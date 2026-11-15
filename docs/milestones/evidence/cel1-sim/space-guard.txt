@@ -1,0 +1,4 @@
+# Free-space guard: df of /cache, / and /data every 30 s while guests ran. It pauses every guest below 3 GiB free.
+samples 132, from 2026-11-16T01:04:48+09:00 to 2026-11-16T02:10:19+09:00
+LOW samples 0, pauses 0
+lowest free bytes: /cache 12263292928, / 19165237248, /data 695719714816

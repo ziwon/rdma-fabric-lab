@@ -1,0 +1,9 @@
+.venv/bin/yamllint --strict .
+cd ansible && <repo>/.venv/bin/ansible-lint --offline
+
+[32mPassed[0m: 0 failure(s), 0 warning(s) in 84 files processed of 86 encountered. Profile 'production' was required, and it passed.
+git ls-files -co --exclude-standard -z -- '*.sh' | xargs -0 -r shellcheck
+PYTHONPATH=scripts .venv/bin/python -m rfl specs $(git ls-files -co --exclude-standard -- 'tracks/*/scenarios/*.yaml')
+validated 11 scenario specs, 0 invalid
+PYTHONPATH=scripts .venv/bin/python -m rfl versions --environment
+47 components, 3 undecided

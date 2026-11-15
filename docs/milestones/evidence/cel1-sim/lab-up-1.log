@@ -1,0 +1,43 @@
+tests/integration/qemu-lab/lab.sh up
+lab.sh: switch management started, pid 1065950, ports cel1-cp-01 cel1-cp-02 cel1-cp-03 cel1-dgx-01 cel1-dgx-02 cel1-dgx-03 cel1-dgx-04 cel1-dgx-05 cel1-dgx-06 cel1-dgx-07 cel1-dgx-08 cel1-pcie-01 cel1-pcie-02 cel1-sim-syslog
+lab.sh: switch storage-a started, pid 1065987, ports cel1-dgx-01 cel1-dgx-02 cel1-dgx-03 cel1-dgx-04 cel1-dgx-05 cel1-dgx-06 cel1-dgx-07 cel1-dgx-08
+lab.sh: switch storage-b started, pid 1066063, ports cel1-dgx-01 cel1-dgx-02 cel1-dgx-03 cel1-dgx-04 cel1-dgx-05 cel1-dgx-06 cel1-dgx-07 cel1-dgx-08
+lab.sh: switch rail0 started, pid 1066119, ports cel1-dgx-01 cel1-dgx-02 cel1-dgx-03 cel1-dgx-04 cel1-dgx-05 cel1-dgx-06 cel1-dgx-07 cel1-dgx-08
+lab.sh: switch rail1 started, pid 1066130, ports cel1-dgx-01 cel1-dgx-02 cel1-dgx-03 cel1-dgx-04 cel1-dgx-05 cel1-dgx-06 cel1-dgx-07 cel1-dgx-08
+lab.sh: switch rail2 started, pid 1066152, ports cel1-dgx-01 cel1-dgx-02 cel1-dgx-03 cel1-dgx-04 cel1-dgx-05 cel1-dgx-06 cel1-dgx-07 cel1-dgx-08
+lab.sh: switch rail3 started, pid 1066163, ports cel1-dgx-01 cel1-dgx-02 cel1-dgx-03 cel1-dgx-04 cel1-dgx-05 cel1-dgx-06 cel1-dgx-07 cel1-dgx-08
+lab.sh: switch rail4 started, pid 1066175, ports cel1-dgx-01 cel1-dgx-02 cel1-dgx-03 cel1-dgx-04 cel1-dgx-05 cel1-dgx-06 cel1-dgx-07 cel1-dgx-08
+lab.sh: switch rail5 started, pid 1066186, ports cel1-dgx-01 cel1-dgx-02 cel1-dgx-03 cel1-dgx-04 cel1-dgx-05 cel1-dgx-06 cel1-dgx-07 cel1-dgx-08
+lab.sh: switch rail6 started, pid 1066220, ports cel1-dgx-01 cel1-dgx-02 cel1-dgx-03 cel1-dgx-04 cel1-dgx-05 cel1-dgx-06 cel1-dgx-07 cel1-dgx-08
+lab.sh: switch rail7 started, pid 1066231, ports cel1-dgx-01 cel1-dgx-02 cel1-dgx-03 cel1-dgx-04 cel1-dgx-05 cel1-dgx-06 cel1-dgx-07 cel1-dgx-08
+lab.sh: cel1-cp-01 started, pid 1066366, ssh 127.0.0.1:22301
+lab.sh: cel1-cp-02 started, pid 1066546, ssh 127.0.0.1:22302
+lab.sh: cel1-cp-03 started, pid 1066679, ssh 127.0.0.1:22303
+lab.sh: cel1-dgx-01 started, pid 1066785, ssh 127.0.0.1:22304
+lab.sh: cel1-dgx-02 started, pid 1066847, ssh 127.0.0.1:22305
+lab.sh: cel1-dgx-03 started, pid 1066914, ssh 127.0.0.1:22306
+lab.sh: cel1-dgx-04 started, pid 1066978, ssh 127.0.0.1:22307
+lab.sh: cel1-dgx-05 started, pid 1067108, ssh 127.0.0.1:22308
+lab.sh: cel1-dgx-06 started, pid 1067149, ssh 127.0.0.1:22309
+lab.sh: cel1-dgx-07 started, pid 1067203, ssh 127.0.0.1:22310
+lab.sh: cel1-dgx-08 started, pid 1067303, ssh 127.0.0.1:22311
+lab.sh: cel1-pcie-01 started, pid 1067384, ssh 127.0.0.1:22312
+lab.sh: cel1-pcie-02 started, pid 1067426, ssh 127.0.0.1:22313
+lab.sh: cel1-sim-syslog started, pid 1067475, ssh 127.0.0.1:22314
+lab.sh: cel1-cp-01 ready
+lab.sh: cel1-cp-02 ready
+lab.sh: cel1-cp-03 ready
+lab.sh: cel1-dgx-01 ready
+lab.sh: cel1-dgx-02 ready
+lab.sh: cel1-dgx-03 ready
+lab.sh: cel1-dgx-04 ready
+lab.sh: cel1-dgx-05 ready
+lab.sh: cel1-dgx-06 ready
+lab.sh: cel1-dgx-07 ready
+lab.sh: cel1-dgx-08 ready
+lab.sh: cel1-pcie-01 ready
+lab.sh: cel1-pcie-02 ready
+lab.sh: cel1-sim-syslog ready
+lab.sh: wrote <lab-disks>/cel1/inventory.yml
+LAB_PROFILE=cel1 LAB_DIR=<lab-disks>/cel1 make --no-print-directory lab-up  5.15s user 1.11s system 19% cpu 32.103 total
+exit 0

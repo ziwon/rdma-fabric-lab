@@ -1,0 +1,17 @@
+$ make fleet-k8s CONFIRM=cel1 FLEET_CONNECT=<lab-disks>/cel1/inventory.yml
+PYTHONPATH=scripts .venv/bin/python -m rfl versions --environment --scope fleet
+scope fleet: every component is pinned
+PLAY RECAP *********************************************************************
+cel1-cp-01                 : ok=54   changed=0    unreachable=0    failed=0    skipped=11   rescued=0    ignored=0   
+cel1-cp-02                 : ok=44   changed=0    unreachable=0    failed=0    skipped=13   rescued=0    ignored=0   
+cel1-cp-03                 : ok=44   changed=0    unreachable=0    failed=0    skipped=13   rescued=0    ignored=0   
+cel1-dgx-01                : ok=43   changed=0    unreachable=0    failed=0    skipped=12   rescued=0    ignored=0   
+cel1-dgx-02                : ok=43   changed=0    unreachable=0    failed=0    skipped=12   rescued=0    ignored=0   
+cel1-dgx-03                : ok=43   changed=0    unreachable=0    failed=0    skipped=12   rescued=0    ignored=0   
+cel1-dgx-04                : ok=43   changed=0    unreachable=0    failed=0    skipped=12   rescued=0    ignored=0   
+cel1-dgx-05                : ok=43   changed=0    unreachable=0    failed=0    skipped=12   rescued=0    ignored=0   
+cel1-dgx-06                : ok=43   changed=0    unreachable=0    failed=0    skipped=12   rescued=0    ignored=0   
+cel1-dgx-07                : ok=43   changed=0    unreachable=0    failed=0    skipped=12   rescued=0    ignored=0   
+cel1-dgx-08                : ok=43   changed=0    unreachable=0    failed=0    skipped=12   rescued=0    ignored=0   
+cel1-pcie-01               : ok=42   changed=0    unreachable=0    failed=0    skipped=13   rescued=0    ignored=0   
+cel1-pcie-02               : ok=42   changed=0    unreachable=0    failed=0    skipped=13   rescued=0    ignored=0   

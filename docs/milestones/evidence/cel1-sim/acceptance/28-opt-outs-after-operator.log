@@ -1,0 +1,15 @@
+$ opt_out_labels
+NAME           STATUS   ROLES           AGE     VERSION   GPU.DEPLOY.DRIVER   GPU.DEPLOY.CONTAINER-TOOLKIT   GPU.PRESENT
+cel1-cp-01     Ready    control-plane   4m53s   v1.36.6                                                      
+cel1-cp-02     Ready    control-plane   4m3s    v1.36.6                                                      
+cel1-cp-03     Ready    control-plane   3m30s   v1.36.6                                                      
+cel1-dgx-01    Ready    <none>          3m25s   v1.36.6                                                      
+cel1-dgx-02    Ready    <none>          3m25s   v1.36.6                                                      
+cel1-dgx-03    Ready    <none>          3m25s   v1.36.6                                                      
+cel1-dgx-04    Ready    <none>          3m25s   v1.36.6                                                      
+cel1-dgx-05    Ready    <none>          3m24s   v1.36.6                                                      
+cel1-dgx-06    Ready    <none>          3m25s   v1.36.6                                                      
+cel1-dgx-07    Ready    <none>          3m25s   v1.36.6                                                      
+cel1-dgx-08    Ready    <none>          3m25s   v1.36.6                                                      
+cel1-pcie-01   Ready    <none>          3m24s   v1.36.6                                                      
+cel1-pcie-02   Ready    <none>          3m25s   v1.36.6                                                      

@@ -1,0 +1,5 @@
+$ make fleet-addons CONFIRM=cel1 FLEET_CONNECT=<lab-disks>/cel1/inventory.yml
+PYTHONPATH=scripts .venv/bin/python -m rfl versions --environment --scope fleet
+scope fleet: every component is pinned
+cilium: upgraded, chart 1.20.4 at revision 1
+gpu-operator: upgraded, chart v26.7.2 at revision 1

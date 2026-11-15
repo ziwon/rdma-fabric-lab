@@ -1,0 +1,18 @@
+$ refused fleet-addons CONFIRM=cel1
+make fleet-addons: cel1-cp-01: ansible_host is unset, not 127.0.0.1
+make fleet-addons: cel1-cp-02: ansible_host is unset, not 127.0.0.1
+make fleet-addons: cel1-cp-03: ansible_host is unset, not 127.0.0.1
+make fleet-addons: cel1-dgx-01: ansible_host is unset, not 127.0.0.1
+make fleet-addons: cel1-dgx-02: ansible_host is unset, not 127.0.0.1
+make fleet-addons: cel1-dgx-03: ansible_host is unset, not 127.0.0.1
+make fleet-addons: cel1-dgx-04: ansible_host is unset, not 127.0.0.1
+make fleet-addons: cel1-dgx-05: ansible_host is unset, not 127.0.0.1
+make fleet-addons: cel1-dgx-06: ansible_host is unset, not 127.0.0.1
+make fleet-addons: cel1-dgx-07: ansible_host is unset, not 127.0.0.1
+make fleet-addons: cel1-dgx-08: ansible_host is unset, not 127.0.0.1
+make fleet-addons: cel1-pcie-01: ansible_host is unset, not 127.0.0.1
+make fleet-addons: cel1-pcie-02: ansible_host is unset, not 127.0.0.1
+make fleet-addons: cel1-cp-01: rfl_kubeconfig_server is unset, so the admin kubeconfig would name the endpoint inside the site instead of https://127.0.0.1:<forward>
+make fleet-addons: refused. cel1 has no real hosts, and ansible/inventories/cel1 and ~/.local/state/rdma-fabric-lab/cel1/kubeconfig does not point every host at a simulation guest on 127.0.0.1. Nothing was contacted. Pass FLEET_CONNECT=<the inventory.yml that lab.sh up wrote for the simulation>.
+make: *** [mk/fleet.mk:78: fleet-addons] Error 2
+exit 2, 0 calls to an IPv4 or IPv6 address in .lab/acceptance-cel1/20261115T163759Z/strace-23.txt

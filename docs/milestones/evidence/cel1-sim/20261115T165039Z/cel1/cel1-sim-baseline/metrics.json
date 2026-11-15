@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "result_kind": "software-rdma-measurement",
+  "metrics": [
+    {
+      "name": "ha_vip.api_unavailable_seconds",
+      "value": 6.032,
+      "unit": "s",
+      "absent_reason": null,
+      "source": "raw/api-survives-holder-loss/probes.txt",
+      "sample_count": 9,
+      "labels": {
+        "lost": "cel1-cp-02",
+        "new_holder": "cel1-cp-03",
+        "probe_from": "cel1-pcie-01",
+        "probe_interval_s": "0.5"
+      }
+    }
+  ]
+}

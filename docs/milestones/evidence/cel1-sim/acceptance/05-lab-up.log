@@ -1,0 +1,16 @@
+$ make lab-up
+lab.sh: cel1-cp-01 ready
+lab.sh: cel1-cp-02 ready
+lab.sh: cel1-cp-03 ready
+lab.sh: cel1-dgx-01 ready
+lab.sh: cel1-dgx-02 ready
+lab.sh: cel1-dgx-03 ready
+lab.sh: cel1-dgx-04 ready
+lab.sh: cel1-dgx-05 ready
+lab.sh: cel1-dgx-06 ready
+lab.sh: cel1-dgx-07 ready
+lab.sh: cel1-dgx-08 ready
+lab.sh: cel1-pcie-01 ready
+lab.sh: cel1-pcie-02 ready
+lab.sh: cel1-sim-syslog ready
+lab.sh: wrote <lab-disks>/cel1/inventory.yml

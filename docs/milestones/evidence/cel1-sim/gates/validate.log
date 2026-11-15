@@ -1,0 +1,2 @@
+PYTHONPATH=scripts .venv/bin/python -m rfl validate 
+validated 123 run directories, 0 invalid

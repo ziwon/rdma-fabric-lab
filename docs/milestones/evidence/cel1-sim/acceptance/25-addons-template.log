@@ -1,0 +1,3 @@
+$ make addons-template ENV=cel1
+Summary: 25 resources found in 1 file - Valid: 25, Invalid: 0, Errors: 0, Skipped: 0
+Summary: 36 resources found in 1 file - Valid: 27, Invalid: 0, Errors: 0, Skipped: 9

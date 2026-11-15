@@ -1,7 +1,7 @@
 # cel1: operations guide for the virtual GPU region
 
-> Written: 2026-11-15  
-> Status: the site model, inventory generation, contract check and Helm rendering ran offline and were confirmed. No target that changes cel1 hosts has ever run (section 8).  
+> Written: 2026-11-15, updated 2026-11-16  
+> Status: the site model, inventory generation, contract check and Helm rendering ran offline and were confirmed. The three fleet targets ran against the cel1 simulation, 13 QEMU guests on this host, and `docs/milestones/cel1-sim.md` records the results. No real host exists.  
 > Basis: `docs/adr/0001-kubernetes-stack.md`. Its section 4 is the inventory contract.
 
 ## 1. Region
@@ -14,7 +14,7 @@ cel1 is a region that does not exist. All host names, addresses, interface names
 | `dgx_b200` | `cel1-dgx-01`–`08` | 8 | DGX OS 7 | Installed in DGX OS | `mgmt0`, `stor0`, `stor1`, `rail0`–`rail7` |
 | `pcie_gpu` | `cel1-pcie-01`–`02` | 2 | Ubuntu 24.04 | GPU Operator installs them | `mgmt0` |
 
-There are 8 DGX nodes, not 64. The user decided that this host cannot simulate more. The next task boots cel1 as small QEMU guests of the lab harness and runs the real playbooks. Every design in this document assumes that boot.
+There are 8 DGX nodes, not 64. The user decided that this host cannot simulate more. The cel1 simulation boots one QEMU guest per host and runs the real playbooks against them (section 9).
 
 ## 2. Site model
 
@@ -79,13 +79,15 @@ M4 builds the ibsim topology from this section. ibsim (`ibsim/sim_net.c`) reads 
 | File | Content |
 |---|---|
 | `hosts.yml` | `kube_control_plane` and `kube_node` under `k8s_cluster`. One group per class |
-| `group_vars/all.yml` | `rfl_inventory`, the API address, port, VIP and VIP interface, the Pod and Service CIDRs, `k8s_kube_proxy`, `k8s_control_plane_schedulable`, the syslog address and port |
-| `group_vars/<class>.yml` | The `k8s_node_labels` of that class |
+| `group_vars/all.yml` | `rfl_inventory`, the API address, port, VIP and VIP interface, the Pod and Service CIDRs, `k8s_kube_proxy`, `k8s_control_plane_schedulable`, `k8s_admin_kubeconfig`, the syslog address and port |
+| `group_vars/<class>.yml` | The `k8s_node_labels` and `k8s_container_runtime_default` of that class |
 | `host_vars/<host>.yml` | `k8s_node_ip` |
 
 The contract groups list their hosts directly. `groups['kube_control_plane'][0]` runs `kubeadm init`, so that order must not depend on the traversal order of child groups. The class groups list the same hosts again. The sha256 of the `ansible-inventory --list` output was the same with `PYTHONHASHSEED` 0, 1, 7, 42 and 999. The host order of `ansible-playbook --list-hosts` differs between runs, but that is because the CLI uses a `set` for its output (`ansible/cli/playbook.py`). `groups['k8s_cluster']` was the same over 6 runs.
 
-The inventory sets no `ansible_host`. The cel1 addresses are invented, so the host must not connect to them. A second inventory (`FLEET_CONNECT`) supplies the connection details. For the simulation it lists 127.0.0.1 port forwards. If a playbook run uses the cel1 inventory without the second inventory, make stops before ssh.
+The inventory sets no `ansible_host`. The cel1 addresses are invented, so the host must not connect to them. A second inventory (`FLEET_CONNECT`) supplies the connection details. For the simulation it lists 127.0.0.1 port forwards. Section 8 describes the gate that stops every other case before ssh.
+
+`kubernetes.admin_kubeconfig` in the model is `${XDG_STATE_HOME:-~/.local/state}/rdma-fabric-lab/cel1/kubeconfig`, the path of ADR section 5 written as the ADR writes it. The `kubeadm` role replaces that state home prefix with the state home of the control node, so the role and `CEL1_KUBECONFIG` of `mk/fleet.mk` name the same file with or without `XDG_STATE_HOME`. A class sets `container_runtime: runc|nvidia`, runc when absent. `dgx_b200` sets `nvidia`.
 
 The generator emits the same bytes from the same model. `make fleet-render-check` compares the directory with the rendered output and fails on a difference. When a host leaves the model, the generator deletes that host's old files. It reports files it did not write and does not delete them.
 
@@ -98,7 +100,7 @@ The generator emits the same bytes from the same model. `make fleet-render-check
 | `missing-group` | A contract group is missing, or `kube_control_plane` is empty |
 | `group-membership` | A host is in both roles, or `k8s_cluster` is not the union of the two groups |
 | `missing-variable` | A host lacks a required variable. A host without `k8s_node_ip` lands here |
-| `bad-value` | The type is wrong. For example, `k8s_kube_proxy: "false"` is a string |
+| `bad-value` | The type is wrong. For example, `k8s_kube_proxy: "false"` is a string, or `k8s_container_runtime_default` is neither `runc` nor `nvidia` |
 | `unresolved-template` | A template that cannot be evaluated offline |
 | `inconsistent-variable` | A cluster-wide variable differs between hosts |
 | `duplicate-node-ip` | Two hosts use the same `k8s_node_ip` |
@@ -149,7 +151,8 @@ The evidence follows.
 
 - The documentation sections "Preventing Installation of NVIDIA GPU Driver on Some Nodes" and "Preventing Installation of Operands on Some Nodes", at https://docs.nvidia.com/datacenter/cloud-native/gpu-operator/latest/getting-started.html. On 2026-11-15 this page names v26.7.2 as the current patch release. The versioned paths (`/26.7.2/`, `/v26.7.2/`) returned 404.
 - The documentation has no per-node section for the toolkit label, so this was confirmed in the source. In github.com/NVIDIA/gpu-operator tag v26.7.2 (commit `5a9c8a8b3f5b`), `addGPUStateLabels` in `controllers/state_manager.go` sets to `"true"` only the `nvidia.com/gpu.deploy.*` labels that are missing or empty on a node. It does not overwrite an existing `"false"`. The nodeSelectors in `assets/state-driver/0500_daemonset.yaml` and `assets/state-container-toolkit/0500_daemonset.yaml` are `nvidia.com/gpu.deploy.driver: "true"` and `nvidia.com/gpu.deploy.container-toolkit: "true"`, respectively.
-- The "Pre-Installed NVIDIA GPU Drivers and NVIDIA Container Toolkit" section of the same documentation says it applies to DGX. It says to set the default runtime to `nvidia` before installing the Operator. No role in this repository makes that setting yet (section 10).
+- The "Pre-Installed NVIDIA GPU Drivers and NVIDIA Container Toolkit" section of the same documentation says it applies to DGX. It says to set the default runtime to `nvidia` before installing the Operator. The `containerd` role does that on every host with `k8s_container_runtime_default: nvidia`, which the model sets for `dgx_b200`.
+- The opt-out labels hold only on a node the Operator sees as a GPU node. In the same tag, `updateGPUStateLabels` in `controllers/nodelabeling_controller.go` calls `removeAllGPUStateLabels` on every node without `nvidia.com/gpu.present`. The simulation guests have no GPU, so the Operator removed both opt-outs from all 8 DGX Nodes when it started. The next `make fleet-k8s` put them back, and they stayed. On a DGX node with GPUs, NFD reports the NVIDIA PCI device, the Operator sets `nvidia.com/gpu.present=true`, and the opt-outs stay. A DGX node whose GPUs disappear from NFD would lose its opt-outs at the next Operator start until `make fleet-k8s` runs again.
 
 On the PCIe GPU servers, the toolkit writes its runtime settings to the drop-in `/etc/containerd/conf.d/99-nvidia.toml` (`DefaultContainerdDropInConfigFile` in `controllers/object_controls.go`). A comment in the same source says that a containerd drop-in needs a change to the top-level configuration. The `config.toml` of the `containerd` role already imports `/etc/containerd/conf.d/*.toml`. So the inference is that the toolkit leaves the top-level file alone and that an Ansible rerun also reports `changed=0`. This is not confirmed. Only a PCIe GPU server with a GPU can confirm it.
 
@@ -161,7 +164,7 @@ The site model's `services.syslog` is the central syslog address `10.140.0.5:514
 
 - Without a syslog address, the role fails and changes nothing. It no longer writes an empty file and passes silently as it used to.
 - Forwarding uses a disk-assisted queue. While the server is down, messages accumulate and are sent again later. The Ubuntu 24.04 `/etc/rsyslog.conf` sets `$WorkDirectory /var/spool/rsyslog`.
-- The playbook `ansible/playbooks/fleet/rsyslog-client.yml` rejects a host whose `rfl_inventory` is missing or `lab`.
+- The playbook `ansible/playbooks/fleet/rsyslog-client.yml` rejects a host whose `rfl_inventory` is missing or `lab`. It runs with `become: true`. Its first run against the simulation failed on all 13 hosts at `apt-mark manual rsyslog`, because the play ran as the SSH user.
 - The rendered configuration file went into `/etc/rsyslog.d/` of an Ubuntu 24.04 container (rsyslog 8.2312.0-3ubuntu9.4), and `rsyslogd -N1` ran on it. The exit code was 0. A file with a typo failed with `parameter 'Prot' not known`. The role does not use Ansible `validate:`, because the Ubuntu AppArmor profile blocks rsyslogd from reading files outside `/etc/rsyslog.d/`. A run on the host with a file in a temporary path gave `Permission denied`.
 
 ## 8. Make targets
@@ -174,12 +177,17 @@ The site model's `services.syslog` is the central syslog address `10.140.0.5:514
 | `make inventory-check INVENTORY=<lab\|cel1\|dir>` | Contract check | None |
 | `make values-check ENV=<env>` | Checks that every key of the values file exists in the `values.yaml` of the chart at its locked version | None. It downloads the chart from the public chart repository |
 | `make addons-template ENV=cel1` | Renders both releases and validates them with kubeconform against v1.36.6 | None. It downloads the charts and schemas |
+| `make fleet-sim-profile`, `make fleet-sim-profile-check` | Writes or compares `tests/integration/qemu-lab/profiles/cel1.tsv` | None |
 | `make fleet-check` | All the checks above | None |
-| `make fleet-k8s CONFIRM=cel1 FLEET_CONNECT=<inventory>` | `make versions SCOPE=fleet`, then `ansible/playbooks/kubernetes.yml` | Yes |
-| `make fleet-addons CONFIRM=cel1` | `make versions SCOPE=fleet`, then `make addons ENV=cel1` with the cel1 kubeconfig | Yes |
-| `make fleet-rsyslog CONFIRM=cel1 FLEET_CONNECT=<inventory>` | `ansible/playbooks/fleet/rsyslog-client.yml` | Yes |
+| `make fleet-sim-stand-ins CONFIRM=cel1 FLEET_CONNECT=<simulation inventory>` | `ansible/playbooks/simulation-stand-ins.yml` | Simulation guests only |
+| `make fleet-k8s CONFIRM=cel1 FLEET_CONNECT=<simulation inventory>` | `make versions SCOPE=fleet`, then `ansible/playbooks/kubernetes.yml` | Simulation guests only |
+| `make fleet-addons CONFIRM=cel1 FLEET_CONNECT=<simulation inventory>` | `make versions SCOPE=fleet`, then `make addons ENV=cel1` with the cel1 kubeconfig | Simulation guests only |
+| `make fleet-rsyslog CONFIRM=cel1 FLEET_CONNECT=<simulation inventory>` | `ansible/playbooks/fleet/rsyslog-client.yml` | Simulation guests only |
+| `make fleet-sim-test FLEET_CONNECT=<simulation inventory>` | The `cel1-sim-baseline` scenario through rfl, VIP holder power cut included | Simulation guests only |
 
-Without `CONFIRM=cel1`, the last three targets run no prerequisite and stop with exit code 2. `fleet-k8s` and `fleet-rsyslog` also stop when the cel1 inventory has no `FLEET_CONNECT`. `fleet-addons` stops when the kubeconfig (`${XDG_STATE_HOME:-~/.local/state}/rdma-fabric-lab/cel1/kubeconfig`) is missing. `ARGS=` adds arguments such as `--limit`.
+Without `CONFIRM=cel1`, the targets that change hosts run no prerequisite and stop with exit code 2. After it, `fleet sim-gate` reads the merged `ansible-inventory --list` output and, for `fleet-addons`, the kubeconfig. Every host whose `rfl_inventory` names a site model under `sites/` must have `ansible_host` 127.0.0.1 and an `ansible_port`, the first control plane must have an `rfl_kubeconfig_server` on 127.0.0.1, and every cluster server of the kubeconfig must be on 127.0.0.1. Otherwise the gate stops with exit code 2. It reads only local files. `fleet-addons` also stops when the kubeconfig (`${XDG_STATE_HOME:-~/.local/state}/rdma-fabric-lab/cel1/kubeconfig`) is missing. `ARGS=` adds arguments such as `--limit`.
+
+The simulation inventory is the `inventory.yml` that `LAB_PROFILE=cel1 make lab-up` writes into the harness state directory. Its hosts point at 127.0.0.1 forwards, the first control plane names the forward of its API port as `rfl_kubeconfig_server`, and the group `simulation_syslog` holds the stand-in syslog server. `make fleet-sim-stand-ins` gives the hosts with `k8s_container_runtime_default: nvidia` a stand-in `/usr/bin/nvidia-container-runtime` that logs each call and execs runc, and configures the stand-in syslog server to receive on the site syslog address. Neither stand-in is part of the inventory or the fleet roles.
 
 ## 9. Offline check results
 
@@ -210,14 +218,14 @@ Each check was broken once to confirm that it fails.
 
 ## 10. Not run
 
+The cel1 simulation ran the three fleet targets on 13 guests (`docs/milestones/cel1-sim.md`). That run settled the earlier items about the targets, a second `rsyslog_client` run, Cilium native routing, kube-proxy replacement and the nvidia default runtime, and M4 built the ibsim topology. These remain.
+
 | Item | Status | Reason |
 |---|---|---|
-| `make fleet-k8s`, `make fleet-addons`, `make fleet-rsyslog` (`CONFIRM=cel1`) | `not_run` | This task boots no guest and does not connect to cel1 addresses. The next simulation task runs them |
-| `changed=0` on a second `rsyslog_client` run | `not_run` | There is no guest to run it on |
-| Behavior of Cilium native routing and kube-proxy replacement | `not_run` | Only rendered |
-| Placement driven by the GPU Operator labels | `not_run` | There is no GPU. The simulation guests have no GPU either, so NFD does not treat them as GPU nodes. So the simulation cannot prove this either |
-| Default runtime `nvidia` on DGX nodes | `not_run` | No role sets it yet. Section 6 |
-| ibsim topology | `not_run` | M4 builds it |
+| Placement driven by the GPU Operator labels | `not_run` | There is no GPU. The guests have none either, so NFD reports no NVIDIA device and the Operator creates no operand |
+| The real NVIDIA container toolkit on DGX nodes | `not_run` | The simulation uses a stand-in runtime that execs runc |
+| The toolkit drop-in on PCIe GPU servers | `not_run` | Section 6. Only a server with a GPU can confirm it |
+| InfiniBand on the rails | `not_run` | The simulation rails carry Ethernet. M4 simulates the fabric's management plane |
 | Schema validation of the 9 GPU Operator CRDs and ClusterPolicy | `not_run` | No kubeconform schema exists |
 
 ## 11. Applying this to another site
@@ -233,7 +241,7 @@ Another site gives the same code only its own files. All those files live outsid
    make inventory-check INVENTORY=/srv/site-x/inventory
    ```
 
-3. Put the connection details (`ansible_host`, `ansible_user`) in a second inventory.
+3. Put the connection details (`ansible_host`, `ansible_user`) in a second inventory. The gate of section 8 holds every host whose `rfl_inventory` names a site model under `sites/` to 127.0.0.1, so a site that borrows `cel1` as its environment name reaches only simulation guests. Item 4 is the way out.
 
    ```bash
    make fleet-k8s CONFIRM=cel1 FLEET_INVENTORY=/srv/site-x/inventory FLEET_CONNECT=/srv/site-x/connect.yml
@@ -248,6 +256,7 @@ Another site gives the same code only its own files. All those files live outsid
 | Label prefix | `rfl.example/node-class`. Change it once a real owned domain exists |
 | Leaf–spine ratio | 1:1. 8 uplinks per leaf |
 | Storage port layout | A separate subnet per port. No bonding |
-| syslog target | Management network `10.140.0.5:514`, TCP. The next task decides who receives this address in the simulation |
-| DGX default runtime | The `containerd` role takes `k8s_container_runtime_default: nvidia` and sets it |
+| syslog target | Management network `10.140.0.5:514`, TCP. In the simulation the stand-in guest `cel1-sim-syslog` receives it |
+| DGX default runtime | `container_runtime: nvidia` on `dgx_b200` in the model. The `containerd` role makes it the default |
+| GPU Operator labels on a DGX node without GPUs | The Operator removes the opt-outs at its start, and `make fleet-k8s` puts them back (section 6). The role keeps converging them |
 | Helm values for another site | Needs the override mechanism of section 11 |

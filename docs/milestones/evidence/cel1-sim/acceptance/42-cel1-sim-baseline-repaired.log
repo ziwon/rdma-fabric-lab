@@ -1,0 +1,27 @@
+$ make fleet-sim-test FLEET_CONNECT=<lab-disks>/cel1/inventory.yml
+make fleet-sim-test: ansible/inventories/cel1 + <lab-disks>/cel1/inventory.yml points every host at 127.0.0.1
+PYTHONPATH=scripts .venv/bin/python -m run.cel1 -i ansible/inventories/cel1 -i <lab-disks>/cel1/inventory.yml  \
+	--power-off 'env LAB_PROFILE=cel1 tests/integration/qemu-lab/lab.sh kill {guest}' --power-on 'env LAB_PROFILE=cel1 tests/integration/qemu-lab/lab.sh start {guest}'
+01:55:17 run 20261115T165516Z scenario cel1-sim-baseline in <repo>/results/20261115T165516Z/cel1/cel1-sim-baseline, VIP 10.140.0.10, 13 nodes
+01:55:22 interfaces-match-site-model: passed - 93 interfaces of 13 hosts carry their site model names and addresses
+01:55:25 nodes-ready-with-class-labels: passed - 13 of 13 Nodes Ready on their node IPs; every kubelet registers the k8s_node_labels of its class (3 control-plane, 8 dgx-b200, 2 pcie-gpu) and the Nodes carry them; live nvidia.com/gpu.deploy.* labels: none
+01:55:25 control-planes-joined: passed - control planes cel1-cp-01, cel1-cp-02, cel1-cp-03 Ready with kube-apiserver and etcd, members cel1-cp-01, cel1-cp-02, cel1-cp-03, endpoint 10.140.0.10:6443
+01:55:27 api-on-vip: passed - cel1-pcie-01 /livez on 10.140.0.10 ok; /readyz ok from cel1-cp-01, cel1-cp-02, cel1-cp-03 through admin.conf on the VIP
+01:55:33 no-kube-proxy: passed - no kube-proxy object, 0 KUBE chains on 13 nodes, every agent KubeProxyReplacement True mgmt0
+01:55:47 cilium-api-direct: passed - agent env {'KUBERNETES_SERVICE_HOST': '10.140.0.10', 'KUBERNETES_SERVICE_PORT': '6443'}; cilium-tblsh deleted on cel1-dgx-03, cilium-j2r9f Ready with 0 container restarts, its log connects to https://10.140.0.10:6443
+01:55:49 gpu-operator-installed: passed - Deployments {'gpu-operator': True, 'gpu-operator-node-feature-discovery-gc': True, 'gpu-operator-node-feature-discovery-master': True}; 8 DGX kubelets register both opt-outs; found: ClusterPolicy state ready, Ready reason NoGPUNodes: No GPU node found, watching for new nodes to join the cluster.; nodes with nvidia.com/gpu.present=true: none; nodes with an NVIDIA PCI device label: none; live nvidia.com/gpu.deploy.* labels: none; DaemonSets ready/desired {'gpu-operator-node-feature-discovery-worker': '13/13'}
+01:55:54 syslog-to-central-address: passed - markers of 13 nodes arrived at cel1-sim-syslog on 10.140.0.5:514, each over TCP from its node IP
+01:55:56 test-pods-ready: passed - server 10.160.3.224 on cel1-dgx-01, client 10.160.6.214 on cel1-dgx-02
+01:56:25 cluster-dns: passed - server.rfl-20261115t165516z.svc.cluster.local -> 10.170.94.204; kubernetes.default.svc.cluster.local -> 10.170.0.1
+01:56:25 clusterip-service: passed - http://server.rfl-20261115t165516z.svc.cluster.local:80/ returned 'server' after 1 attempts, last exit 0 'server'
+01:57:01 pod-to-pod-native-routing: passed - http://10.160.3.224:8080/ returned 'server' after 1 attempts, last exit 0 'server'; 10.160.3.224 via 10.140.0.21 dev mgmt0 src 10.140.0.22 uid 1000 
+    cache; cel1-dgx-01 mgmt0 20 pod-to-pod, 0 VXLAN, 0 Geneve; cel1-dgx-02 mgmt0 20 pod-to-pod, 0 VXLAN, 0 Geneve
+01:57:01 no-pod-traffic-on-storage-or-rail-nics: passed - 20 storage and rail captures, 20 with marker pings, 0 pod, Service or tunnel frames
+01:57:05 dgx-containerd-defaults-to-nvidia: passed - 8 nodes nvidia /usr/bin/nvidia-container-runtime, 5 nodes runc /usr/local/sbin/runc; server container 0c9c36edd227 on cel1-dgx-01 runs through /usr/bin/nvidia-container-runtime, stand-in calls create, start
+01:57:14 test-namespace-removed: passed - namespace rfl-20261115t165516z and every object labeled rdma-fabric-lab/run=20261115T165516Z are gone
+01:57:15 vip-holder-identified: passed - lease plndr-cp-lock held by cel1-cp-03, VIP 10.140.0.10 on cel1-cp-03 only
+01:57:28 api-survives-holder-loss: passed - cel1-cp-03 powered off; 4 of 9 probes failed, API back on 10.140.0.10 after 6.029 s; lease and VIP now on cel1-cp-01
+01:57:34 cluster-works-after-loss: passed - from cel1-cp-01 through the VIP: nodes listed, ConfigMap written, read and deleted; etcd healthy 2 of 3
+01:57:54 holder-rejoins: passed - cel1-cp-03 Ready again, etcd healthy 3 of 3
+01:58:01 no-process-left: passed - cel1-cp-01: 0 stopped by the runner, 0 remaining; cel1-cp-02: 0 stopped by the runner, 0 remaining; cel1-cp-03: 0 stopped by the runner, 0 remaining; cel1-dgx-01: 0 stopped by the runner, 0 remaining; cel1-dgx-02: 0 stopped by the runner, 0 remaining; cel1-dgx-03: 0 stopped by the runner, 0 remaining; cel1-dgx-04: 0 stopped by the runner, 0 remaining; cel1-dgx-05: 0 stopped by the runner, 0 remaining; cel1-dgx-06: 0 stopped by the runner, 0 remaining; cel1-dgx-07: 0 stopped by the runner, 0 remaining; cel1-dgx-08: 0 stopped by the runner, 0 remaining; cel1-pcie-01: 0 stopped by the runner, 0 remaining; cel1-pcie-02: 0 stopped by the runner, 0 remaining; cel1-sim-syslog: 0 stopped by the runner, 0 remaining
+01:58:04 <repo>/results/20261115T165516Z/cel1/cel1-sim-baseline: passed

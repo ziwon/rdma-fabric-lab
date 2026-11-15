@@ -1,0 +1,219 @@
+make fleet-rsyslog: ansible/inventories/cel1 + <lab-disks>/cel1/inventory.yml points every host at 127.0.0.1
+.venv/bin/ansible-playbook -i ansible/inventories/cel1 -i <lab-disks>/cel1/inventory.yml ansible/playbooks/fleet/rsyslog-client.yml 
+
+PLAY [Forward syslog to the site syslog server] ********************************
+
+TASK [Gathering Facts] *********************************************************
+Monday 16 November 2026  01:13:07 +0900 (0:00:00.015)       0:00:00.015 ******* 
+ok: [cel1-cp-01]
+ok: [cel1-cp-02]
+ok: [cel1-dgx-04]
+ok: [cel1-pcie-02]
+ok: [cel1-pcie-01]
+ok: [cel1-cp-03]
+ok: [cel1-dgx-07]
+ok: [cel1-dgx-06]
+ok: [cel1-dgx-03]
+ok: [cel1-dgx-02]
+ok: [cel1-dgx-08]
+ok: [cel1-dgx-01]
+ok: [cel1-dgx-05]
+
+TASK [Refuse a host outside a fleet inventory] *********************************
+Monday 16 November 2026  01:13:08 +0900 (0:00:00.915)       0:00:00.931 ******* 
+ok: [cel1-cp-01]
+ok: [cel1-cp-02]
+ok: [cel1-cp-03]
+ok: [cel1-dgx-01]
+ok: [cel1-dgx-02]
+ok: [cel1-dgx-03]
+ok: [cel1-dgx-04]
+ok: [cel1-dgx-05]
+ok: [cel1-dgx-06]
+ok: [cel1-dgx-07]
+ok: [cel1-dgx-08]
+ok: [cel1-pcie-01]
+ok: [cel1-pcie-02]
+
+TASK [rsyslog_client : Refuse a host without a syslog server] ******************
+Monday 16 November 2026  01:13:08 +0900 (0:00:00.077)       0:00:01.008 ******* 
+ok: [cel1-cp-01]
+ok: [cel1-cp-02]
+ok: [cel1-cp-03]
+ok: [cel1-dgx-01]
+ok: [cel1-dgx-02]
+ok: [cel1-dgx-03]
+ok: [cel1-dgx-04]
+ok: [cel1-dgx-05]
+ok: [cel1-dgx-06]
+ok: [cel1-dgx-07]
+ok: [cel1-dgx-08]
+ok: [cel1-pcie-01]
+ok: [cel1-pcie-02]
+
+TASK [rsyslog_client : Ensure rsyslog is installed] ****************************
+Monday 16 November 2026  01:13:08 +0900 (0:00:00.132)       0:00:01.140 ******* 
+[ERROR]: Task failed: Module failed: Command '/usr/bin/apt-mark manual rsyslog' failed.
+Origin: <repo>/ansible/roles/rsyslog_client/tasks/main.yml:11:3
+
+ 9     quiet: true
+10
+11 - name: Ensure rsyslog is installed
+     ^ column 3
+
+fatal: [cel1-dgx-04]: FAILED! => 
+    changed: false
+    msg: Command '/usr/bin/apt-mark manual rsyslog' failed.
+    rc: 100
+    stderr: |-
+        E: Could not create temporary file for /var/lib/apt/extended_states - mkstemp (13: Permission denied)
+        E: Failed to write temporary StateFile /var/lib/apt/extended_states
+    stderr_lines: <omitted>
+    stdout: ''
+    stdout_lines: <omitted>
+fatal: [cel1-cp-01]: FAILED! => 
+    changed: false
+    msg: Command '/usr/bin/apt-mark manual rsyslog' failed.
+    rc: 100
+    stderr: |-
+        E: Could not create temporary file for /var/lib/apt/extended_states - mkstemp (13: Permission denied)
+        E: Failed to write temporary StateFile /var/lib/apt/extended_states
+    stderr_lines: <omitted>
+    stdout: ''
+    stdout_lines: <omitted>
+fatal: [cel1-pcie-01]: FAILED! => 
+    changed: false
+    msg: Command '/usr/bin/apt-mark manual rsyslog' failed.
+    rc: 100
+    stderr: |-
+        E: Could not create temporary file for /var/lib/apt/extended_states - mkstemp (13: Permission denied)
+        E: Failed to write temporary StateFile /var/lib/apt/extended_states
+    stderr_lines: <omitted>
+    stdout: ''
+    stdout_lines: <omitted>
+fatal: [cel1-cp-03]: FAILED! => 
+    changed: false
+    msg: Command '/usr/bin/apt-mark manual rsyslog' failed.
+    rc: 100
+    stderr: |-
+        E: Could not create temporary file for /var/lib/apt/extended_states - mkstemp (13: Permission denied)
+        E: Failed to write temporary StateFile /var/lib/apt/extended_states
+    stderr_lines: <omitted>
+    stdout: ''
+    stdout_lines: <omitted>
+fatal: [cel1-pcie-02]: FAILED! => 
+    changed: false
+    msg: Command '/usr/bin/apt-mark manual rsyslog' failed.
+    rc: 100
+    stderr: |-
+        E: Could not create temporary file for /var/lib/apt/extended_states - mkstemp (13: Permission denied)
+        E: Failed to write temporary StateFile /var/lib/apt/extended_states
+    stderr_lines: <omitted>
+    stdout: ''
+    stdout_lines: <omitted>
+fatal: [cel1-cp-02]: FAILED! => 
+    changed: false
+    msg: Command '/usr/bin/apt-mark manual rsyslog' failed.
+    rc: 100
+    stderr: |-
+        E: Could not create temporary file for /var/lib/apt/extended_states - mkstemp (13: Permission denied)
+        E: Failed to write temporary StateFile /var/lib/apt/extended_states
+    stderr_lines: <omitted>
+    stdout: ''
+    stdout_lines: <omitted>
+fatal: [cel1-dgx-05]: FAILED! => 
+    changed: false
+    msg: Command '/usr/bin/apt-mark manual rsyslog' failed.
+    rc: 100
+    stderr: |-
+        E: Could not create temporary file for /var/lib/apt/extended_states - mkstemp (13: Permission denied)
+        E: Failed to write temporary StateFile /var/lib/apt/extended_states
+    stderr_lines: <omitted>
+    stdout: ''
+    stdout_lines: <omitted>
+fatal: [cel1-dgx-06]: FAILED! => 
+    changed: false
+    msg: Command '/usr/bin/apt-mark manual rsyslog' failed.
+    rc: 100
+    stderr: |-
+        E: Could not create temporary file for /var/lib/apt/extended_states - mkstemp (13: Permission denied)
+        E: Failed to write temporary StateFile /var/lib/apt/extended_states
+    stderr_lines: <omitted>
+    stdout: ''
+    stdout_lines: <omitted>
+fatal: [cel1-dgx-01]: FAILED! => 
+    changed: false
+    msg: Command '/usr/bin/apt-mark manual rsyslog' failed.
+    rc: 100
+    stderr: |-
+        E: Could not create temporary file for /var/lib/apt/extended_states - mkstemp (13: Permission denied)
+        E: Failed to write temporary StateFile /var/lib/apt/extended_states
+    stderr_lines: <omitted>
+    stdout: ''
+    stdout_lines: <omitted>
+fatal: [cel1-dgx-03]: FAILED! => 
+    changed: false
+    msg: Command '/usr/bin/apt-mark manual rsyslog' failed.
+    rc: 100
+    stderr: |-
+        E: Could not create temporary file for /var/lib/apt/extended_states - mkstemp (13: Permission denied)
+        E: Failed to write temporary StateFile /var/lib/apt/extended_states
+    stderr_lines: <omitted>
+    stdout: ''
+    stdout_lines: <omitted>
+fatal: [cel1-dgx-02]: FAILED! => 
+    changed: false
+    msg: Command '/usr/bin/apt-mark manual rsyslog' failed.
+    rc: 100
+    stderr: |-
+        E: Could not create temporary file for /var/lib/apt/extended_states - mkstemp (13: Permission denied)
+        E: Failed to write temporary StateFile /var/lib/apt/extended_states
+    stderr_lines: <omitted>
+    stdout: ''
+    stdout_lines: <omitted>
+fatal: [cel1-dgx-08]: FAILED! => 
+    changed: false
+    msg: Command '/usr/bin/apt-mark manual rsyslog' failed.
+    rc: 100
+    stderr: |-
+        E: Could not create temporary file for /var/lib/apt/extended_states - mkstemp (13: Permission denied)
+        E: Failed to write temporary StateFile /var/lib/apt/extended_states
+    stderr_lines: <omitted>
+    stdout: ''
+    stdout_lines: <omitted>
+fatal: [cel1-dgx-07]: FAILED! => 
+    changed: false
+    msg: Command '/usr/bin/apt-mark manual rsyslog' failed.
+    rc: 100
+    stderr: |-
+        E: Could not create temporary file for /var/lib/apt/extended_states - mkstemp (13: Permission denied)
+        E: Failed to write temporary StateFile /var/lib/apt/extended_states
+    stderr_lines: <omitted>
+    stdout: ''
+    stdout_lines: <omitted>
+
+PLAY RECAP *********************************************************************
+cel1-cp-01                 : ok=3    changed=0    unreachable=0    failed=1    skipped=0    rescued=0    ignored=0   
+cel1-cp-02                 : ok=3    changed=0    unreachable=0    failed=1    skipped=0    rescued=0    ignored=0   
+cel1-cp-03                 : ok=3    changed=0    unreachable=0    failed=1    skipped=0    rescued=0    ignored=0   
+cel1-dgx-01                : ok=3    changed=0    unreachable=0    failed=1    skipped=0    rescued=0    ignored=0   
+cel1-dgx-02                : ok=3    changed=0    unreachable=0    failed=1    skipped=0    rescued=0    ignored=0   
+cel1-dgx-03                : ok=3    changed=0    unreachable=0    failed=1    skipped=0    rescued=0    ignored=0   
+cel1-dgx-04                : ok=3    changed=0    unreachable=0    failed=1    skipped=0    rescued=0    ignored=0   
+cel1-dgx-05                : ok=3    changed=0    unreachable=0    failed=1    skipped=0    rescued=0    ignored=0   
+cel1-dgx-06                : ok=3    changed=0    unreachable=0    failed=1    skipped=0    rescued=0    ignored=0   
+cel1-dgx-07                : ok=3    changed=0    unreachable=0    failed=1    skipped=0    rescued=0    ignored=0   
+cel1-dgx-08                : ok=3    changed=0    unreachable=0    failed=1    skipped=0    rescued=0    ignored=0   
+cel1-pcie-01               : ok=3    changed=0    unreachable=0    failed=1    skipped=0    rescued=0    ignored=0   
+cel1-pcie-02               : ok=3    changed=0    unreachable=0    failed=1    skipped=0    rescued=0    ignored=0   
+
+
+TASKS RECAP ********************************************************************
+Monday 16 November 2026  01:13:09 +0900 (0:00:01.385)       0:00:02.526 ******* 
+=============================================================================== 
+rsyslog_client : Ensure rsyslog is installed ---------------------------- 1.39s
+Gathering Facts --------------------------------------------------------- 0.92s
+rsyslog_client : Refuse a host without a syslog server ------------------ 0.13s
+Refuse a host outside a fleet inventory --------------------------------- 0.08s
+make: *** [mk/fleet.mk:85: fleet-rsyslog] Error 2
+exit 2

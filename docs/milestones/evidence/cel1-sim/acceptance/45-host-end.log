@@ -1,0 +1,10 @@
+$ host
+ 01:58:04 up  4:12,  1 user,  load average: 7.21, 6.76, 6.51
+               total        used        free      shared  buff/cache   available
+Mem:          128427       71441        5371        1157       53955       56985
+Swap:           8191           0        8191
+Mounted on        Avail
+/cache      12264435712
+/           19219251200
+/data      696593694720
+40990028875	<lab-disks>/cel1

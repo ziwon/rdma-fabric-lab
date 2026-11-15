@@ -1,0 +1,17 @@
+$ harness
+    188 u_dgr
+     11 <repo>/.venv/bin apparmor=unconfined CapEff: 0000000000000000
+      1 qemu-system-x86_64 -name cel1-cp-01,process=rfl- apparmor=unconfined CapEff: 0000000000000000
+      1 qemu-system-x86_64 -name cel1-cp-02,process=rfl- apparmor=unconfined CapEff: 0000000000000000
+      1 qemu-system-x86_64 -name cel1-cp-03,process=rfl- apparmor=unconfined CapEff: 0000000000000000
+      1 qemu-system-x86_64 -name cel1-dgx-01,process=rfl apparmor=unconfined CapEff: 0000000000000000
+      1 qemu-system-x86_64 -name cel1-dgx-02,process=rfl apparmor=unconfined CapEff: 0000000000000000
+      1 qemu-system-x86_64 -name cel1-dgx-03,process=rfl apparmor=unconfined CapEff: 0000000000000000
+      1 qemu-system-x86_64 -name cel1-dgx-04,process=rfl apparmor=unconfined CapEff: 0000000000000000
+      1 qemu-system-x86_64 -name cel1-dgx-05,process=rfl apparmor=unconfined CapEff: 0000000000000000
+      1 qemu-system-x86_64 -name cel1-dgx-06,process=rfl apparmor=unconfined CapEff: 0000000000000000
+      1 qemu-system-x86_64 -name cel1-dgx-07,process=rfl apparmor=unconfined CapEff: 0000000000000000
+      1 qemu-system-x86_64 -name cel1-dgx-08,process=rfl apparmor=unconfined CapEff: 0000000000000000
+      1 qemu-system-x86_64 -name cel1-pcie-01,process=rf apparmor=unconfined CapEff: 0000000000000000
+      1 qemu-system-x86_64 -name cel1-pcie-02,process=rf apparmor=unconfined CapEff: 0000000000000000
+      1 qemu-system-x86_64 -name cel1-sim-syslog,process apparmor=unconfined CapEff: 0000000000000000

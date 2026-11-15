@@ -1,0 +1,48 @@
+$ LAB_PROFILE=lab make lab-down
+tests/integration/qemu-lab/lab.sh down
+lab.sh: cp1 stopped
+lab.sh: worker1 stopped
+lab.sh: worker2 stopped
+lab.sh: switch mgmt stopped
+exit 0
+$ LAB_PROFILE=lab lab.sh status
+cp1              stopped
+worker1          stopped
+worker2          stopped
+switch mgmt   stopped
+$ LAB_PROFILE=ha lab.sh status
+ha-cp1           stopped
+ha-cp2           stopped
+ha-cp3           stopped
+ha-w1            stopped
+switch mgmt   stopped
+$ LAB_PROFILE=ibsim lab.sh status
+ibsim1           stopped
+$ LAB_PROFILE=cel1 LAB_DIR=<lab-disks>/cel1 lab.sh status
+cel1-cp-01       stopped
+cel1-cp-02       stopped
+cel1-cp-03       stopped
+cel1-dgx-01      stopped
+cel1-dgx-02      stopped
+cel1-dgx-03      stopped
+cel1-dgx-04      stopped
+cel1-dgx-05      stopped
+cel1-dgx-06      stopped
+cel1-dgx-07      stopped
+cel1-dgx-08      stopped
+cel1-pcie-01     stopped
+cel1-pcie-02     stopped
+cel1-sim-syslog  stopped
+switch management stopped
+switch storage-a stopped
+switch storage-b stopped
+switch rail0  stopped
+switch rail1  stopped
+switch rail2  stopped
+switch rail3  stopped
+switch rail4  stopped
+switch rail5  stopped
+switch rail6  stopped
+switch rail7  stopped
+$ pgrep -fc '^qemu-system-x86_64 -name'
+0

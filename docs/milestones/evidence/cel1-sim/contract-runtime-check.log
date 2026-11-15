@@ -1,0 +1,19 @@
+$ make inventory-check INVENTORY=ansible/inventories/cel1
+PYTHONPATH=scripts .venv/bin/python -m inventory check -i ansible/inventories/cel1 --explicit
+ansible/inventories/cel1: contract holds, 0 violations over 13 hosts, every variable explicit
+exit 0
+
+$ cp -r ansible/inventories/cel1 <scratch>/bad-inventory; sed -i 's/nvidia/crun/' <scratch>/bad-inventory/group_vars/dgx_b200.yml
+$ make inventory-check INVENTORY=<scratch>/bad-inventory
+PYTHONPATH=scripts .venv/bin/python -m inventory check -i <scratch>/bad-inventory --explicit
+<scratch>/bad-inventory: bad-value: cel1-dgx-01: k8s_container_runtime_default 'crun' is not one of runc, nvidia
+<scratch>/bad-inventory: bad-value: cel1-dgx-02: k8s_container_runtime_default 'crun' is not one of runc, nvidia
+<scratch>/bad-inventory: bad-value: cel1-dgx-03: k8s_container_runtime_default 'crun' is not one of runc, nvidia
+<scratch>/bad-inventory: bad-value: cel1-dgx-04: k8s_container_runtime_default 'crun' is not one of runc, nvidia
+<scratch>/bad-inventory: bad-value: cel1-dgx-05: k8s_container_runtime_default 'crun' is not one of runc, nvidia
+<scratch>/bad-inventory: bad-value: cel1-dgx-06: k8s_container_runtime_default 'crun' is not one of runc, nvidia
+<scratch>/bad-inventory: bad-value: cel1-dgx-07: k8s_container_runtime_default 'crun' is not one of runc, nvidia
+<scratch>/bad-inventory: bad-value: cel1-dgx-08: k8s_container_runtime_default 'crun' is not one of runc, nvidia
+<scratch>/bad-inventory: contract broken, 8 violations over 13 hosts, every variable explicit
+make: *** [mk/fleet.mk:35: inventory-check] Error 1
+exit 2

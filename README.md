@@ -30,7 +30,7 @@ The tracks share the repository, the result format and the version lock, not a d
 | M2 Kubernetes | done. Kubernetes v1.36.6 with Cilium 1.20.4 installed by Helm. Three control planes behind a kube-vip address answered again 6.0 s after the address holder lost power | `docs/milestones/M2.md` |
 | cel1 region, offline | done. Site model, generated inventory, contract check and rendered charts pass | `docs/fleet.md` |
 | M4 ibsim and OpenSM | done. B-01 to B-04 pass inside the Track B guest: discovery, unique LIDs, port states, a link fault and its recovery, and rerouting on the cel1 rail fabric. Each scenario fails on its deliberate break | `docs/milestones/M4.md` |
-| cel1 region, simulated as 13 guests | not started | |
+| cel1 region, simulated as 13 guests | done. `make fleet-k8s`, `fleet-addons` and `fleet-rsyslog` built the cluster on 13 guests from wiped disks. All 13 nodes Ready with their class labels, kube-proxy replacement with native routing, the nvidia runtime default on the DGX guests, and the API back on the VIP after its holder lost power | `docs/milestones/cel1-sim.md` |
 | M3 Multus and hostNetwork RDMA pods, M5 and M6 ns-3, M7 wrap-up | not started | |
 
 Nothing in this repository has run against GPU hardware.
@@ -77,6 +77,12 @@ Track B boots its own guest and runs everything inside it:
 make track-b                         # B-01 to B-04 in the Track B guest
 make track-b-breaks                  # every scenario must fail on its deliberate break
 make lab-down LAB_PROFILE=ibsim
+```
+
+The cel1 simulation boots 13 guests and needs about 40 GB of disk. Put the disks where there is room:
+
+```bash
+LAB_DIR=/path/with/room bash tests/integration/qemu-lab/acceptance-cel1.sh
 ```
 
 `make help` lists every target.

@@ -1,0 +1,4 @@
+$ refused fleet-addons
+make fleet-addons changes every cel1 host. Nothing was changed. Rerun with CONFIRM=cel1.
+make: *** [mk/fleet.mk:76: fleet-addons] Error 2
+exit 2, 0 calls to an IPv4 or IPv6 address in .lab/acceptance-cel1/20261115T163759Z/strace-22.txt

@@ -1,0 +1,38 @@
+make fleet-addons: ansible/inventories/cel1 + <lab-disks>/cel1/inventory.yml and ~/.local/state/rdma-fabric-lab/cel1/kubeconfig points every host at 127.0.0.1
+make --no-print-directory versions SCOPE=fleet
+PYTHONPATH=scripts .venv/bin/python -m rfl versions --environment --scope fleet
+47 components, 3 undecided
+scope fleet: every component is pinned
+make --no-print-directory addons ENV=cel1 KUBECONFIG_FILE=~/.local/state/rdma-fabric-lab/cel1/kubeconfig
+make --no-print-directory .tools/bin/.helm-v4.3.2 .tools/bin/.kubeconform-v0.8.0
+make[2]: '.tools/bin/.helm-v4.3.2' is up to date.
+make[2]: '.tools/bin/.kubeconform-v0.8.0' is up to date.
+PYTHONPATH=scripts .venv/bin/python -m addons apply --env cel1 --kubeconfig ~/.local/state/rdma-fabric-lab/cel1/kubeconfig  
++ <repo>/.tools/bin/helm upgrade --install cilium cilium --repo https://helm.cilium.io --version 1.20.4 --namespace kube-system --values <repo>/helm/cilium/values-cel1.yaml --create-namespace --wait --timeout 10m --kubeconfig ~/.local/state/rdma-fabric-lab/cel1/kubeconfig
+Release "cilium" does not exist. Installing it now.
+NAME: cilium
+LAST DEPLOYED: Mon Nov 16 01:10:42 2026
+NAMESPACE: kube-system
+STATUS: deployed
+REVISION: 1
+DESCRIPTION: Install complete
+TEST SUITE: None
+NOTES:
+You have successfully installed Cilium with Hubble.
+
+Your release version is 1.20.4.
+
+For any further help, visit https://docs.cilium.io/en/v1.20/gettinghelp
+cilium: upgraded, chart 1.20.4 at revision 1
++ <repo>/.tools/bin/helm upgrade --install gpu-operator gpu-operator --repo https://helm.ngc.nvidia.com/nvidia --version v26.7.2 --namespace gpu-operator --values <repo>/helm/gpu-operator/values-cel1.yaml --create-namespace --wait --timeout 10m --kubeconfig ~/.local/state/rdma-fabric-lab/cel1/kubeconfig
+Release "gpu-operator" does not exist. Installing it now.
+NAME: gpu-operator
+LAST DEPLOYED: Mon Nov 16 01:12:16 2026
+NAMESPACE: gpu-operator
+STATUS: deployed
+REVISION: 1
+DESCRIPTION: Install complete
+TEST SUITE: None
+gpu-operator: upgraded, chart v26.7.2 at revision 1
+make --no-print-directory fleet-addons CONFIRM=cel1   5.17s user 0.90s system 4% cpu 2:15.93 total
+exit 0
