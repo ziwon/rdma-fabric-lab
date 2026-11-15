@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "result.schema.json",
+  "title": "Run metrics",
+  "description": "metrics.json next to manifest.json. A metric that was not measured carries value null and an absent_reason. It is never written as 0.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "result_kind", "metrics"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "result_kind": {
+      "enum": ["software-rdma-measurement", "ib-management-simulation", "packet-model-simulation"]
+    },
+    "metrics": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "value", "unit", "absent_reason", "source"],
+        "properties": {
+          "name": {"type": "string", "pattern": "^[a-z0-9][a-z0-9_.-]*$"},
+          "value": {"type": ["number", "null"]},
+          "unit": {"type": "string", "minLength": 1},
+          "absent_reason": {"type": ["string", "null"]},
+          "source": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Path of the raw file inside the run directory that the value was parsed from."
+          },
+          "sample_count": {"type": "integer", "minimum": 1},
+          "labels": {"type": "object", "additionalProperties": {"type": "string"}}
+        },
+        "oneOf": [
+          {
+            "properties": {"value": {"type": "number"}, "absent_reason": {"type": "null"}}
+          },
+          {
+            "properties": {"value": {"type": "null"}, "absent_reason": {"type": "string", "minLength": 1}}
+          }
+        ]
+      }
+    }
+  }
+}

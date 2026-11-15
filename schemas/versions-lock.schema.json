@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "versions-lock.schema.json",
+  "title": "Version lock",
+  "description": "versions.lock.yaml. A component with value null is undecided. Any scope that lists it is refused before install.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "components", "scopes"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "components": {
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": {"pattern": "^[a-z0-9]+(\\.[a-z0-9_-]+)+$"},
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["kind", "value", "reason", "source"],
+        "properties": {
+          "kind": {
+            "enum": ["version", "git-sha", "image-digest", "checksum", "observed"],
+            "description": "observed marks a value read from a running environment, such as a guest kernel release."
+          },
+          "value": {"type": ["string", "null"]},
+          "reason": {"type": "string", "minLength": 1},
+          "source": {"type": "string", "minLength": 1},
+          "ref": {
+            "type": "string",
+            "description": "Human-readable tag that the pinned value was resolved from, for example v2.27.0."
+          }
+        }
+      }
+    },
+    "scopes": {
+      "type": "object",
+      "propertyNames": {"pattern": "^[a-z0-9][a-z0-9-]*$"},
+      "additionalProperties": {
+        "type": "array",
+        "minItems": 1,
+        "uniqueItems": true,
+        "items": {"type": "string"}
+      }
+    }
+  }
+}

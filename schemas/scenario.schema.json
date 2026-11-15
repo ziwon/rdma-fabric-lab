@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "scenario.schema.json",
+  "title": "Scenario spec",
+  "description": "Declares one scenario and every check it must record. A run starts from this file, so a runner that dies early leaves its remaining checks as not_run.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["track", "scenario", "description", "required", "result_kind", "security", "checks"],
+  "properties": {
+    "track": {"$ref": "#/$defs/slug"},
+    "scenario": {"$ref": "#/$defs/slug"},
+    "description": {"type": "string", "minLength": 1},
+    "required": {
+      "type": "boolean",
+      "description": "true for MVP scenarios, false for optional experiments. The report tallies the two groups separately."
+    },
+    "result_kind": {
+      "enum": ["software-rdma-measurement", "ib-management-simulation", "packet-model-simulation"]
+    },
+    "security": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["privileged", "device_exposure"],
+      "properties": {
+        "privileged": {"type": "boolean"},
+        "device_exposure": {"type": "string", "minLength": 1}
+      }
+    },
+    "checks": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "description"],
+        "properties": {
+          "id": {"$ref": "#/$defs/slug"},
+          "description": {"type": "string", "minLength": 1}
+        }
+      }
+    }
+  },
+  "$defs": {
+    "slug": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$"}
+  }
+}

@@ -1,0 +1,13 @@
+track: a-soft-roce
+scenario: unit-fixture
+description: Two-check scenario used by the manifest unit tests.
+required: true
+result_kind: software-rdma-measurement
+security:
+  privileged: false
+  device_exposure: none
+checks:
+  - id: first
+    description: First declared check.
+  - id: second
+    description: Second declared check.
