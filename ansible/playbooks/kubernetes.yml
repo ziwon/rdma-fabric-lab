@@ -1,0 +1,73 @@
+# One playbook for the lab and the fleet (docs/adr/0001-kubernetes-stack.md). It reads only the
+# inventory contract of ADR section 4, and an optional -e rfl_kubeconfig_server when the control
+# node reaches the API at another address than the endpoint, as through the QEMU harness forward.
+- name: Check the inventory contract before anything changes
+  hosts: k8s_cluster
+  gather_facts: false
+  any_errors_fatal: true
+  tasks:
+    - name: Check the contract
+      ansible.builtin.include_role:
+        name: kubeadm
+        tasks_from: contract
+
+- name: Install the container runtime
+  hosts: k8s_cluster
+  become: true
+  roles:
+    - containerd
+
+- name: Prepare every node and install the Kubernetes packages
+  hosts: k8s_cluster
+  become: true
+  tasks:
+    - name: Prepare the node
+      ansible.builtin.include_role:
+        name: kubeadm
+        tasks_from: node
+
+- name: Initialize the first control plane
+  hosts: kube_control_plane[0]
+  become: true
+  tasks:
+    - name: Initialize
+      ansible.builtin.include_role:
+        name: kubeadm
+        tasks_from: init
+
+- name: Join the other control planes one at a time
+  hosts: kube_control_plane[1:]
+  become: true
+  serial: 1
+  tasks:
+    - name: Join
+      ansible.builtin.include_role:
+        name: kubeadm
+        tasks_from: join
+
+- name: Join the workers
+  hosts: kube_node
+  become: true
+  tasks:
+    - name: Join
+      ansible.builtin.include_role:
+        name: kubeadm
+        tasks_from: join
+
+- name: Converge node labels and control-plane taints
+  hosts: k8s_cluster
+  become: true
+  tasks:
+    - name: Converge the Node objects
+      ansible.builtin.include_role:
+        name: kubeadm
+        tasks_from: registered
+
+- name: Write the admin kubeconfig on the control node
+  hosts: kube_control_plane[0]
+  become: true
+  tasks:
+    - name: Fetch the admin kubeconfig
+      ansible.builtin.include_role:
+        name: kubeadm
+        tasks_from: kubeconfig

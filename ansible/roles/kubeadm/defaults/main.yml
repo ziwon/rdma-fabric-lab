@@ -1,0 +1,6 @@
+kubeadm_lock: "{{ lookup('ansible.builtin.file', role_path ~ '/../../../versions.lock.yaml') | from_yaml }}"
+kubeadm_releases: "{{ lookup('ansible.builtin.file', role_path ~ '/../../../helm/releases.yaml') | from_yaml }}"
+# Signing key of the pkgs.k8s.io deb repositories. The role refuses a downloaded key with another fingerprint.
+kubeadm_apt_key_fingerprint: DE15B14486CD377B9E876E1A234654DA9A296436
+kubeadm_join_token_ttl: 15m
+kubeadm_api_wait_seconds: 300

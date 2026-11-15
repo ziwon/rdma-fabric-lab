@@ -1,0 +1,19 @@
+# Runs without facts or become, before anything changes on any host.
+- name: Check the inventory contract of docs/adr/0001-kubernetes-stack.md
+  ansible.builtin.assert:
+    that: kubeadm_broken | length == 0
+    fail_msg: "{{ inventory_hostname }}: {{ kubeadm_broken | join('; ') }}. Nothing was changed."
+    quiet: true
+  vars:
+    kubeadm_broken: "{{ kubeadm_contract | rejectattr('ok') | map(attribute='msg') | list }}"
+
+- name: Check every node IP is held once
+  ansible.builtin.assert:
+    that: kubeadm_twins | length == 0
+    fail_msg: "{{ inventory_hostname }}: k8s_node_ip {{ k8s_node_ip }} is also the node IP of {{ kubeadm_twins | join(', ') }}"
+    quiet: true
+  vars:
+    kubeadm_twins: >-
+      {{ groups['k8s_cluster'] | difference([inventory_hostname])
+         | select('in', hostvars) | map('extract', hostvars) | selectattr('k8s_node_ip', 'defined')
+         | selectattr('k8s_node_ip', 'equalto', k8s_node_ip) | map(attribute='inventory_hostname') | list }}

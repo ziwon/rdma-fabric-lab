@@ -1,0 +1,17 @@
+# {{ ansible_managed }}
+apiVersion: kubeadm.k8s.io/v1beta4
+kind: JoinConfiguration
+discovery:
+  bootstrapToken:
+    apiServerEndpoint: "{{ kubeadm_endpoint }}"
+    token: "{{ kubeadm_join_token }}"
+    caCertHashes:
+      - "{{ kubeadm_join_ca_hash }}"
+{% include 'node-registration.yaml.j2' %}
+{% if kubeadm_is_cp %}
+controlPlane:
+  localAPIEndpoint:
+    advertiseAddress: {{ k8s_node_ip }}
+    bindPort: {{ kubeadm_api_port }}
+  certificateKey: "{{ kubeadm_join_certificate_key }}"
+{% endif %}

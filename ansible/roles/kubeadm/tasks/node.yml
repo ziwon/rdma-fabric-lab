@@ -1,0 +1,121 @@
+- name: Load the kernel modules Kubernetes networking needs at every boot
+  ansible.builtin.template:
+    src: modules-load.conf.j2
+    dest: /etc/modules-load.d/rfl-k8s.conf
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Load the kernel modules now
+  community.general.modprobe:
+    name: "{{ item }}"
+    state: present
+  loop: "{{ kubeadm_modules }}"
+
+- name: Set the forwarding and bridge sysctls
+  ansible.posix.sysctl:
+    name: "{{ item.key }}"
+    value: "{{ item.value }}"
+    sysctl_file: /etc/sysctl.d/99-rfl-k8s.conf
+    reload: true
+  loop: "{{ kubeadm_sysctls | dict2items }}"
+
+- name: Read the active swap areas
+  ansible.builtin.command: swapon --show=NAME --noheadings
+  register: kubeadm_swap
+  changed_when: false
+  check_mode: false
+
+- name: Turn swap off
+  ansible.builtin.command: swapoff -a
+  changed_when: true
+  when: kubeadm_swap.stdout | trim | length > 0
+
+- name: Keep swap off at the next boot
+  ansible.builtin.replace:
+    path: /etc/fstab
+    regexp: '^(\s*[^#\s]+\s+\S+\s+swap\s.*)$'
+    replace: '# \1'
+
+- name: Read the installed packages
+  ansible.builtin.package_facts:
+    manager: apt
+
+- name: Refuse Kubernetes packages at another version
+  ansible.builtin.assert:
+    that: kubeadm_drift | length == 0
+    fail_msg: >-
+      {{ inventory_hostname }} has {{ kubeadm_drift | join(', ') }}, the lock wants {{ kubeadm_packages.items()
+      | map('join', '=') | join(', ') }}. This role installs and converges, it does not upgrade (ADR 0001 section 6).
+      Nothing was changed.
+    quiet: true
+  vars:
+    kubeadm_drift: >-
+      {%- set out = [] -%}
+      {%- for name, want in kubeadm_packages.items() if name in ansible_facts.packages -%}
+      {%- set have = ansible_facts.packages[name] | map(attribute='version') | list -%}
+      {%- if want not in have -%}{%- set _ = out.append(name ~ '=' ~ have | join(',')) -%}{%- endif -%}
+      {%- endfor -%}
+      {{ out }}
+
+- name: Create the apt keyring directory
+  ansible.builtin.file:
+    path: "{{ kubeadm_keyring | dirname }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Download the pkgs.k8s.io signing key
+  ansible.builtin.get_url:
+    url: "{{ kubeadm_repo }}Release.key"
+    dest: "{{ kubeadm_keyring }}"
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Read the fingerprint of the signing key
+  ansible.builtin.command: gpg --show-keys --with-colons {{ kubeadm_keyring }}
+  register: kubeadm_key
+  changed_when: false
+  check_mode: false
+
+- name: Refuse a signing key with another fingerprint
+  ansible.builtin.assert:
+    that: kubeadm_key.stdout is search('^fpr:+' ~ kubeadm_apt_key_fingerprint ~ ':', multiline=True)
+    fail_msg: >-
+      {{ kubeadm_keyring }} on {{ inventory_hostname }} is not the key {{ kubeadm_apt_key_fingerprint }}. gpg printed
+      {{ kubeadm_key.stdout_lines | select('match', '^(fpr|uid):') | list }}. Check the key pkgs.k8s.io publishes and
+      update kubeadm_apt_key_fingerprint if it rotated.
+    quiet: true
+
+- name: Add the pkgs.k8s.io repository of the locked minor version
+  ansible.builtin.deb822_repository:
+    name: rfl-kubernetes
+    types: [deb]
+    uris: ["{{ kubeadm_repo }}"]
+    suites: [/]
+    signed_by: "{{ kubeadm_keyring }}"
+  register: kubeadm_repo_added
+
+- name: Refresh the apt index
+  ansible.builtin.apt:
+    update_cache: true
+  when: kubeadm_repo_added is changed or kubeadm_packages.keys() | reject('in', ansible_facts.packages) | list | length > 0
+
+- name: Install kubelet, kubeadm, kubectl and cri-tools at the locked versions
+  ansible.builtin.apt:
+    name: "{{ kubeadm_packages.items() | map('join', '=') | list }}"
+    install_recommends: false
+  when: kubeadm_packages.keys() | reject('in', ansible_facts.packages) | list | length > 0
+
+- name: Hold the Kubernetes packages
+  ansible.builtin.dpkg_selections:
+    name: "{{ item }}"
+    selection: hold
+  loop: "{{ kubeadm_packages.keys() | list }}"
+
+- name: Enable kubelet
+  ansible.builtin.systemd_service:
+    name: kubelet.service
+    enabled: true

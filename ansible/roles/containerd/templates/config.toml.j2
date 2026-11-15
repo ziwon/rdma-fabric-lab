@@ -1,0 +1,24 @@
+# {{ ansible_managed }}
+version = 4
+# Drop-ins such as the NVIDIA container toolkit's runtime go here instead of into this file.
+imports = ['/etc/containerd/conf.d/*.toml']
+
+[plugins.'io.containerd.cri.v1.runtime'.containerd.runtimes.runc]
+  runtime_type = 'io.containerd.runc.v2'
+
+[plugins.'io.containerd.cri.v1.runtime'.containerd.runtimes.runc.options]
+  BinaryName = '{{ containerd_runc.dest }}'
+  SystemdCgroup = true
+{% if containerd_default_runtime == 'nvidia' %}
+
+# k8s_container_runtime_default nvidia: the toolkit preinstalled on the host runs every container.
+[plugins.'io.containerd.cri.v1.runtime'.containerd]
+  default_runtime_name = 'nvidia'
+
+[plugins.'io.containerd.cri.v1.runtime'.containerd.runtimes.nvidia]
+  runtime_type = 'io.containerd.runc.v2'
+
+[plugins.'io.containerd.cri.v1.runtime'.containerd.runtimes.nvidia.options]
+  BinaryName = '{{ containerd_nvidia_runtime }}'
+  SystemdCgroup = true
+{% endif %}

@@ -1,0 +1,87 @@
+- name: Read whether this control plane is initialized
+  ansible.builtin.stat:
+    path: "{{ kubeadm_admin }}"
+  register: kubeadm_init_state
+
+- name: Create the kubeadm configuration directory
+  ansible.builtin.file:
+    path: "{{ kubeadm_conf_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0700"
+
+- name: Write the kubeadm init configuration
+  ansible.builtin.template:
+    src: kubeadm-init.yaml.j2
+    dest: "{{ kubeadm_conf_dir }}/kubeadm-init.yaml"
+    owner: root
+    group: root
+    mode: "0600"
+
+# Until init binds the kubeadm:cluster-admins group, only super-admin.conf may take the
+# kube-vip lease, and the VIP must be up before init reaches the endpoint.
+- name: Write the kube-vip static pod for init
+  ansible.builtin.include_tasks: kube_vip.yml
+  vars:
+    kubeadm_kube_vip_kubeconfig: /etc/kubernetes/super-admin.conf
+  when: not kubeadm_init_state.stat.exists
+
+- name: Initialize the first control plane
+  ansible.builtin.command: kubeadm init --config {{ kubeadm_conf_dir }}/kubeadm-init.yaml --skip-token-print
+  changed_when: true
+  when: not kubeadm_init_state.stat.exists
+
+- name: Write the kube-vip static pod
+  ansible.builtin.include_tasks: kube_vip.yml
+  vars:
+    kubeadm_kube_vip_kubeconfig: "{{ kubeadm_admin }}"
+
+- name: Wait for the API on {{ kubeadm_endpoint }}
+  ansible.builtin.command: "{{ kubeadm_kubectl }} get --raw=/readyz"
+  register: kubeadm_readyz
+  until: kubeadm_readyz.rc == 0
+  retries: "{{ (kubeadm_api_wait_seconds / 5) | int }}"
+  delay: 5
+  changed_when: false
+  check_mode: false
+
+- name: Read the cluster configuration kubeadm stored
+  ansible.builtin.command: "{{ kubeadm_kubectl }} -n kube-system get configmap kubeadm-config -o jsonpath={.data.ClusterConfiguration}"
+  register: kubeadm_stored
+  changed_when: false
+  check_mode: false
+
+- name: Read whether kube-proxy runs
+  ansible.builtin.command: "{{ kubeadm_kubectl }} -n kube-system get daemonset kube-proxy --ignore-not-found -o name"
+  register: kubeadm_kube_proxy_ds
+  changed_when: false
+  check_mode: false
+
+- name: Refuse a cluster that was initialized with other settings
+  ansible.builtin.assert:
+    that:
+      - kubeadm_cluster.controlPlaneEndpoint == kubeadm_endpoint
+      - kubeadm_cluster.networking.podSubnet == k8s_pod_cidr
+      - kubeadm_cluster.networking.serviceSubnet == k8s_service_cidr
+      - kubeadm_cluster.kubernetesVersion == kubeadm_version
+      - (kubeadm_kube_proxy_ds.stdout | length > 0) == k8s_kube_proxy
+    fail_msg: >-
+      The cluster on {{ inventory_hostname }} runs {{ kubeadm_cluster.kubernetesVersion }} with endpoint
+      {{ kubeadm_cluster.controlPlaneEndpoint }}, pods {{ kubeadm_cluster.networking.podSubnet }}, services
+      {{ kubeadm_cluster.networking.serviceSubnet }} and kube-proxy {{ 'present' if kubeadm_kube_proxy_ds.stdout else 'absent' }}.
+      The inventory wants {{ kubeadm_version }}, {{ kubeadm_endpoint }}, {{ k8s_pod_cidr }}, {{ k8s_service_cidr }} and kube-proxy
+      {{ 'present' if k8s_kube_proxy else 'absent' }}. This role installs and converges, it does not reconfigure or upgrade.
+    quiet: true
+  vars:
+    kubeadm_cluster: "{{ kubeadm_stored.stdout | from_yaml }}"
+
+# Cilium reads the API endpoint from here instead of reaching the API through its ClusterIP. Its own
+# traffic carries a mark that its NAT rules exempt from kube-proxy's masquerade, so on a node whose
+# default route is on another NIC than the node IP that traffic leaves with a source the API cannot answer.
+- name: Publish the API endpoint for addons in kube-system/{{ kubeadm_endpoint_configmap }}
+  ansible.builtin.command: "{{ kubeadm_kubectl }} apply -f -"
+  args:
+    stdin: "{{ kubeadm_endpoint_manifest | to_json }}"
+  register: kubeadm_endpoint_applied
+  changed_when: kubeadm_endpoint_applied.stdout is not search(' unchanged$', multiline=True)

@@ -1,0 +1,2 @@
+containerd_lock: "{{ lookup('ansible.builtin.file', role_path ~ '/../../../versions.lock.yaml') | from_yaml }}"
+containerd_cache_dir: /var/cache/rfl/k8s

@@ -1,0 +1,106 @@
+kubeadm_version: "{{ kubeadm_lock.components['k8s.kubernetes'].value }}"
+kubeadm_package_version: "{{ kubeadm_lock.components['k8s.kubeadm_package'].value }}"
+kubeadm_minor: "{{ kubeadm_version | regex_replace('^(v[0-9]+[.][0-9]+)[.].*$', '\\1') }}"
+# cri-tools shares the package revision of the kubeadm package in the same pkgs.k8s.io repository.
+kubeadm_cri_tools_version: >-
+  {{ kubeadm_lock.components['k8s.cri_tools'].value | regex_replace('^v', '') }}-{{ kubeadm_package_version.split('-') | last }}
+kubeadm_repo: https://pkgs.k8s.io/core:/stable:/{{ kubeadm_minor }}/deb/
+kubeadm_keyring: /etc/apt/keyrings/rfl-kubernetes.asc
+kubeadm_packages:
+  kubelet: "{{ kubeadm_package_version }}"
+  kubeadm: "{{ kubeadm_package_version }}"
+  kubectl: "{{ kubeadm_package_version }}"
+  cri-tools: "{{ kubeadm_cri_tools_version }}"
+
+kubeadm_environments: "{{ kubeadm_releases.releases | map(attribute='environments') | flatten | unique | sort }}"
+kubeadm_api_port: "{{ k8s_api_port | default(6443) | int }}"
+kubeadm_vip: "{{ k8s_api_vip | default('', true) }}"
+kubeadm_endpoint: "{{ k8s_api_endpoint }}:{{ kubeadm_api_port }}"
+kubeadm_first_cp: "{{ groups['kube_control_plane'] | first }}"
+kubeadm_is_cp: "{{ inventory_hostname in groups['kube_control_plane'] }}"
+kubeadm_schedulable: "{{ k8s_control_plane_schedulable | default(false) | bool }}"
+kubeadm_cri_socket: unix:///run/containerd/containerd.sock
+kubeadm_admin: /etc/kubernetes/admin.conf
+kubeadm_kubectl: kubectl --kubeconfig {{ kubeadm_admin }}
+kubeadm_conf_dir: /etc/kubernetes/rfl
+kubeadm_cp_taint: node-role.kubernetes.io/control-plane
+kubeadm_kube_vip_image: >-
+  ghcr.io/kube-vip/kube-vip:{{ kubeadm_lock.components['k8s.kube_vip'].value }}@{{ kubeadm_lock.components['k8s.kube_vip_image'].value }}
+
+kubeadm_modules: [overlay, br_netfilter]
+kubeadm_sysctls:
+  net.ipv4.ip_forward: 1
+  net.bridge.bridge-nf-call-iptables: 1
+  net.bridge.bridge-nf-call-ip6tables: 1
+
+# Each rule of the inventory contract in docs/adr/0001-kubernetes-stack.md section 4, with the message that names it.
+kubeadm_contract:
+  - ok: "{{ rfl_inventory | default('') in kubeadm_environments }}"
+    msg: rfl_inventory is {{ rfl_inventory | default('unset') }}, not one of the Helm environments {{ kubeadm_environments | join(', ') }}
+  - ok: "{{ k8s_node_ip | default('') is ansible.utils.ipv4_address }}"
+    msg: k8s_node_ip is {{ k8s_node_ip | default('unset') }}, not an IPv4 address
+  - ok: "{{ k8s_api_endpoint | default('') | string | length > 0 }}"
+    msg: k8s_api_endpoint is unset
+  - ok: "{{ kubeadm_api_port | int > 0 and kubeadm_api_port | int < 65536 }}"
+    msg: k8s_api_port is {{ k8s_api_port | default('unset') }}, not a TCP port
+  - ok: "{{ k8s_pod_cidr | default('') is ansible.utils.ipv4_address == false and k8s_pod_cidr | default('') is ansible.utils.ipv4 }}"
+    msg: k8s_pod_cidr is {{ k8s_pod_cidr | default('unset') }}, not an IPv4 CIDR
+  - ok: "{{ k8s_service_cidr | default('') is ansible.utils.ipv4_address == false and k8s_service_cidr | default('') is ansible.utils.ipv4 }}"
+    msg: k8s_service_cidr is {{ k8s_service_cidr | default('unset') }}, not an IPv4 CIDR
+  - ok: "{{ k8s_kube_proxy is defined and k8s_kube_proxy is boolean }}"
+    msg: k8s_kube_proxy is {{ k8s_kube_proxy | default('unset') }}, not a boolean
+  - ok: "{{ k8s_control_plane_schedulable | default(false) is boolean }}"
+    msg: k8s_control_plane_schedulable is {{ k8s_control_plane_schedulable }}, not a boolean
+  - ok: "{{ groups['kube_control_plane'] | default([]) | length > 0 }}"
+    msg: the group kube_control_plane is empty
+  - ok: "{{ groups['kube_control_plane'] | default([]) | length < 2 or kubeadm_vip | length > 0 }}"
+    msg: "{{ groups['kube_control_plane'] | default([]) | length }} control planes need k8s_api_vip"
+  - ok: "{{ kubeadm_vip | length == 0 or kubeadm_vip is ansible.utils.ipv4_address }}"
+    msg: k8s_api_vip is {{ kubeadm_vip }}, not an IPv4 address
+  - ok: "{{ kubeadm_vip | length == 0 or kubeadm_vip == k8s_api_endpoint | default('') }}"
+    msg: k8s_api_vip {{ kubeadm_vip }} differs from k8s_api_endpoint {{ k8s_api_endpoint | default('unset') }}
+  - ok: "{{ kubeadm_vip | length == 0 or k8s_api_vip_interface | default('') | length > 0 }}"
+    msg: k8s_api_vip is set but k8s_api_vip_interface is not
+  - ok: "{{ k8s_container_runtime_default | default('runc') in ['runc', 'nvidia'] }}"
+    msg: k8s_container_runtime_default is {{ k8s_container_runtime_default }}, not runc or nvidia
+  - ok: "{{ k8s_admin_kubeconfig | default('x', true) is string }}"
+    msg: k8s_admin_kubeconfig is {{ k8s_admin_kubeconfig }}, not a path
+  - ok: "{{ k8s_node_labels | default({}) is mapping }}"
+    msg: k8s_node_labels is {{ k8s_node_labels | default('unset') }}, not a map
+  - ok: "{{ kubeadm_labels | dict2items | map(attribute='key') | select('search', '(^|[.])(kubernetes|k8s)[.]io/') | list | length == 0 }}"
+    msg: >-
+      k8s_node_labels uses {{ kubeadm_labels | dict2items | map(attribute='key') | select('search', '(^|[.])(kubernetes|k8s)[.]io/') | join(', ') }},
+      a prefix kubelet may not set on itself
+
+kubeadm_labels_raw: "{{ k8s_node_labels | default({}) if k8s_node_labels | default({}) is mapping else {} }}"
+kubeadm_labels: "{{ dict(kubeadm_labels_raw.keys() | zip(kubeadm_labels_raw.values() | map('string'))) }}"
+kubeadm_node_labels_arg: "{{ kubeadm_labels.items() | map('join', '=') | join(',') }}"
+
+kubeadm_node_name: "{{ ansible_facts.nodename | lower }}"
+kubeadm_node_obj: "{{ kubeadm_node.stdout | default('{}', true) | from_json }}"
+kubeadm_internal_ips: "{{ kubeadm_node_obj.status.addresses | default([]) | selectattr('type', 'equalto', 'InternalIP') | map(attribute='address') | list }}"
+kubeadm_label_drift: >-
+  {{ kubeadm_labels | dict2items | reject('in', kubeadm_node_obj.metadata.labels | default({}) | dict2items) | items2dict }}
+kubeadm_cp_tainted: >-
+  {{ kubeadm_node_obj.spec.taints | default([]) | selectattr('key', 'equalto', kubeadm_cp_taint)
+     | selectattr('effect', 'equalto', 'NoSchedule') | list | length > 0 }}
+
+# Where the control node keeps the admin kubeconfig. A relative k8s_admin_kubeconfig is relative to the
+# repository root. Without one, the path of ADR 0001 section 5 for this inventory.
+kubeadm_state_home: "{{ lookup('ansible.builtin.env', 'XDG_STATE_HOME') or lookup('ansible.builtin.env', 'HOME') ~ '/.local/state' }}"
+kubeadm_kubeconfig_wanted: >-
+  {{ k8s_admin_kubeconfig | default(kubeadm_state_home ~ '/rdma-fabric-lab/' ~ rfl_inventory ~ '/kubeconfig', true) | expanduser }}
+kubeadm_kubeconfig_path: >-
+  {{ kubeadm_kubeconfig_wanted if kubeadm_kubeconfig_wanted.startswith('/')
+     else (role_path ~ '/../../../' ~ kubeadm_kubeconfig_wanted) | realpath }}
+
+kubeadm_endpoint_configmap: rfl-api-endpoint
+kubeadm_endpoint_manifest:
+  apiVersion: v1
+  kind: ConfigMap
+  metadata:
+    name: "{{ kubeadm_endpoint_configmap }}"
+    namespace: kube-system
+  data:
+    host: "{{ k8s_api_endpoint }}"
+    port: "{{ kubeadm_api_port | string }}"

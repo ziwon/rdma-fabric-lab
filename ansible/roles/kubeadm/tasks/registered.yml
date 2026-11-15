@@ -1,0 +1,37 @@
+- name: Wait for the Node object of this host
+  ansible.builtin.command: "{{ kubeadm_kubectl }} get node {{ kubeadm_node_name }} -o json"
+  delegate_to: "{{ kubeadm_first_cp }}"
+  register: kubeadm_node
+  until: kubeadm_node.rc == 0
+  retries: "{{ (kubeadm_api_wait_seconds / 5) | int }}"
+  delay: 5
+  changed_when: false
+  check_mode: false
+
+- name: Check the node registered with its contract address
+  ansible.builtin.assert:
+    that: k8s_node_ip in kubeadm_internal_ips
+    fail_msg: >-
+      Node {{ kubeadm_node_name }} registered with InternalIP {{ kubeadm_internal_ips | join(', ') or 'none' }}, the
+      inventory wants k8s_node_ip {{ k8s_node_ip }}. Check the kubelet --node-ip in /var/lib/kubelet/kubeadm-flags.env.
+    quiet: true
+
+- name: Set the node labels the inventory names
+  ansible.builtin.command: >-
+    {{ kubeadm_kubectl }} label node {{ kubeadm_node_name }} --overwrite
+    {{ kubeadm_label_drift.items() | map('join', '=') | join(' ') }}
+  delegate_to: "{{ kubeadm_first_cp }}"
+  changed_when: true
+  when: kubeadm_label_drift | length > 0
+
+- name: Remove the control-plane taint of a schedulable control plane
+  ansible.builtin.command: "{{ kubeadm_kubectl }} taint node {{ kubeadm_node_name }} {{ kubeadm_cp_taint }}:NoSchedule-"
+  delegate_to: "{{ kubeadm_first_cp }}"
+  changed_when: true
+  when: kubeadm_is_cp and kubeadm_schedulable and kubeadm_cp_tainted
+
+- name: Taint a control plane that is not schedulable
+  ansible.builtin.command: "{{ kubeadm_kubectl }} taint node {{ kubeadm_node_name }} {{ kubeadm_cp_taint }}:NoSchedule"
+  delegate_to: "{{ kubeadm_first_cp }}"
+  changed_when: true
+  when: kubeadm_is_cp and not kubeadm_schedulable and not kubeadm_cp_tainted

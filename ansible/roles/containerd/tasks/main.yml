@@ -1,0 +1,145 @@
+- name: Refuse an architecture the locked release files do not cover
+  ansible.builtin.assert:
+    that: ansible_facts.architecture == 'x86_64'
+    fail_msg: >-
+      {{ inventory_hostname }} is {{ ansible_facts.architecture }}, but versions.lock.yaml pins the sha256 of the
+      linux-amd64 release files only. Nothing was changed.
+    quiet: true
+
+- name: Read the installed packages
+  ansible.builtin.package_facts:
+    manager: apt
+
+- name: Refuse a host whose containerd comes from a package
+  ansible.builtin.assert:
+    that: containerd_packaged | length == 0
+    fail_msg: >-
+      {{ inventory_hostname }} has {{ containerd_packaged | join(', ') }} installed. This role installs containerd
+      {{ containerd_version }} from the upstream archive under /usr/local with its own unit, and both daemons would claim
+      {{ containerd_socket }}. Nothing was changed. Remove the package, or leave this host out of k8s_cluster.
+    quiet: true
+  vars:
+    containerd_packaged: >-
+      {%- set out = [] -%}
+      {%- for p in containerd_packages if p in ansible_facts.packages -%}
+      {%- set _ = out.append(p ~ ' ' ~ ansible_facts.packages[p] | map(attribute='version') | join(',')) -%}
+      {%- endfor -%}
+      {{ out }}
+
+- name: Keep dpkg out of /opt/cni/bin
+  ansible.builtin.template:
+    src: dpkg-path-exclude.j2
+    dest: /etc/dpkg/dpkg.cfg.d/rfl-cni-plugins
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Create the directories of the runtime
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  loop:
+    - "{{ containerd_cache_dir }}"
+    - /opt/cni/bin
+    - /etc/cni/net.d
+    - /etc/containerd
+    - /etc/containerd/conf.d
+
+- name: Download the release archives at their locked checksums
+  ansible.builtin.get_url:
+    url: "{{ item.url }}"
+    dest: "{{ containerd_cache_dir }}/{{ item.url | basename }}"
+    checksum: "{{ item.checksum }}"
+    owner: root
+    group: root
+    mode: "0644"
+  loop: "{{ containerd_archives }}"
+  loop_control:
+    label: "{{ item.name }}"
+
+- name: Unpack the release archives
+  ansible.builtin.unarchive:
+    src: "{{ containerd_cache_dir }}/{{ item.url | basename }}"
+    dest: "{{ item.dest }}"
+    remote_src: true
+    owner: root
+    group: root
+  loop: "{{ containerd_archives }}"
+  loop_control:
+    label: "{{ item.name }} into {{ item.dest }}"
+  notify: Restart containerd
+
+- name: Install runc at its locked checksum
+  ansible.builtin.get_url:
+    url: "{{ containerd_runc.url }}"
+    dest: "{{ containerd_runc.dest }}"
+    checksum: "{{ containerd_runc.checksum }}"
+    owner: root
+    group: root
+    mode: "0755"
+  notify: Restart containerd
+
+- name: Write the containerd configuration
+  ansible.builtin.template:
+    src: config.toml.j2
+    dest: /etc/containerd/config.toml
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart containerd
+
+- name: Install the containerd unit
+  ansible.builtin.template:
+    src: containerd.service.j2
+    dest: /etc/systemd/system/containerd.service
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart containerd
+
+- name: Apply runtime changes now
+  ansible.builtin.meta: flush_handlers
+
+- name: Enable and start containerd
+  ansible.builtin.systemd_service:
+    name: containerd.service
+    enabled: true
+    state: started
+    daemon_reload: true
+
+- name: Read what the installed runtime reports
+  ansible.builtin.command: "{{ item.value }}"
+  loop: "{{ containerd_probes | dict2items }}"
+  loop_control:
+    label: "{{ item.key }}"
+  register: containerd_reported
+  changed_when: false
+  check_mode: false
+
+- name: Check the running runtime is the locked one with the systemd cgroup driver
+  ansible.builtin.assert:
+    that: containerd_broken | length == 0
+    fail_msg: "On {{ inventory_hostname }}: {{ containerd_broken | join('; ') }}. See journalctl -u containerd.service."
+    quiet: true
+  vars:
+    containerd_out: >-
+      {{ dict(containerd_reported.results | map(attribute='item.key')
+         | zip(containerd_reported.results | map(attribute='stdout') | zip(containerd_reported.results | map(attribute='stderr'))
+         | map('join', '\n'))) }}
+    containerd_broken: "{{ containerd_runtime_checks | rejectattr('ok') | map(attribute='msg') | list }}"
+
+- name: Look for the NVIDIA container runtime
+  ansible.builtin.stat:
+    path: "{{ containerd_nvidia_runtime }}"
+  register: containerd_nvidia_binary
+  when: containerd_default_runtime == 'nvidia'
+
+- name: Warn that new containers cannot start without the NVIDIA container runtime
+  ansible.builtin.debug:
+    msg: >-
+      [WARN] k8s_container_runtime_default is nvidia on {{ inventory_hostname }}, but {{ containerd_nvidia_runtime }} is
+      missing, so every new container on this node fails to start. Install the NVIDIA container toolkit or set runc.
+  when: containerd_default_runtime == 'nvidia' and not containerd_nvidia_binary.stat.exists

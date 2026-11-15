@@ -1,0 +1,44 @@
+# {{ ansible_managed }}
+apiVersion: v1
+kind: Pod
+metadata:
+  name: kube-vip
+  namespace: kube-system
+spec:
+  containers:
+    - name: kube-vip
+      image: {{ kubeadm_kube_vip_image }}
+      imagePullPolicy: IfNotPresent
+      args: [manager]
+      env:
+        - {name: vip_arp, value: "true"}
+        - {name: port, value: "{{ kubeadm_api_port }}"}
+        - {name: vip_interface, value: "{{ k8s_api_vip_interface }}"}
+        - {name: vip_cidr, value: "32"}
+        - {name: cp_enable, value: "true"}
+        - {name: cp_namespace, value: kube-system}
+        - {name: svc_enable, value: "false"}
+        - {name: vip_leaderelection, value: "true"}
+        - {name: vip_leasename, value: plndr-cp-lock}
+        - {name: vip_leaseduration, value: "5"}
+        - {name: vip_renewdeadline, value: "3"}
+        - {name: vip_retryperiod, value: "1"}
+        - {name: address, value: "{{ kubeadm_vip }}"}
+        - name: vip_nodename
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+      securityContext:
+        capabilities:
+          add: [NET_ADMIN, NET_RAW]
+      volumeMounts:
+        - name: kubeconfig
+          mountPath: /etc/kubernetes/admin.conf
+  hostAliases:
+    - hostnames: [kubernetes]
+      ip: 127.0.0.1
+  hostNetwork: true
+  volumes:
+    - name: kubeconfig
+      hostPath:
+        path: {{ kubeadm_kube_vip_kubeconfig }}

@@ -1,0 +1,4 @@
+# {{ ansible_managed }}
+# /opt/cni/bin holds the CNI plugins of the locked upstream archive. kubelet depends on
+# kubernetes-cni, whose plugins of another release would otherwise replace them.
+path-exclude=/opt/cni/bin/*

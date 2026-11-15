@@ -1,0 +1,14 @@
+- name: Write the kube-vip static pod that advertises {{ kubeadm_vip }}
+  ansible.builtin.template:
+    src: kube-vip.yaml.j2
+    dest: /etc/kubernetes/manifests/kube-vip.yaml
+    owner: root
+    group: root
+    mode: "0600"
+  when: kubeadm_vip | length > 0
+
+- name: Remove the kube-vip static pod of an inventory without a VIP
+  ansible.builtin.file:
+    path: /etc/kubernetes/manifests/kube-vip.yaml
+    state: absent
+  when: kubeadm_vip | length == 0

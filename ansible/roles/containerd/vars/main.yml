@@ -1,0 +1,41 @@
+containerd_version: "{{ containerd_lock.components['k8s.containerd'].value }}"
+containerd_runc_version: "{{ containerd_lock.components['k8s.runc'].value }}"
+containerd_cni_version: "{{ containerd_lock.components['k8s.cni_plugins'].value }}"
+
+# Upstream release files. The lock holds the sha256 of each, so get_url refuses any other bytes.
+containerd_archives:
+  - name: containerd
+    url: https://github.com/containerd/containerd/releases/download/v{{ containerd_version }}/containerd-{{ containerd_version }}-linux-amd64.tar.gz
+    checksum: "{{ containerd_lock.components['k8s.containerd_archive'].value }}"
+    dest: /usr/local
+  - name: cni-plugins
+    url: https://github.com/containernetworking/plugins/releases/download/{{ containerd_cni_version }}/cni-plugins-linux-amd64-{{ containerd_cni_version }}.tgz
+    checksum: "{{ containerd_lock.components['k8s.cni_plugins_archive'].value }}"
+    dest: /opt/cni/bin
+containerd_runc:
+  url: https://github.com/opencontainers/runc/releases/download/v{{ containerd_runc_version }}/runc.amd64
+  checksum: "{{ containerd_lock.components['k8s.runc_binary'].value }}"
+  dest: /usr/local/sbin/runc
+
+containerd_default_runtime: "{{ k8s_container_runtime_default | default('runc') }}"
+containerd_nvidia_runtime: /usr/bin/nvidia-container-runtime
+
+containerd_packages: [containerd, containerd.io]
+containerd_socket: /run/containerd/containerd.sock
+# What each installed piece reports, read after every run.
+containerd_probes:
+  server: /usr/local/bin/ctr --address {{ containerd_socket }} version
+  runc: "{{ containerd_runc.dest }} --version"
+  cni: /opt/cni/bin/loopback
+  config: /usr/local/bin/containerd config dump
+containerd_runtime_checks:
+  - ok: "{{ containerd_out.server is search('Server:\\s+Version:\\s+v' ~ containerd_version | regex_escape ~ '\\s') }}"
+    msg: the daemon on {{ containerd_socket }} does not report v{{ containerd_version }}
+  - ok: "{{ containerd_out.runc is search('^runc version ' ~ containerd_runc_version | regex_escape ~ '$', multiline=True) }}"
+    msg: "{{ containerd_runc.dest }} reports {{ containerd_out.runc.splitlines() | first | default('nothing') }}, not runc {{ containerd_runc_version }}"
+  - ok: "{{ containerd_out.cni is search('CNI loopback plugin ' ~ containerd_cni_version | regex_escape ~ '\\s') }}"
+    msg: /opt/cni/bin/loopback reports {{ containerd_out.cni.splitlines() | first | default('nothing') }}, not {{ containerd_cni_version }}
+  - ok: "{{ containerd_out.config is search('SystemdCgroup = true') and containerd_out.config is search(\"BinaryName = '\" ~ containerd_runc.dest ~ \"'\") }}"
+    msg: containerd config dump does not run {{ containerd_runc.dest }} under the systemd cgroup driver
+  - ok: "{{ containerd_out.config is search(\"default_runtime_name = '\" ~ containerd_default_runtime ~ \"'\") }}"
+    msg: containerd config dump does not make {{ containerd_default_runtime }} the default runtime

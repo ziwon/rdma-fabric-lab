@@ -1,0 +1,62 @@
+- name: Read whether this node has joined
+  ansible.builtin.stat:
+    path: /etc/kubernetes/kubelet.conf
+  register: kubeadm_join_state
+
+- name: Create a join token on the first control plane
+  ansible.builtin.command: >-
+    kubeadm token create --ttl {{ kubeadm_join_token_ttl }} --description "rfl join {{ inventory_hostname }}" --print-join-command
+  delegate_to: "{{ kubeadm_first_cp }}"
+  register: kubeadm_join_command
+  changed_when: true
+  no_log: true
+  when: not kubeadm_join_state.stat.exists
+
+# Without --config, kubeadm defaults the cluster settings, looks up a version online and fails to
+# reach the API through the VIP.
+- name: Upload the control-plane certificates for this join
+  ansible.builtin.command: kubeadm init phase upload-certs --upload-certs --config {{ kubeadm_conf_dir }}/kubeadm-init.yaml
+  delegate_to: "{{ kubeadm_first_cp }}"
+  register: kubeadm_upload_certs
+  changed_when: true
+  no_log: true
+  when: not kubeadm_join_state.stat.exists and kubeadm_is_cp
+
+- name: Create the kubeadm configuration directory
+  ansible.builtin.file:
+    path: "{{ kubeadm_conf_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0700"
+
+- name: Write the kube-vip static pod
+  ansible.builtin.include_tasks: kube_vip.yml
+  vars:
+    kubeadm_kube_vip_kubeconfig: "{{ kubeadm_admin }}"
+  when: kubeadm_is_cp
+
+- name: Write the join configuration
+  ansible.builtin.template:
+    src: kubeadm-join.yaml.j2
+    dest: "{{ kubeadm_conf_dir }}/kubeadm-join.yaml"
+    owner: root
+    group: root
+    mode: "0600"
+  no_log: true
+  when: not kubeadm_join_state.stat.exists
+  vars:
+    kubeadm_join_token: "{{ kubeadm_join_command.stdout | regex_search('--token\\s+(\\S+)', '\\1') | first }}"
+    kubeadm_join_ca_hash: "{{ kubeadm_join_command.stdout | regex_search('--discovery-token-ca-cert-hash\\s+(\\S+)', '\\1') | first }}"
+    kubeadm_join_certificate_key: >-
+      {{ (kubeadm_upload_certs.stdout | regex_findall('^[0-9a-f]{64}$', multiline=True) | last) if kubeadm_is_cp else '' }}
+
+- name: Join the cluster through {{ kubeadm_endpoint }}
+  ansible.builtin.command: kubeadm join --config {{ kubeadm_conf_dir }}/kubeadm-join.yaml
+  changed_when: true
+  when: not kubeadm_join_state.stat.exists
+
+- name: Remove the join configuration, which holds the token and the certificate key
+  ansible.builtin.file:
+    path: "{{ kubeadm_conf_dir }}/kubeadm-join.yaml"
+    state: absent

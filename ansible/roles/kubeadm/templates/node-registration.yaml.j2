@@ -1,0 +1,13 @@
+nodeRegistration:
+  name: {{ kubeadm_node_name }}
+  criSocket: {{ kubeadm_cri_socket }}
+  kubeletExtraArgs:
+    - name: node-ip
+      value: "{{ k8s_node_ip }}"
+{% if kubeadm_node_labels_arg %}
+    - name: node-labels
+      value: "{{ kubeadm_node_labels_arg }}"
+{% endif %}
+{% if kubeadm_is_cp and kubeadm_schedulable %}
+  taints: []
+{% endif %}

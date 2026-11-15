@@ -1,0 +1,23 @@
+# {{ ansible_managed }}
+apiVersion: kubeadm.k8s.io/v1beta4
+kind: InitConfiguration
+localAPIEndpoint:
+  advertiseAddress: {{ k8s_node_ip }}
+  bindPort: {{ kubeadm_api_port }}
+{% include 'node-registration.yaml.j2' %}
+{% if not k8s_kube_proxy %}
+skipPhases:
+  - addon/kube-proxy
+{% endif %}
+---
+apiVersion: kubeadm.k8s.io/v1beta4
+kind: ClusterConfiguration
+kubernetesVersion: {{ kubeadm_version }}
+controlPlaneEndpoint: "{{ kubeadm_endpoint }}"
+networking:
+  podSubnet: {{ k8s_pod_cidr }}
+  serviceSubnet: {{ k8s_service_cidr }}
+---
+apiVersion: kubelet.config.k8s.io/v1beta1
+kind: KubeletConfiguration
+cgroupDriver: systemd
