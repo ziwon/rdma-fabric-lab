@@ -53,7 +53,7 @@ components:
     kind: version
     value: Ubuntu 24.04.5 LTS
     ref: noble
-    reason: PLAN 4.1 names Ubuntu Server 24.04 LTS. Read from a worker guest booted from lab.guest_image.
+    reason: The lab guests run Ubuntu Server 24.04 LTS. Read from a worker guest booted from lab.guest_image.
     source: PRETTY_NAME in /etc/os-release inside worker1 and worker2
   lab.guest_image:
     kind: checksum
@@ -184,36 +184,89 @@ components:
     value: v26.7.2
     reason: Newest NVIDIA GPU Operator chart on 2026-11-15. Installed by Helm on the GPU fleet only.
     source: https://helm.ngc.nvidia.com/nvidia/index.yaml
-  ibsim.image:
+  ibsim.guest_kernel:
+    kind: observed
+    value: 6.8.0-147-generic
+    reason: Kernel the lab.guest_image boots in the ibsim harness guest. ibsim, OpenSM and the diagnostic tools run on this kernel, never
+      on the host kernel. track-b-guest.yml refuses any other.
+    source: uname -r inside ibsim1 of tests/integration/qemu-lab/profiles/ibsim.tsv
+  ibsim.guest_docker:
+    kind: version
+    value: 29.1.3-0ubuntu3~24.04.2
+    reason: Candidate of docker.io in noble-updates on 2026-11-15, the container runtime of the Track B guest. ADR 0002 runs the ibsim
+      image in a container runtime inside that guest.
+    source: apt-cache policy docker.io inside ibsim1
+  ibsim.guest_buildx:
+    kind: version
+    value: 0.30.1-0ubuntu1~24.04.1
+    reason: Candidate of docker-buildx in noble-updates on 2026-11-15. docker build uses BuildKit through it, whose layer cache the second
+      build reuses.
+    source: apt-cache policy docker-buildx inside ibsim1
+  ibsim.guest_containerd:
+    kind: version
+    value: 2.2.1-0ubuntu1~24.04.4
+    reason: Candidate of containerd in noble-updates on 2026-11-15, the version docker.io pulls in. Pinned and held with it.
+    source: apt-cache policy containerd inside ibsim1
+  ibsim.guest_runc:
+    kind: version
+    value: 1.3.4-0ubuntu1~24.04.1
+    reason: Candidate of runc in noble-updates on 2026-11-15, the version docker.io pulls in. Pinned and held with it.
+    source: apt-cache policy runc inside ibsim1
+  ibsim.base_image:
     kind: image-digest
-    value: null
-    reason: Built at milestone M4. Holds ibsim, OpenSM and the diagnostic tools at fixed versions.
-    source: PLAN.md section 4.1
+    value: sha256:2198e4c65076e9cb0b3d695219df667c0e3b0072da64ca3c2648aca17dcecaf5
+    ref: ubuntu:24.04
+    reason: OCI index of ubuntu:24.04 that Docker Hub served on 2026-11-15, created 2026-11-10. images/ibsim/Dockerfile starts FROM
+      it by digest.
+    source: docker pull ubuntu:24.04 and docker image inspect RepoDigests inside ibsim1
+  ibsim.apt_snapshot:
+    kind: version
+    value: 20261115T000000Z
+    reason: Ubuntu archive snapshot the image installs every package from, dependencies included. The Dockerfile replaces the base
+      image's sources with this snapshot only, so a rebuild cannot pick up a newer package.
+    source: https://snapshot.ubuntu.com/ubuntu/20261115T000000Z/
   ibsim.ibsim:
     kind: version
-    value: null
-    reason: Selected at milestone M4.
-    source: PLAN.md section 4.1
+    value: 0.10-2build1
+    reason: ibsim-utils and libumad2sim0 in noble universe, built from upstream ibsim 0.10. It ships ibsim, libumad2sim.so and the
+      upstream net-examples. Upstream 0.12 exists but no Ubuntu package carries it, and 0.10 runs every scenario.
+    source: images/ibsim/Dockerfile installs both from ibsim.apt_snapshot (docs/milestones/evidence/m4/image-build-1.log). Upstream tag
+      ibsim-0.10 of github.com/linux-rdma/ibsim dereferences to commit c7e430dc3d9bb677e53a8cd9ca87c5d27d406aa1 (git ls-remote --tags)
   ibsim.opensm:
     kind: version
-    value: null
-    reason: Selected at milestone M4.
-    source: PLAN.md section 4.1
+    value: 3.3.23-2
+    reason: opensm in noble universe. OpenSM 3.3.23 routes with minhop by default and supports updn, dnup, file, ftree, lash, dor,
+      torus-2QoS, nue, dfsssp and sssp (opensm --help in the image, docs/milestones/evidence/m4/probe/09-opensm-options.txt).
+    source: images/ibsim/Dockerfile installs it from ibsim.apt_snapshot (docs/milestones/evidence/m4/image-build-1.log)
+  ibsim.infiniband_diags:
+    kind: version
+    value: 50.0-2ubuntu0.2
+    reason: infiniband-diags in noble-updates, from rdma-core 50.0 like lab.rdma_core. ibnetdiscover, iblinkinfo, ibswitches, ibhosts,
+      ibroute and smpquery come from it.
+    source: images/ibsim/Dockerfile installs it from ibsim.apt_snapshot (docs/milestones/evidence/m4/image-build-1.log)
+  ibsim.image:
+    kind: image-digest
+    value: sha256:cb3e3550f4f60de5414abe55dbe81e45fd68106ef5ecc4cfa4d701b6083ee279
+    ref: rfl-ibsim:m4
+    reason: Built from images/ibsim/Dockerfile inside ibsim1 by make track-b-image. A second build reuses every layer and gives the same
+      ID. Every Track B scenario ran on it.
+    source: docker image inspect --format {{.Id}} rfl-ibsim:m4 inside ibsim1 after guest.sh build
+      (docs/milestones/evidence/m4/image-build-final-1.log, image-build-final-2.log)
   ns3.simai:
     kind: git-sha
     value: null
     reason: Selected at milestone M5 after the build probe succeeds.
-    source: PLAN.md section 4.1
+    source: not selected yet, milestone M5
   ns3.ns3_alibabacloud:
     kind: git-sha
     value: null
     reason: Submodule commit that the selected SimAI commit resolves to.
-    source: PLAN.md section 4.1
+    source: not selected yet, milestone M5
   ns3.image:
     kind: image-digest
     value: null
     reason: Built at milestone M5.
-    source: PLAN.md section 4.1
+    source: not selected yet, milestone M5
 scopes:
   tooling:
     - tooling.python
@@ -264,9 +317,17 @@ scopes:
     - k8s.kube_vip_image
     - addons.gpu_operator_chart
   m4:
-    - ibsim.image
+    - ibsim.guest_kernel
+    - ibsim.guest_docker
+    - ibsim.guest_buildx
+    - ibsim.guest_containerd
+    - ibsim.guest_runc
+    - ibsim.base_image
+    - ibsim.apt_snapshot
     - ibsim.ibsim
     - ibsim.opensm
+    - ibsim.infiniband_diags
+    - ibsim.image
   m5:
     - ns3.simai
     - ns3.ns3_alibabacloud
