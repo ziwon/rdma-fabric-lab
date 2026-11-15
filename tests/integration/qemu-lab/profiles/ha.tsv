@@ -1,0 +1,9 @@
+# Fleet-shaped control plane: three small control planes behind a kube-vip VIP and one worker on the
+# switched mgmt network. The mgmt NIC is renamed mgmt0 at first boot, so the tracked inventory names it.
+#inventory tests/integration/qemu-lab/profiles/ha/inventory
+#network mgmt 192.168.140.0/24
+# name	ssh_port	vcpus	mem_mib	disk_gib	nics
+ha-cp1	22221	2	2560	20	mac=52:54:00:8c:01:21,net=user,vars=lab_uplink_nic,fwd=22644:6443 mac=52:54:00:6d:01:21,net=switch:mgmt,name=mgmt0,ip=k8s_node_ip
+ha-cp2	22222	2	2560	20	mac=52:54:00:8c:01:22,net=user,vars=lab_uplink_nic mac=52:54:00:6d:01:22,net=switch:mgmt,name=mgmt0,ip=k8s_node_ip
+ha-cp3	22223	2	2560	20	mac=52:54:00:8c:01:23,net=user,vars=lab_uplink_nic mac=52:54:00:6d:01:23,net=switch:mgmt,name=mgmt0,ip=k8s_node_ip
+ha-w1	22224	2	2048	20	mac=52:54:00:8c:01:31,net=user,vars=lab_uplink_nic mac=52:54:00:6d:01:31,net=switch:mgmt,name=mgmt0,ip=k8s_node_ip

@@ -1,0 +1,10 @@
+rfl_inventory: lab
+k8s_api_endpoint: 192.168.140.20
+k8s_api_vip: 192.168.140.20
+k8s_api_vip_interface: mgmt0
+k8s_api_port: 6443
+k8s_pod_cidr: 10.244.0.0/16
+k8s_service_cidr: 10.96.0.0/12
+k8s_kube_proxy: true
+k8s_admin_kubeconfig: .lab/ha/kubeconfig
+lab_mgmt_nic: mgmt0
