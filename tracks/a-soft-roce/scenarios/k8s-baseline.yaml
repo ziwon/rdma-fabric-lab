@@ -1,7 +1,7 @@
 track: a-soft-roce
 scenario: k8s-baseline
 description: >-
-  PLAN A2 baseline of the kubeadm cluster with Cilium in VXLAN tunnel mode and kube-proxy kept. Two test pods on
+  Baseline of the kubeadm cluster with Cilium in VXLAN tunnel mode and kube-proxy kept. Two test pods on
   different workers exercise pod to pod traffic, cluster DNS, a ClusterIP Service and a NetworkPolicy, while the
   management and lab NICs of both workers are captured.
 required: true

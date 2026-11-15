@@ -1,7 +1,7 @@
 track: a-soft-roce
 scenario: vm-rxe-reboot
 description: >-
-  PLAN A1 persistence. Both workers reboot, rfl-rxe.service recreates the device with no Ansible involved, and the
+  RXE persistence. Both workers reboot, rfl-rxe.service recreates the device with no Ansible involved, and the
   baseline tests pass again.
 required: true
 result_kind: software-rdma-measurement

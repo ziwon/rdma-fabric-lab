@@ -1,6 +1,6 @@
 # Track A lab. The harness targets boot QEMU guests on this host; everything else works on
 # any Ubuntu guests the lab inventory can reach. LAB_PROFILE=<name> picks a harness profile
-# under tests/integration/qemu-lab/profiles (default lab, the PLAN 3.2 guests).
+# under tests/integration/qemu-lab/profiles (default lab: cp1, worker1 and worker2).
 LAB_PROFILE ?= lab
 export LAB_PROFILE
 LAB_HARNESS := tests/integration/qemu-lab/lab.sh
@@ -31,13 +31,13 @@ lab-wipe: ## QEMU harness: delete guest disks and seeds so the next lab-up start
 lab-lock: venv
 	$(RFL) versions --scope m1
 
-preflight: lab-lock ## PLAN A0 read-only checks on the workers
+preflight: lab-lock ## Read-only checks on the workers
 	$(LAB_PLAYBOOK) ansible/playbooks/preflight.yml
 
 bootstrap: lab-lock ## Locked packages, rdma_rxe module and RDMA NIC address on the workers
 	$(LAB_PLAYBOOK) ansible/playbooks/bootstrap.yml
 
-rxe-up: lab-lock ## PLAN A0 checks, then rxe0 on the RDMA NIC through rfl-rxe.service
+rxe-up: lab-lock ## Preflight checks, then rxe0 on the RDMA NIC through rfl-rxe.service
 	$(LAB_PLAYBOOK) ansible/playbooks/rxe.yml
 
 .PHONY: k8s-lock k8s
@@ -48,7 +48,7 @@ k8s: k8s-lock ## kubeadm cluster of ansible/playbooks/kubernetes.yml, admin kube
 	$(LAB_PLAYBOOK) ansible/playbooks/kubernetes.yml $(if $(LAB_API_URL),-e rfl_kubeconfig_server=$(LAB_API_URL))
 
 .PHONY: doctor
-doctor: venv ## Read-only host check: virtualization, tools, PLAN 3.1 resources, address plan overlaps. LAB_PLAN=<file> tries another plan
+doctor: venv ## Read-only host check: virtualization, tools, resource budget, address plan overlaps. LAB_PLAN=<file> tries another plan
 	PYTHONPATH=scripts $(BIN)/python -m doctor $(if $(LAB_PLAN),--plan $(LAB_PLAN))
 
 SCENARIO ?= vm-rxe-baseline

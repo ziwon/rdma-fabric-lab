@@ -2,7 +2,7 @@
 
 A software-only lab for RDMA, InfiniBand management and RoCE congestion control on one Ubuntu host, with no HCA, InfiniBand switch or GPU. The same Ansible and kubeadm code that builds the lab cluster also describes `cel1`, an invented GPU region with DGX B200 nodes, so every lab run exercises that code.
 
-`PLAN.md` is the design. This file says what exists today and how to run it.
+This file says what exists today and how to run it. Design decisions live in `docs/adr/`.
 
 ## Tracks
 
@@ -12,7 +12,14 @@ A software-only lab for RDMA, InfiniBand management and RoCE congestion control 
 | B. InfiniBand management | How does a subnet manager discover a fabric, assign LIDs and react to link faults? | ibsim, OpenSM, infiniband-diags | A container inside a dedicated QEMU guest |
 | C. RoCE congestion control | How do PFC, ECN and DCQCN settings change queues, rates and flow completion? | ns-3 RDMA model | A container inside a dedicated QEMU guest |
 
-The tracks share the repository, the result format and the version lock, not a data path. A result of one track never stands in for another. `PLAN.md` section 2 lists what this lab does not claim, such as hardware RDMA performance or real lossless switching.
+The tracks share the repository, the result format and the version lock, not a data path. A result of one track never stands in for another.
+
+## What this lab does not claim
+
+- IPoIB. RXE runs over Ethernet and ibsim simulates management datagrams. Neither creates the IPoIB data path, so nothing here validates IPoIB or an IPoIB CNI.
+- HCA performance. RXE numbers are software results of one host, kernel and guest combination. They say nothing about offload, InfiniBand or RoCE hardware latency, or 200, 400 or 800 Gb/s throughput.
+- Lossless switching. PFC, ECN and DCQCN results in Track C are the behaviour of the simulation model, not of a real switch or of the hypervisor's virtual switch.
+- GPU and NCCL performance. GPUDirect RDMA, NVLink and NCCL are out of scope. A collective pattern, if added, is a synthetic workload or a model result.
 
 ## Status
 
@@ -24,7 +31,7 @@ The tracks share the repository, the result format and the version lock, not a d
 | cel1 region, offline | done. Site model, generated inventory, contract check and rendered charts pass | `docs/fleet.md` |
 | M4 ibsim and OpenSM | in progress, inside a guest | |
 | cel1 region, simulated as 13 guests | not started | |
-| M3, M5, M6, M7 | not started | `PLAN.md` section 10 |
+| M3 Multus and hostNetwork RDMA pods, M5 and M6 ns-3, M7 wrap-up | not started | |
 
 Nothing in this repository has run against GPU hardware.
 
@@ -32,7 +39,13 @@ Nothing in this repository has run against GPU hardware.
 
 - Ubuntu 24.04 host with KVM, and `/dev/kvm` usable by your user. No sudo is needed for the lab.
 - `qemu-system-x86_64`, `qemu-img`, `cloud-localds`, `ssh-keygen`, `uv`, `make`, `git`, `curl`.
-- About 16 GiB of free memory and 10 cores for the default lab profile. `PLAN.md` section 3.1 has the budget per guest.
+- Free memory and cores for the guests of the profile you boot. The default `lab` profile:
+
+  | Guest | vCPU | Memory | Disk |
+  |---|---:|---:|---:|
+  | cp1 | 2 | 4 GiB | 30 GiB |
+  | worker1 | 4 | 6 GiB | 40 GiB |
+  | worker2 | 4 | 6 GiB | 40 GiB |
 
 ## Quick start
 
@@ -93,5 +106,5 @@ Every scenario declares its checks in `tracks/<track>/scenarios/*.yaml`. A run w
 - `docs/adr/0001-kubernetes-stack.md`: one Ansible and kubeadm stack for the lab and cel1, and the inventory contract.
 - `docs/adr/0002-execution-environments.md`: where each track runs and why.
 - `docs/fleet.md`: the cel1 runbook.
-- `docs/setup-vmware.md`: the VMware Workstation layout of `PLAN.md`, not verified on the current host.
+- `docs/setup-vmware.md`: the same lab as VMware Workstation guests with two VMnets, not verified on the current host.
 - `docs/troubleshooting.md`: failures seen so far and how to read them.

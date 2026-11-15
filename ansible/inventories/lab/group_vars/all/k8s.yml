@@ -1,4 +1,4 @@
-# Inventory contract of docs/adr/0001-kubernetes-stack.md section 4. PLAN A2 starts the lab with
+# Inventory contract of docs/adr/0001-kubernetes-stack.md section 4. The lab starts with
 # kube-proxy, one control plane and no VIP, so the endpoint is the node IP of cp1.
 rfl_inventory: lab
 k8s_api_endpoint: 192.168.140.11

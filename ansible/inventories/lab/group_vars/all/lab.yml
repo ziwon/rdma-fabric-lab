@@ -2,7 +2,7 @@
 # so a lab play can never run against the hardware fleet inventory.
 lab_inventory: rdma-fabric-lab
 
-# The address plan of PLAN 3.2, with the pod and service CIDRs of k8s.yml. `make doctor`
+# The lab address plan, with the pod and service CIDRs of k8s.yml. `make doctor`
 # compares every range and every node address against the host's addresses, routes and
 # container networks.
 lab_address_plan:
@@ -17,7 +17,7 @@ lab_rxe_wait_seconds: 90
 # versions.lock.yaml is the single source of every pinned version the roles install or compare.
 lab_lock: "{{ lookup('ansible.builtin.file', playbook_dir ~ '/../../versions.lock.yaml') | from_yaml }}"
 
-# Guest packages of PLAN A1. lock names the component whose value is the exact version to install.
+# Guest packages of the RXE baseline. lock names the component whose value is the exact version to install.
 lab_packages:
   - { name: rdma-core, lock: lab.rdma_core }
   - { name: ibverbs-providers, lock: lab.rdma_core }

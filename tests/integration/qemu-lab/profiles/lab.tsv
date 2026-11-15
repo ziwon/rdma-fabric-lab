@@ -1,4 +1,4 @@
-# PLAN 3.2 lab: cp1 and two workers at the PLAN 3.1 sizes. The user NIC carries SSH and package
+# Lab profile: cp1 and two workers at the lab budget sizes. The user NIC carries SSH and package
 # downloads, the switched mgmt network carries Kubernetes, and the cable joins the two RDMA NICs.
 #inventory ansible/inventories/lab
 #network mgmt 192.168.140.0/24

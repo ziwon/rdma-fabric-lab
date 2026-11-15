@@ -1,4 +1,4 @@
-- name: Create the Soft-RoCE device on each worker once PLAN A0 holds
+- name: Create the Soft-RoCE device on each worker once the preflight checks hold
   hosts: workers
   become: true
   pre_tasks:

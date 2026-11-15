@@ -1,4 +1,4 @@
-"""Address plan of PLAN 3.2 against the networks a host already uses.
+"""Lab address plan against the networks a host already uses.
 
 Every range is an inclusive interval of integer addresses, so a CIDR, a single
 address and an "a-b" pool compare the same way.

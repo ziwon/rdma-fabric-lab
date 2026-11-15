@@ -1,7 +1,7 @@
 track: a-soft-roce
 scenario: vm-rxe-rerun
 description: >-
-  PLAN A1 idempotence. A second bootstrap and rxe-up against configured workers change nothing and leave one device
+  RXE idempotence. A second bootstrap and rxe-up against configured workers change nothing and leave one device
   and one address on the lab NIC.
 required: true
 result_kind: software-rdma-measurement

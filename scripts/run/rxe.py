@@ -296,7 +296,7 @@ def add_absent_metrics(run: Run, check_id: str, source: str, reason: str, labels
 
 CAPTURES = (
     # role, NIC attribute, BPF filter. The other NICs record only RoCEv2 and what proves the capture was
-    # live, so they collect no management traffic (PLAN 11.2): SSH connection setups where SSH arrives,
+    # live, so they collect no management traffic: SSH connection setups where SSH arrives,
     # and the marker pings the runner sends over the management network.
     ("lab", "rdma_nic", ""),
     ("mgmt", "mgmt_nic", "udp port 4791 or icmp or (tcp port 22 and tcp[tcpflags] & tcp-syn != 0)"),

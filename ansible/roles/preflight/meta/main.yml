@@ -2,7 +2,7 @@ galaxy_info:
   role_name: preflight
   namespace: rfl
   author: rdma-fabric-lab
-  description: PLAN A0 read-only checks of a lab worker, each finding named with its cause
+  description: Read-only checks of a lab worker, each finding named with its cause
   license: MIT
   min_ansible_version: "2.16"
   platforms:

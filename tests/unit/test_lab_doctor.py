@@ -20,7 +20,7 @@ def _hosts(group: dict) -> dict:
 
 
 HOSTVARS = {name: LAB_VARS | (values or {}) for name, values in _hosts(yaml.safe_load((LAB / "hosts.yml").read_text())["all"]).items()}
-PLAN, NODES = plan.from_hostvars(HOSTVARS)
+ADDRESS_PLAN, NODES = plan.from_hostvars(HOSTVARS)
 
 
 def host_sources() -> list[host.Source]:
@@ -41,13 +41,13 @@ def failures(findings):
 
 
 def test_plan_of_the_inventory_clears_the_captured_host_networks():
-    findings = doctor.address_findings(PLAN, NODES, host_sources())
+    findings = doctor.address_findings(ADDRESS_PLAN, NODES, host_sources())
     assert failures(findings) == []
     assert doctor.exit_code(findings) == 0
 
 
 def test_rdma_network_inside_docker_bridge_conflicts():
-    clashing = dict(PLAN, rdma="172.17.0.0/24", multus_pool="172.17.0.100-172.17.0.199")
+    clashing = dict(ADDRESS_PLAN, rdma="172.17.0.0/24", multus_pool="172.17.0.100-172.17.0.199")
     nodes = {"worker1": {"lab_rdma_ip": "172.17.0.12"}, "worker2": {"lab_rdma_ip": "172.17.0.13"}}
     findings = doctor.address_findings(clashing, nodes, host_sources())
     messages = failures(findings)
@@ -58,19 +58,19 @@ def test_rdma_network_inside_docker_bridge_conflicts():
 
 
 def test_service_range_over_cgnat_hits_the_overlay_route():
-    findings = doctor.address_findings(dict(PLAN, service="100.64.0.0/10"), NODES, host_sources())
+    findings = doctor.address_findings(dict(ADDRESS_PLAN, service="100.64.0.0/10"), NODES, host_sources())
     assert any("plan service 100.64.0.0/10 overlaps route 100.100.100.100" in m for m in failures(findings))
 
 
 def test_management_network_on_the_libvirt_bridge_conflicts():
-    clashing = dict(PLAN, management="192.168.122.0/24")
+    clashing = dict(ADDRESS_PLAN, management="192.168.122.0/24")
     nodes = {"cp1": {"k8s_node_ip": "192.168.122.11"}}
     assert any("libvirt network default" in m for m in failures(doctor.address_findings(clashing, nodes, host_sources())))
 
 
 def test_unreadable_source_warns_without_hiding_the_rest():
     sources = host_sources() + [host.Source("docker networks", [], "permission denied")]
-    findings = doctor.address_findings(PLAN, NODES, sources)
+    findings = doctor.address_findings(ADDRESS_PLAN, NODES, sources)
     assert any(f.level == "warn" and "permission denied" in f.message for f in findings)
     assert doctor.exit_code(findings) == 0
 
@@ -87,17 +87,17 @@ def test_unreadable_source_warns_without_hiding_the_rest():
     ],
 )
 def test_contradictions_inside_the_plan_fail(change, nodes, expected):
-    problems = plan.plan_problems(dict(PLAN, **change), nodes)
+    problems = plan.plan_problems(dict(ADDRESS_PLAN, **change), nodes)
     assert any(expected in p for p in problems), problems
 
 
 def test_plan_of_the_inventory_is_consistent():
-    assert plan.plan_problems(PLAN, NODES) == []
+    assert plan.plan_problems(ADDRESS_PLAN, NODES) == []
 
 
 def test_ipv6_host_range_never_overlaps_an_ipv4_plan():
     v6 = plan.span("kind bridge", "fc00:f853:ccd:e793::/64")
-    assert plan.overlaps(PLAN, [v6]) == []
+    assert plan.overlaps(ADDRESS_PLAN, [v6]) == []
 
 
 def test_span_reads_cidr_address_and_pool():
@@ -156,4 +156,4 @@ def test_plan_takes_pod_and_service_from_the_inventory_contract():
 
 def test_node_ip_outside_the_management_network_is_a_plan_problem():
     nodes = {"worker1": {"k8s_node_ip": "192.168.141.12"}}
-    assert any("lies outside plan management" in p for p in plan.plan_problems(PLAN, nodes))
+    assert any("lies outside plan management" in p for p in plan.plan_problems(ADDRESS_PLAN, nodes))

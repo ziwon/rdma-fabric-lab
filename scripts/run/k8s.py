@@ -1,4 +1,4 @@
-"""make k8s-test: the PLAN A2 Kubernetes baseline of the lab cluster, recorded through the rfl CLI.
+"""make k8s-test: the Kubernetes baseline of the lab cluster, recorded through the rfl CLI.
 
     python -m run.k8s -i ansible/inventories/lab -i .lab/inventory.yml
 

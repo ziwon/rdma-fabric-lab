@@ -1,8 +1,8 @@
 """make doctor: read-only checks of the machine that hosts the lab.
 
 Exits 1 when any finding fails. An address plan range that overlaps a network the
-host already uses always fails. Resource shortfalls against the PLAN 3.1 budget warn,
-because PLAN treats that budget as a starting allocation.
+host already uses always fails. Resource shortfalls against the lab budget warn,
+because that budget is a starting allocation.
 """
 
 from __future__ import annotations
@@ -28,7 +28,7 @@ GIB = 1024**3
 
 LEVELS = ("ok", "info", "warn", "fail")
 
-# PLAN 3.1. vCPU, memory GiB and disk GiB per component, B and C at their upper bounds.
+# Lab budget. vCPU, memory GiB and disk GiB per component, B and C at their upper bounds.
 BUDGET = (
     ("cp1", 2, 4, 30),
     ("worker1", 4, 6, 40),
@@ -48,7 +48,7 @@ TOOLS = (
     ("cloud-localds", None, "the QEMU harness seeds", "warn"),
     ("ssh-keygen", None, "the QEMU harness keys", "warn"),
     ("curl", ["curl", "--version"], "the QEMU harness image download", "warn"),
-    ("vmrun", ["vmrun"], "VMware Workstation, the hypervisor PLAN names", "info"),
+    ("vmrun", ["vmrun"], "VMware Workstation, the hypervisor of the manual setup", "info"),
 )
 
 
@@ -108,7 +108,7 @@ def resource_findings(cpus: int, mem_available_gib: float, disk_free_gib: float,
     all_cpu, all_mem = (sum(r[i] for r in BUDGET) for i in (1, 2))
     found = []
     if cpus >= all_cpu:
-        found.append(Finding("resources", "ok", f"{cpus} CPUs cover the PLAN 3.1 vCPU budget of {vm_cpu} for the VMs and {all_cpu} with B and C"))
+        found.append(Finding("resources", "ok", f"{cpus} CPUs cover the lab vCPU budget of {vm_cpu} for the VMs and {all_cpu} with B and C"))
     else:
         found.append(Finding("resources", "warn", f"{cpus} CPUs are below the {all_cpu} vCPU budget with B and C. Run B and C one after the other."))
     if mem_available_gib >= all_mem:

@@ -1,4 +1,4 @@
-- name: Check the lab workers against PLAN A0 without changing them
+- name: Check the lab workers without changing them
   hosts: workers
   become: true
   pre_tasks:

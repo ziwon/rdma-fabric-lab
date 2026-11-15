@@ -76,13 +76,13 @@ preflight_checks:
   - id: rdma-mtu
     ok: "{{ preflight_rdma.mtu | default(0) == lab_rdma_mtu }}"
     detail: "MTU {{ preflight_rdma.mtu | default('-') }}"
-    cause: "{{ lab_rdma_nic }} has MTU {{ preflight_rdma.mtu | default('-') }}, the plan starts at {{ lab_rdma_mtu }} (PLAN 3.2)."
+    cause: "{{ lab_rdma_nic }} has MTU {{ preflight_rdma.mtu | default('-') }}, the lab starts at {{ lab_rdma_mtu }}."
   - id: default-route-on-uplink
     ok: "{{ ansible_facts.default_ipv4.interface | default('') == preflight_uplink_nic }}"
     detail: "default route via {{ preflight_uplink_nic }}"
     cause: >-
       the default route uses {{ ansible_facts.default_ipv4.interface | default('no interface') }}, not {{ preflight_uplink_nic }}.
-      PLAN 3.2 keeps the only default route on the management network, or on the uplink NIC where the hypervisor splits it off.
+      The lab keeps the only default route on the management network, or on the uplink NIC where the hypervisor splits it off.
   - id: mgmt-address
     ok: "{{ preflight_mgmt.ipv4.address | default('') == k8s_node_ip | default('-') }}"
     detail: "{{ lab_mgmt_nic }} holds the node IP {{ k8s_node_ip | default('-') }}"

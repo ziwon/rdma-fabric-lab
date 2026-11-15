@@ -20,3 +20,6 @@ admin.conf
 
 # Pinned helm and kubeconform from make tools, and the charts they render.
 /.tools/
+
+# Local design draft, kept out of the repository.
+/PLAN.md

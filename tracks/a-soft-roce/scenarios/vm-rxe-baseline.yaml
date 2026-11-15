@@ -1,7 +1,7 @@
 track: a-soft-roce
 scenario: vm-rxe-baseline
 description: >-
-  PLAN A1 baseline between two worker VMs over Soft-RoCE. rping and perftest Read, Write and Send run over RDMA CM
+  RXE baseline between two worker VMs over Soft-RoCE. rping and perftest Read, Write and Send run over RDMA CM
   while both NICs of both workers are captured. Bandwidth is a software measurement of this host and guest pair.
 required: true
 result_kind: software-rdma-measurement

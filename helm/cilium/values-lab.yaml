@@ -1,4 +1,4 @@
-# PLAN A2 on the Cilium 1.20.4 chart. kube-proxy stays and Cilium adds pod networking only: a
+# The lab's first Kubernetes stage on the Cilium 1.20.4 chart. kube-proxy stays and Cilium adds pod networking only: a
 # VXLAN tunnel between the node IPs, with each node's pod CIDR taken from its Node object.
 cni:
   # Other CNI configuration files stay in place, so Multus can be added at M3.
