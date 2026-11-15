@@ -1,0 +1,23 @@
+$ ibroute 2
+Unicast lids [0x0-0x6] of switch Lid 2 guid 0x0000000000200000 (sw1):
+  Lid  Out   Destination
+       Port     Info 
+0x0001 001 : (Channel Adapter portguid 0x0000000000100001: 'hca1')
+0x0002 000 : (Switch portguid 0x0000000000200000: 'sw1')
+0x0003 007 : (Switch portguid 0x0000000000200001: 'sw2')
+0x0004 002 : (Channel Adapter portguid 0x0000000000100003: 'hca2')
+0x0005 007 : (Channel Adapter portguid 0x0000000000100005: 'hca3')
+0x0006 008 : (Channel Adapter portguid 0x0000000000100007: 'hca4')
+6 valid lids dumped 
+
+$ ibroute 3
+Unicast lids [0x0-0x6] of switch Lid 3 guid 0x0000000000200001 (sw2):
+  Lid  Out   Destination
+       Port     Info 
+0x0001 007 : (Channel Adapter portguid 0x0000000000100001: 'hca1')
+0x0002 007 : (Switch portguid 0x0000000000200000: 'sw1')
+0x0003 000 : (Switch portguid 0x0000000000200001: 'sw2')
+0x0004 008 : (Channel Adapter portguid 0x0000000000100003: 'hca2')
+0x0005 001 : (Channel Adapter portguid 0x0000000000100005: 'hca3')
+0x0006 002 : (Channel Adapter portguid 0x0000000000100007: 'hca4')
+6 valid lids dumped 

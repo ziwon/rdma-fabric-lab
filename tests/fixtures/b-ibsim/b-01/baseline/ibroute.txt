@@ -1,0 +1,8 @@
+$ ibroute 2
+Unicast lids [0x0-0x3] of switch Lid 2 guid 0x0000000000200000 (sw1):
+  Lid  Out   Destination
+       Port     Info 
+0x0001 001 : (Channel Adapter portguid 0x0000000000100001: 'hca1')
+0x0002 000 : (Switch portguid 0x0000000000200000: 'sw1')
+0x0003 002 : (Channel Adapter portguid 0x0000000000100003: 'hca2')
+3 valid lids dumped 

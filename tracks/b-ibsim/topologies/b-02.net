@@ -1,0 +1,26 @@
+# B-02: four single-port HCAs on two 8-port switches, two HCAs each, joined by two parallel links.
+# Hand-written in the ibsim net file format, after net.2sw2path4hca of the upstream ibsim net-examples.
+
+Switch	8 "sw1"
+[1]	"hca1"[1]
+[2]	"hca2"[1]
+[7]	"sw2"[7]
+[8]	"sw2"[8]
+
+Switch	8 "sw2"
+[1]	"hca3"[1]
+[2]	"hca4"[1]
+[7]	"sw1"[7]
+[8]	"sw1"[8]
+
+Hca	1 "hca1"
+[1]	"sw1"[1]
+
+Hca	1 "hca2"
+[1]	"sw1"[2]
+
+Hca	1 "hca3"
+[1]	"sw2"[1]
+
+Hca	1 "hca4"
+[1]	"sw2"[2]

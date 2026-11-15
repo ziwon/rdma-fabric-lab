@@ -1,0 +1,84 @@
+#!/usr/bin/env bash
+# Entry point of the Track B image. One container is one simulated fabric:
+#
+#   rfl-ibsim fabric <netfile> [opensm option...]   ibsim on the net file and OpenSM attached at
+#                                                   SIM_HOST, until either exits or the container stops
+#   rfl-ibsim tool <name> [arg...]                  one diagnostic tool attached at SIM_HOST
+#   rfl-ibsim console <command...>                  one ibsim console command, its reply on stdout
+#
+# LD_PRELOAD reaches only the OpenSM and tool processes. Nothing sets it image wide.
+set -euo pipefail
+
+umad2sim=/usr/lib/x86_64-linux-gnu/umad2sim/libumad2sim.so
+osm_conf=/etc/opensm/rfl-opensm.conf
+state=/run/rfl
+guest_marker=/run/rfl-guest/track-b-guest
+tools=(ibnetdiscover iblinkinfo ibswitches ibhosts ibroute ibtracert sminfo smpquery saquery ibstat)
+
+die() { printf 'rfl-ibsim: %s\n' "$*" >&2; exit 2; }
+
+# The marker comes from a read-only mount that only tracks/b-ibsim/scripts/guest.sh adds, and only
+# inside the Track B guest. Without it this container may be on a host whose kernel ibsim crashes.
+[[ -r $guest_marker ]] || die "no $guest_marker. This image runs only inside the Track B guest, started by tracks/b-ibsim/scripts/guest.sh."
+[[ -n ${SIM_HOST:-} ]] || die "SIM_HOST is not set. It names the HCA that OpenSM and the tools attach to."
+
+wait_for_line() {
+  local file=$1 text=$2 seconds=$3 deadline=$((SECONDS + $3))
+  until grep -qF -- "$text" "$file" 2> /dev/null; do
+    ((SECONDS < deadline)) || die "no \"$text\" in $file after $seconds s"
+    sleep 0.2
+  done
+}
+
+fabric() {
+  [[ $# -ge 1 && -r $1 ]] || die "usage: rfl-ibsim fabric <readable netfile> [opensm option...]"
+  local netfile=$1 sim sm rc=0
+  shift
+  mkdir -p "$state/osm"
+  mkfifo "$state/console"
+  # Console replies and prompts go to ibsim.out, warnings to ibsim.err, so a reply ends at its prompt.
+  ibsim -s "$netfile" < "$state/console" > "$state/ibsim.out" 2> "$state/ibsim.err" &
+  sim=$!
+  # This writer stays open, so ibsim never reads end of file between console commands.
+  exec 3> "$state/console"
+  wait_for_line "$state/ibsim.out" "Network simulator ready" 60
+  OSM_CACHE_DIR=$state/osm OSM_TMP_DIR=$state/osm LD_PRELOAD=$umad2sim \
+    opensm -F "$osm_conf" -f "$state/opensm.log" "$@" > "$state/opensm.out" 2>&1 &
+  sm=$!
+  trap 'kill -TERM "$sm" "$sim" 2> /dev/null || true; wait || true; exit 0' TERM INT
+  wait -n "$sim" "$sm" || rc=$?
+  kill -TERM "$sm" "$sim" 2> /dev/null || true
+  die "ibsim or OpenSM exited with status $rc. See $state/ibsim.err and $state/opensm.out"
+}
+
+tool() {
+  [[ $# -ge 1 ]] || die "usage: rfl-ibsim tool <name> [arg...]. Tools: ${tools[*]}"
+  local name=$1
+  shift
+  [[ " ${tools[*]} " == *" $name "* ]] || die "unknown tool $name. Tools: ${tools[*]}"
+  exec env LD_PRELOAD="$umad2sim" "$name" "$@"
+}
+
+console() {
+  [[ $# -ge 1 && -p $state/console ]] || die "usage: rfl-ibsim console <command...>, inside a running fabric"
+  local before after deadline=$((SECONDS + 10))
+  before=$(stat -c %s "$state/ibsim.out")
+  printf '%s\n' "$*" > "$state/console"
+  while ((SECONDS < deadline)); do
+    after=$(stat -c %s "$state/ibsim.out")
+    if ((after > before)) && [[ $(tail -c 5 "$state/ibsim.out") == "sim> " ]]; then
+      tail -c +"$((before + 1))" "$state/ibsim.out"
+      printf '\n'
+      return 0
+    fi
+    sleep 0.1
+  done
+  die "ibsim printed no prompt within 10 s after: $*"
+}
+
+case ${1:-} in
+  fabric) shift; fabric "$@" ;;
+  tool) shift; tool "$@" ;;
+  console) shift; console "$@" ;;
+  *) die "usage: rfl-ibsim fabric <netfile> [opensm option...] | tool <name> [arg...] | console <command...>" ;;
+esac

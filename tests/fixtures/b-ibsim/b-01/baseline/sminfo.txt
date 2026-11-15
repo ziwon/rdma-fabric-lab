@@ -1,0 +1,1 @@
+sminfo: sm lid 1 sm guid 0x100001, activity count 47 priority 0 state 3 SMINFO_MASTER

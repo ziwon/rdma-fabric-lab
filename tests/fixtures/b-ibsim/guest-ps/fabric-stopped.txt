@@ -1,0 +1,136 @@
+      1 systemd         /sbin/init
+      2 kthreadd        [kthreadd]
+      3 pool_workqueue_ [pool_workqueue_release]
+      4 kworker/R-rcu_g [kworker/R-rcu_g]
+      5 kworker/R-rcu_p [kworker/R-rcu_p]
+      6 kworker/R-slub_ [kworker/R-slub_]
+      7 kworker/R-netns [kworker/R-netns]
+      8 kworker/0:0-cgw [kworker/0:0-cgwb_release]
+      9 kworker/0:0H-ev [kworker/0:0H-events_highpri]
+     10 kworker/0:1-cgr [kworker/0:1-cgroup_free]
+     12 kworker/R-mm_pe [kworker/R-mm_pe]
+     13 rcu_tasks_kthre [rcu_tasks_kthread]
+     14 rcu_tasks_rude_ [rcu_tasks_rude_kthread]
+     15 rcu_tasks_trace [rcu_tasks_trace_kthread]
+     16 ksoftirqd/0     [ksoftirqd/0]
+     17 rcu_preempt     [rcu_preempt]
+     18 migration/0     [migration/0]
+     19 idle_inject/0   [idle_inject/0]
+     20 cpuhp/0         [cpuhp/0]
+     21 cpuhp/1         [cpuhp/1]
+     22 idle_inject/1   [idle_inject/1]
+     23 migration/1     [migration/1]
+     24 ksoftirqd/1     [ksoftirqd/1]
+     26 kworker/1:0H-ev [kworker/1:0H-events_highpri]
+     27 cpuhp/2         [cpuhp/2]
+     28 idle_inject/2   [idle_inject/2]
+     29 migration/2     [migration/2]
+     30 ksoftirqd/2     [ksoftirqd/2]
+     32 kworker/2:0H-ev [kworker/2:0H-events_highpri]
+     33 cpuhp/3         [cpuhp/3]
+     34 idle_inject/3   [idle_inject/3]
+     35 migration/3     [migration/3]
+     36 ksoftirqd/3     [ksoftirqd/3]
+     37 kworker/3:0-cgr [kworker/3:0-cgroup_free]
+     39 kdevtmpfs       [kdevtmpfs]
+     40 kworker/R-inet_ [kworker/R-inet_]
+     41 kauditd         [kauditd]
+     42 khungtaskd      [khungtaskd]
+     43 oom_reaper      [oom_reaper]
+     44 kworker/u8:1-fl [kworker/u8:1-flush-253:0]
+     45 kworker/R-write [kworker/R-write]
+     46 kcompactd0      [kcompactd0]
+     47 kworker/u8:2-fl [kworker/u8:2-flush-253:0]
+     48 ksmd            [ksmd]
+     49 kworker/2:1-cgr [kworker/2:1-cgroup_free]
+     50 khugepaged      [khugepaged]
+     51 kworker/R-kinte [kworker/R-kinte]
+     52 kworker/R-kbloc [kworker/R-kbloc]
+     53 kworker/R-blkcg [kworker/R-blkcg]
+     54 irq/9-acpi      [irq/9-acpi]
+     55 kworker/1:1-cgw [kworker/1:1-cgwb_release]
+     56 kworker/R-tpm_d [kworker/R-tpm_d]
+     57 kworker/R-ata_s [kworker/R-ata_s]
+     58 kworker/R-md    [kworker/R-md]
+     59 kworker/R-md_bi [kworker/R-md_bi]
+     60 kworker/R-edac- [kworker/R-edac-]
+     61 kworker/R-devfr [kworker/R-devfr]
+     62 watchdogd       [watchdogd]
+     64 kworker/R-quota [kworker/R-quota]
+     65 kworker/0:1H-kb [kworker/0:1H-kblockd]
+     66 kswapd0         [kswapd0]
+     67 ecryptfs-kthrea [ecryptfs-kthread]
+     68 kworker/R-kthro [kworker/R-kthro]
+     69 kworker/R-acpi_ [kworker/R-acpi_]
+     70 kworker/R-mld   [kworker/R-mld]
+     71 kworker/2:1H-kb [kworker/2:1H-kblockd]
+     72 kworker/R-ipv6_ [kworker/R-ipv6_]
+     79 kworker/R-kstrp [kworker/R-kstrp]
+     81 kworker/u9:0    [kworker/u9:0]
+     86 kworker/R-crypt [kworker/R-crypt]
+     96 kworker/R-charg [kworker/R-charg]
+    123 kworker/1:1H-kb [kworker/1:1H-kblockd]
+    124 kworker/3:1H-kb [kworker/3:1H-kblockd]
+    155 scsi_eh_0       [scsi_eh_0]
+    157 kworker/R-scsi_ [kworker/R-scsi_]
+    163 scsi_eh_1       [scsi_eh_1]
+    165 kworker/R-scsi_ [kworker/R-scsi_]
+    177 scsi_eh_2       [scsi_eh_2]
+    179 kworker/R-scsi_ [kworker/R-scsi_]
+    182 scsi_eh_3       [scsi_eh_3]
+    183 kworker/R-scsi_ [kworker/R-scsi_]
+    184 scsi_eh_4       [scsi_eh_4]
+    185 kworker/R-scsi_ [kworker/R-scsi_]
+    186 scsi_eh_5       [scsi_eh_5]
+    187 kworker/R-scsi_ [kworker/R-scsi_]
+    188 kworker/u8:3-ev [kworker/u8:3-events_unbound]
+    190 kworker/u8:5-wr [kworker/u8:5-writeback]
+    202 kworker/3:2H-kb [kworker/3:2H-kblockd]
+    229 kworker/R-raid5 [kworker/R-raid5]
+    266 jbd2/vda1-8     [jbd2/vda1-8]
+    267 kworker/R-ext4- [kworker/R-ext4-]
+    301 kworker/3:2-cgr [kworker/3:2-cgroup_release]
+    336 kworker/1:2-cgr [kworker/1:2-cgroup_free]
+    337 psimon          [psimon]
+    342 systemd-journal /usr/lib/systemd/systemd-journald
+    362 kworker/R-kmpat [kworker/R-kmpat]
+    363 kworker/R-kmpat [kworker/R-kmpat]
+    380 kworker/2:3-eve [kworker/2:3-events]
+    404 multipathd      /sbin/multipathd -d -s
+    408 systemd-udevd   /usr/lib/systemd/systemd-udevd
+    418 psimon          [psimon]
+    486 jbd2/vda16-8    [jbd2/vda16-8]
+    487 kworker/R-ext4- [kworker/R-ext4-]
+    551 systemd-resolve /usr/lib/systemd/systemd-resolved
+    555 systemd-timesyn /usr/lib/systemd/systemd-timesyncd
+    661 systemd-network /usr/lib/systemd/systemd-networkd
+    707 cron            /usr/sbin/cron -f -P
+    708 dbus-daemon     @dbus-daemon --system --address=systemd: --nofork --nopidfile --systemd-activation --syslog-only
+    712 polkitd         /usr/lib/polkit-1/polkitd --no-debug
+    718 systemd-logind  /usr/lib/systemd/systemd-logind
+    721 udisksd         /usr/libexec/udisks2/udisksd
+    741 agetty          /sbin/agetty -o -p -- \u --keep-baud 115200,57600,38400,9600 - vt220
+    749 unattended-upgr /usr/bin/python3 /usr/share/unattended-upgrades/unattended-upgrade-shutdown --wait-for-signal
+    754 containerd      /usr/bin/containerd
+    762 agetty          /sbin/agetty -o -p -- \u --noclear - linux
+    784 rsyslogd        /usr/sbin/rsyslogd -n -iNONE
+    786 ModemManager    /usr/sbin/ModemManager
+    848 dockerd         /usr/bin/dockerd -H fd:// --containerd=/run/containerd/containerd.sock
+   1101 sshd            sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups
+   1461 fwupd           /usr/libexec/fwupd/fwupd
+   1481 systemd         /usr/lib/systemd/systemd --user
+   1482 (sd-pam)        (sd-pam)
+   1487 kworker/3:1-mm_ [kworker/3:1-mm_percpu_wq]
+   1553 kworker/1:0-cgr [kworker/1:0-cgroup_free]
+   1656 sshd            sshd: ubuntu [priv]
+   1704 sshd            sshd: ubuntu@notty
+   1911 kworker/0:2     [kworker/0:2]
+   2185 kworker/2:0-eve [kworker/2:0-events]
+   2417 kworker/3:3     [kworker/3:3]
+   2518 sshd            sshd: ubuntu [priv]
+   2566 sshd            sshd: ubuntu@notty
+   2567 bash            bash -c sudo /var/tmp/rfl-track-b/src/tracks/b-ibsim/scripts/guest.sh stop 20261116T000000Z-capture-ps; ps -eo pid=,comm=,args=; sudo /var/tmp/rfl-track-b/src/tracks/b-ibsim/scripts/guest.sh ls
+   2609 kworker/u8:0-fl [kworker/u8:0-flush-253:0]
+   2610 kworker/u8:4    [kworker/u8:4]
+   2611 kworker/u8:6-ex [kworker/u8:6-ext4-rsv-conversion]
+   2616 ps              ps -eo pid=,comm=,args=

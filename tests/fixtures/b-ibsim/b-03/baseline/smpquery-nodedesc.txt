@@ -1,0 +1,18 @@
+== 1
+Node Description:............................hca1
+rc=0
+== 2
+Node Description:.............................sw1
+rc=0
+== 3
+Node Description:.............................sw2
+rc=0
+== 4
+Node Description:............................hca2
+rc=0
+== 5
+Node Description:............................hca3
+rc=0
+== 6
+Node Description:............................hca4
+rc=0

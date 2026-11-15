@@ -1,0 +1,26 @@
+Nov 15 14:21:45 231902 [FBDB3740] 0x03 -> OpenSM 3.3.23
+Nov 15 14:21:45 231920 [FBDB3740] 0x80 -> OpenSM 3.3.23
+Nov 15 14:21:45 232797 [FBDB3740] 0x02 -> osm_vendor_init: 1000 pending umads specified
+Nov 15 14:21:45 233047 [FBDB3740] 0x80 -> Entering DISCOVERING state
+Nov 15 14:21:45 233114 [FBDB3740] 0x02 -> osm_vendor_bind: Mgmt class 0x81 binding to port GUID 0x100001
+Nov 15 14:21:45 233452 [FBDB3740] 0x02 -> osm_vendor_bind: Mgmt class 0x03 binding to port GUID 0x100001
+Nov 15 14:21:45 233458 [FBDB3740] 0x02 -> osm_vendor_bind: Mgmt class 0x04 binding to port GUID 0x100001
+Nov 15 14:21:45 233463 [FBDB3740] 0x02 -> osm_vendor_bind: Mgmt class 0x21 binding to port GUID 0x100001
+Nov 15 14:21:45 233467 [FBDB3740] 0x02 -> osm_opensm_bind: Setting IS_SM on port 0x0000000000100001
+Nov 15 14:21:45 234713 [F7DAA6C0] 0x80 -> Entering MASTER state
+Nov 15 14:21:45 235056 [F7DAA6C0] 0x02 -> osm_ucast_mgr_process: minhop tables configured on all switches
+Nov 15 14:21:45 235573 [F7DAA6C0] 0x02 -> SUBNET UP
+Nov 15 14:21:51 374409 [FB5B16C0] 0x01 -> log_trap_info: Received Generic Notice type:1 num:128 (Link state change) Producer:2 (Switch) from LID:3 TID:0x0000000000000000
+Nov 15 14:21:51 374437 [FB5B16C0] 0x02 -> SM class trap 128: Directed Path Dump of 2 hop path: Path = 0,1,7
+Nov 15 14:21:51 374443 [FB5B16C0] 0x02 -> log_notice: Reporting Urgent Notice "Link state change" from switch LID 3, GUID 0x0000000000200001
+Nov 15 14:21:51 375469 [F7DAA6C0] 0x02 -> log_notice: Reporting Informational Notice "GID out of service", GID:fe80::10:5
+Nov 15 14:21:51 375478 [F7DAA6C0] 0x02 -> drop_mgr_remove_port: Removed port with GUID:0x0000000000100005 LID range [5, 5] of node:hca3
+Nov 15 14:21:51 375715 [F7DAA6C0] 0x02 -> osm_ucast_mgr_process: minhop tables configured on all switches
+Nov 15 14:21:51 375897 [F7DAA6C0] 0x02 -> SUBNET UP
+Nov 15 14:21:56 927116 [FB5B16C0] 0x01 -> log_trap_info: Received Generic Notice type:1 num:128 (Link state change) Producer:2 (Switch) from LID:3 TID:0x0000000000000000
+Nov 15 14:21:56 927137 [FB5B16C0] 0x02 -> SM class trap 128: Directed Path Dump of 2 hop path: Path = 0,1,7
+Nov 15 14:21:56 927144 [FB5B16C0] 0x02 -> log_notice: Reporting Urgent Notice "Link state change" from switch LID 3, GUID 0x0000000000200001
+Nov 15 14:21:56 928085 [F7DAA6C0] 0x02 -> osm_ucast_mgr_process: minhop tables configured on all switches
+Nov 15 14:21:56 928336 [F7DAA6C0] 0x02 -> log_notice: Reporting Informational Notice "GID in service", GID:fe80::10:5
+Nov 15 14:21:56 928341 [F7DAA6C0] 0x02 -> state_mgr_report_new_ports: Discovered new port with GUID:0x0000000000100005 LID range [5,5] of node: hca3
+Nov 15 14:21:56 928377 [F7DAA6C0] 0x02 -> SUBNET UP

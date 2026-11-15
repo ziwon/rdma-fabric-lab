@@ -1,0 +1,12 @@
+# B-01: two single-port HCAs on one 8-port switch. Hand-written in the ibsim net file format,
+# after net.1 of the upstream ibsim net-examples.
+
+Switch	8 "sw1"
+[1]	"hca1"[1]
+[2]	"hca2"[1]
+
+Hca	1 "hca1"
+[1]	"sw1"[1]
+
+Hca	1 "hca2"
+[1]	"sw1"[2]

@@ -1,0 +1,714 @@
+#
+# Topology file: generated on Sun Nov 15 14:22:21 2026
+#
+# Initiated from node 0000000000100000 port 0000000000100001
+
+vendid=0x0
+devid=0x0
+sysimgguid=0x200007
+switchguid=0x200007(200007)
+Switch	64 "S-0000000000200007"		# "cel1-ib-leaf-r7" base port 0 lid 12 lmc 0
+[1]	"H-000000000010000e"[1](10000f) 		# "cel1-dgx-01 mlx5_7" lid 20 4xSDR
+[2]	"H-000000000010001e"[1](10001f) 		# "cel1-dgx-02 mlx5_7" lid 28 4xSDR
+[3]	"H-000000000010002e"[1](10002f) 		# "cel1-dgx-03 mlx5_7" lid 36 4xSDR
+[4]	"H-000000000010003e"[1](10003f) 		# "cel1-dgx-04 mlx5_7" lid 44 4xSDR
+[5]	"H-000000000010004e"[1](10004f) 		# "cel1-dgx-05 mlx5_7" lid 52 4xSDR
+[6]	"H-000000000010005e"[1](10005f) 		# "cel1-dgx-06 mlx5_7" lid 60 4xSDR
+[7]	"H-000000000010006e"[1](10006f) 		# "cel1-dgx-07 mlx5_7" lid 68 4xSDR
+[8]	"H-000000000010007e"[1](10007f) 		# "cel1-dgx-08 mlx5_7" lid 76 4xSDR
+[33]	"S-0000000000200008"[15]		# "cel1-ib-spine-01" lid 13 4xSDR
+[34]	"S-0000000000200008"[16]		# "cel1-ib-spine-01" lid 13 4xSDR
+[35]	"S-0000000000200009"[15]		# "cel1-ib-spine-02" lid 15 4xSDR
+[36]	"S-0000000000200009"[16]		# "cel1-ib-spine-02" lid 15 4xSDR
+[37]	"S-000000000020000a"[15]		# "cel1-ib-spine-03" lid 16 4xSDR
+[38]	"S-000000000020000a"[16]		# "cel1-ib-spine-03" lid 16 4xSDR
+[39]	"S-000000000020000b"[15]		# "cel1-ib-spine-04" lid 18 4xSDR
+[40]	"S-000000000020000b"[16]		# "cel1-ib-spine-04" lid 18 4xSDR
+
+vendid=0x0
+devid=0x0
+sysimgguid=0x200006
+switchguid=0x200006(200006)
+Switch	64 "S-0000000000200006"		# "cel1-ib-leaf-r6" base port 0 lid 10 lmc 0
+[1]	"H-000000000010000c"[1](10000d) 		# "cel1-dgx-01 mlx5_6" lid 19 4xSDR
+[2]	"H-000000000010001c"[1](10001d) 		# "cel1-dgx-02 mlx5_6" lid 27 4xSDR
+[3]	"H-000000000010002c"[1](10002d) 		# "cel1-dgx-03 mlx5_6" lid 35 4xSDR
+[4]	"H-000000000010003c"[1](10003d) 		# "cel1-dgx-04 mlx5_6" lid 43 4xSDR
+[5]	"H-000000000010004c"[1](10004d) 		# "cel1-dgx-05 mlx5_6" lid 51 4xSDR
+[6]	"H-000000000010005c"[1](10005d) 		# "cel1-dgx-06 mlx5_6" lid 59 4xSDR
+[7]	"H-000000000010006c"[1](10006d) 		# "cel1-dgx-07 mlx5_6" lid 67 4xSDR
+[8]	"H-000000000010007c"[1](10007d) 		# "cel1-dgx-08 mlx5_6" lid 75 4xSDR
+[33]	"S-0000000000200008"[13]		# "cel1-ib-spine-01" lid 13 4xSDR
+[34]	"S-0000000000200008"[14]		# "cel1-ib-spine-01" lid 13 4xSDR
+[35]	"S-0000000000200009"[13]		# "cel1-ib-spine-02" lid 15 4xSDR
+[36]	"S-0000000000200009"[14]		# "cel1-ib-spine-02" lid 15 4xSDR
+[37]	"S-000000000020000a"[13]		# "cel1-ib-spine-03" lid 16 4xSDR
+[38]	"S-000000000020000a"[14]		# "cel1-ib-spine-03" lid 16 4xSDR
+[39]	"S-000000000020000b"[13]		# "cel1-ib-spine-04" lid 18 4xSDR
+[40]	"S-000000000020000b"[14]		# "cel1-ib-spine-04" lid 18 4xSDR
+
+vendid=0x0
+devid=0x0
+sysimgguid=0x200005
+switchguid=0x200005(200005)
+Switch	64 "S-0000000000200005"		# "cel1-ib-leaf-r5" base port 0 lid 9 lmc 0
+[1]	"H-000000000010000a"[1](10000b) 		# "cel1-dgx-01 mlx5_5" lid 17 4xSDR
+[2]	"H-000000000010001a"[1](10001b) 		# "cel1-dgx-02 mlx5_5" lid 26 4xSDR
+[3]	"H-000000000010002a"[1](10002b) 		# "cel1-dgx-03 mlx5_5" lid 34 4xSDR
+[4]	"H-000000000010003a"[1](10003b) 		# "cel1-dgx-04 mlx5_5" lid 42 4xSDR
+[5]	"H-000000000010004a"[1](10004b) 		# "cel1-dgx-05 mlx5_5" lid 50 4xSDR
+[6]	"H-000000000010005a"[1](10005b) 		# "cel1-dgx-06 mlx5_5" lid 58 4xSDR
+[7]	"H-000000000010006a"[1](10006b) 		# "cel1-dgx-07 mlx5_5" lid 66 4xSDR
+[8]	"H-000000000010007a"[1](10007b) 		# "cel1-dgx-08 mlx5_5" lid 74 4xSDR
+[33]	"S-0000000000200008"[11]		# "cel1-ib-spine-01" lid 13 4xSDR
+[34]	"S-0000000000200008"[12]		# "cel1-ib-spine-01" lid 13 4xSDR
+[35]	"S-0000000000200009"[11]		# "cel1-ib-spine-02" lid 15 4xSDR
+[36]	"S-0000000000200009"[12]		# "cel1-ib-spine-02" lid 15 4xSDR
+[37]	"S-000000000020000a"[11]		# "cel1-ib-spine-03" lid 16 4xSDR
+[38]	"S-000000000020000a"[12]		# "cel1-ib-spine-03" lid 16 4xSDR
+[39]	"S-000000000020000b"[11]		# "cel1-ib-spine-04" lid 18 4xSDR
+[40]	"S-000000000020000b"[12]		# "cel1-ib-spine-04" lid 18 4xSDR
+
+vendid=0x0
+devid=0x0
+sysimgguid=0x200004
+switchguid=0x200004(200004)
+Switch	64 "S-0000000000200004"		# "cel1-ib-leaf-r4" base port 0 lid 7 lmc 0
+[1]	"H-0000000000100008"[1](100009) 		# "cel1-dgx-01 mlx5_4" lid 14 4xSDR
+[2]	"H-0000000000100018"[1](100019) 		# "cel1-dgx-02 mlx5_4" lid 25 4xSDR
+[3]	"H-0000000000100028"[1](100029) 		# "cel1-dgx-03 mlx5_4" lid 33 4xSDR
+[4]	"H-0000000000100038"[1](100039) 		# "cel1-dgx-04 mlx5_4" lid 41 4xSDR
+[5]	"H-0000000000100048"[1](100049) 		# "cel1-dgx-05 mlx5_4" lid 49 4xSDR
+[6]	"H-0000000000100058"[1](100059) 		# "cel1-dgx-06 mlx5_4" lid 57 4xSDR
+[7]	"H-0000000000100068"[1](100069) 		# "cel1-dgx-07 mlx5_4" lid 65 4xSDR
+[8]	"H-0000000000100078"[1](100079) 		# "cel1-dgx-08 mlx5_4" lid 73 4xSDR
+[33]	"S-0000000000200008"[9]		# "cel1-ib-spine-01" lid 13 4xSDR
+[34]	"S-0000000000200008"[10]		# "cel1-ib-spine-01" lid 13 4xSDR
+[35]	"S-0000000000200009"[9]		# "cel1-ib-spine-02" lid 15 4xSDR
+[36]	"S-0000000000200009"[10]		# "cel1-ib-spine-02" lid 15 4xSDR
+[37]	"S-000000000020000a"[9]		# "cel1-ib-spine-03" lid 16 4xSDR
+[38]	"S-000000000020000a"[10]		# "cel1-ib-spine-03" lid 16 4xSDR
+[39]	"S-000000000020000b"[9]		# "cel1-ib-spine-04" lid 18 4xSDR
+[40]	"S-000000000020000b"[10]		# "cel1-ib-spine-04" lid 18 4xSDR
+
+vendid=0x0
+devid=0x0
+sysimgguid=0x200003
+switchguid=0x200003(200003)
+Switch	64 "S-0000000000200003"		# "cel1-ib-leaf-r3" base port 0 lid 6 lmc 0
+[1]	"H-0000000000100006"[1](100007) 		# "cel1-dgx-01 mlx5_3" lid 11 4xSDR
+[2]	"H-0000000000100016"[1](100017) 		# "cel1-dgx-02 mlx5_3" lid 24 4xSDR
+[3]	"H-0000000000100026"[1](100027) 		# "cel1-dgx-03 mlx5_3" lid 32 4xSDR
+[4]	"H-0000000000100036"[1](100037) 		# "cel1-dgx-04 mlx5_3" lid 40 4xSDR
+[5]	"H-0000000000100046"[1](100047) 		# "cel1-dgx-05 mlx5_3" lid 48 4xSDR
+[6]	"H-0000000000100056"[1](100057) 		# "cel1-dgx-06 mlx5_3" lid 56 4xSDR
+[7]	"H-0000000000100066"[1](100067) 		# "cel1-dgx-07 mlx5_3" lid 64 4xSDR
+[8]	"H-0000000000100076"[1](100077) 		# "cel1-dgx-08 mlx5_3" lid 72 4xSDR
+[33]	"S-0000000000200008"[7]		# "cel1-ib-spine-01" lid 13 4xSDR
+[34]	"S-0000000000200008"[8]		# "cel1-ib-spine-01" lid 13 4xSDR
+[36]	"S-0000000000200009"[8]		# "cel1-ib-spine-02" lid 15 4xSDR
+[37]	"S-000000000020000a"[7]		# "cel1-ib-spine-03" lid 16 4xSDR
+[38]	"S-000000000020000a"[8]		# "cel1-ib-spine-03" lid 16 4xSDR
+[39]	"S-000000000020000b"[7]		# "cel1-ib-spine-04" lid 18 4xSDR
+[40]	"S-000000000020000b"[8]		# "cel1-ib-spine-04" lid 18 4xSDR
+
+vendid=0x0
+devid=0x0
+sysimgguid=0x200002
+switchguid=0x200002(200002)
+Switch	64 "S-0000000000200002"		# "cel1-ib-leaf-r2" base port 0 lid 4 lmc 0
+[1]	"H-0000000000100004"[1](100005) 		# "cel1-dgx-01 mlx5_2" lid 8 4xSDR
+[2]	"H-0000000000100014"[1](100015) 		# "cel1-dgx-02 mlx5_2" lid 23 4xSDR
+[3]	"H-0000000000100024"[1](100025) 		# "cel1-dgx-03 mlx5_2" lid 31 4xSDR
+[4]	"H-0000000000100034"[1](100035) 		# "cel1-dgx-04 mlx5_2" lid 39 4xSDR
+[5]	"H-0000000000100044"[1](100045) 		# "cel1-dgx-05 mlx5_2" lid 47 4xSDR
+[6]	"H-0000000000100054"[1](100055) 		# "cel1-dgx-06 mlx5_2" lid 55 4xSDR
+[7]	"H-0000000000100064"[1](100065) 		# "cel1-dgx-07 mlx5_2" lid 63 4xSDR
+[8]	"H-0000000000100074"[1](100075) 		# "cel1-dgx-08 mlx5_2" lid 71 4xSDR
+[33]	"S-0000000000200008"[5]		# "cel1-ib-spine-01" lid 13 4xSDR
+[34]	"S-0000000000200008"[6]		# "cel1-ib-spine-01" lid 13 4xSDR
+[35]	"S-0000000000200009"[5]		# "cel1-ib-spine-02" lid 15 4xSDR
+[36]	"S-0000000000200009"[6]		# "cel1-ib-spine-02" lid 15 4xSDR
+[37]	"S-000000000020000a"[5]		# "cel1-ib-spine-03" lid 16 4xSDR
+[38]	"S-000000000020000a"[6]		# "cel1-ib-spine-03" lid 16 4xSDR
+[39]	"S-000000000020000b"[5]		# "cel1-ib-spine-04" lid 18 4xSDR
+[40]	"S-000000000020000b"[6]		# "cel1-ib-spine-04" lid 18 4xSDR
+
+vendid=0x0
+devid=0x0
+sysimgguid=0x200001
+switchguid=0x200001(200001)
+Switch	64 "S-0000000000200001"		# "cel1-ib-leaf-r1" base port 0 lid 3 lmc 0
+[1]	"H-0000000000100002"[1](100003) 		# "cel1-dgx-01 mlx5_1" lid 5 4xSDR
+[2]	"H-0000000000100012"[1](100013) 		# "cel1-dgx-02 mlx5_1" lid 22 4xSDR
+[3]	"H-0000000000100022"[1](100023) 		# "cel1-dgx-03 mlx5_1" lid 30 4xSDR
+[4]	"H-0000000000100032"[1](100033) 		# "cel1-dgx-04 mlx5_1" lid 38 4xSDR
+[5]	"H-0000000000100042"[1](100043) 		# "cel1-dgx-05 mlx5_1" lid 46 4xSDR
+[6]	"H-0000000000100052"[1](100053) 		# "cel1-dgx-06 mlx5_1" lid 54 4xSDR
+[7]	"H-0000000000100062"[1](100063) 		# "cel1-dgx-07 mlx5_1" lid 62 4xSDR
+[8]	"H-0000000000100072"[1](100073) 		# "cel1-dgx-08 mlx5_1" lid 70 4xSDR
+[33]	"S-0000000000200008"[3]		# "cel1-ib-spine-01" lid 13 4xSDR
+[34]	"S-0000000000200008"[4]		# "cel1-ib-spine-01" lid 13 4xSDR
+[35]	"S-0000000000200009"[3]		# "cel1-ib-spine-02" lid 15 4xSDR
+[36]	"S-0000000000200009"[4]		# "cel1-ib-spine-02" lid 15 4xSDR
+[37]	"S-000000000020000a"[3]		# "cel1-ib-spine-03" lid 16 4xSDR
+[38]	"S-000000000020000a"[4]		# "cel1-ib-spine-03" lid 16 4xSDR
+[39]	"S-000000000020000b"[3]		# "cel1-ib-spine-04" lid 18 4xSDR
+[40]	"S-000000000020000b"[4]		# "cel1-ib-spine-04" lid 18 4xSDR
+
+vendid=0x0
+devid=0x0
+sysimgguid=0x20000b
+switchguid=0x20000b(20000b)
+Switch	64 "S-000000000020000b"		# "cel1-ib-spine-04" base port 0 lid 18 lmc 0
+[1]	"S-0000000000200000"[39]		# "cel1-ib-leaf-r0" lid 2 4xSDR
+[2]	"S-0000000000200000"[40]		# "cel1-ib-leaf-r0" lid 2 4xSDR
+[3]	"S-0000000000200001"[39]		# "cel1-ib-leaf-r1" lid 3 4xSDR
+[4]	"S-0000000000200001"[40]		# "cel1-ib-leaf-r1" lid 3 4xSDR
+[5]	"S-0000000000200002"[39]		# "cel1-ib-leaf-r2" lid 4 4xSDR
+[6]	"S-0000000000200002"[40]		# "cel1-ib-leaf-r2" lid 4 4xSDR
+[7]	"S-0000000000200003"[39]		# "cel1-ib-leaf-r3" lid 6 4xSDR
+[8]	"S-0000000000200003"[40]		# "cel1-ib-leaf-r3" lid 6 4xSDR
+[9]	"S-0000000000200004"[39]		# "cel1-ib-leaf-r4" lid 7 4xSDR
+[10]	"S-0000000000200004"[40]		# "cel1-ib-leaf-r4" lid 7 4xSDR
+[11]	"S-0000000000200005"[39]		# "cel1-ib-leaf-r5" lid 9 4xSDR
+[12]	"S-0000000000200005"[40]		# "cel1-ib-leaf-r5" lid 9 4xSDR
+[13]	"S-0000000000200006"[39]		# "cel1-ib-leaf-r6" lid 10 4xSDR
+[14]	"S-0000000000200006"[40]		# "cel1-ib-leaf-r6" lid 10 4xSDR
+[15]	"S-0000000000200007"[39]		# "cel1-ib-leaf-r7" lid 12 4xSDR
+[16]	"S-0000000000200007"[40]		# "cel1-ib-leaf-r7" lid 12 4xSDR
+
+vendid=0x0
+devid=0x0
+sysimgguid=0x20000a
+switchguid=0x20000a(20000a)
+Switch	64 "S-000000000020000a"		# "cel1-ib-spine-03" base port 0 lid 16 lmc 0
+[1]	"S-0000000000200000"[37]		# "cel1-ib-leaf-r0" lid 2 4xSDR
+[2]	"S-0000000000200000"[38]		# "cel1-ib-leaf-r0" lid 2 4xSDR
+[3]	"S-0000000000200001"[37]		# "cel1-ib-leaf-r1" lid 3 4xSDR
+[4]	"S-0000000000200001"[38]		# "cel1-ib-leaf-r1" lid 3 4xSDR
+[5]	"S-0000000000200002"[37]		# "cel1-ib-leaf-r2" lid 4 4xSDR
+[6]	"S-0000000000200002"[38]		# "cel1-ib-leaf-r2" lid 4 4xSDR
+[7]	"S-0000000000200003"[37]		# "cel1-ib-leaf-r3" lid 6 4xSDR
+[8]	"S-0000000000200003"[38]		# "cel1-ib-leaf-r3" lid 6 4xSDR
+[9]	"S-0000000000200004"[37]		# "cel1-ib-leaf-r4" lid 7 4xSDR
+[10]	"S-0000000000200004"[38]		# "cel1-ib-leaf-r4" lid 7 4xSDR
+[11]	"S-0000000000200005"[37]		# "cel1-ib-leaf-r5" lid 9 4xSDR
+[12]	"S-0000000000200005"[38]		# "cel1-ib-leaf-r5" lid 9 4xSDR
+[13]	"S-0000000000200006"[37]		# "cel1-ib-leaf-r6" lid 10 4xSDR
+[14]	"S-0000000000200006"[38]		# "cel1-ib-leaf-r6" lid 10 4xSDR
+[15]	"S-0000000000200007"[37]		# "cel1-ib-leaf-r7" lid 12 4xSDR
+[16]	"S-0000000000200007"[38]		# "cel1-ib-leaf-r7" lid 12 4xSDR
+
+vendid=0x0
+devid=0x0
+sysimgguid=0x200009
+switchguid=0x200009(200009)
+Switch	64 "S-0000000000200009"		# "cel1-ib-spine-02" base port 0 lid 15 lmc 0
+[1]	"S-0000000000200000"[35]		# "cel1-ib-leaf-r0" lid 2 4xSDR
+[2]	"S-0000000000200000"[36]		# "cel1-ib-leaf-r0" lid 2 4xSDR
+[3]	"S-0000000000200001"[35]		# "cel1-ib-leaf-r1" lid 3 4xSDR
+[4]	"S-0000000000200001"[36]		# "cel1-ib-leaf-r1" lid 3 4xSDR
+[5]	"S-0000000000200002"[35]		# "cel1-ib-leaf-r2" lid 4 4xSDR
+[6]	"S-0000000000200002"[36]		# "cel1-ib-leaf-r2" lid 4 4xSDR
+[8]	"S-0000000000200003"[36]		# "cel1-ib-leaf-r3" lid 6 4xSDR
+[9]	"S-0000000000200004"[35]		# "cel1-ib-leaf-r4" lid 7 4xSDR
+[10]	"S-0000000000200004"[36]		# "cel1-ib-leaf-r4" lid 7 4xSDR
+[11]	"S-0000000000200005"[35]		# "cel1-ib-leaf-r5" lid 9 4xSDR
+[12]	"S-0000000000200005"[36]		# "cel1-ib-leaf-r5" lid 9 4xSDR
+[13]	"S-0000000000200006"[35]		# "cel1-ib-leaf-r6" lid 10 4xSDR
+[14]	"S-0000000000200006"[36]		# "cel1-ib-leaf-r6" lid 10 4xSDR
+[15]	"S-0000000000200007"[35]		# "cel1-ib-leaf-r7" lid 12 4xSDR
+[16]	"S-0000000000200007"[36]		# "cel1-ib-leaf-r7" lid 12 4xSDR
+
+vendid=0x0
+devid=0x0
+sysimgguid=0x200008
+switchguid=0x200008(200008)
+Switch	64 "S-0000000000200008"		# "cel1-ib-spine-01" base port 0 lid 13 lmc 0
+[1]	"S-0000000000200000"[33]		# "cel1-ib-leaf-r0" lid 2 4xSDR
+[2]	"S-0000000000200000"[34]		# "cel1-ib-leaf-r0" lid 2 4xSDR
+[3]	"S-0000000000200001"[33]		# "cel1-ib-leaf-r1" lid 3 4xSDR
+[4]	"S-0000000000200001"[34]		# "cel1-ib-leaf-r1" lid 3 4xSDR
+[5]	"S-0000000000200002"[33]		# "cel1-ib-leaf-r2" lid 4 4xSDR
+[6]	"S-0000000000200002"[34]		# "cel1-ib-leaf-r2" lid 4 4xSDR
+[7]	"S-0000000000200003"[33]		# "cel1-ib-leaf-r3" lid 6 4xSDR
+[8]	"S-0000000000200003"[34]		# "cel1-ib-leaf-r3" lid 6 4xSDR
+[9]	"S-0000000000200004"[33]		# "cel1-ib-leaf-r4" lid 7 4xSDR
+[10]	"S-0000000000200004"[34]		# "cel1-ib-leaf-r4" lid 7 4xSDR
+[11]	"S-0000000000200005"[33]		# "cel1-ib-leaf-r5" lid 9 4xSDR
+[12]	"S-0000000000200005"[34]		# "cel1-ib-leaf-r5" lid 9 4xSDR
+[13]	"S-0000000000200006"[33]		# "cel1-ib-leaf-r6" lid 10 4xSDR
+[14]	"S-0000000000200006"[34]		# "cel1-ib-leaf-r6" lid 10 4xSDR
+[15]	"S-0000000000200007"[33]		# "cel1-ib-leaf-r7" lid 12 4xSDR
+[16]	"S-0000000000200007"[34]		# "cel1-ib-leaf-r7" lid 12 4xSDR
+
+vendid=0x0
+devid=0x0
+sysimgguid=0x200000
+switchguid=0x200000(200000)
+Switch	64 "S-0000000000200000"		# "cel1-ib-leaf-r0" base port 0 lid 2 lmc 0
+[1]	"H-0000000000100000"[1](100001) 		# "cel1-dgx-01 mlx5_0" lid 1 4xSDR
+[2]	"H-0000000000100010"[1](100011) 		# "cel1-dgx-02 mlx5_0" lid 21 4xSDR
+[3]	"H-0000000000100020"[1](100021) 		# "cel1-dgx-03 mlx5_0" lid 29 4xSDR
+[4]	"H-0000000000100030"[1](100031) 		# "cel1-dgx-04 mlx5_0" lid 37 4xSDR
+[5]	"H-0000000000100040"[1](100041) 		# "cel1-dgx-05 mlx5_0" lid 45 4xSDR
+[6]	"H-0000000000100050"[1](100051) 		# "cel1-dgx-06 mlx5_0" lid 53 4xSDR
+[7]	"H-0000000000100060"[1](100061) 		# "cel1-dgx-07 mlx5_0" lid 61 4xSDR
+[8]	"H-0000000000100070"[1](100071) 		# "cel1-dgx-08 mlx5_0" lid 69 4xSDR
+[33]	"S-0000000000200008"[1]		# "cel1-ib-spine-01" lid 13 4xSDR
+[34]	"S-0000000000200008"[2]		# "cel1-ib-spine-01" lid 13 4xSDR
+[35]	"S-0000000000200009"[1]		# "cel1-ib-spine-02" lid 15 4xSDR
+[36]	"S-0000000000200009"[2]		# "cel1-ib-spine-02" lid 15 4xSDR
+[37]	"S-000000000020000a"[1]		# "cel1-ib-spine-03" lid 16 4xSDR
+[38]	"S-000000000020000a"[2]		# "cel1-ib-spine-03" lid 16 4xSDR
+[39]	"S-000000000020000b"[1]		# "cel1-ib-spine-04" lid 18 4xSDR
+[40]	"S-000000000020000b"[2]		# "cel1-ib-spine-04" lid 18 4xSDR
+
+vendid=0x0
+devid=0x0
+sysimgguid=0x10007e
+caguid=0x10007e
+Ca	1 "H-000000000010007e"		# "cel1-dgx-08 mlx5_7"
+[1](10007f) 	"S-0000000000200007"[8]		# lid 76 lmc 0 "cel1-ib-leaf-r7" lid 12 4xSDR
+
+vendid=0x0
+devid=0x0
+sysimgguid=0x10006e
+caguid=0x10006e
+Ca	1 "H-000000000010006e"		# "cel1-dgx-07 mlx5_7"
+[1](10006f) 	"S-0000000000200007"[7]		# lid 68 lmc 0 "cel1-ib-leaf-r7" lid 12 4xSDR
+
+vendid=0x0
+devid=0x0
+sysimgguid=0x10005e
+caguid=0x10005e
+Ca	1 "H-000000000010005e"		# "cel1-dgx-06 mlx5_7"
+[1](10005f) 	"S-0000000000200007"[6]		# lid 60 lmc 0 "cel1-ib-leaf-r7" lid 12 4xSDR
+
+vendid=0x0
+devid=0x0
+sysimgguid=0x10004e
+caguid=0x10004e
+Ca	1 "H-000000000010004e"		# "cel1-dgx-05 mlx5_7"
+[1](10004f) 	"S-0000000000200007"[5]		# lid 52 lmc 0 "cel1-ib-leaf-r7" lid 12 4xSDR
+
+vendid=0x0
+devid=0x0
+sysimgguid=0x10003e
+caguid=0x10003e
+Ca	1 "H-000000000010003e"		# "cel1-dgx-04 mlx5_7"
+[1](10003f) 	"S-0000000000200007"[4]		# lid 44 lmc 0 "cel1-ib-leaf-r7" lid 12 4xSDR
+
+vendid=0x0
+devid=0x0
+sysimgguid=0x10002e
+caguid=0x10002e
+Ca	1 "H-000000000010002e"		# "cel1-dgx-03 mlx5_7"
+[1](10002f) 	"S-0000000000200007"[3]		# lid 36 lmc 0 "cel1-ib-leaf-r7" lid 12 4xSDR
+
+vendid=0x0
+devid=0x0
+sysimgguid=0x10001e
+caguid=0x10001e
+Ca	1 "H-000000000010001e"		# "cel1-dgx-02 mlx5_7"
+[1](10001f) 	"S-0000000000200007"[2]		# lid 28 lmc 0 "cel1-ib-leaf-r7" lid 12 4xSDR
+
+vendid=0x0
+devid=0x0
+sysimgguid=0x10000e
+caguid=0x10000e
+Ca	1 "H-000000000010000e"		# "cel1-dgx-01 mlx5_7"
+[1](10000f) 	"S-0000000000200007"[1]		# lid 20 lmc 0 "cel1-ib-leaf-r7" lid 12 4xSDR
+
+vendid=0x0
+devid=0x0
+sysimgguid=0x10007c
+caguid=0x10007c
+Ca	1 "H-000000000010007c"		# "cel1-dgx-08 mlx5_6"
+[1](10007d) 	"S-0000000000200006"[8]		# lid 75 lmc 0 "cel1-ib-leaf-r6" lid 10 4xSDR
+
+vendid=0x0
+devid=0x0
+sysimgguid=0x10006c
+caguid=0x10006c
+Ca	1 "H-000000000010006c"		# "cel1-dgx-07 mlx5_6"
+[1](10006d) 	"S-0000000000200006"[7]		# lid 67 lmc 0 "cel1-ib-leaf-r6" lid 10 4xSDR
+
+vendid=0x0
+devid=0x0
+sysimgguid=0x10005c
+caguid=0x10005c
+Ca	1 "H-000000000010005c"		# "cel1-dgx-06 mlx5_6"
+[1](10005d) 	"S-0000000000200006"[6]		# lid 59 lmc 0 "cel1-ib-leaf-r6" lid 10 4xSDR
+
+vendid=0x0
+devid=0x0
+sysimgguid=0x10004c
+caguid=0x10004c
+Ca	1 "H-000000000010004c"		# "cel1-dgx-05 mlx5_6"
+[1](10004d) 	"S-0000000000200006"[5]		# lid 51 lmc 0 "cel1-ib-leaf-r6" lid 10 4xSDR
+
+vendid=0x0
+devid=0x0
+sysimgguid=0x10003c
+caguid=0x10003c
+Ca	1 "H-000000000010003c"		# "cel1-dgx-04 mlx5_6"
+[1](10003d) 	"S-0000000000200006"[4]		# lid 43 lmc 0 "cel1-ib-leaf-r6" lid 10 4xSDR
+
+vendid=0x0
+devid=0x0
+sysimgguid=0x10002c
+caguid=0x10002c
+Ca	1 "H-000000000010002c"		# "cel1-dgx-03 mlx5_6"
+[1](10002d) 	"S-0000000000200006"[3]		# lid 35 lmc 0 "cel1-ib-leaf-r6" lid 10 4xSDR
+
+vendid=0x0
+devid=0x0
+sysimgguid=0x10001c
+caguid=0x10001c
+Ca	1 "H-000000000010001c"		# "cel1-dgx-02 mlx5_6"
+[1](10001d) 	"S-0000000000200006"[2]		# lid 27 lmc 0 "cel1-ib-leaf-r6" lid 10 4xSDR
+
+vendid=0x0
+devid=0x0
+sysimgguid=0x10000c
+caguid=0x10000c
+Ca	1 "H-000000000010000c"		# "cel1-dgx-01 mlx5_6"
+[1](10000d) 	"S-0000000000200006"[1]		# lid 19 lmc 0 "cel1-ib-leaf-r6" lid 10 4xSDR
+
+vendid=0x0
+devid=0x0
+sysimgguid=0x10007a
+caguid=0x10007a
+Ca	1 "H-000000000010007a"		# "cel1-dgx-08 mlx5_5"
+[1](10007b) 	"S-0000000000200005"[8]		# lid 74 lmc 0 "cel1-ib-leaf-r5" lid 9 4xSDR
+
+vendid=0x0
+devid=0x0
+sysimgguid=0x10006a
+caguid=0x10006a
+Ca	1 "H-000000000010006a"		# "cel1-dgx-07 mlx5_5"
+[1](10006b) 	"S-0000000000200005"[7]		# lid 66 lmc 0 "cel1-ib-leaf-r5" lid 9 4xSDR
+
+vendid=0x0
+devid=0x0
+sysimgguid=0x10005a
+caguid=0x10005a
+Ca	1 "H-000000000010005a"		# "cel1-dgx-06 mlx5_5"
+[1](10005b) 	"S-0000000000200005"[6]		# lid 58 lmc 0 "cel1-ib-leaf-r5" lid 9 4xSDR
+
+vendid=0x0
+devid=0x0
+sysimgguid=0x10004a
+caguid=0x10004a
+Ca	1 "H-000000000010004a"		# "cel1-dgx-05 mlx5_5"
+[1](10004b) 	"S-0000000000200005"[5]		# lid 50 lmc 0 "cel1-ib-leaf-r5" lid 9 4xSDR
+
+vendid=0x0
+devid=0x0
+sysimgguid=0x10003a
+caguid=0x10003a
+Ca	1 "H-000000000010003a"		# "cel1-dgx-04 mlx5_5"
+[1](10003b) 	"S-0000000000200005"[4]		# lid 42 lmc 0 "cel1-ib-leaf-r5" lid 9 4xSDR
+
+vendid=0x0
+devid=0x0
+sysimgguid=0x10002a
+caguid=0x10002a
+Ca	1 "H-000000000010002a"		# "cel1-dgx-03 mlx5_5"
+[1](10002b) 	"S-0000000000200005"[3]		# lid 34 lmc 0 "cel1-ib-leaf-r5" lid 9 4xSDR
+
+vendid=0x0
+devid=0x0
+sysimgguid=0x10001a
+caguid=0x10001a
+Ca	1 "H-000000000010001a"		# "cel1-dgx-02 mlx5_5"
+[1](10001b) 	"S-0000000000200005"[2]		# lid 26 lmc 0 "cel1-ib-leaf-r5" lid 9 4xSDR
+
+vendid=0x0
+devid=0x0
+sysimgguid=0x10000a
+caguid=0x10000a
+Ca	1 "H-000000000010000a"		# "cel1-dgx-01 mlx5_5"
+[1](10000b) 	"S-0000000000200005"[1]		# lid 17 lmc 0 "cel1-ib-leaf-r5" lid 9 4xSDR
+
+vendid=0x0
+devid=0x0
+sysimgguid=0x100078
+caguid=0x100078
+Ca	1 "H-0000000000100078"		# "cel1-dgx-08 mlx5_4"
+[1](100079) 	"S-0000000000200004"[8]		# lid 73 lmc 0 "cel1-ib-leaf-r4" lid 7 4xSDR
+
+vendid=0x0
+devid=0x0
+sysimgguid=0x100068
+caguid=0x100068
+Ca	1 "H-0000000000100068"		# "cel1-dgx-07 mlx5_4"
+[1](100069) 	"S-0000000000200004"[7]		# lid 65 lmc 0 "cel1-ib-leaf-r4" lid 7 4xSDR
+
+vendid=0x0
+devid=0x0
+sysimgguid=0x100058
+caguid=0x100058
+Ca	1 "H-0000000000100058"		# "cel1-dgx-06 mlx5_4"
+[1](100059) 	"S-0000000000200004"[6]		# lid 57 lmc 0 "cel1-ib-leaf-r4" lid 7 4xSDR
+
+vendid=0x0
+devid=0x0
+sysimgguid=0x100048
+caguid=0x100048
+Ca	1 "H-0000000000100048"		# "cel1-dgx-05 mlx5_4"
+[1](100049) 	"S-0000000000200004"[5]		# lid 49 lmc 0 "cel1-ib-leaf-r4" lid 7 4xSDR
+
+vendid=0x0
+devid=0x0
+sysimgguid=0x100038
+caguid=0x100038
+Ca	1 "H-0000000000100038"		# "cel1-dgx-04 mlx5_4"
+[1](100039) 	"S-0000000000200004"[4]		# lid 41 lmc 0 "cel1-ib-leaf-r4" lid 7 4xSDR
+
+vendid=0x0
+devid=0x0
+sysimgguid=0x100028
+caguid=0x100028
+Ca	1 "H-0000000000100028"		# "cel1-dgx-03 mlx5_4"
+[1](100029) 	"S-0000000000200004"[3]		# lid 33 lmc 0 "cel1-ib-leaf-r4" lid 7 4xSDR
+
+vendid=0x0
+devid=0x0
+sysimgguid=0x100018
+caguid=0x100018
+Ca	1 "H-0000000000100018"		# "cel1-dgx-02 mlx5_4"
+[1](100019) 	"S-0000000000200004"[2]		# lid 25 lmc 0 "cel1-ib-leaf-r4" lid 7 4xSDR
+
+vendid=0x0
+devid=0x0
+sysimgguid=0x100008
+caguid=0x100008
+Ca	1 "H-0000000000100008"		# "cel1-dgx-01 mlx5_4"
+[1](100009) 	"S-0000000000200004"[1]		# lid 14 lmc 0 "cel1-ib-leaf-r4" lid 7 4xSDR
+
+vendid=0x0
+devid=0x0
+sysimgguid=0x100076
+caguid=0x100076
+Ca	1 "H-0000000000100076"		# "cel1-dgx-08 mlx5_3"
+[1](100077) 	"S-0000000000200003"[8]		# lid 72 lmc 0 "cel1-ib-leaf-r3" lid 6 4xSDR
+
+vendid=0x0
+devid=0x0
+sysimgguid=0x100066
+caguid=0x100066
+Ca	1 "H-0000000000100066"		# "cel1-dgx-07 mlx5_3"
+[1](100067) 	"S-0000000000200003"[7]		# lid 64 lmc 0 "cel1-ib-leaf-r3" lid 6 4xSDR
+
+vendid=0x0
+devid=0x0
+sysimgguid=0x100056
+caguid=0x100056
+Ca	1 "H-0000000000100056"		# "cel1-dgx-06 mlx5_3"
+[1](100057) 	"S-0000000000200003"[6]		# lid 56 lmc 0 "cel1-ib-leaf-r3" lid 6 4xSDR
+
+vendid=0x0
+devid=0x0
+sysimgguid=0x100046
+caguid=0x100046
+Ca	1 "H-0000000000100046"		# "cel1-dgx-05 mlx5_3"
+[1](100047) 	"S-0000000000200003"[5]		# lid 48 lmc 0 "cel1-ib-leaf-r3" lid 6 4xSDR
+
+vendid=0x0
+devid=0x0
+sysimgguid=0x100036
+caguid=0x100036
+Ca	1 "H-0000000000100036"		# "cel1-dgx-04 mlx5_3"
+[1](100037) 	"S-0000000000200003"[4]		# lid 40 lmc 0 "cel1-ib-leaf-r3" lid 6 4xSDR
+
+vendid=0x0
+devid=0x0
+sysimgguid=0x100026
+caguid=0x100026
+Ca	1 "H-0000000000100026"		# "cel1-dgx-03 mlx5_3"
+[1](100027) 	"S-0000000000200003"[3]		# lid 32 lmc 0 "cel1-ib-leaf-r3" lid 6 4xSDR
+
+vendid=0x0
+devid=0x0
+sysimgguid=0x100016
+caguid=0x100016
+Ca	1 "H-0000000000100016"		# "cel1-dgx-02 mlx5_3"
+[1](100017) 	"S-0000000000200003"[2]		# lid 24 lmc 0 "cel1-ib-leaf-r3" lid 6 4xSDR
+
+vendid=0x0
+devid=0x0
+sysimgguid=0x100006
+caguid=0x100006
+Ca	1 "H-0000000000100006"		# "cel1-dgx-01 mlx5_3"
+[1](100007) 	"S-0000000000200003"[1]		# lid 11 lmc 0 "cel1-ib-leaf-r3" lid 6 4xSDR
+
+vendid=0x0
+devid=0x0
+sysimgguid=0x100074
+caguid=0x100074
+Ca	1 "H-0000000000100074"		# "cel1-dgx-08 mlx5_2"
+[1](100075) 	"S-0000000000200002"[8]		# lid 71 lmc 0 "cel1-ib-leaf-r2" lid 4 4xSDR
+
+vendid=0x0
+devid=0x0
+sysimgguid=0x100064
+caguid=0x100064
+Ca	1 "H-0000000000100064"		# "cel1-dgx-07 mlx5_2"
+[1](100065) 	"S-0000000000200002"[7]		# lid 63 lmc 0 "cel1-ib-leaf-r2" lid 4 4xSDR
+
+vendid=0x0
+devid=0x0
+sysimgguid=0x100054
+caguid=0x100054
+Ca	1 "H-0000000000100054"		# "cel1-dgx-06 mlx5_2"
+[1](100055) 	"S-0000000000200002"[6]		# lid 55 lmc 0 "cel1-ib-leaf-r2" lid 4 4xSDR
+
+vendid=0x0
+devid=0x0
+sysimgguid=0x100044
+caguid=0x100044
+Ca	1 "H-0000000000100044"		# "cel1-dgx-05 mlx5_2"
+[1](100045) 	"S-0000000000200002"[5]		# lid 47 lmc 0 "cel1-ib-leaf-r2" lid 4 4xSDR
+
+vendid=0x0
+devid=0x0
+sysimgguid=0x100034
+caguid=0x100034
+Ca	1 "H-0000000000100034"		# "cel1-dgx-04 mlx5_2"
+[1](100035) 	"S-0000000000200002"[4]		# lid 39 lmc 0 "cel1-ib-leaf-r2" lid 4 4xSDR
+
+vendid=0x0
+devid=0x0
+sysimgguid=0x100024
+caguid=0x100024
+Ca	1 "H-0000000000100024"		# "cel1-dgx-03 mlx5_2"
+[1](100025) 	"S-0000000000200002"[3]		# lid 31 lmc 0 "cel1-ib-leaf-r2" lid 4 4xSDR
+
+vendid=0x0
+devid=0x0
+sysimgguid=0x100014
+caguid=0x100014
+Ca	1 "H-0000000000100014"		# "cel1-dgx-02 mlx5_2"
+[1](100015) 	"S-0000000000200002"[2]		# lid 23 lmc 0 "cel1-ib-leaf-r2" lid 4 4xSDR
+
+vendid=0x0
+devid=0x0
+sysimgguid=0x100004
+caguid=0x100004
+Ca	1 "H-0000000000100004"		# "cel1-dgx-01 mlx5_2"
+[1](100005) 	"S-0000000000200002"[1]		# lid 8 lmc 0 "cel1-ib-leaf-r2" lid 4 4xSDR
+
+vendid=0x0
+devid=0x0
+sysimgguid=0x100072
+caguid=0x100072
+Ca	1 "H-0000000000100072"		# "cel1-dgx-08 mlx5_1"
+[1](100073) 	"S-0000000000200001"[8]		# lid 70 lmc 0 "cel1-ib-leaf-r1" lid 3 4xSDR
+
+vendid=0x0
+devid=0x0
+sysimgguid=0x100062
+caguid=0x100062
+Ca	1 "H-0000000000100062"		# "cel1-dgx-07 mlx5_1"
+[1](100063) 	"S-0000000000200001"[7]		# lid 62 lmc 0 "cel1-ib-leaf-r1" lid 3 4xSDR
+
+vendid=0x0
+devid=0x0
+sysimgguid=0x100052
+caguid=0x100052
+Ca	1 "H-0000000000100052"		# "cel1-dgx-06 mlx5_1"
+[1](100053) 	"S-0000000000200001"[6]		# lid 54 lmc 0 "cel1-ib-leaf-r1" lid 3 4xSDR
+
+vendid=0x0
+devid=0x0
+sysimgguid=0x100042
+caguid=0x100042
+Ca	1 "H-0000000000100042"		# "cel1-dgx-05 mlx5_1"
+[1](100043) 	"S-0000000000200001"[5]		# lid 46 lmc 0 "cel1-ib-leaf-r1" lid 3 4xSDR
+
+vendid=0x0
+devid=0x0
+sysimgguid=0x100032
+caguid=0x100032
+Ca	1 "H-0000000000100032"		# "cel1-dgx-04 mlx5_1"
+[1](100033) 	"S-0000000000200001"[4]		# lid 38 lmc 0 "cel1-ib-leaf-r1" lid 3 4xSDR
+
+vendid=0x0
+devid=0x0
+sysimgguid=0x100022
+caguid=0x100022
+Ca	1 "H-0000000000100022"		# "cel1-dgx-03 mlx5_1"
+[1](100023) 	"S-0000000000200001"[3]		# lid 30 lmc 0 "cel1-ib-leaf-r1" lid 3 4xSDR
+
+vendid=0x0
+devid=0x0
+sysimgguid=0x100012
+caguid=0x100012
+Ca	1 "H-0000000000100012"		# "cel1-dgx-02 mlx5_1"
+[1](100013) 	"S-0000000000200001"[2]		# lid 22 lmc 0 "cel1-ib-leaf-r1" lid 3 4xSDR
+
+vendid=0x0
+devid=0x0
+sysimgguid=0x100002
+caguid=0x100002
+Ca	1 "H-0000000000100002"		# "cel1-dgx-01 mlx5_1"
+[1](100003) 	"S-0000000000200001"[1]		# lid 5 lmc 0 "cel1-ib-leaf-r1" lid 3 4xSDR
+
+vendid=0x0
+devid=0x0
+sysimgguid=0x100070
+caguid=0x100070
+Ca	1 "H-0000000000100070"		# "cel1-dgx-08 mlx5_0"
+[1](100071) 	"S-0000000000200000"[8]		# lid 69 lmc 0 "cel1-ib-leaf-r0" lid 2 4xSDR
+
+vendid=0x0
+devid=0x0
+sysimgguid=0x100060
+caguid=0x100060
+Ca	1 "H-0000000000100060"		# "cel1-dgx-07 mlx5_0"
+[1](100061) 	"S-0000000000200000"[7]		# lid 61 lmc 0 "cel1-ib-leaf-r0" lid 2 4xSDR
+
+vendid=0x0
+devid=0x0
+sysimgguid=0x100050
+caguid=0x100050
+Ca	1 "H-0000000000100050"		# "cel1-dgx-06 mlx5_0"
+[1](100051) 	"S-0000000000200000"[6]		# lid 53 lmc 0 "cel1-ib-leaf-r0" lid 2 4xSDR
+
+vendid=0x0
+devid=0x0
+sysimgguid=0x100040
+caguid=0x100040
+Ca	1 "H-0000000000100040"		# "cel1-dgx-05 mlx5_0"
+[1](100041) 	"S-0000000000200000"[5]		# lid 45 lmc 0 "cel1-ib-leaf-r0" lid 2 4xSDR
+
+vendid=0x0
+devid=0x0
+sysimgguid=0x100030
+caguid=0x100030
+Ca	1 "H-0000000000100030"		# "cel1-dgx-04 mlx5_0"
+[1](100031) 	"S-0000000000200000"[4]		# lid 37 lmc 0 "cel1-ib-leaf-r0" lid 2 4xSDR
+
+vendid=0x0
+devid=0x0
+sysimgguid=0x100020
+caguid=0x100020
+Ca	1 "H-0000000000100020"		# "cel1-dgx-03 mlx5_0"
+[1](100021) 	"S-0000000000200000"[3]		# lid 29 lmc 0 "cel1-ib-leaf-r0" lid 2 4xSDR
+
+vendid=0x0
+devid=0x0
+sysimgguid=0x100010
+caguid=0x100010
+Ca	1 "H-0000000000100010"		# "cel1-dgx-02 mlx5_0"
+[1](100011) 	"S-0000000000200000"[2]		# lid 21 lmc 0 "cel1-ib-leaf-r0" lid 2 4xSDR
+
+vendid=0x0
+devid=0x0
+sysimgguid=0x100000
+caguid=0x100000
+Ca	1 "H-0000000000100000"		# "cel1-dgx-01 mlx5_0"
+[1](100001) 	"S-0000000000200000"[1]		# lid 1 lmc 0 "cel1-ib-leaf-r0" lid 2 4xSDR

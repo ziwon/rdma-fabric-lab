@@ -1,0 +1,410 @@
+# Rendered by `make track-b-render` from sites/cel1.yaml fabrics.compute. Do not edit.
+# One single-port HCA per cabled host interface, named '<host> <hca>'. Counts: switches 12, hcas 64, switch_ports 768, hca_ports 64, links 128.
+
+Switch	64 "cel1-ib-leaf-r0"
+[1]	"cel1-dgx-01 mlx5_0"[1]
+[2]	"cel1-dgx-02 mlx5_0"[1]
+[3]	"cel1-dgx-03 mlx5_0"[1]
+[4]	"cel1-dgx-04 mlx5_0"[1]
+[5]	"cel1-dgx-05 mlx5_0"[1]
+[6]	"cel1-dgx-06 mlx5_0"[1]
+[7]	"cel1-dgx-07 mlx5_0"[1]
+[8]	"cel1-dgx-08 mlx5_0"[1]
+[33]	"cel1-ib-spine-01"[1]
+[34]	"cel1-ib-spine-01"[2]
+[35]	"cel1-ib-spine-02"[1]
+[36]	"cel1-ib-spine-02"[2]
+[37]	"cel1-ib-spine-03"[1]
+[38]	"cel1-ib-spine-03"[2]
+[39]	"cel1-ib-spine-04"[1]
+[40]	"cel1-ib-spine-04"[2]
+
+Switch	64 "cel1-ib-leaf-r1"
+[1]	"cel1-dgx-01 mlx5_1"[1]
+[2]	"cel1-dgx-02 mlx5_1"[1]
+[3]	"cel1-dgx-03 mlx5_1"[1]
+[4]	"cel1-dgx-04 mlx5_1"[1]
+[5]	"cel1-dgx-05 mlx5_1"[1]
+[6]	"cel1-dgx-06 mlx5_1"[1]
+[7]	"cel1-dgx-07 mlx5_1"[1]
+[8]	"cel1-dgx-08 mlx5_1"[1]
+[33]	"cel1-ib-spine-01"[3]
+[34]	"cel1-ib-spine-01"[4]
+[35]	"cel1-ib-spine-02"[3]
+[36]	"cel1-ib-spine-02"[4]
+[37]	"cel1-ib-spine-03"[3]
+[38]	"cel1-ib-spine-03"[4]
+[39]	"cel1-ib-spine-04"[3]
+[40]	"cel1-ib-spine-04"[4]
+
+Switch	64 "cel1-ib-leaf-r2"
+[1]	"cel1-dgx-01 mlx5_2"[1]
+[2]	"cel1-dgx-02 mlx5_2"[1]
+[3]	"cel1-dgx-03 mlx5_2"[1]
+[4]	"cel1-dgx-04 mlx5_2"[1]
+[5]	"cel1-dgx-05 mlx5_2"[1]
+[6]	"cel1-dgx-06 mlx5_2"[1]
+[7]	"cel1-dgx-07 mlx5_2"[1]
+[8]	"cel1-dgx-08 mlx5_2"[1]
+[33]	"cel1-ib-spine-01"[5]
+[34]	"cel1-ib-spine-01"[6]
+[35]	"cel1-ib-spine-02"[5]
+[36]	"cel1-ib-spine-02"[6]
+[37]	"cel1-ib-spine-03"[5]
+[38]	"cel1-ib-spine-03"[6]
+[39]	"cel1-ib-spine-04"[5]
+[40]	"cel1-ib-spine-04"[6]
+
+Switch	64 "cel1-ib-leaf-r3"
+[1]	"cel1-dgx-01 mlx5_3"[1]
+[2]	"cel1-dgx-02 mlx5_3"[1]
+[3]	"cel1-dgx-03 mlx5_3"[1]
+[4]	"cel1-dgx-04 mlx5_3"[1]
+[5]	"cel1-dgx-05 mlx5_3"[1]
+[6]	"cel1-dgx-06 mlx5_3"[1]
+[7]	"cel1-dgx-07 mlx5_3"[1]
+[8]	"cel1-dgx-08 mlx5_3"[1]
+[33]	"cel1-ib-spine-01"[7]
+[34]	"cel1-ib-spine-01"[8]
+[35]	"cel1-ib-spine-02"[7]
+[36]	"cel1-ib-spine-02"[8]
+[37]	"cel1-ib-spine-03"[7]
+[38]	"cel1-ib-spine-03"[8]
+[39]	"cel1-ib-spine-04"[7]
+[40]	"cel1-ib-spine-04"[8]
+
+Switch	64 "cel1-ib-leaf-r4"
+[1]	"cel1-dgx-01 mlx5_4"[1]
+[2]	"cel1-dgx-02 mlx5_4"[1]
+[3]	"cel1-dgx-03 mlx5_4"[1]
+[4]	"cel1-dgx-04 mlx5_4"[1]
+[5]	"cel1-dgx-05 mlx5_4"[1]
+[6]	"cel1-dgx-06 mlx5_4"[1]
+[7]	"cel1-dgx-07 mlx5_4"[1]
+[8]	"cel1-dgx-08 mlx5_4"[1]
+[33]	"cel1-ib-spine-01"[9]
+[34]	"cel1-ib-spine-01"[10]
+[35]	"cel1-ib-spine-02"[9]
+[36]	"cel1-ib-spine-02"[10]
+[37]	"cel1-ib-spine-03"[9]
+[38]	"cel1-ib-spine-03"[10]
+[39]	"cel1-ib-spine-04"[9]
+[40]	"cel1-ib-spine-04"[10]
+
+Switch	64 "cel1-ib-leaf-r5"
+[1]	"cel1-dgx-01 mlx5_5"[1]
+[2]	"cel1-dgx-02 mlx5_5"[1]
+[3]	"cel1-dgx-03 mlx5_5"[1]
+[4]	"cel1-dgx-04 mlx5_5"[1]
+[5]	"cel1-dgx-05 mlx5_5"[1]
+[6]	"cel1-dgx-06 mlx5_5"[1]
+[7]	"cel1-dgx-07 mlx5_5"[1]
+[8]	"cel1-dgx-08 mlx5_5"[1]
+[33]	"cel1-ib-spine-01"[11]
+[34]	"cel1-ib-spine-01"[12]
+[35]	"cel1-ib-spine-02"[11]
+[36]	"cel1-ib-spine-02"[12]
+[37]	"cel1-ib-spine-03"[11]
+[38]	"cel1-ib-spine-03"[12]
+[39]	"cel1-ib-spine-04"[11]
+[40]	"cel1-ib-spine-04"[12]
+
+Switch	64 "cel1-ib-leaf-r6"
+[1]	"cel1-dgx-01 mlx5_6"[1]
+[2]	"cel1-dgx-02 mlx5_6"[1]
+[3]	"cel1-dgx-03 mlx5_6"[1]
+[4]	"cel1-dgx-04 mlx5_6"[1]
+[5]	"cel1-dgx-05 mlx5_6"[1]
+[6]	"cel1-dgx-06 mlx5_6"[1]
+[7]	"cel1-dgx-07 mlx5_6"[1]
+[8]	"cel1-dgx-08 mlx5_6"[1]
+[33]	"cel1-ib-spine-01"[13]
+[34]	"cel1-ib-spine-01"[14]
+[35]	"cel1-ib-spine-02"[13]
+[36]	"cel1-ib-spine-02"[14]
+[37]	"cel1-ib-spine-03"[13]
+[38]	"cel1-ib-spine-03"[14]
+[39]	"cel1-ib-spine-04"[13]
+[40]	"cel1-ib-spine-04"[14]
+
+Switch	64 "cel1-ib-leaf-r7"
+[1]	"cel1-dgx-01 mlx5_7"[1]
+[2]	"cel1-dgx-02 mlx5_7"[1]
+[3]	"cel1-dgx-03 mlx5_7"[1]
+[4]	"cel1-dgx-04 mlx5_7"[1]
+[5]	"cel1-dgx-05 mlx5_7"[1]
+[6]	"cel1-dgx-06 mlx5_7"[1]
+[7]	"cel1-dgx-07 mlx5_7"[1]
+[8]	"cel1-dgx-08 mlx5_7"[1]
+[33]	"cel1-ib-spine-01"[15]
+[34]	"cel1-ib-spine-01"[16]
+[35]	"cel1-ib-spine-02"[15]
+[36]	"cel1-ib-spine-02"[16]
+[37]	"cel1-ib-spine-03"[15]
+[38]	"cel1-ib-spine-03"[16]
+[39]	"cel1-ib-spine-04"[15]
+[40]	"cel1-ib-spine-04"[16]
+
+Switch	64 "cel1-ib-spine-01"
+[1]	"cel1-ib-leaf-r0"[33]
+[2]	"cel1-ib-leaf-r0"[34]
+[3]	"cel1-ib-leaf-r1"[33]
+[4]	"cel1-ib-leaf-r1"[34]
+[5]	"cel1-ib-leaf-r2"[33]
+[6]	"cel1-ib-leaf-r2"[34]
+[7]	"cel1-ib-leaf-r3"[33]
+[8]	"cel1-ib-leaf-r3"[34]
+[9]	"cel1-ib-leaf-r4"[33]
+[10]	"cel1-ib-leaf-r4"[34]
+[11]	"cel1-ib-leaf-r5"[33]
+[12]	"cel1-ib-leaf-r5"[34]
+[13]	"cel1-ib-leaf-r6"[33]
+[14]	"cel1-ib-leaf-r6"[34]
+[15]	"cel1-ib-leaf-r7"[33]
+[16]	"cel1-ib-leaf-r7"[34]
+
+Switch	64 "cel1-ib-spine-02"
+[1]	"cel1-ib-leaf-r0"[35]
+[2]	"cel1-ib-leaf-r0"[36]
+[3]	"cel1-ib-leaf-r1"[35]
+[4]	"cel1-ib-leaf-r1"[36]
+[5]	"cel1-ib-leaf-r2"[35]
+[6]	"cel1-ib-leaf-r2"[36]
+[7]	"cel1-ib-leaf-r3"[35]
+[8]	"cel1-ib-leaf-r3"[36]
+[9]	"cel1-ib-leaf-r4"[35]
+[10]	"cel1-ib-leaf-r4"[36]
+[11]	"cel1-ib-leaf-r5"[35]
+[12]	"cel1-ib-leaf-r5"[36]
+[13]	"cel1-ib-leaf-r6"[35]
+[14]	"cel1-ib-leaf-r6"[36]
+[15]	"cel1-ib-leaf-r7"[35]
+[16]	"cel1-ib-leaf-r7"[36]
+
+Switch	64 "cel1-ib-spine-03"
+[1]	"cel1-ib-leaf-r0"[37]
+[2]	"cel1-ib-leaf-r0"[38]
+[3]	"cel1-ib-leaf-r1"[37]
+[4]	"cel1-ib-leaf-r1"[38]
+[5]	"cel1-ib-leaf-r2"[37]
+[6]	"cel1-ib-leaf-r2"[38]
+[7]	"cel1-ib-leaf-r3"[37]
+[8]	"cel1-ib-leaf-r3"[38]
+[9]	"cel1-ib-leaf-r4"[37]
+[10]	"cel1-ib-leaf-r4"[38]
+[11]	"cel1-ib-leaf-r5"[37]
+[12]	"cel1-ib-leaf-r5"[38]
+[13]	"cel1-ib-leaf-r6"[37]
+[14]	"cel1-ib-leaf-r6"[38]
+[15]	"cel1-ib-leaf-r7"[37]
+[16]	"cel1-ib-leaf-r7"[38]
+
+Switch	64 "cel1-ib-spine-04"
+[1]	"cel1-ib-leaf-r0"[39]
+[2]	"cel1-ib-leaf-r0"[40]
+[3]	"cel1-ib-leaf-r1"[39]
+[4]	"cel1-ib-leaf-r1"[40]
+[5]	"cel1-ib-leaf-r2"[39]
+[6]	"cel1-ib-leaf-r2"[40]
+[7]	"cel1-ib-leaf-r3"[39]
+[8]	"cel1-ib-leaf-r3"[40]
+[9]	"cel1-ib-leaf-r4"[39]
+[10]	"cel1-ib-leaf-r4"[40]
+[11]	"cel1-ib-leaf-r5"[39]
+[12]	"cel1-ib-leaf-r5"[40]
+[13]	"cel1-ib-leaf-r6"[39]
+[14]	"cel1-ib-leaf-r6"[40]
+[15]	"cel1-ib-leaf-r7"[39]
+[16]	"cel1-ib-leaf-r7"[40]
+
+Hca	1 "cel1-dgx-01 mlx5_0"
+[1]	"cel1-ib-leaf-r0"[1]
+
+Hca	1 "cel1-dgx-01 mlx5_1"
+[1]	"cel1-ib-leaf-r1"[1]
+
+Hca	1 "cel1-dgx-01 mlx5_2"
+[1]	"cel1-ib-leaf-r2"[1]
+
+Hca	1 "cel1-dgx-01 mlx5_3"
+[1]	"cel1-ib-leaf-r3"[1]
+
+Hca	1 "cel1-dgx-01 mlx5_4"
+[1]	"cel1-ib-leaf-r4"[1]
+
+Hca	1 "cel1-dgx-01 mlx5_5"
+[1]	"cel1-ib-leaf-r5"[1]
+
+Hca	1 "cel1-dgx-01 mlx5_6"
+[1]	"cel1-ib-leaf-r6"[1]
+
+Hca	1 "cel1-dgx-01 mlx5_7"
+[1]	"cel1-ib-leaf-r7"[1]
+
+Hca	1 "cel1-dgx-02 mlx5_0"
+[1]	"cel1-ib-leaf-r0"[2]
+
+Hca	1 "cel1-dgx-02 mlx5_1"
+[1]	"cel1-ib-leaf-r1"[2]
+
+Hca	1 "cel1-dgx-02 mlx5_2"
+[1]	"cel1-ib-leaf-r2"[2]
+
+Hca	1 "cel1-dgx-02 mlx5_3"
+[1]	"cel1-ib-leaf-r3"[2]
+
+Hca	1 "cel1-dgx-02 mlx5_4"
+[1]	"cel1-ib-leaf-r4"[2]
+
+Hca	1 "cel1-dgx-02 mlx5_5"
+[1]	"cel1-ib-leaf-r5"[2]
+
+Hca	1 "cel1-dgx-02 mlx5_6"
+[1]	"cel1-ib-leaf-r6"[2]
+
+Hca	1 "cel1-dgx-02 mlx5_7"
+[1]	"cel1-ib-leaf-r7"[2]
+
+Hca	1 "cel1-dgx-03 mlx5_0"
+[1]	"cel1-ib-leaf-r0"[3]
+
+Hca	1 "cel1-dgx-03 mlx5_1"
+[1]	"cel1-ib-leaf-r1"[3]
+
+Hca	1 "cel1-dgx-03 mlx5_2"
+[1]	"cel1-ib-leaf-r2"[3]
+
+Hca	1 "cel1-dgx-03 mlx5_3"
+[1]	"cel1-ib-leaf-r3"[3]
+
+Hca	1 "cel1-dgx-03 mlx5_4"
+[1]	"cel1-ib-leaf-r4"[3]
+
+Hca	1 "cel1-dgx-03 mlx5_5"
+[1]	"cel1-ib-leaf-r5"[3]
+
+Hca	1 "cel1-dgx-03 mlx5_6"
+[1]	"cel1-ib-leaf-r6"[3]
+
+Hca	1 "cel1-dgx-03 mlx5_7"
+[1]	"cel1-ib-leaf-r7"[3]
+
+Hca	1 "cel1-dgx-04 mlx5_0"
+[1]	"cel1-ib-leaf-r0"[4]
+
+Hca	1 "cel1-dgx-04 mlx5_1"
+[1]	"cel1-ib-leaf-r1"[4]
+
+Hca	1 "cel1-dgx-04 mlx5_2"
+[1]	"cel1-ib-leaf-r2"[4]
+
+Hca	1 "cel1-dgx-04 mlx5_3"
+[1]	"cel1-ib-leaf-r3"[4]
+
+Hca	1 "cel1-dgx-04 mlx5_4"
+[1]	"cel1-ib-leaf-r4"[4]
+
+Hca	1 "cel1-dgx-04 mlx5_5"
+[1]	"cel1-ib-leaf-r5"[4]
+
+Hca	1 "cel1-dgx-04 mlx5_6"
+[1]	"cel1-ib-leaf-r6"[4]
+
+Hca	1 "cel1-dgx-04 mlx5_7"
+[1]	"cel1-ib-leaf-r7"[4]
+
+Hca	1 "cel1-dgx-05 mlx5_0"
+[1]	"cel1-ib-leaf-r0"[5]
+
+Hca	1 "cel1-dgx-05 mlx5_1"
+[1]	"cel1-ib-leaf-r1"[5]
+
+Hca	1 "cel1-dgx-05 mlx5_2"
+[1]	"cel1-ib-leaf-r2"[5]
+
+Hca	1 "cel1-dgx-05 mlx5_3"
+[1]	"cel1-ib-leaf-r3"[5]
+
+Hca	1 "cel1-dgx-05 mlx5_4"
+[1]	"cel1-ib-leaf-r4"[5]
+
+Hca	1 "cel1-dgx-05 mlx5_5"
+[1]	"cel1-ib-leaf-r5"[5]
+
+Hca	1 "cel1-dgx-05 mlx5_6"
+[1]	"cel1-ib-leaf-r6"[5]
+
+Hca	1 "cel1-dgx-05 mlx5_7"
+[1]	"cel1-ib-leaf-r7"[5]
+
+Hca	1 "cel1-dgx-06 mlx5_0"
+[1]	"cel1-ib-leaf-r0"[6]
+
+Hca	1 "cel1-dgx-06 mlx5_1"
+[1]	"cel1-ib-leaf-r1"[6]
+
+Hca	1 "cel1-dgx-06 mlx5_2"
+[1]	"cel1-ib-leaf-r2"[6]
+
+Hca	1 "cel1-dgx-06 mlx5_3"
+[1]	"cel1-ib-leaf-r3"[6]
+
+Hca	1 "cel1-dgx-06 mlx5_4"
+[1]	"cel1-ib-leaf-r4"[6]
+
+Hca	1 "cel1-dgx-06 mlx5_5"
+[1]	"cel1-ib-leaf-r5"[6]
+
+Hca	1 "cel1-dgx-06 mlx5_6"
+[1]	"cel1-ib-leaf-r6"[6]
+
+Hca	1 "cel1-dgx-06 mlx5_7"
+[1]	"cel1-ib-leaf-r7"[6]
+
+Hca	1 "cel1-dgx-07 mlx5_0"
+[1]	"cel1-ib-leaf-r0"[7]
+
+Hca	1 "cel1-dgx-07 mlx5_1"
+[1]	"cel1-ib-leaf-r1"[7]
+
+Hca	1 "cel1-dgx-07 mlx5_2"
+[1]	"cel1-ib-leaf-r2"[7]
+
+Hca	1 "cel1-dgx-07 mlx5_3"
+[1]	"cel1-ib-leaf-r3"[7]
+
+Hca	1 "cel1-dgx-07 mlx5_4"
+[1]	"cel1-ib-leaf-r4"[7]
+
+Hca	1 "cel1-dgx-07 mlx5_5"
+[1]	"cel1-ib-leaf-r5"[7]
+
+Hca	1 "cel1-dgx-07 mlx5_6"
+[1]	"cel1-ib-leaf-r6"[7]
+
+Hca	1 "cel1-dgx-07 mlx5_7"
+[1]	"cel1-ib-leaf-r7"[7]
+
+Hca	1 "cel1-dgx-08 mlx5_0"
+[1]	"cel1-ib-leaf-r0"[8]
+
+Hca	1 "cel1-dgx-08 mlx5_1"
+[1]	"cel1-ib-leaf-r1"[8]
+
+Hca	1 "cel1-dgx-08 mlx5_2"
+[1]	"cel1-ib-leaf-r2"[8]
+
+Hca	1 "cel1-dgx-08 mlx5_3"
+[1]	"cel1-ib-leaf-r3"[8]
+
+Hca	1 "cel1-dgx-08 mlx5_4"
+[1]	"cel1-ib-leaf-r4"[8]
+
+Hca	1 "cel1-dgx-08 mlx5_5"
+[1]	"cel1-ib-leaf-r5"[8]
+
+Hca	1 "cel1-dgx-08 mlx5_6"
+[1]	"cel1-ib-leaf-r6"[8]
+
+Hca	1 "cel1-dgx-08 mlx5_7"
+[1]	"cel1-ib-leaf-r7"[8]

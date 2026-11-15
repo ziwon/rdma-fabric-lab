@@ -1,0 +1,12 @@
+Switch	: 0x0000000000200007 ports 64 "cel1-ib-leaf-r7" base port 0 lid 12 lmc 0
+Switch	: 0x0000000000200006 ports 64 "cel1-ib-leaf-r6" base port 0 lid 10 lmc 0
+Switch	: 0x0000000000200005 ports 64 "cel1-ib-leaf-r5" base port 0 lid 9 lmc 0
+Switch	: 0x0000000000200004 ports 64 "cel1-ib-leaf-r4" base port 0 lid 7 lmc 0
+Switch	: 0x0000000000200003 ports 64 "cel1-ib-leaf-r3" base port 0 lid 6 lmc 0
+Switch	: 0x0000000000200002 ports 64 "cel1-ib-leaf-r2" base port 0 lid 4 lmc 0
+Switch	: 0x0000000000200001 ports 64 "cel1-ib-leaf-r1" base port 0 lid 3 lmc 0
+Switch	: 0x000000000020000b ports 64 "cel1-ib-spine-04" base port 0 lid 18 lmc 0
+Switch	: 0x000000000020000a ports 64 "cel1-ib-spine-03" base port 0 lid 16 lmc 0
+Switch	: 0x0000000000200009 ports 64 "cel1-ib-spine-02" base port 0 lid 15 lmc 0
+Switch	: 0x0000000000200008 ports 64 "cel1-ib-spine-01" base port 0 lid 13 lmc 0
+Switch	: 0x0000000000200000 ports 64 "cel1-ib-leaf-r0" base port 0 lid 2 lmc 0

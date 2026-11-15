@@ -1,0 +1,14 @@
+Nov 15 14:19:33 536737 [F2825740] 0x03 -> OpenSM 3.3.23
+Nov 15 14:19:33 536755 [F2825740] 0x80 -> OpenSM 3.3.23
+Nov 15 14:19:33 537464 [F2825740] 0x02 -> osm_vendor_init: 1000 pending umads specified
+Nov 15 14:19:33 537701 [F2825740] 0x80 -> Entering DISCOVERING state
+Nov 15 14:19:33 537754 [F2825740] 0x02 -> osm_vendor_bind: Mgmt class 0x81 binding to port GUID 0x100001
+Nov 15 14:19:33 538054 [F2825740] 0x02 -> osm_vendor_bind: Mgmt class 0x03 binding to port GUID 0x100001
+Nov 15 14:19:33 538059 [F2825740] 0x02 -> osm_vendor_bind: Mgmt class 0x04 binding to port GUID 0x100001
+Nov 15 14:19:33 538064 [F2825740] 0x02 -> osm_vendor_bind: Mgmt class 0x21 binding to port GUID 0x100001
+Nov 15 14:19:33 538068 [F2825740] 0x02 -> osm_opensm_bind: Setting IS_SM on port 0x0000000000100001
+Nov 15 14:19:33 539015 [EE81C6C0] 0x80 -> Entering MASTER state
+Nov 15 14:19:33 539266 [EE81C6C0] 0x02 -> updn_lid_matrices: disabling UPDN algorithm, no root nodes were found
+Nov 15 14:19:33 539269 [EE81C6C0] 0x01 -> ucast_mgr_route: updn: cannot build lid matrices
+Nov 15 14:19:33 539276 [EE81C6C0] 0x02 -> osm_ucast_mgr_process: minhop tables configured on all switches
+Nov 15 14:19:33 539674 [EE81C6C0] 0x02 -> SUBNET UP

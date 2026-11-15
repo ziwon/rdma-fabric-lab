@@ -1,0 +1,33 @@
+---
+# Parameters of each Track B scenario. tracks/b-ibsim/scenarios/<scenario>.yaml declares its checks.
+# sm_host is the HCA that OpenSM and the diagnostic tools attach to. fault names one port whose link
+# goes down and then comes back up. routing_engine goes to opensm -R. break names one port whose
+# link python -m ibsim run --break removes from the simulated net file while every expectation
+# keeps the full topology file, so that run must end failed.
+# updn finds no root on the single-tier B-01 and B-02 fabrics, so they keep the default minhop.
+# The two-tier cel1 fabric uses updn, which keeps routing through a leaf to spine failure.
+defaults:
+  routing_engine: minhop
+  subnet_up_timeout_s: 60
+  resweep_timeout_s: 60
+  settle_s: 2
+scenarios:
+  b-01:
+    topology: tracks/b-ibsim/topologies/b-01.net
+    sm_host: hca1
+    break: {node: hca2, port: 1}
+  b-02:
+    topology: tracks/b-ibsim/topologies/b-02.net
+    sm_host: hca1
+    break: {node: sw1, port: 8}
+  b-03:
+    topology: tracks/b-ibsim/topologies/b-02.net
+    sm_host: hca1
+    fault: {node: hca3, port: 1}
+    break: {node: sw1, port: 7}
+  b-04:
+    topology: tracks/b-ibsim/topologies/cel1-compute.net
+    sm_host: cel1-dgx-01 mlx5_0
+    routing_engine: updn
+    fault: {node: cel1-ib-leaf-r3, port: 35}
+    break: {node: cel1-ib-leaf-r0, port: 33}

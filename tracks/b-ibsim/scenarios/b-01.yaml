@@ -1,0 +1,36 @@
+---
+track: b-ibsim
+scenario: b-01
+description: Two HCAs on one switch from a hand-written net file. OpenSM discovers the fabric, brings every port Active and assigns
+  LIDs. A management simulation, no data path.
+required: true
+result_kind: ib-management-simulation
+security:
+  privileged: false
+  device_exposure: None. ibsim, OpenSM and the tools run in one unprivileged container with no network inside the Track B guest. No
+    device node is mounted. MADs travel over ibsim's Unix socket through libumad2sim.
+checks:
+  - id: image-pinned
+    description: rfl-ibsim:m4 in the Track B guest is the image the lock pins as ibsim.image, and the run starts that digest.
+  - id: container-locked-down
+    description: The guest is a VM with the Track B marker on the locked kernel. The fabric container runs as 10001:10001, not privileged,
+      with no network, no device, every capability dropped, no-new-privileges, a read-only root, AppArmor docker-default, read-only mounts, and
+      no image-wide LD_PRELOAD. docker top shows UID 10001 for every process.
+  - id: subnet-up
+    description: OpenSM logs SUBNET UP, every sweep routes with the scenario's routing engine, and sminfo reports SMINFO_MASTER at the LID of the SM host port.
+  - id: topology-discovered
+    description: ibnetdiscover finds exactly the nodes, with kind and port count, and the links of the topology file.
+  - id: lids-unique
+    description: Every linked HCA port has a non-zero LID with LMC 0, and no two ports share a LID.
+  - id: port-states
+    description: iblinkinfo shows every linked port Active/LinkUp facing its peer from the topology file, every unlinked switch port
+      Down/Polling.
+  - id: routes-shortest
+    description: ibroute of every switch forwards every endpoint LID one hop closer to its endpoint and keeps no LID that no port holds.
+  - id: lid-reachability
+    description: A LID-routed smpquery nodedesc from the SM host reaches every LID and answers with the node name of the topology file.
+  - id: no-container-left
+    description: After the run, guest.sh stop removed the fabric container and guest.sh ls lists no container of this run.
+  - id: host-untouched
+    description: At the start and the end of the run the host runs no ibsim, OpenSM or diagnostic tool process and lists no Track B
+      container.

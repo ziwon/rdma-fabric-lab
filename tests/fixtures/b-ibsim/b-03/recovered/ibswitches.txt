@@ -1,0 +1,2 @@
+Switch	: 0x0000000000200001 ports 8 "sw2" base port 0 lid 3 lmc 0
+Switch	: 0x0000000000200000 ports 8 "sw1" base port 0 lid 2 lmc 0
