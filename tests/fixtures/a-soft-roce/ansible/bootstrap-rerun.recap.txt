@@ -1,0 +1,28 @@
+PLAY RECAP *********************************************************************
+worker1                    : ok=19   changed=0    unreachable=0    failed=0    skipped=6    rescued=0    ignored=0   
+worker2                    : ok=19   changed=0    unreachable=0    failed=0    skipped=6    rescued=0    ignored=0   
+
+
+TASKS RECAP ********************************************************************
+Sunday 15 November 2026  11:00:46 +0900 (0:00:00.097)       0:00:04.756 ******* 
+=============================================================================== 
+Gathering Facts --------------------------------------------------------- 0.90s
+common : Read the installed packages ------------------------------------ 0.86s
+common : Hold the kernel metapackages on the locked release ------------- 0.56s
+network : Write the netplan file of the RDMA NIC ------------------------ 0.42s
+network : Read the state of systemd-networkd ---------------------------- 0.29s
+network : Read network facts and the SSH session of Ansible ------------- 0.26s
+network : Read network facts and the SSH session of Ansible ------------- 0.26s
+network : Wait for the RDMA address on enp0s4 --------------------------- 0.19s
+common : Check whether the running kernel provides rdma_rxe ------------- 0.17s
+network : Check the RDMA NIC holds the planned address and MTU and no default route --- 0.10s
+network : Check the inventory names two distinct NICs and an RDMA address --- 0.09s
+common : Work out which locked packages are missing --------------------- 0.08s
+network : Check that SSH reaches this host through the management NIC --- 0.07s
+network : Check that SSH reaches this host through the management NIC --- 0.06s
+common : Refresh the apt index before installing anything --------------- 0.06s
+network : Verify the SSH path before the change ------------------------- 0.05s
+network : Verify the SSH path after the change -------------------------- 0.04s
+common : Refuse a kernel other than the locked one ---------------------- 0.04s
+network : Refuse a guest whose netplan renderer is not systemd-networkd --- 0.04s
+common : Install the RDMA packages at the locked versions --------------- 0.03s

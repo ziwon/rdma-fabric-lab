@@ -1,0 +1,25 @@
+# SSH_CONNECTION only survives without become, since sudo resets the environment.
+- name: Read network facts and the SSH session of Ansible
+  ansible.builtin.setup:
+    gather_subset: ["!all", "!min", network, env]
+  become: false
+
+- name: Check that SSH reaches this host through the uplink NIC
+  ansible.builtin.assert:
+    that:
+      - network_uplink_nic in ansible_facts.interfaces
+      - lab_rdma_nic in ansible_facts.interfaces
+      - ansible_facts.default_ipv4.interface | default('') == network_uplink_nic
+      - network_ssh_address in network_uplink_addresses
+    fail_msg: >-
+      On {{ inventory_hostname }} Ansible's SSH session ends at {{ network_ssh_address }} and the default route uses
+      {{ ansible_facts.default_ipv4.interface | default('nothing') }}, but the uplink NIC {{ network_uplink_nic }} holds
+      {{ network_uplink_addresses | join(', ') or 'no IPv4 address' }}. Interfaces present:
+      {{ ansible_facts.interfaces | sort | join(', ') }}. The role stops before it can cut the SSH path.
+    quiet: true
+  vars:
+    network_ssh_address: "{{ ansible_facts.env.SSH_CONNECTION.split()[2] }}"
+    network_uplink_facts: "{{ ansible_facts[network_uplink_nic | replace('-', '_')] | default({}) }}"
+    network_uplink_addresses: >-
+      {{ ([network_uplink_facts.ipv4 | default({})] + network_uplink_facts.ipv4_secondaries | default([]))
+         | map(attribute='address') | select('defined') | list }}

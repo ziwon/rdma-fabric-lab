@@ -1,0 +1,5 @@
+network_prefix: "{{ lab_address_plan.rdma | ansible.utils.ipaddr('prefix') }}"
+network_rdma_key: "{{ lab_rdma_nic | replace('-', '_') }}"
+# The NIC with the default route and the SSH session: lab_uplink_nic where the hypervisor splits it
+# from the management NIC, as the QEMU harness does, else the management NIC.
+network_uplink_nic: "{{ lab_uplink_nic | default(lab_mgmt_nic) }}"

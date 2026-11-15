@@ -1,0 +1,11 @@
+- name: Check the lab workers against PLAN A0 without changing them
+  hosts: workers
+  become: true
+  pre_tasks:
+    - name: Refuse hosts outside the lab inventory
+      ansible.builtin.assert:
+        that: lab_inventory | default('') == 'rdma-fabric-lab'
+        fail_msg: "{{ inventory_hostname }} is not from ansible/inventories/lab. Lab playbooks run only there."
+        quiet: true
+  roles:
+    - preflight

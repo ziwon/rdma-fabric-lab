@@ -1,0 +1,20 @@
+- name: Generate networkd files from netplan
+  ansible.builtin.command: netplan generate
+  changed_when: true
+  listen:
+    - Apply the RDMA NIC configuration
+    - Drop the RDMA NIC configuration
+
+# networkctl reload reconfigures only links whose .network file changed, so the
+# management NIC keeps its lease. The explicit reconfigure names the RDMA NIC alone.
+- name: Reload systemd-networkd
+  ansible.builtin.command: networkctl reload
+  changed_when: true
+  listen:
+    - Apply the RDMA NIC configuration
+    - Drop the RDMA NIC configuration
+
+- name: Reconfigure the RDMA NIC
+  ansible.builtin.command: networkctl reconfigure {{ lab_rdma_nic }}
+  changed_when: true
+  listen: Apply the RDMA NIC configuration

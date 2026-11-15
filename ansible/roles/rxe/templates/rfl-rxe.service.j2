@@ -1,0 +1,14 @@
+# {{ ansible_managed }}
+[Unit]
+Description=Soft-RoCE device {{ lab_rxe_device }} on the RDMA lab NIC {{ lab_rdma_nic }}
+After=systemd-modules-load.service systemd-networkd.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+EnvironmentFile=/etc/rfl/rxe.env
+ExecStart=/usr/local/sbin/rfl-rxe-ensure
+TimeoutStartSec={{ lab_rxe_wait_seconds + 30 }}
+
+[Install]
+WantedBy=multi-user.target

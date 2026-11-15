@@ -1,0 +1,39 @@
+# Undoes this role. The device goes only when it is bound to the lab NIC, never by its name alone.
+- name: Read the RDMA links
+  ansible.builtin.command: rdma -j link show
+  register: rxe_reset_links
+  changed_when: false
+  check_mode: false
+
+- name: Read whether the unit is installed
+  ansible.builtin.stat:
+    path: /etc/systemd/system/rfl-rxe.service
+  register: rxe_reset_unit
+
+- name: Stop and disable rfl-rxe.service
+  ansible.builtin.systemd_service:
+    name: rfl-rxe.service
+    state: stopped
+    enabled: false
+  when: rxe_reset_unit.stat.exists
+
+- name: Delete the device bound to the lab NIC
+  ansible.builtin.command: rdma link delete {{ lab_rxe_device }}
+  changed_when: true
+  when: rxe_reset_device | selectattr('netdev', 'defined') | selectattr('netdev', 'equalto', lab_rdma_nic) | list | length == 1
+  vars:
+    rxe_reset_device: "{{ rxe_reset_links.stdout | from_json | selectattr('ifname', 'equalto', lab_rxe_device) | list }}"
+
+- name: Remove the files this role installed
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - /etc/systemd/system/rfl-rxe.service
+    - /usr/local/sbin/rfl-rxe-ensure
+    - /etc/rfl/rxe.env
+    - /etc/modules-load.d/rfl-rdma_rxe.conf
+  notify: Reload systemd units
+
+- name: Reload systemd after removing the unit
+  ansible.builtin.meta: flush_handlers

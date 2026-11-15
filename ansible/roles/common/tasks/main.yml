@@ -1,0 +1,88 @@
+- name: Refuse a kernel other than the locked one
+  ansible.builtin.assert:
+    that: ansible_facts.kernel == lab_lock.components['lab.guest_kernel'].value
+    fail_msg: >-
+      {{ inventory_hostname }} runs kernel {{ ansible_facts.kernel }}, but versions.lock.yaml pins lab.guest_kernel
+      {{ lab_lock.components['lab.guest_kernel'].value }}. rdma_rxe ships per kernel release, so boot the locked
+      kernel, or probe the new one and re-pin the lock.
+    quiet: true
+
+- name: Read the installed packages
+  ansible.builtin.package_facts:
+    manager: apt
+
+- name: Check whether the running kernel provides rdma_rxe
+  ansible.builtin.command: modinfo -n rdma_rxe
+  register: common_modinfo
+  changed_when: false
+  failed_when: false
+  check_mode: false
+
+- name: Work out which locked packages are missing
+  ansible.builtin.set_fact:
+    common_wanted: >-
+      {%- set out = [] -%}
+      {%- for p in lab_packages -%}
+      {%- set _ = out.append(p.name ~ ('=' ~ lab_lock.components[p.lock].value if p.lock is defined else '')) -%}
+      {%- endfor -%}
+      {{ out }}
+    common_missing: >-
+      {%- set out = [] -%}
+      {%- for p in lab_packages -%}
+      {%- set installed = ansible_facts.packages.get(p.name, []) | map(attribute='version') | list -%}
+      {%- if not installed or (p.lock is defined and lab_lock.components[p.lock].value not in installed) -%}
+      {%- set _ = out.append(p.name) -%}
+      {%- endif -%}
+      {%- endfor -%}
+      {{ out }}
+
+- name: Refresh the apt index before installing anything
+  ansible.builtin.apt:
+    update_cache: true
+    lock_timeout: "{{ common_apt_lock_timeout }}"
+  when: common_missing | length > 0 or common_modinfo.rc != 0
+
+- name: Look up the extra modules package of the running kernel
+  ansible.builtin.command: apt-cache policy linux-modules-extra-{{ ansible_facts.kernel }}
+  register: common_extra_policy
+  changed_when: false
+  check_mode: false
+  when: common_modinfo.rc != 0
+
+- name: Stop when no package provides rdma_rxe for this kernel
+  ansible.builtin.fail:
+    msg: >-
+      rdma_rxe is not part of kernel {{ ansible_facts.kernel }} and apt has no installable
+      linux-modules-extra-{{ ansible_facts.kernel }} (apt-cache policy printed
+      "{{ common_extra_policy.stdout | default('') | trim | truncate(200) }}"). Boot a kernel whose extra modules
+      package is in the archive, then re-pin lab.guest_kernel.
+  when:
+    - common_modinfo.rc != 0
+    - common_extra_policy.stdout is not search('Candidate:\s+(?!\(none\))\S+')
+
+- name: Install the extra modules package that carries rdma_rxe
+  ansible.builtin.apt:
+    name: linux-modules-extra-{{ ansible_facts.kernel }}
+    install_recommends: false
+    lock_timeout: "{{ common_apt_lock_timeout }}"
+  when: common_modinfo.rc != 0
+
+- name: Confirm rdma_rxe is available after the install
+  ansible.builtin.command: modinfo -n rdma_rxe
+  changed_when: false
+  check_mode: false
+  when: common_modinfo.rc != 0
+
+- name: Install the RDMA packages at the locked versions
+  ansible.builtin.apt:
+    name: "{{ common_wanted }}"
+    install_recommends: false
+    allow_downgrade: true
+    lock_timeout: "{{ common_apt_lock_timeout }}"
+  when: common_missing | length > 0
+
+- name: Hold the kernel metapackages on the locked release
+  ansible.builtin.dpkg_selections:
+    name: "{{ item }}"
+    selection: hold
+  loop: "{{ common_kernel_metapackages | select('in', ansible_facts.packages) | list }}"

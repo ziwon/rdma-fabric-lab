@@ -1,0 +1,78 @@
+- name: Check the inventory names two distinct NICs and an RDMA address
+  ansible.builtin.assert:
+    that:
+      - lab_mgmt_nic is defined
+      - lab_rdma_nic is defined
+      - lab_rdma_ip is defined
+      - lab_mgmt_nic != lab_rdma_nic
+    fail_msg: >-
+      [FAIL] nic-variables: {{ inventory_hostname }} needs lab_mgmt_nic, lab_rdma_nic and lab_rdma_ip, with two
+      different NICs. Set them in the override inventory of this lab.
+    quiet: true
+
+- name: Read the installed packages
+  ansible.builtin.package_facts:
+    manager: apt
+
+- name: Resolve the route to each peer RDMA address
+  ansible.builtin.command: ip -j route get {{ hostvars[item].lab_rdma_ip }}
+  loop: "{{ preflight_peers }}"
+  register: preflight_routes
+  changed_when: false
+  failed_when: false
+  check_mode: false
+
+- name: Ping each peer over the RDMA NIC
+  ansible.builtin.command: ping -c 3 -W 2 -I {{ lab_rdma_nic }} {{ hostvars[item].lab_rdma_ip }}
+  loop: "{{ preflight_peers }}"
+  register: preflight_pings
+  changed_when: false
+  failed_when: false
+  check_mode: false
+
+- name: Look for rdma_rxe in the running kernel
+  ansible.builtin.command: modinfo -n rdma_rxe
+  register: preflight_modinfo
+  changed_when: false
+  failed_when: false
+  check_mode: false
+
+- name: Look for the rxe verbs provider
+  ansible.builtin.find:
+    paths: /usr/lib/{{ ansible_facts.architecture }}-linux-gnu/libibverbs
+    patterns: librxe-rdmav*.so
+  register: preflight_provider
+
+- name: Look for a loaded rdma_rxe
+  ansible.builtin.stat:
+    path: /sys/module/rdma_rxe
+  register: preflight_loaded
+
+- name: Read RDMA and system state for the report
+  ansible.builtin.command: "{{ item.value }}"
+  loop: "{{ preflight_state_commands | dict2items }}"
+  loop_control:
+    label: "{{ item.key }}"
+  register: preflight_state
+  changed_when: false
+  failed_when: false
+  check_mode: false
+
+- name: Report each finding
+  ansible.builtin.debug:
+    msg: "[{{ 'ok' if item.ok | bool else 'FAIL' }}] {{ item.id }}: {{ item.detail if item.ok | bool else item.cause }}"
+  loop: "{{ preflight_checks }}"
+  loop_control:
+    label: "{{ item.id }}"
+
+- name: Report the recorded state
+  ansible.builtin.debug:
+    msg: "[info] {{ item.id }}: {{ item.value }}"
+  loop: "{{ preflight_info }}"
+  loop_control:
+    label: "{{ item.id }}"
+
+- name: Stop when any finding failed
+  ansible.builtin.fail:
+    msg: "{{ preflight_checks | rejectattr('ok') | map(attribute='cause') | join(' | ') }}"
+  when: preflight_checks | rejectattr('ok') | list | length > 0

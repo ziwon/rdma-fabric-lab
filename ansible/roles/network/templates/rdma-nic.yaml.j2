@@ -1,0 +1,13 @@
+# {{ ansible_managed }}
+# The RDMA lab NIC only: static address, no DHCP, no router advertisements, no default route.
+network:
+  version: 2
+  ethernets:
+    {{ lab_rdma_nic }}:
+      dhcp4: false
+      dhcp6: false
+      accept-ra: false
+      addresses:
+        - {{ lab_rdma_ip }}/{{ network_prefix }}
+      mtu: {{ lab_rdma_mtu }}
+      optional: true

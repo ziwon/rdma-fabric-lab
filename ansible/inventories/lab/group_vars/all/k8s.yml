@@ -1,0 +1,10 @@
+# Inventory contract of docs/adr/0001-kubernetes-stack.md section 4. PLAN A2 starts the lab with
+# kube-proxy, one control plane and no VIP, so the endpoint is the node IP of cp1.
+rfl_inventory: lab
+k8s_api_endpoint: 192.168.140.11
+k8s_api_port: 6443
+k8s_pod_cidr: 10.244.0.0/16
+k8s_service_cidr: 10.96.0.0/12
+k8s_kube_proxy: true
+# Relative to the repository root, gitignored.
+k8s_admin_kubeconfig: .lab/kubeconfig

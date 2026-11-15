@@ -1,0 +1,93 @@
+- name: Read the RDMA links
+  ansible.builtin.command: rdma -j link show
+  register: rxe_links_before
+  changed_when: false
+  check_mode: false
+
+- name: Refuse a device of this name on another NIC, or a second device on the lab NIC
+  ansible.builtin.assert:
+    that:
+      - rxe_same_name | rejectattr('netdev', 'equalto', lab_rdma_nic) | list | length == 0
+      - rxe_same_nic | rejectattr('ifname', 'equalto', lab_rxe_device) | list | length == 0
+    fail_msg: >-
+      On {{ inventory_hostname }} the RDMA links are
+      {{ rxe_links | map(attribute='ifname') | zip(rxe_links | map(attribute='netdev', default='-')) | map('join', ' on ') | join(', ') }}.
+      {{ lab_rxe_device }} must be absent or bound to {{ lab_rdma_nic }}, and no other device may use {{ lab_rdma_nic }}.
+      Nothing was changed. Inspect the existing device and remove it by hand if nothing uses it.
+    quiet: true
+  vars:
+    rxe_links: "{{ rxe_links_before.stdout | from_json }}"
+    rxe_same_name: "{{ rxe_links | selectattr('ifname', 'equalto', lab_rxe_device) | list }}"
+    rxe_same_nic: "{{ rxe_links | selectattr('netdev', 'defined') | selectattr('netdev', 'equalto', lab_rdma_nic) | list }}"
+
+- name: Load rdma_rxe at every boot
+  ansible.builtin.copy:
+    content: "rdma_rxe\n"
+    dest: /etc/modules-load.d/rfl-rdma_rxe.conf
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Install the device script
+  ansible.builtin.copy:
+    src: rfl-rxe-ensure.sh
+    dest: /usr/local/sbin/rfl-rxe-ensure
+    owner: root
+    group: root
+    mode: "0755"
+  notify: Restart rfl-rxe
+
+- name: Create the configuration directory
+  ansible.builtin.file:
+    path: /etc/rfl
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Write the device settings
+  ansible.builtin.template:
+    src: rfl-rxe.env.j2
+    dest: /etc/rfl/rxe.env
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart rfl-rxe
+
+- name: Install the unit that creates the device
+  ansible.builtin.template:
+    src: rfl-rxe.service.j2
+    dest: /etc/systemd/system/rfl-rxe.service
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart rfl-rxe
+
+- name: Run changed device settings through the unit
+  ansible.builtin.meta: flush_handlers
+
+- name: Enable and start the unit
+  ansible.builtin.systemd_service:
+    name: rfl-rxe.service
+    enabled: true
+    state: started
+    daemon_reload: true
+
+- name: Read the RDMA links again
+  ansible.builtin.command: rdma -j link show
+  register: rxe_links_after
+  changed_when: false
+  check_mode: false
+
+- name: Check the device is bound to the lab NIC and active
+  ansible.builtin.assert:
+    that:
+      - rxe_bound | length == 1
+      - rxe_bound[0].netdev | default('') == lab_rdma_nic
+      - rxe_bound[0].state == 'ACTIVE'
+    fail_msg: >-
+      After rfl-rxe.service ran, {{ lab_rxe_device }} on {{ inventory_hostname }} is {{ rxe_bound | to_json }},
+      expected one ACTIVE link on {{ lab_rdma_nic }}. See journalctl -u rfl-rxe.service on the guest.
+    quiet: true
+  vars:
+    rxe_bound: "{{ rxe_links_after.stdout | from_json | selectattr('ifname', 'equalto', lab_rxe_device) | list }}"

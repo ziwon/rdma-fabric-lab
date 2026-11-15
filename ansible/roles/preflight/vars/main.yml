@@ -1,0 +1,150 @@
+preflight_peers: "{{ groups['workers'] | difference([inventory_hostname]) }}"
+preflight_rdma: "{{ ansible_facts[lab_rdma_nic | replace('-', '_')] | default({}) }}"
+preflight_mgmt: "{{ ansible_facts[lab_mgmt_nic | replace('-', '_')] | default({}) }}"
+preflight_prefix: "{{ lab_address_plan.rdma | ansible.utils.ipaddr('prefix') }}"
+preflight_rdma_flags: "{{ (preflight_state_out['rdma-nic-link'] | from_json | first).flags | default([]) }}"
+preflight_kernel_lock: "{{ lab_lock.components['lab.guest_kernel'].value }}"
+
+preflight_state_commands:
+  rdma-system: rdma system show
+  rdma-links: rdma link show
+  sys-class-infiniband: ls /sys/class/infiniband
+  dev-infiniband: ls -l /dev/infiniband
+  ntp-synchronized: timedatectl show -p NTPSynchronized --value
+  mgmt-nic-driver: readlink -f /sys/class/net/{{ lab_mgmt_nic }}/device/driver
+  rdma-nic-driver: readlink -f /sys/class/net/{{ lab_rdma_nic }}/device/driver
+  rdma-nic-link: ip -j link show dev {{ lab_rdma_nic }}
+  proc-stat: head -n1 /proc/stat
+# Name of each state command to what it printed, stderr when stdout is empty.
+preflight_state_out: >-
+  {%- set out = {} -%}
+  {%- for r in preflight_state.results -%}
+  {%- set _ = out.update({r.item.key: r.stdout or r.stderr}) -%}
+  {%- endfor -%}
+  {{ out }}
+
+# "peer=device" for each peer, from ip -j route get.
+preflight_route_devs: >-
+  {%- set out = [] -%}
+  {%- for r in preflight_routes.results -%}
+  {%- set _ = out.append(r.item ~ '=' ~ ((r.stdout or '[{}]') | from_json | first).dev | default('unroutable')) -%}
+  {%- endfor -%}
+  {{ out }}
+preflight_unreachable: "{{ preflight_pings.results | rejectattr('rc', 'equalto', 0) | map(attribute='item') | list }}"
+
+# "name wanted installed" for each lab package whose installed version is not the locked one.
+preflight_package_drift: >-
+  {%- set out = [] -%}
+  {%- for p in lab_packages -%}
+  {%- set have = ansible_facts.packages.get(p.name, []) | map(attribute='version') | list -%}
+  {%- set want = lab_lock.components[p.lock].value if p.lock is defined else None -%}
+  {%- if not have or (want and want not in have) -%}
+  {%- set _ = out.append(p.name ~ ' wants ' ~ (want or 'any') ~ ', has ' ~ (have | join(',') or 'none')) -%}
+  {%- endif -%}
+  {%- endfor -%}
+  {{ out }}
+
+preflight_checks:
+  - id: mgmt-nic-present
+    ok: "{{ lab_mgmt_nic in ansible_facts.interfaces }}"
+    detail: "{{ lab_mgmt_nic }} present"
+    cause: >-
+      management NIC {{ lab_mgmt_nic }} is not an interface of {{ inventory_hostname }}
+      (present: {{ ansible_facts.interfaces | sort | join(', ') }}). Fix lab_mgmt_nic.
+  - id: rdma-nic-present
+    ok: "{{ lab_rdma_nic in ansible_facts.interfaces }}"
+    detail: "{{ lab_rdma_nic }} present"
+    cause: >-
+      RDMA NIC {{ lab_rdma_nic }} is not an interface of {{ inventory_hostname }}
+      (present: {{ ansible_facts.interfaces | sort | join(', ') }}). Attach the lab network NIC or fix lab_rdma_nic.
+  - id: rdma-nic-up
+    ok: "{{ preflight_rdma.active | default(false) }}"
+    detail: "{{ lab_rdma_nic }} is up"
+    cause: >-
+      {{ lab_rdma_nic }} is down: {{ 'it is administratively down. Before make bootstrap nothing has configured it; after
+      make bootstrap something set it down' if 'UP' not in preflight_rdma_flags
+      else 'it is up but has no carrier, so check the virtual cable of the lab network' }}
+      (flags {{ preflight_rdma_flags | join(',') or 'none' }}).
+  - id: rdma-address
+    ok: >-
+      {{ preflight_rdma.ipv4.address | default('') == lab_rdma_ip
+         and preflight_rdma.ipv4.prefix | default('') | string == preflight_prefix | string }}
+    detail: "{{ lab_rdma_nic }} holds {{ lab_rdma_ip }}/{{ preflight_prefix }}"
+    cause: >-
+      {{ lab_rdma_nic }} holds {{ preflight_rdma.ipv4.address | default('no IPv4 address') }}/{{ preflight_rdma.ipv4.prefix | default('-') }},
+      the plan wants {{ lab_rdma_ip }}/{{ preflight_prefix }}. Run make bootstrap, which applies the network role.
+  - id: rdma-mtu
+    ok: "{{ preflight_rdma.mtu | default(0) == lab_rdma_mtu }}"
+    detail: "MTU {{ preflight_rdma.mtu | default('-') }}"
+    cause: "{{ lab_rdma_nic }} has MTU {{ preflight_rdma.mtu | default('-') }}, the plan starts at {{ lab_rdma_mtu }} (PLAN 3.2)."
+  - id: default-route-on-uplink
+    ok: "{{ ansible_facts.default_ipv4.interface | default('') == preflight_uplink_nic }}"
+    detail: "default route via {{ preflight_uplink_nic }}"
+    cause: >-
+      the default route uses {{ ansible_facts.default_ipv4.interface | default('no interface') }}, not {{ preflight_uplink_nic }}.
+      PLAN 3.2 keeps the only default route on the management network, or on the uplink NIC where the hypervisor splits it off.
+  - id: mgmt-address
+    ok: "{{ preflight_mgmt.ipv4.address | default('') == k8s_node_ip | default('-') }}"
+    detail: "{{ lab_mgmt_nic }} holds the node IP {{ k8s_node_ip | default('-') }}"
+    cause: >-
+      {{ lab_mgmt_nic }} holds {{ preflight_mgmt.ipv4.address | default('no IPv4 address') }}, but k8s_node_ip is
+      {{ k8s_node_ip | default('unset') }}. Kubernetes registers the node on that address, so the management NIC must carry it.
+  - id: peers-routed-via-rdma-nic
+    ok: "{{ preflight_route_devs | reject('match', '.*=' ~ lab_rdma_nic ~ '$') | list | length == 0 }}"
+    detail: "{{ preflight_route_devs | join(', ') }}"
+    cause: >-
+      routes to the peer RDMA addresses resolve to {{ preflight_route_devs | join(', ') }}, not {{ lab_rdma_nic }},
+      so RDMA traffic would leave by another NIC. Check the address and prefix of {{ lab_rdma_nic }}.
+  - id: peers-reachable
+    ok: "{{ preflight_unreachable | length == 0 }}"
+    detail: "ping over {{ lab_rdma_nic }} reached {{ preflight_peers | join(', ') }}"
+    cause: >-
+      no ping reply over {{ lab_rdma_nic }} from {{ preflight_unreachable | join(', ') }}. Check that both RDMA NICs
+      share one lab network and that each peer has its address.
+  - id: kernel-locked
+    ok: "{{ ansible_facts.kernel == preflight_kernel_lock }}"
+    detail: "kernel {{ ansible_facts.kernel }} matches lab.guest_kernel"
+    cause: "kernel {{ ansible_facts.kernel }} differs from lab.guest_kernel {{ preflight_kernel_lock }} in versions.lock.yaml."
+  - id: rdma-rxe-available
+    ok: "{{ preflight_modinfo.rc == 0 }}"
+    detail: "{{ preflight_modinfo.stdout }}"
+    cause: >-
+      modinfo finds no rdma_rxe for kernel {{ ansible_facts.kernel }}. Run make bootstrap, whose common role installs
+      the extra modules package of this kernel when apt offers one.
+  - id: packages-locked
+    ok: "{{ preflight_package_drift | length == 0 }}"
+    detail: "{{ lab_packages | map(attribute='name') | join(', ') }} installed at the locked versions"
+    cause: "{{ preflight_package_drift | join('; ') }}. Run make bootstrap, or re-pin versions.lock.yaml."
+  - id: rxe-verbs-provider
+    ok: "{{ preflight_provider.matched > 0 }}"
+    detail: "{{ preflight_provider.files | map(attribute='path') | join(', ') }}"
+    cause: "no librxe-rdmav*.so under /usr/lib/{{ ansible_facts.architecture }}-linux-gnu/libibverbs. ibverbs-providers is missing."
+
+preflight_info:
+  - id: vcpus-memory
+    value: "{{ ansible_facts.processor_vcpus }} vCPU, {{ ansible_facts.memtotal_mb }} MiB"
+  - id: virtualization
+    value: "{{ ansible_facts.virtualization_type | default('unknown') }} {{ ansible_facts.virtualization_role | default('') }}"
+  - id: nic-drivers
+    value: >-
+      {{ lab_mgmt_nic }} {{ preflight_state_out['mgmt-nic-driver'] | basename }},
+      {{ lab_rdma_nic }} {{ preflight_state_out['rdma-nic-driver'] | basename }}
+  - id: rdma-rxe-loaded
+    value: "{{ 'loaded' if preflight_loaded.stat.exists else 'not loaded' }}"
+  - id: rdma-system
+    value: "{{ preflight_state_out['rdma-system'] }}"
+  - id: rdma-links
+    value: "{{ preflight_state_out['rdma-links'] or 'none' }}"
+  - id: sys-class-infiniband
+    value: "{{ preflight_state_out['sys-class-infiniband'] | replace('\n', ' ') or 'empty' }}"
+  - id: dev-infiniband
+    value: "{{ preflight_state_out['dev-infiniband'] | replace('\n', ' | ') }}"
+  - id: ntp-synchronized
+    value: "{{ preflight_state_out['ntp-synchronized'] }}"
+  - id: cpu-steal-since-boot-percent
+    value: >-
+      {%- set f = preflight_state_out['proc-stat'].split()[1:] | map('int') | list -%}
+      {{ (100.0 * f[7] / (f | sum)) | round(3) if f | length > 7 and f | sum > 0 else 'unknown' }}
+# The NIC with the default route and the SSH session: lab_uplink_nic where the hypervisor splits it
+# from the management NIC, as the QEMU harness does, else the management NIC.
+preflight_uplink_nic: "{{ lab_uplink_nic | default(lab_mgmt_nic) }}"

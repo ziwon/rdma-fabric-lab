@@ -1,0 +1,23 @@
+- name: Undo the rxe and network roles on the lab workers
+  hosts: workers
+  become: true
+  pre_tasks:
+    - name: Refuse hosts outside the lab inventory
+      ansible.builtin.assert:
+        that: lab_inventory | default('') == 'rdma-fabric-lab'
+        fail_msg: "{{ inventory_hostname }} is not from ansible/inventories/lab. Lab playbooks run only there."
+        quiet: true
+    - name: Refuse to reset without the confirmation
+      ansible.builtin.assert:
+        that: lab_reset_confirm | default('') == 'lab'
+        fail_msg: Resetting deletes the lab device and the RDMA NIC address. Pass -e lab_reset_confirm=lab, or make reset-lab CONFIRM=lab.
+        quiet: true
+  tasks:
+    - name: Undo the rxe role
+      ansible.builtin.include_role:
+        name: rxe
+        tasks_from: reset
+    - name: Undo the network role
+      ansible.builtin.include_role:
+        name: network
+        tasks_from: reset

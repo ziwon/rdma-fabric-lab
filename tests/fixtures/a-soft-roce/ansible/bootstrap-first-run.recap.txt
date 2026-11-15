@@ -1,0 +1,26 @@
+PLAY RECAP *********************************************************************
+worker1                    : ok=27   changed=8    unreachable=0    failed=0    skipped=1    rescued=0    ignored=0   
+worker2                    : ok=27   changed=8    unreachable=0    failed=0    skipped=1    rescued=0    ignored=0   
+
+Sunday 15 November 2026  10:38:03 +0900 (0:00:00.128)       0:00:53.956 ******* 
+=============================================================================== 
+common : Refresh the apt index before installing anything -------------- 18.62s
+common : Install the extra modules package that carries rdma_rxe ------- 18.61s
+common : Install the RDMA packages at the locked versions -------------- 10.39s
+Gathering Facts --------------------------------------------------------- 1.24s
+common : Hold the kernel metapackages on the locked release ------------- 0.81s
+common : Read the installed packages ------------------------------------ 0.56s
+network : Write the netplan file of the RDMA NIC ------------------------ 0.44s
+network : Generate networkd files from netplan -------------------------- 0.39s
+network : Read the state of systemd-networkd ---------------------------- 0.37s
+network : Reload systemd-networkd --------------------------------------- 0.35s
+network : Read network facts and the SSH session of Ansible ------------- 0.26s
+network : Read network facts and the SSH session of Ansible ------------- 0.25s
+network : Wait for the RDMA address on enp0s4 --------------------------- 0.20s
+common : Look up the extra modules package of the running kernel -------- 0.20s
+common : Check whether the running kernel provides rdma_rxe ------------- 0.17s
+network : Reconfigure the RDMA NIC -------------------------------------- 0.16s
+common : Confirm rdma_rxe is available after the install ---------------- 0.16s
+network : Check the RDMA NIC holds the planned address and MTU and no default route --- 0.13s
+common : Work out which locked packages are missing --------------------- 0.12s
+network : Check the inventory names two distinct NICs and an RDMA address --- 0.09s

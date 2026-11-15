@@ -1,0 +1,14 @@
+common_apt_lock_timeout: 600
+
+# Kernel metapackages a guest may carry. The role holds whichever are installed,
+# because a kernel upgrade boots a release whose rdma_rxe package nobody installed.
+common_kernel_metapackages:
+  - linux-generic
+  - linux-image-generic
+  - linux-headers-generic
+  - linux-generic-hwe-24.04
+  - linux-image-generic-hwe-24.04
+  - linux-headers-generic-hwe-24.04
+  - linux-virtual
+  - linux-image-virtual
+  - linux-headers-virtual

@@ -1,0 +1,26 @@
+# Undoes this role on the RDMA NIC only, with the SSH path checked before and after.
+- name: Verify the SSH path before the reset
+  ansible.builtin.include_tasks: ssh_path.yml
+
+- name: Remove the netplan file of the RDMA NIC
+  ansible.builtin.file:
+    path: /etc/netplan/60-rfl-rdma.yaml
+    state: absent
+  notify: Drop the RDMA NIC configuration
+
+- name: Drop the RDMA NIC configuration now
+  ansible.builtin.meta: flush_handlers
+
+- name: Read the addresses of the RDMA NIC
+  ansible.builtin.command: ip -4 -o addr show dev {{ lab_rdma_nic }}
+  register: network_reset_addr
+  changed_when: false
+  check_mode: false
+
+- name: Remove the lab address networkd left on the RDMA NIC
+  ansible.builtin.command: ip addr del {{ lab_rdma_ip }}/{{ network_prefix }} dev {{ lab_rdma_nic }}
+  changed_when: true
+  when: network_reset_addr.stdout is search('inet ' ~ (lab_rdma_ip ~ '/' ~ network_prefix) | regex_escape ~ ' ')
+
+- name: Verify the SSH path after the reset
+  ansible.builtin.include_tasks: ssh_path.yml
