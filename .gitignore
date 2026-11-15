@@ -1,0 +1,22 @@
+.venv/
+__pycache__/
+.pytest_cache/
+*.retry
+
+# Raw run data stays local. Curated summaries go under docs/milestones/.
+/results/
+
+# Guest disks, cloud-init seeds, SSH keys and logs of the local VM lab.
+/.lab/
+
+/artifacts/
+.env
+*.kubeconfig
+admin.conf
+
+
+# Agent briefs, decision trails and machine-local pointers.
+/.audit/
+
+# Pinned helm and kubeconform from make tools, and the charts they render.
+/.tools/

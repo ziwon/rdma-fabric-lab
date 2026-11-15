@@ -1,0 +1,11 @@
+# Control-node tooling. `make venv` installs the compiled requirements.txt on the Python
+# that tooling.python in versions.lock.yaml names. Bump a pin here, recompile, and update
+# the matching tooling.* lock value; make versions fails until both agree.
+ansible==14.6.0
+ansible-lint
+yamllint
+jsonschema
+PyYAML
+pytest
+# ansible.utils.ipaddr, used by the lab templates.
+netaddr
