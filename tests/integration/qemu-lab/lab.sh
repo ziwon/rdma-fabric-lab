@@ -148,7 +148,7 @@ start_switch() {
 }
 
 start_guest() {
-  local name=$1 port=$2 vcpus=$3 mem=$4 disk_gib=$5 dir=$lab/guests/$1 nic_args
+  local name=$1 port=$2 vcpus=$3 mem=$4 disk_gib=$5 dir=$lab/guests/$1 nic_args profile_flags
   if qemu_pid "$dir/qemu.pid" > /dev/null; then
     say "$name already runs"
     return 0
@@ -157,10 +157,11 @@ start_guest() {
   [[ -f $dir/disk.qcow2 ]] || qemu-img create -q -f qcow2 -F qcow2 -b "$(image_path)" "$dir/disk.qcow2" "${disk_gib}G"
   write_seed "$name"
   mapfile -t nic_args < <(guests qemu-nics --guest "$name" --lab-dir "$lab")
+  mapfile -t profile_flags < <(guests qemu-flags)
   rm -f "$lab/net/cable-$name-"*.sock "$lab/net/"*"/$name.nic"
   qemu-system-x86_64 \
     -name "$name,process=rfl-lab-$name" \
-    -machine q35,accel=kvm -cpu host -smp "$vcpus" -m "$mem" \
+    -machine q35,accel=kvm -cpu host -smp "$vcpus" -m "$mem" "${profile_flags[@]}" \
     -drive "file=$dir/disk.qcow2,if=virtio,format=qcow2" \
     -drive "file=$dir/seed.iso,if=virtio,format=raw,readonly=on" \
     "${nic_args[@]}" \

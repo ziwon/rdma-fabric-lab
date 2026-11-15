@@ -1,10 +1,11 @@
 """Guest profiles of the QEMU harness: which guests boot, with which NICs on which networks.
 
-A profile is a TSV file under profiles/. Header lines name the inventory the profile belongs to
-and the CIDR of each switched network:
+A profile is a TSV file under profiles/. Header lines name the inventory the profile belongs to,
+the CIDR of each switched network and, optionally, extra QEMU flags for every guest of the profile:
 
     #inventory ansible/inventories/lab
     #network mgmt 192.168.140.0/24
+    #qemu -no-reboot
 
 Each guest row is: name, ssh_port, vcpus, mem_mib, disk_gib, then NIC specs separated by spaces.
 A NIC spec is comma separated key=value pairs:
@@ -39,6 +40,9 @@ SLUG = re.compile(r"^[a-z0-9][a-z0-9-]*$")
 IFNAME = re.compile(r"^[a-zA-Z][a-zA-Z0-9_.-]{0,14}$")
 VAR = re.compile(r"^[a-z_][a-z0-9_]*$")
 FIRST_PCI_SLOT = 3
+# -no-reboot makes a guest that panics or reboots end its QEMU process, so serial.log keeps the
+# console of the crash. A profile whose guests must survive a reboot leaves it out.
+QEMU_FLAGS = frozenset({"-no-reboot"})
 
 
 class ProfileError(ValueError):
@@ -71,6 +75,7 @@ class Profile:
     inventory: str
     networks: dict[str, ipaddress.IPv4Network] = field(default_factory=dict)
     guests: list[Guest] = field(default_factory=list)
+    qemu_flags: tuple[str, ...] = ()
 
     def guest(self, name: str) -> Guest:
         for g in self.guests:
@@ -118,6 +123,12 @@ def parse(text: str) -> Profile:
         elif line.startswith("#network "):
             _, name, cidr = line.split()
             profile.networks[name] = ipaddress.ip_network(cidr)
+        elif line.startswith("#qemu "):
+            flags = tuple(line.split()[1:])
+            unknown = sorted(set(flags) - QEMU_FLAGS)
+            if unknown:
+                raise ProfileError(f"{where}: QEMU flags {unknown} are not allowed. Allowed: {sorted(QEMU_FLAGS)}")
+            profile.qemu_flags += flags
         elif line.strip() and not line.startswith("#"):
             cols = line.split("\t")
             if len(cols) != 6:
@@ -262,8 +273,8 @@ def _flatten(listing: dict, group: str) -> list[str]:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="guests.py", description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("command", choices=["rows", "inventory-path", "switches", "qemu-nics", "network-config",
-                                            "override", "api-url"])
+    parser.add_argument("command", choices=["rows", "inventory-path", "switches", "qemu-flags", "qemu-nics",
+                                            "network-config", "override", "api-url"])
     parser.add_argument("profile", type=Path)
     parser.add_argument("--guest")
     parser.add_argument("--lab-dir")
@@ -283,6 +294,9 @@ def main(argv: list[str] | None = None) -> int:
         elif args.command == "switches":
             for name, members in switches(profile).items():
                 print(name, *members)
+        elif args.command == "qemu-flags":
+            for flag in profile.qemu_flags:
+                print(flag)
         elif args.command == "qemu-nics":
             print("\n".join(qemu_nic_args(profile.guest(args.guest), args.lab_dir)))
         elif args.command == "network-config":

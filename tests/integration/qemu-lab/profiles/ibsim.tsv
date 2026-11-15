@@ -1,0 +1,7 @@
+# Track B: one guest whose container runtime runs the pinned ibsim image, so ibsim, OpenSM and the
+# diagnostic tools run on this guest's kernel and never on the host's. It has no switched network or
+# cable. A panic inside it ends its QEMU process and leaves the console in serial.log.
+#inventory tests/integration/qemu-lab/profiles/ibsim/inventory
+#qemu -no-reboot
+# name	ssh_port	vcpus	mem_mib	disk_gib	nics
+ibsim1	22231	4	6144	20	mac=52:54:00:8c:02:31,net=user

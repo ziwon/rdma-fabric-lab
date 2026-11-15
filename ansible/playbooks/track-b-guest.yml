@@ -1,0 +1,100 @@
+---
+# The Track B guest of the ibsim harness profile: Docker from the Ubuntu archive at the locked
+# versions, and a marker file the scenario commands require before they start any container.
+- name: Prepare the Track B guest
+  hosts: track_b_guest
+  become: true
+  vars:
+    track_b_lock: "{{ lookup('ansible.builtin.file', playbook_dir ~ '/../../versions.lock.yaml') | from_yaml }}"
+    track_b_packages:
+      - { name: docker.io, lock: ibsim.guest_docker }
+      - { name: docker-buildx, lock: ibsim.guest_buildx }
+      - { name: containerd, lock: ibsim.guest_containerd }
+      - { name: runc, lock: ibsim.guest_runc }
+    track_b_marker: /etc/rfl/track-b-guest
+    track_b_apt_lock_timeout: 600
+  tasks:
+    - name: Refuse hosts other than the Track B guest
+      ansible.builtin.assert:
+        that:
+          - rfl_track_b_guest | default(false) | bool
+          - ansible_facts.virtualization_role == 'guest'
+        fail_msg: >-
+          {{ inventory_hostname }} is not the Track B guest of tests/integration/qemu-lab/profiles/ibsim.tsv.
+          ibsim and OpenSM run only inside that guest, never on the host.
+        quiet: true
+
+    - name: Refuse a kernel other than the locked one
+      ansible.builtin.assert:
+        that: ansible_facts.kernel == track_b_lock.components['ibsim.guest_kernel'].value
+        fail_msg: >-
+          {{ inventory_hostname }} runs kernel {{ ansible_facts.kernel }}, but versions.lock.yaml pins ibsim.guest_kernel
+          {{ track_b_lock.components['ibsim.guest_kernel'].value }}. Boot the locked image, or re-pin the lock after a probe.
+        quiet: true
+
+    - name: Read the installed packages
+      ansible.builtin.package_facts:
+        manager: apt
+
+    - name: Work out which locked packages are missing
+      ansible.builtin.set_fact:
+        track_b_missing: >-
+          {%- set out = [] -%}
+          {%- for p in track_b_packages -%}
+          {%- if track_b_lock.components[p.lock].value not in (ansible_facts.packages.get(p.name, []) | map(attribute='version')) -%}
+          {%- set _ = out.append(p.name ~ '=' ~ track_b_lock.components[p.lock].value) -%}
+          {%- endif -%}
+          {%- endfor -%}
+          {{ out }}
+
+    - name: Install the container runtime at the locked versions
+      ansible.builtin.apt:
+        name: "{{ track_b_missing }}"
+        update_cache: true
+        install_recommends: false
+        lock_timeout: "{{ track_b_apt_lock_timeout }}"
+      when: track_b_missing | length > 0
+
+    - name: Hold the container runtime on the locked versions
+      ansible.builtin.dpkg_selections:
+        name: "{{ item.name }}"
+        selection: hold
+      loop: "{{ track_b_packages }}"
+      loop_control:
+        label: "{{ item.name }}"
+
+    # An Oops then panics, and the harness's -no-reboot turns the panic into a QEMU exit with the
+    # console in serial.log, instead of a guest that hangs half alive.
+    - name: Panic on an Oops and reboot five seconds later
+      ansible.posix.sysctl:
+        name: "{{ item.name }}"
+        value: "{{ item.value }}"
+        sysctl_file: /etc/sysctl.d/90-rfl-track-b.conf
+        reload: true
+      loop:
+        - { name: kernel.panic_on_oops, value: "1" }
+        - { name: kernel.panic, value: "5" }
+      loop_control:
+        label: "{{ item.name }}={{ item.value }}"
+
+    - name: Start Docker now and at boot
+      ansible.builtin.systemd_service:
+        name: docker.service
+        state: started
+        enabled: true
+
+    - name: Create the marker directory
+      ansible.builtin.file:
+        path: "{{ track_b_marker | dirname }}"
+        state: directory
+        owner: root
+        group: root
+        mode: "0755"
+
+    - name: Mark this guest as the Track B guest
+      ansible.builtin.copy:
+        dest: "{{ track_b_marker }}"
+        content: "{{ inventory_hostname }}\n"
+        owner: root
+        group: root
+        mode: "0644"
