@@ -3,6 +3,7 @@
 # kernel messages of any node can explain a failed job.
 - name: Forward syslog to the site syslog server
   hosts: k8s_cluster
+  become: true
   tags: [rsyslog]
   pre_tasks:
     - name: Refuse a host outside a fleet inventory
