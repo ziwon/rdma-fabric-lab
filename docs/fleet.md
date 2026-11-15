@@ -1,231 +1,231 @@
-# cel1 — 가상 GPU 리전 운영 문서
+# cel1: operations guide for the virtual GPU region
 
-> 작성일: 2026-11-15  
-> 상태: 사이트 모델, 인벤토리 생성, 계약 검사, Helm 렌더링은 오프라인으로 실행해 확인했다. cel1 호스트를 바꾸는 타깃은 한 번도 실행하지 않았다(8절).  
-> 근거: `docs/adr/0001-kubernetes-stack.md`. 4절이 인벤토리 계약이다.
+> Written: 2026-11-15  
+> Status: the site model, inventory generation, contract check and Helm rendering ran offline and were confirmed. No target that changes cel1 hosts has ever run (section 8).  
+> Basis: `docs/adr/0001-kubernetes-stack.md`. Its section 4 is the inventory contract.
 
-## 1. 리전
+## 1. Region
 
-cel1은 실재하지 않는 리전이다. 호스트 이름, 주소, 인터페이스 이름, 스위치 이름은 모두 새로 지었다.
+cel1 is a region that does not exist. All host names, addresses, interface names and switch names were invented for it.
 
-| 클래스 | 호스트 | 수 | OS | NVIDIA 드라이버와 컨테이너 툴킷 | 포트 |
+| Class | Hosts | Count | OS | NVIDIA driver and container toolkit | Ports |
 |---|---|---:|---|---|---|
-| `control_plane` | `cel1-cp-01`–`03` | 3 | Ubuntu 24.04 | 없음 | `mgmt0` |
-| `dgx_b200` | `cel1-dgx-01`–`08` | 8 | DGX OS 7 | DGX OS에 설치되어 있다 | `mgmt0`, `stor0`, `stor1`, `rail0`–`rail7` |
-| `pcie_gpu` | `cel1-pcie-01`–`02` | 2 | Ubuntu 24.04 | GPU Operator가 설치한다 | `mgmt0` |
+| `control_plane` | `cel1-cp-01`–`03` | 3 | Ubuntu 24.04 | None | `mgmt0` |
+| `dgx_b200` | `cel1-dgx-01`–`08` | 8 | DGX OS 7 | Installed in DGX OS | `mgmt0`, `stor0`, `stor1`, `rail0`–`rail7` |
+| `pcie_gpu` | `cel1-pcie-01`–`02` | 2 | Ubuntu 24.04 | GPU Operator installs them | `mgmt0` |
 
-DGX는 64대가 아니라 8대다. 이 호스트가 그 이상을 시뮬레이션할 수 없다고 사용자가 정했다. 다음 작업이 cel1을 랩 하네스의 작은 QEMU 게스트로 부팅하고 실제 플레이북을 실행한다. 이 문서의 설계는 모두 그 부팅을 전제로 한다.
+There are 8 DGX nodes, not 64. The user decided that this host cannot simulate more. The next task boots cel1 as small QEMU guests of the lab harness and runs the real playbooks. Every design in this document assumes that boot.
 
-## 2. 사이트 모델
+## 2. Site model
 
-`sites/cel1.yaml` 하나가 리전의 단일 원천이다. 호스트와 클래스, 주소 계획, API 주소, syslog 주소, InfiniBand 컴퓨트 패브릭이 모두 여기에 있다. 형식은 `scripts/fleet/site.py`의 docstring이 정의한다.
+The single file `sites/cel1.yaml` is the single source of truth for the region. It holds the hosts and classes, the address plan, the API address, the syslog address and the InfiniBand compute fabric. The docstring of `scripts/fleet/site.py` defines the format.
 
-### 2.1 주소 계획
+### 2.1 Address plan
 
-| 용도 | 범위 | 할당 |
+| Use | Range | Assignment |
 |---|---|---|
-| 인밴드 관리망 `management` | `10.140.0.0/24` | API VIP `.10`, syslog `.5`, 컨트롤 플레인 `.11`–`.13`, DGX `.21`–`.28`, PCIe GPU 서버 `.31`–`.32` |
-| 스토리지 `storage-a`, `storage-b` | `10.141.0.0/24`, `10.141.1.0/24` | DGX `.21`–`.28` |
-| 컴퓨트 레일 `rail0`–`rail7` | `10.142.0.0/24`–`10.142.7.0/24` | DGX `.21`–`.28` |
-| Pod | `10.160.0.0/16` | kube-controller-manager가 노드별 `/24`를 나눈다 |
+| In-band management network `management` | `10.140.0.0/24` | API VIP `.10`, syslog `.5`, control planes `.11`–`.13`, DGX `.21`–`.28`, PCIe GPU servers `.31`–`.32` |
+| Storage `storage-a`, `storage-b` | `10.141.0.0/24`, `10.141.1.0/24` | DGX `.21`–`.28` |
+| Compute rails `rail0`–`rail7` | `10.142.0.0/24`–`10.142.7.0/24` | DGX `.21`–`.28` |
+| Pod | `10.160.0.0/16` | kube-controller-manager hands each node a `/24` |
 | Service | `10.170.0.0/16` | |
 
-각 범위는 하나의 L2 세그먼트다. 범위끼리, 랩 주소 계획(`ansible/inventories/lab/group_vars/all/lab.yml`의 `lab_address_plan`)과 겹치지 않는다. 검증기가 매번 이 두 가지를 확인한다.
+Each range is one L2 segment. The ranges overlap neither each other nor the lab address plan (`lab_address_plan` in `ansible/inventories/lab/group_vars/all/lab.yml`). The validator checks both on every run.
 
-호스트마다 주소를 모두 적는다. 호스트 번호로 주소를 계산하는 규칙을 쓰지 않는다. 주소를 명시해야 중복 검사와 범위 검사가 실제로 일을 한다.
+Every host lists all its addresses. No rule computes an address from a host number. The duplicate check and the range check do real work only when the addresses are explicit.
 
-### 2.2 인터페이스 이름
+### 2.2 Interface names
 
-포트 이름은 systemd `.link` 파일이 바꿔 붙이는 이름이다. 하드웨어에서는 PCI 경로나 MAC으로, QEMU 게스트에서는 virtio NIC의 MAC으로 매칭한다. 그래서 같은 인벤토리가 두 환경에서 같다.
+A port name is the name a systemd `.link` file assigns as a rename. On hardware it matches by PCI path or MAC. In a QEMU guest it matches by the MAC of the virtio NIC. So the inventory is the same in both environments.
 
-검증기는 15자를 넘거나 소문자와 숫자 밖의 문자를 쓰는 이름을 거부한다. `eth`, `en`, `ib`, `wl`, `ww`, `usb`, `sl`로 시작하는 이름도 거부한다. systemd.link(5)는 커널이 직접 붙일 수 있는 이름으로 바꾸면 커널과 경쟁한다고 경고한다. 나머지는 udev 예측 이름의 접두사라서 혼동을 만든다.
+The validator rejects a name longer than 15 characters or with characters other than lowercase letters and digits. It also rejects names that start with `eth`, `en`, `ib`, `wl`, `ww`, `usb` or `sl`. systemd.link(5) warns that a rename to a name the kernel can assign itself races with the kernel. The rest are prefixes of udev predictable names, so they cause confusion.
 
-### 2.3 컴퓨트 패브릭
+### 2.3 Compute fabric
 
-`fabrics.compute`는 레일 최적화 InfiniBand 패브릭이다.
+`fabrics.compute` is a rail-optimized InfiniBand fabric.
 
-| 항목 | 값 |
+| Item | Value |
 |---|---|
-| 스위치 모델 | `ndr-64`, 포트 64개, 링크 4x NDR |
-| 리프 | `cel1-ib-leaf-r0`–`r7`. 레일 하나에 리프 하나 |
-| 스파인 | `cel1-ib-spine-01`–`04` |
-| 다운링크 | DGX n의 `rail r` → 리프 `r`의 포트 n. 리프마다 8개 |
-| 업링크 | 리프 포트 33–40. 스파인마다 2개. 스파인 포트는 `1 + 2r`, `2 + 2r` |
-| 링크 수 | 레일 64개, 리프–스파인 64개, 합계 128개 |
+| Switch model | `ndr-64`, 64 ports, 4x NDR links |
+| Leaves | `cel1-ib-leaf-r0`–`r7`. One leaf per rail |
+| Spines | `cel1-ib-spine-01`–`04` |
+| Downlinks | `rail r` of DGX n → port n of leaf `r`. 8 per leaf |
+| Uplinks | Leaf ports 33–40. 2 per spine. The spine ports are `1 + 2r` and `2 + 2r` |
+| Link count | 64 rail, 64 leaf–spine, 128 in total |
 
-리프의 다운링크 8개와 업링크 8개가 같으므로 리프에서 과다 구독이 없다. 링크는 모두 명시한 케이블 목록이다. 규칙으로 생성하지 않으므로 검증기가 실제 배선 계획을 검사한다.
+Each leaf has 8 downlinks and 8 uplinks, an equal number, so the leaves have no oversubscription. Every link is an entry in an explicit cable list. No rule generates them, so the validator checks the real cabling plan.
 
-M4는 이 절에서 ibsim 토폴로지를 만든다. ibsim(`ibsim/sim_net.c`)이 읽는 것은 노드 종류와 포트 수, 고유한 노드 이름, 양쪽 포트 번호를 가진 링크, 선택 사항인 링크 폭과 속도다. 모델에는 그것이 모두 있다. HCA는 레일마다 포트가 하나인 `mlx5_<r>`이다. ibsim 파일은 아직 쓰지 않았다.
+M4 builds the ibsim topology from this section. ibsim (`ibsim/sim_net.c`) reads node kinds and port counts, unique node names, links with the port number on each end, and optional link width and speed. The model has all of them. Each rail has one single-port HCA, `mlx5_<r>`. No ibsim file is written yet.
 
-### 2.4 검증기
+### 2.4 Validator
 
-`make fleet-site-check`가 모델을 검증한다. 모양이 틀리면 파싱 단계에서 거부한다. 같은 키가 파일에 두 번 나오는 경우도 거부한다. PyYAML은 뒤의 값을 조용히 남기기 때문이다. 모양이 맞으면 다음 위반을 각각 이름으로 보고한다.
+`make fleet-site-check` validates the model. It rejects a wrong shape at the parsing stage. It also rejects a key that appears twice in the file, because PyYAML silently keeps the later value. When the shape is right, it reports each of the following violations by name.
 
-- 인터페이스 이름 규칙 위반, 알 수 없는 네트워크·클래스·스위치 모델·노드
-- 노드 네트워크에 인터페이스가 정확히 하나가 아닌 클래스, 클래스와 맞지 않는 호스트 주소
-- 호스트와 스위치가 같은 이름을 쓰는 경우, Ansible 그룹 이름이 될 수 없는 클래스 이름, RFC 1123 라벨이 아닌 호스트 이름
-- 겹치는 범위, 랩 계획과 겹치는 범위, 네트워크 밖 주소, 중복 주소, 노드 네트워크 밖의 VIP
-- 컨트롤 플레인이 없거나 컨트롤 플레인 클래스마다 VIP 인터페이스 이름이 다른 경우
-- 레일을 갖지 않은 리프나 레일을 가진 스파인, 포트 범위(`1`–라딕스) 밖의 포트, 숫자가 아닌 스위치 포트
-- 다른 레일 리프에 꽂힌 레일 포트, 패브릭에 꽂힌 관리 포트, 레일–스파인과 리프–리프 링크
-- 두 번 쓰인 포트, 케이블이 없는 레일 포트, 어떤 스파인에도 업링크가 없는 리프
+- Interface name rule violations, unknown networks, classes, switch models and nodes
+- A class without exactly one interface on the node network, host addresses that do not match their class
+- A host and a switch with the same name, class names that cannot be Ansible group names, host names that are not RFC 1123 labels
+- Overlapping ranges, ranges that overlap the lab plan, addresses outside their network, duplicate addresses, a VIP outside the node network
+- No control plane, or a VIP interface name that differs between control plane classes
+- A leaf without a rail or a spine with a rail, ports outside the port range (`1`–radix), switch ports that are not numbers
+- A rail port cabled to the leaf of another rail, a management port cabled to the fabric, rail–spine and leaf–leaf links
+- A port used twice, a rail port without a cable, a leaf that lacks an uplink to a spine
 
-`tests/unit/test_fleet_site.py`가 위반마다 실패하는 테스트를 하나씩 둔다.
+`tests/unit/test_fleet_site.py` has one test for each violation. Each test fails if the validator misses its violation.
 
-## 3. 생성기
+## 3. Generator
 
-`make fleet-render`가 `sites/cel1.yaml`에서 `ansible/inventories/cel1/`을 쓴다. 손으로 고치지 않는다.
+`make fleet-render` writes `ansible/inventories/cel1/` from `sites/cel1.yaml`. Nobody edits it by hand.
 
-| 파일 | 내용 |
+| File | Content |
 |---|---|
-| `hosts.yml` | `k8s_cluster` 아래 `kube_control_plane`, `kube_node`. 클래스마다 그룹 하나 |
-| `group_vars/all.yml` | `rfl_inventory`, API 주소·포트·VIP·VIP 인터페이스, Pod·Service CIDR, `k8s_kube_proxy`, `k8s_control_plane_schedulable`, syslog 주소와 포트 |
-| `group_vars/<class>.yml` | 그 클래스의 `k8s_node_labels` |
+| `hosts.yml` | `kube_control_plane` and `kube_node` under `k8s_cluster`. One group per class |
+| `group_vars/all.yml` | `rfl_inventory`, the API address, port, VIP and VIP interface, the Pod and Service CIDRs, `k8s_kube_proxy`, `k8s_control_plane_schedulable`, the syslog address and port |
+| `group_vars/<class>.yml` | The `k8s_node_labels` of that class |
 | `host_vars/<host>.yml` | `k8s_node_ip` |
 
-계약 그룹은 호스트를 직접 나열한다. `groups['kube_control_plane'][0]`이 `kubeadm init`을 실행하므로 그 순서가 자식 그룹 탐색 순서에 기대면 안 된다. 클래스 그룹은 같은 호스트를 다시 나열한다. `PYTHONHASHSEED` 0, 1, 7, 42, 999에서 `ansible-inventory --list` 출력의 sha256이 같았다. `ansible-playbook --list-hosts`의 호스트 순서는 실행마다 다르지만 CLI가 출력용으로 `set`을 쓰기 때문이다(`ansible/cli/playbook.py`). `groups['k8s_cluster']`는 6회 실행에서 같았다.
+The contract groups list their hosts directly. `groups['kube_control_plane'][0]` runs `kubeadm init`, so that order must not depend on the traversal order of child groups. The class groups list the same hosts again. The sha256 of the `ansible-inventory --list` output was the same with `PYTHONHASHSEED` 0, 1, 7, 42 and 999. The host order of `ansible-playbook --list-hosts` differs between runs, but that is because the CLI uses a `set` for its output (`ansible/cli/playbook.py`). `groups['k8s_cluster']` was the same over 6 runs.
 
-인벤토리는 `ansible_host`를 두지 않는다. cel1 주소는 지어낸 값이라 호스트에서 접속하면 안 된다. 접속 방법은 두 번째 인벤토리(`FLEET_CONNECT`)가 준다. 시뮬레이션은 127.0.0.1 포트 포워딩을 적는다. 두 번째 인벤토리 없이 cel1 인벤토리로 플레이북을 실행하려 하면 make가 ssh 전에 멈춘다.
+The inventory sets no `ansible_host`. The cel1 addresses are invented, so the host must not connect to them. A second inventory (`FLEET_CONNECT`) supplies the connection details. For the simulation it lists 127.0.0.1 port forwards. If a playbook run uses the cel1 inventory without the second inventory, make stops before ssh.
 
-생성기는 같은 모델에서 같은 바이트를 낸다. `make fleet-render-check`가 디렉터리와 렌더링 결과를 비교하고 다르면 실패한다. 호스트가 모델에서 빠지면 그 호스트의 예전 파일을 지운다. 생성기가 쓰지 않은 파일은 지우지 않고 보고한다.
+The generator emits the same bytes from the same model. `make fleet-render-check` compares the directory with the rendered output and fails on a difference. When a host leaves the model, the generator deletes that host's old files. It reports files it did not write and does not delete them.
 
-## 4. 인벤토리 계약 검사
+## 4. Inventory contract check
 
-`make inventory-check INVENTORY=<lab|cel1|dir>`가 `ansible-inventory --list` 출력을 ADR 4절과 비교한다. 호스트에 접속하지 않는다. 값이 정확히 `{{ other_variable }}`이면 같은 호스트의 변수로 푼다. 그 밖의 템플릿은 오프라인으로 평가할 수 없다고 보고한다.
+`make inventory-check INVENTORY=<lab|cel1|dir>` compares the `ansible-inventory --list` output with section 4 of the ADR. It does not connect to hosts. A value that is exactly `{{ other_variable }}` resolves to that variable of the same host. The check reports any other template as impossible to evaluate offline.
 
-| 코드 | 뜻 |
+| Code | Meaning |
 |---|---|
-| `missing-group` | 계약 그룹이 없거나 `kube_control_plane`이 비었다 |
-| `group-membership` | 호스트가 두 역할에 모두 있거나 `k8s_cluster`가 두 그룹의 합이 아니다 |
-| `missing-variable` | 호스트에 필요한 변수가 없다. `k8s_node_ip`가 없는 호스트가 여기에 걸린다 |
-| `bad-value` | 형식이 틀렸다. 예를 들어 `k8s_kube_proxy: "false"`는 문자열이다 |
-| `unresolved-template` | 오프라인으로 평가할 수 없는 템플릿이다 |
-| `inconsistent-variable` | 클러스터 공통 변수가 호스트마다 다르다 |
-| `duplicate-node-ip` | 두 호스트가 같은 `k8s_node_ip`를 쓴다 |
-| `range-overlap` | Pod와 Service 범위가 겹치거나 노드 주소나 VIP가 그 안에 있다 |
-| `missing-vip` | 컨트롤 플레인이 둘 이상인데 `k8s_api_vip`가 없다 |
-| `vip-endpoint-mismatch` | `k8s_api_vip`와 `k8s_api_endpoint`가 다르다 |
-| `unknown-environment` | `rfl_inventory`가 `helm/releases.yaml`의 환경이 아니다 |
-| `reserved-label-prefix` | 라벨이 `kubernetes.io`나 `k8s.io` 또는 그 하위 도메인을 쓴다 |
-| `invalid-label` | 라벨 키나 값이 Kubernetes 문법에 맞지 않거나 값이 문자열이 아니다 |
-| `cilium-values`, `cilium-mismatch` | Cilium 값 파일이 없거나 인벤토리와 다르다 |
+| `missing-group` | A contract group is missing, or `kube_control_plane` is empty |
+| `group-membership` | A host is in both roles, or `k8s_cluster` is not the union of the two groups |
+| `missing-variable` | A host lacks a required variable. A host without `k8s_node_ip` lands here |
+| `bad-value` | The type is wrong. For example, `k8s_kube_proxy: "false"` is a string |
+| `unresolved-template` | A template that cannot be evaluated offline |
+| `inconsistent-variable` | A cluster-wide variable differs between hosts |
+| `duplicate-node-ip` | Two hosts use the same `k8s_node_ip` |
+| `range-overlap` | The Pod and Service ranges overlap, or a node address or the VIP lies inside them |
+| `missing-vip` | There are two or more control planes but no `k8s_api_vip` |
+| `vip-endpoint-mismatch` | `k8s_api_vip` and `k8s_api_endpoint` differ |
+| `unknown-environment` | `rfl_inventory` is not an environment in `helm/releases.yaml` |
+| `reserved-label-prefix` | A label uses `kubernetes.io`, `k8s.io` or a subdomain of them |
+| `invalid-label` | A label key or value breaks the Kubernetes syntax, or a value is not a string |
+| `cilium-values`, `cilium-mismatch` | The Cilium values file is missing or disagrees with the inventory |
 
-`invalid-label`은 문자열이 아닌 값을 잡는다. YAML의 `false`는 불리언이고 kubelet에는 `False`로 전달된다. GPU Operator는 `"false"`만 알아듣는다.
+`invalid-label` catches values that are not strings. In YAML, `false` is a boolean, and kubelet receives it as `False`. GPU Operator understands only `"false"`.
 
-`cilium-mismatch`는 ADR이 Cilium과 kubeadm에 같은 값을 주라고 한 부분을 확인한다. kube-proxy와 kube-proxy 대체가 둘 다 켜지거나 둘 다 꺼진 경우, kube-proxy 대체에서 `k8sServiceHost`와 `k8sServicePort`가 API 주소와 포트가 아닌 경우, cluster-pool IPAM 범위가 `k8s_pod_cidr`가 아닌 경우, `ipam.mode`가 없어서 chart 기본값인 cluster-pool이 되는 경우, native routing의 `ipv4NativeRoutingCIDR`가 Pod 범위를 덮지 않는 경우다.
+`cilium-mismatch` checks the places where the ADR requires the same value for Cilium and kubeadm. These are the cases. kube-proxy and kube-proxy replacement are both on or both off. With kube-proxy replacement, `k8sServiceHost` and `k8sServicePort` are not the API address and port. The cluster-pool IPAM range is not `k8s_pod_cidr`. `ipam.mode` is missing, so the chart default cluster-pool applies. With native routing, `ipv4NativeRoutingCIDR` does not cover the Pod range.
 
-랩은 ADR이 정한 기본값(`k8s_api_port` 6443, VIP 없음, `k8s_control_plane_schedulable` 거짓, `k8s_node_labels` 빈 맵)에 기댈 수 있다. 랩 밖의 인벤토리는 `--explicit`로 검사하고 모든 계약 변수가 모든 호스트에 있어야 한다. `tests/unit/test_inventory_contract.py`가 위반마다 실패하는 테스트를 둔다. 테스트의 입력은 cel1 인벤토리에서 실제로 받은 `ansible-inventory --list` 출력이다(`tests/fixtures/fleet/README.md`).
+The lab may rely on the defaults the ADR sets (`k8s_api_port` 6443, no VIP, `k8s_control_plane_schedulable` false, `k8s_node_labels` an empty map). An inventory outside the lab is checked with `--explicit`, and every contract variable must be present on every host. `tests/unit/test_inventory_contract.py` has a test for each violation. Each test fails if the check misses its violation. The test input is real `ansible-inventory --list` output from the cel1 inventory (`tests/fixtures/fleet/README.md`).
 
 ## 5. Cilium
 
-`helm/cilium/values-cel1.yaml`은 chart 1.20.4용이다.
+`helm/cilium/values-cel1.yaml` targets chart 1.20.4.
 
-| 키 | 값 | 이유 |
+| Key | Value | Reason |
 |---|---|---|
-| `kubeProxyReplacement` | `true` | cel1은 `k8s_kube_proxy: false`다. kubeadm이 kube-proxy를 설치하지 않는다 |
-| `k8sServiceHost`, `k8sServicePort` | `10.140.0.10`, `6443` | kube-proxy가 없으면 Service가 생기기 전에 API에 닿아야 한다. kube-vip VIP다 |
-| `routingMode`, `autoDirectNodeRoutes` | `native`, `true` | 아래 설명 |
-| `ipv4NativeRoutingCIDR` | `10.160.0.0/16` | Pod 범위. 이 범위로 가는 패킷은 SNAT하지 않는다 |
-| `ipam.mode` | `kubernetes` | 노드 Pod CIDR은 kubeadm의 `podSubnet`에서 온다. chart 기본값 cluster-pool은 `10.0.0.0/8`을 쓴다 |
-| `devices` | `mgmt0` | eBPF 데이터 경로를 관리 포트에만 붙인다 |
+| `kubeProxyReplacement` | `true` | cel1 has `k8s_kube_proxy: false`. kubeadm does not install kube-proxy |
+| `k8sServiceHost`, `k8sServicePort` | `10.140.0.10`, `6443` | Without kube-proxy, Cilium must reach the API before any Service exists. This is the kube-vip VIP |
+| `routingMode`, `autoDirectNodeRoutes` | `native`, `true` | Explained below |
+| `ipv4NativeRoutingCIDR` | `10.160.0.0/16` | The Pod range. Packets to this range are not SNATed |
+| `ipam.mode` | `kubernetes` | Node Pod CIDRs come from the kubeadm `podSubnet`. The chart default cluster-pool uses `10.0.0.0/8` |
+| `devices` | `mgmt0` | Attaches the eBPF datapath to the management port only |
 
-**라우팅 모드는 native다.** 모든 노드가 하나의 관리 L2 세그먼트에 있다. 그러면 `autoDirectNodeRoutes`가 각 노드에 다른 노드의 Pod CIDR로 가는 경로를 그 노드의 관리 주소로 넣는다. 라우터가 Pod CIDR을 알 필요가 없다. Cilium 1.20 문서는 모든 노드가 하나의 L2 네트워크를 공유하면 이 옵션으로 충분하다고 적는다(https://docs.cilium.io/en/v1.20/network/concepts/routing/). 캡슐화가 없으므로 Pod MTU는 1500 그대로다. VXLAN은 50바이트를 쓴다. 회선의 패킷에 실제 Pod 주소가 보이므로 tcpdump로 추적하기 쉽다. 대신 관리망이 여러 L3 세그먼트로 나뉘면 이 방식은 작동하지 않는다. 그때는 터널 모드나 BGP로 바꾼다. 랩은 PLAN A2에 따라 VXLAN 터널을 쓴다. 따라서 native routing은 랩이 증명하지 않는다. cel1 시뮬레이션이 증명한다.
+**The routing mode is native.** All nodes sit on one management L2 segment. So `autoDirectNodeRoutes` gives each node a route to every other node's Pod CIDR via that node's management address. Routers do not need to know the Pod CIDRs. The Cilium 1.20 documentation states that this option suffices when all nodes share one L2 network (https://docs.cilium.io/en/v1.20/network/concepts/routing/). There is no encapsulation, so the Pod MTU stays 1500. VXLAN costs 50 bytes. Packets on the wire show the real Pod addresses, so tcpdump tracing is easy. The trade-off is that this mode does not work when the management network splits into several L3 segments. In that case, switch to tunnel mode or BGP. The lab uses a VXLAN tunnel in its initial Cilium setup. So the lab does not prove native routing. The cel1 simulation proves it.
 
-**Pod 트래픽은 관리망으로만 흐른다.** `k8s_node_ip`가 관리 주소이고, 자동 직접 경로는 그 주소를 다음 홉으로 쓰고, `devices`가 레일과 스토리지 포트를 제외한다. InfiniBand 레일은 RDMA 전용으로 남는다.
+**Pod traffic flows only over the management network.** `k8s_node_ip` is the management address. The automatic direct routes use that address as the next hop. `devices` excludes the rail and storage ports. The InfiniBand rails stay dedicated to RDMA.
 
 ## 6. GPU Operator
 
-`helm/gpu-operator/values-cel1.yaml`은 chart v26.7.2용이다. chart 수준에서 드라이버와 툴킷을 켠다. 노드마다 라벨로 끈다.
+`helm/gpu-operator/values-cel1.yaml` targets chart v26.7.2. It turns the driver and the toolkit on at the chart level. Node labels turn them off per node.
 
-| 클래스 | `k8s_node_labels` | 결과 |
+| Class | `k8s_node_labels` | Result |
 |---|---|---|
-| `dgx_b200` | `nvidia.com/gpu.deploy.driver: "false"`, `nvidia.com/gpu.deploy.container-toolkit: "false"` | DGX OS의 드라이버와 툴킷을 쓴다 |
-| `pcie_gpu` | 없음 | Operator가 드라이버와 툴킷을 설치한다 |
-| `control_plane` | 없음 | GPU가 없어 NFD가 `pci-10de` 라벨을 붙이지 않는다. Operator가 아무것도 배치하지 않는다 |
+| `dgx_b200` | `nvidia.com/gpu.deploy.driver: "false"`, `nvidia.com/gpu.deploy.container-toolkit: "false"` | Uses the driver and toolkit of DGX OS |
+| `pcie_gpu` | None | The Operator installs the driver and the toolkit |
+| `control_plane` | None | With no GPU, NFD adds no `pci-10de` label. The Operator deploys nothing |
 
-kubelet이 등록할 때 라벨을 붙인다. kubelet은 `--node-labels`를 처음 등록할 때만 적용한다. 등록 후 바꾸려면 `kubectl label`로 바꿔야 한다.
+kubelet adds the labels when it registers. kubelet applies `--node-labels` only at the first registration. A change after registration needs `kubectl label`.
 
-근거는 다음과 같다.
+The evidence follows.
 
-- 문서 "Preventing Installation of NVIDIA GPU Driver on Some Nodes"와 "Preventing Installation of Operands on Some Nodes". https://docs.nvidia.com/datacenter/cloud-native/gpu-operator/latest/getting-started.html 이 페이지는 2026-11-15에 현재 패치 릴리스를 v26.7.2로 적는다. 버전 경로(`/26.7.2/`, `/v26.7.2/`)는 404였다.
-- 툴킷 라벨은 문서에 노드별 절이 없다. 그래서 소스로 확인했다. github.com/NVIDIA/gpu-operator 태그 v26.7.2(커밋 `5a9c8a8b3f5b`)의 `controllers/state_manager.go` `addGPUStateLabels`는 노드에 없거나 빈 `nvidia.com/gpu.deploy.*` 라벨만 `"true"`로 채운다. 이미 있는 `"false"`는 덮어쓰지 않는다. `assets/state-driver/0500_daemonset.yaml`과 `assets/state-container-toolkit/0500_daemonset.yaml`의 nodeSelector는 각각 `nvidia.com/gpu.deploy.driver: "true"`, `nvidia.com/gpu.deploy.container-toolkit: "true"`다.
-- 같은 문서의 "Pre-Installed NVIDIA GPU Drivers and NVIDIA Container Toolkit" 절은 DGX에 해당한다고 적고 Operator 설치 전에 기본 런타임을 `nvidia`로 두라고 한다. 이 저장소의 어떤 역할도 아직 그 설정을 하지 않는다(10절).
+- The documentation sections "Preventing Installation of NVIDIA GPU Driver on Some Nodes" and "Preventing Installation of Operands on Some Nodes", at https://docs.nvidia.com/datacenter/cloud-native/gpu-operator/latest/getting-started.html. On 2026-11-15 this page names v26.7.2 as the current patch release. The versioned paths (`/26.7.2/`, `/v26.7.2/`) returned 404.
+- The documentation has no per-node section for the toolkit label, so this was confirmed in the source. In github.com/NVIDIA/gpu-operator tag v26.7.2 (commit `5a9c8a8b3f5b`), `addGPUStateLabels` in `controllers/state_manager.go` sets to `"true"` only the `nvidia.com/gpu.deploy.*` labels that are missing or empty on a node. It does not overwrite an existing `"false"`. The nodeSelectors in `assets/state-driver/0500_daemonset.yaml` and `assets/state-container-toolkit/0500_daemonset.yaml` are `nvidia.com/gpu.deploy.driver: "true"` and `nvidia.com/gpu.deploy.container-toolkit: "true"`, respectively.
+- The "Pre-Installed NVIDIA GPU Drivers and NVIDIA Container Toolkit" section of the same documentation says it applies to DGX. It says to set the default runtime to `nvidia` before installing the Operator. No role in this repository makes that setting yet (section 10).
 
-PCIe GPU 서버의 툴킷은 런타임 설정을 drop-in `/etc/containerd/conf.d/99-nvidia.toml`에 쓴다(`controllers/object_controls.go`의 `DefaultContainerdDropInConfigFile`). 같은 소스의 주석은 containerd drop-in에 최상위 설정 수정이 필요하다고 적는다. `containerd` 역할의 `config.toml`은 이미 `/etc/containerd/conf.d/*.toml`을 import한다. 그래서 툴킷이 최상위 파일을 바꾸지 않고 Ansible 재실행도 `changed=0`일 것으로 추정한다. 확인하지 않았다. GPU가 있는 PCIe GPU 서버에서만 확인할 수 있다.
+On the PCIe GPU servers, the toolkit writes its runtime settings to the drop-in `/etc/containerd/conf.d/99-nvidia.toml` (`DefaultContainerdDropInConfigFile` in `controllers/object_controls.go`). A comment in the same source says that a containerd drop-in needs a change to the top-level configuration. The `config.toml` of the `containerd` role already imports `/etc/containerd/conf.d/*.toml`. So the inference is that the toolkit leaves the top-level file alone and that an Ansible rerun also reports `changed=0`. This is not confirmed. Only a PCIe GPU server with a GPU can confirm it.
 
 ## 7. rsyslog
 
-사이트 모델의 `services.syslog`가 중앙 syslog 주소 `10.140.0.5:514/tcp`다. 생성기가 `rsyslog_client_tcp_host`와 `rsyslog_client_tcp_port`로 옮긴다.
+The site model's `services.syslog` is the central syslog address `10.140.0.5:514/tcp`. The generator carries it into `rsyslog_client_tcp_host` and `rsyslog_client_tcp_port`.
 
-**`rsyslog_client`는 클러스터의 모든 노드에서 실행한다.** 컨트롤 플레인도 포함한다. GPU 작업이 실패한 원인은 어느 노드의 kubelet, containerd, 커널 메시지에도 있을 수 있다. 호스트별로 끄는 변수는 없다. 이전의 `kube_enable_rsyslog_client` 토글은 지웠다.
+**`rsyslog_client` runs on every node of the cluster.** That includes the control planes. The cause of a failed GPU job can sit in the kubelet, containerd or kernel messages of any node. No variable turns it off per host. The old `kube_enable_rsyslog_client` toggle is removed.
 
-- 역할은 syslog 주소가 없으면 아무것도 바꾸지 않고 실패한다. 예전처럼 빈 파일을 쓰고 조용히 지나가지 않는다.
-- 전달은 디스크 보조 큐를 쓴다. 서버가 내려가 있는 동안 메시지를 쌓아 두었다가 다시 보낸다. Ubuntu 24.04의 `/etc/rsyslog.conf`가 `$WorkDirectory /var/spool/rsyslog`를 정한다.
-- 플레이북 `ansible/playbooks/fleet/rsyslog-client.yml`은 `rfl_inventory`가 없거나 `lab`인 호스트를 거부한다.
-- 렌더링한 설정 파일을 Ubuntu 24.04 컨테이너(rsyslog 8.2312.0-3ubuntu9.4)의 `/etc/rsyslog.d/`에 넣고 `rsyslogd -N1`을 실행했다. 종료 코드 0이었다. 오타를 넣은 파일은 `parameter 'Prot' not known`으로 실패했다. Ansible `validate:`는 쓰지 않는다. Ubuntu의 AppArmor 프로필이 rsyslogd에 `/etc/rsyslog.d/` 밖 파일 읽기를 막기 때문이다. 호스트에서 임시 경로의 파일로 실행하면 `Permission denied`였다.
+- Without a syslog address, the role fails and changes nothing. It no longer writes an empty file and passes silently as it used to.
+- Forwarding uses a disk-assisted queue. While the server is down, messages accumulate and are sent again later. The Ubuntu 24.04 `/etc/rsyslog.conf` sets `$WorkDirectory /var/spool/rsyslog`.
+- The playbook `ansible/playbooks/fleet/rsyslog-client.yml` rejects a host whose `rfl_inventory` is missing or `lab`.
+- The rendered configuration file went into `/etc/rsyslog.d/` of an Ubuntu 24.04 container (rsyslog 8.2312.0-3ubuntu9.4), and `rsyslogd -N1` ran on it. The exit code was 0. A file with a typo failed with `parameter 'Prot' not known`. The role does not use Ansible `validate:`, because the Ubuntu AppArmor profile blocks rsyslogd from reading files outside `/etc/rsyslog.d/`. A run on the host with a file in a temporary path gave `Permission denied`.
 
-## 8. Make 타깃
+## 8. Make targets
 
-| 타깃 | 동작 | 호스트 접속 |
+| Target | Action | Host access |
 |---|---|---|
-| `make fleet-site-check` | 사이트 모델 검증 | 없음 |
-| `make fleet-render` | 인벤토리 생성 | 없음 |
-| `make fleet-render-check` | 생성 결과와 커밋된 인벤토리 비교 | 없음 |
-| `make inventory-check INVENTORY=<lab\|cel1\|dir>` | 계약 검사 | 없음 |
-| `make values-check ENV=<env>` | 값 파일의 모든 키가 잠근 버전 chart의 `values.yaml`에 있는지 검사 | 없음. 공개 chart 저장소에서 chart를 받는다 |
-| `make addons-template ENV=cel1` | 두 릴리스 렌더링, kubeconform v1.36.6 검증 | 없음. chart와 스키마를 받는다 |
-| `make fleet-check` | 위 검사 전부 | 없음 |
-| `make fleet-k8s CONFIRM=cel1 FLEET_CONNECT=<inventory>` | `make versions SCOPE=fleet` 뒤 `ansible/playbooks/kubernetes.yml` | 있음 |
-| `make fleet-addons CONFIRM=cel1` | `make versions SCOPE=fleet` 뒤 cel1 kubeconfig로 `make addons ENV=cel1` | 있음 |
-| `make fleet-rsyslog CONFIRM=cel1 FLEET_CONNECT=<inventory>` | `ansible/playbooks/fleet/rsyslog-client.yml` | 있음 |
+| `make fleet-site-check` | Validates the site model | None |
+| `make fleet-render` | Generates the inventory | None |
+| `make fleet-render-check` | Compares the generated output with the committed inventory | None |
+| `make inventory-check INVENTORY=<lab\|cel1\|dir>` | Contract check | None |
+| `make values-check ENV=<env>` | Checks that every key of the values file exists in the `values.yaml` of the chart at its locked version | None. It downloads the chart from the public chart repository |
+| `make addons-template ENV=cel1` | Renders both releases and validates them with kubeconform against v1.36.6 | None. It downloads the charts and schemas |
+| `make fleet-check` | All the checks above | None |
+| `make fleet-k8s CONFIRM=cel1 FLEET_CONNECT=<inventory>` | `make versions SCOPE=fleet`, then `ansible/playbooks/kubernetes.yml` | Yes |
+| `make fleet-addons CONFIRM=cel1` | `make versions SCOPE=fleet`, then `make addons ENV=cel1` with the cel1 kubeconfig | Yes |
+| `make fleet-rsyslog CONFIRM=cel1 FLEET_CONNECT=<inventory>` | `ansible/playbooks/fleet/rsyslog-client.yml` | Yes |
 
-마지막 세 타깃은 `CONFIRM=cel1`이 없으면 어떤 전제 조건도 실행하지 않고 종료 코드 2로 멈춘다. `fleet-k8s`와 `fleet-rsyslog`는 cel1 인벤토리에 `FLEET_CONNECT`가 없어도 멈춘다. `fleet-addons`는 kubeconfig(`${XDG_STATE_HOME:-~/.local/state}/rdma-fabric-lab/cel1/kubeconfig`)가 없으면 멈춘다. `ARGS=`로 `--limit` 같은 인자를 더한다.
+Without `CONFIRM=cel1`, the last three targets run no prerequisite and stop with exit code 2. `fleet-k8s` and `fleet-rsyslog` also stop when the cel1 inventory has no `FLEET_CONNECT`. `fleet-addons` stops when the kubeconfig (`${XDG_STATE_HOME:-~/.local/state}/rdma-fabric-lab/cel1/kubeconfig`) is missing. `ARGS=` adds arguments such as `--limit`.
 
-## 9. 오프라인 검사 결과
+## 9. Offline check results
 
-2026-11-15에 이 저장소에서 실행했다.
+These ran in this repository on 2026-11-15.
 
-| 명령 | 종료 코드 | 결과 |
+| Command | Exit code | Result |
 |---|---:|---|
-| `make fleet-site-check` | 0 | 호스트 13, 네트워크 11, 링크 128, 랩 계획에 대해 유효 |
-| `make fleet-render-check` | 0 | 렌더링 파일 18개, 차이 0 |
-| `make inventory-check INVENTORY=cel1` | 0 | 호스트 13, 위반 0, 모든 변수 명시 |
-| `make inventory-check INVENTORY=lab` | 0 | 호스트 3, 위반 0. 랩 작업자가 계약 변수와 `values-lab.yaml`을 추가한 뒤의 결과다 |
-| `make values-check ENV=cel1` | 0 | 값 파일 2개, 모르는 키 0 |
-| `make addons-template ENV=cel1` | 0 | Cilium 리소스 25개 유효. GPU Operator 36개 중 27개 유효, 9개 건너뜀 |
-| `make fleet-k8s`, `make fleet-addons`, `make fleet-rsyslog` (CONFIRM 없음, `CONFIRM=lab`) | 2 | 저장소와 상태 디렉터리의 체크섬이 실행 전후 같았다 |
+| `make fleet-site-check` | 0 | 13 hosts, 11 networks, 128 links, valid against the lab plan |
+| `make fleet-render-check` | 0 | 18 rendered files, 0 differences |
+| `make inventory-check INVENTORY=cel1` | 0 | 13 hosts, 0 violations, every variable explicit |
+| `make inventory-check INVENTORY=lab` | 0 | 3 hosts, 0 violations. This is the result after the lab worker added the contract variables and `values-lab.yaml` |
+| `make values-check ENV=cel1` | 0 | 2 values files, 0 unknown keys |
+| `make addons-template ENV=cel1` | 0 | 25 Cilium resources valid. Of 36 GPU Operator resources, 27 valid and 9 skipped |
+| `make fleet-k8s`, `make fleet-addons`, `make fleet-rsyslog` (no CONFIRM, `CONFIRM=lab`) | 2 | The checksums of the repository and the state directory were the same before and after the run |
 
-GPU Operator에서 건너뛴 9개는 CRD 8개와 `ClusterPolicy` 1개다. kubeconform의 기본 스키마 위치에 그 스키마가 없다. 그 9개는 검증하지 않았다.
+The 9 skipped GPU Operator resources are 8 CRDs and 1 `ClusterPolicy`. The default schema location of kubeconform has no schema for them. Those 9 were not validated.
 
-각 검사를 한 번씩 깨서 실패를 확인했다.
+Each check was broken once to confirm that it fails.
 
-| 깬 것 | 결과 |
+| What was broken | Result |
 |---|---|
-| Cilium 값에 `kubeProxyReplacment` | `values-check` 종료 코드 2, `kubeProxyReplacment is not a key of the chart` |
-| GPU Operator 값에 `devicePlugn` | `values-check` 종료 코드 2, `devicePlugn is not a key of the chart` |
-| Cilium `priorityClassName`을 리스트로 | `addons-template` 종료 코드 2. helm이 `at '/priorityClassName': got array, want string`으로 거부 |
-| GPU Operator `operator.priorityClassName`을 리스트로 | `addons-template` 종료 코드 2. kubeconform이 Deployment `gpu-operator`를 `got array, want null or string`으로 거부 |
-| 검증기의 포트 중복, 라딕스, 레일 배선 검사를 각각 끔 | `test_fleet_site.py`가 각각 실패 |
-| 계약 검사의 예약 접두사, VIP 규칙, 노드 IP 중복 검사를 각각 끔 | `test_inventory_contract.py`가 각각 실패 |
+| `kubeProxyReplacment` in the Cilium values | `values-check` exit code 2, `kubeProxyReplacment is not a key of the chart` |
+| `devicePlugn` in the GPU Operator values | `values-check` exit code 2, `devicePlugn is not a key of the chart` |
+| Cilium `priorityClassName` as a list | `addons-template` exit code 2. helm rejects it with `at '/priorityClassName': got array, want string` |
+| GPU Operator `operator.priorityClassName` as a list | `addons-template` exit code 2. kubeconform rejects Deployment `gpu-operator` with `got array, want null or string` |
+| The duplicate port, radix and rail cabling checks of the validator, each turned off | `test_fleet_site.py` fails each time |
+| The reserved prefix, VIP rule and duplicate node IP checks of the contract check, each turned off | `test_inventory_contract.py` fails each time |
 
-## 10. 실행하지 않은 것
+## 10. Not run
 
-| 항목 | 상태 | 이유 |
+| Item | Status | Reason |
 |---|---|---|
-| `make fleet-k8s`, `make fleet-addons`, `make fleet-rsyslog` (`CONFIRM=cel1`) | `not_run` | 이 작업은 게스트를 부팅하지 않고 cel1 주소에 접속하지 않는다. 다음 시뮬레이션 작업이 실행한다 |
-| `rsyslog_client` 두 번째 실행의 `changed=0` | `not_run` | 실행할 게스트가 없다 |
-| Cilium native routing과 kube-proxy 대체의 동작 | `not_run` | 렌더링만 했다 |
-| GPU Operator 라벨에 따른 배치 | `not_run` | GPU가 없다. 시뮬레이션 게스트에도 GPU가 없어 NFD가 GPU 노드로 보지 않는다. 그래서 시뮬레이션도 이것을 증명하지 못한다 |
-| DGX 노드의 기본 런타임 `nvidia` | `not_run` | 어떤 역할도 아직 설정하지 않는다. 6절 |
-| ibsim 토폴로지 | `not_run` | M4에서 만든다 |
-| 9개 GPU Operator CRD와 ClusterPolicy의 스키마 검증 | `not_run` | kubeconform 스키마가 없다 |
+| `make fleet-k8s`, `make fleet-addons`, `make fleet-rsyslog` (`CONFIRM=cel1`) | `not_run` | This task boots no guest and does not connect to cel1 addresses. The next simulation task runs them |
+| `changed=0` on a second `rsyslog_client` run | `not_run` | There is no guest to run it on |
+| Behavior of Cilium native routing and kube-proxy replacement | `not_run` | Only rendered |
+| Placement driven by the GPU Operator labels | `not_run` | There is no GPU. The simulation guests have no GPU either, so NFD does not treat them as GPU nodes. So the simulation cannot prove this either |
+| Default runtime `nvidia` on DGX nodes | `not_run` | No role sets it yet. Section 6 |
+| ibsim topology | `not_run` | M4 builds it |
+| Schema validation of the 9 GPU Operator CRDs and ClusterPolicy | `not_run` | No kubeconform schema exists |
 
-## 11. 다른 사이트에 적용하기
+## 11. Applying this to another site
 
-다른 사이트는 같은 코드에 자기 파일만 준다. 파일은 모두 저장소 밖에 둔다.
+Another site gives the same code only its own files. All those files live outside the repository.
 
-1. 사이트 모델을 이 형식으로 쓴다. 예를 들어 `/srv/site-x/site.yaml`. 실제 MAC이나 PCI 경로는 모델에 넣지 않는다. `.link` 파일은 그 사이트의 프로비저닝이 쓴다. `site:` 값이 `rfl_inventory`가 된다. 계약은 이 값이 `helm/releases.yaml`의 환경이기를 요구하므로 지금은 `cel1`이어야 한다. 4번이 그 이유다.
-2. 검증하고 인벤토리를 만든다.
+1. Write the site model in this format, for example `/srv/site-x/site.yaml`. Real MACs or PCI paths stay out of the model. The site's provisioning writes the `.link` files. The `site:` value becomes `rfl_inventory`. The contract requires this value to be an environment in `helm/releases.yaml`, so for now it must be `cel1`. Item 4 gives the reason.
+2. Validate the model and generate the inventory.
 
    ```bash
    PYTHONPATH=scripts .venv/bin/python -m fleet site-check /srv/site-x/site.yaml
@@ -233,21 +233,21 @@ GPU Operator에서 건너뛴 9개는 CRD 8개와 `ClusterPolicy` 1개다. kubeco
    make inventory-check INVENTORY=/srv/site-x/inventory
    ```
 
-3. 접속 정보(`ansible_host`, `ansible_user`)는 두 번째 인벤토리에 둔다.
+3. Put the connection details (`ansible_host`, `ansible_user`) in a second inventory.
 
    ```bash
    make fleet-k8s CONFIRM=cel1 FLEET_INVENTORY=/srv/site-x/inventory FLEET_CONNECT=/srv/site-x/connect.yml
    ```
 
-4. Helm 값은 아직 저장소 밖에서 줄 수 없다. `rfl_inventory`는 `helm/releases.yaml`의 환경이어야 하고 값 파일은 `helm/<release>/values-<env>.yaml`이다. `values-cel1.yaml`에는 cel1의 VIP와 Pod 범위가 있으므로 다른 사이트가 그대로 쓰면 `cilium-mismatch`가 난다. 값 덧씌우기 파일을 받는 기능이 `make addons`와 계약 검사에 필요하며 아직 없다.
+4. Helm values cannot come from outside the repository yet. `rfl_inventory` must be an environment in `helm/releases.yaml`, and the values files are `helm/<release>/values-<env>.yaml`. `values-cel1.yaml` holds the cel1 VIP and Pod range, so another site that uses it unchanged gets `cilium-mismatch`. `make addons` and the contract check need support for a values override file, and that support does not exist yet.
 
-## 12. 사용자가 정할 것
+## 12. Decisions for the user
 
-| 결정 | 적용한 기본값 |
+| Decision | Default applied |
 |---|---|
-| 라벨 접두사 | `rfl.example/node-class`. 실제 소유 도메인이 생기면 바꾼다 |
-| 리프–스파인 비율 | 1:1. 리프마다 업링크 8개 |
-| 스토리지 포트 구성 | 포트마다 별도 서브넷. 본딩하지 않는다 |
-| syslog 대상 | 관리망 `10.140.0.5:514`, TCP. 시뮬레이션에서 이 주소를 누가 받을지는 다음 작업이 정한다 |
-| DGX 기본 런타임 | `containerd` 역할이 `k8s_container_runtime_default: nvidia`를 받아 설정한다 |
-| 다른 사이트의 Helm 값 | 11절의 덧씌우기 방식이 필요하다 |
+| Label prefix | `rfl.example/node-class`. Change it once a real owned domain exists |
+| Leaf–spine ratio | 1:1. 8 uplinks per leaf |
+| Storage port layout | A separate subnet per port. No bonding |
+| syslog target | Management network `10.140.0.5:514`, TCP. The next task decides who receives this address in the simulation |
+| DGX default runtime | The `containerd` role takes `k8s_container_runtime_default: nvidia` and sets it |
+| Helm values for another site | Needs the override mechanism of section 11 |
