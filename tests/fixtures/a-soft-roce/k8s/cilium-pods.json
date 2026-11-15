@@ -1,0 +1,304 @@
+{
+ "items": [
+  {
+   "metadata": {
+    "name": "cilium-hr8km"
+   },
+   "spec": {
+    "nodeName": "cp1"
+   },
+   "status": {
+    "phase": "Running",
+    "containerStatuses": [
+     {
+      "containerID": "containerd://acae1d34fdb4cc82e3e47367147ff7cd9778ab3a5e2031f4f0431ac830c9754c",
+      "image": "sha256:1320017dd0b611d024c18a7e2f59a0378221a9bb840b16f35f159ecbb03d5c8a",
+      "imageID": "quay.io/cilium/cilium@sha256:20fe92e4c86641233a450098c158d2d29085f3419931ab6bf681d2485dedf16e",
+      "lastState": {},
+      "name": "cilium-agent",
+      "ready": true,
+      "resources": {},
+      "restartCount": 0,
+      "started": true,
+      "state": {
+       "running": {
+        "startedAt": "2026-11-15T04:50:56Z"
+       }
+      },
+      "user": {
+       "linux": {
+        "gid": 0,
+        "supplementalGroups": [
+         0
+        ],
+        "uid": 0
+       }
+      },
+      "volumeMounts": [
+       {
+        "mountPath": "/var/run/cilium/envoy/sockets",
+        "name": "envoy-sockets"
+       },
+       {
+        "mountPath": "/host/proc/sys/net",
+        "name": "host-proc-sys-net"
+       },
+       {
+        "mountPath": "/host/proc/sys/kernel",
+        "name": "host-proc-sys-kernel"
+       },
+       {
+        "mountPath": "/sys/fs/bpf",
+        "name": "bpf-maps"
+       },
+       {
+        "mountPath": "/var/run/cilium",
+        "name": "cilium-run"
+       },
+       {
+        "mountPath": "/var/run/cilium/netns",
+        "name": "cilium-netns"
+       },
+       {
+        "mountPath": "/host/etc/cni/net.d",
+        "name": "etc-cni-netd"
+       },
+       {
+        "mountPath": "/var/lib/cilium/clustermesh",
+        "name": "clustermesh-secrets",
+        "readOnly": true,
+        "recursiveReadOnly": "Disabled"
+       },
+       {
+        "mountPath": "/lib/modules",
+        "name": "lib-modules",
+        "readOnly": true,
+        "recursiveReadOnly": "Disabled"
+       },
+       {
+        "mountPath": "/run/xtables.lock",
+        "name": "xtables-lock"
+       },
+       {
+        "mountPath": "/var/lib/cilium/tls/hubble",
+        "name": "hubble-tls",
+        "readOnly": true,
+        "recursiveReadOnly": "Disabled"
+       },
+       {
+        "mountPath": "/tmp",
+        "name": "tmp"
+       },
+       {
+        "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount",
+        "name": "kube-api-access-9xsks",
+        "readOnly": true,
+        "recursiveReadOnly": "Disabled"
+       }
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "metadata": {
+    "name": "cilium-rfr9b"
+   },
+   "spec": {
+    "nodeName": "worker1"
+   },
+   "status": {
+    "phase": "Running",
+    "containerStatuses": [
+     {
+      "containerID": "containerd://a4c762f1cf7584324254c0b890c1285ad82283646f9ca356dd5c012e1c2992cc",
+      "image": "sha256:1320017dd0b611d024c18a7e2f59a0378221a9bb840b16f35f159ecbb03d5c8a",
+      "imageID": "quay.io/cilium/cilium@sha256:20fe92e4c86641233a450098c158d2d29085f3419931ab6bf681d2485dedf16e",
+      "lastState": {},
+      "name": "cilium-agent",
+      "ready": true,
+      "resources": {},
+      "restartCount": 0,
+      "started": true,
+      "state": {
+       "running": {
+        "startedAt": "2026-11-15T04:51:02Z"
+       }
+      },
+      "user": {
+       "linux": {
+        "gid": 0,
+        "supplementalGroups": [
+         0
+        ],
+        "uid": 0
+       }
+      },
+      "volumeMounts": [
+       {
+        "mountPath": "/var/run/cilium/envoy/sockets",
+        "name": "envoy-sockets"
+       },
+       {
+        "mountPath": "/host/proc/sys/net",
+        "name": "host-proc-sys-net"
+       },
+       {
+        "mountPath": "/host/proc/sys/kernel",
+        "name": "host-proc-sys-kernel"
+       },
+       {
+        "mountPath": "/sys/fs/bpf",
+        "name": "bpf-maps"
+       },
+       {
+        "mountPath": "/var/run/cilium",
+        "name": "cilium-run"
+       },
+       {
+        "mountPath": "/var/run/cilium/netns",
+        "name": "cilium-netns"
+       },
+       {
+        "mountPath": "/host/etc/cni/net.d",
+        "name": "etc-cni-netd"
+       },
+       {
+        "mountPath": "/var/lib/cilium/clustermesh",
+        "name": "clustermesh-secrets",
+        "readOnly": true,
+        "recursiveReadOnly": "Disabled"
+       },
+       {
+        "mountPath": "/lib/modules",
+        "name": "lib-modules",
+        "readOnly": true,
+        "recursiveReadOnly": "Disabled"
+       },
+       {
+        "mountPath": "/run/xtables.lock",
+        "name": "xtables-lock"
+       },
+       {
+        "mountPath": "/var/lib/cilium/tls/hubble",
+        "name": "hubble-tls",
+        "readOnly": true,
+        "recursiveReadOnly": "Disabled"
+       },
+       {
+        "mountPath": "/tmp",
+        "name": "tmp"
+       },
+       {
+        "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount",
+        "name": "kube-api-access-l9qfd",
+        "readOnly": true,
+        "recursiveReadOnly": "Disabled"
+       }
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "metadata": {
+    "name": "cilium-zzk8n"
+   },
+   "spec": {
+    "nodeName": "worker2"
+   },
+   "status": {
+    "phase": "Running",
+    "containerStatuses": [
+     {
+      "containerID": "containerd://218bddb68bcec8929db5df1500ba71b2c154d1f0216b3c7b946608cd29a27ea8",
+      "image": "sha256:1320017dd0b611d024c18a7e2f59a0378221a9bb840b16f35f159ecbb03d5c8a",
+      "imageID": "quay.io/cilium/cilium@sha256:20fe92e4c86641233a450098c158d2d29085f3419931ab6bf681d2485dedf16e",
+      "lastState": {},
+      "name": "cilium-agent",
+      "ready": true,
+      "resources": {},
+      "restartCount": 0,
+      "started": true,
+      "state": {
+       "running": {
+        "startedAt": "2026-11-15T04:50:53Z"
+       }
+      },
+      "user": {
+       "linux": {
+        "gid": 0,
+        "supplementalGroups": [
+         0
+        ],
+        "uid": 0
+       }
+      },
+      "volumeMounts": [
+       {
+        "mountPath": "/var/run/cilium/envoy/sockets",
+        "name": "envoy-sockets"
+       },
+       {
+        "mountPath": "/host/proc/sys/net",
+        "name": "host-proc-sys-net"
+       },
+       {
+        "mountPath": "/host/proc/sys/kernel",
+        "name": "host-proc-sys-kernel"
+       },
+       {
+        "mountPath": "/sys/fs/bpf",
+        "name": "bpf-maps"
+       },
+       {
+        "mountPath": "/var/run/cilium",
+        "name": "cilium-run"
+       },
+       {
+        "mountPath": "/var/run/cilium/netns",
+        "name": "cilium-netns"
+       },
+       {
+        "mountPath": "/host/etc/cni/net.d",
+        "name": "etc-cni-netd"
+       },
+       {
+        "mountPath": "/var/lib/cilium/clustermesh",
+        "name": "clustermesh-secrets",
+        "readOnly": true,
+        "recursiveReadOnly": "Disabled"
+       },
+       {
+        "mountPath": "/lib/modules",
+        "name": "lib-modules",
+        "readOnly": true,
+        "recursiveReadOnly": "Disabled"
+       },
+       {
+        "mountPath": "/run/xtables.lock",
+        "name": "xtables-lock"
+       },
+       {
+        "mountPath": "/var/lib/cilium/tls/hubble",
+        "name": "hubble-tls",
+        "readOnly": true,
+        "recursiveReadOnly": "Disabled"
+       },
+       {
+        "mountPath": "/tmp",
+        "name": "tmp"
+       },
+       {
+        "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount",
+        "name": "kube-api-access-cmk2z",
+        "readOnly": true,
+        "recursiveReadOnly": "Disabled"
+       }
+      ]
+     }
+    ]
+   }
+  }
+ ]
+}

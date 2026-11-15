@@ -1,0 +1,1 @@
+[{"endpoint":"https://192.168.140.21:2379","health":true,"took":"4.451428ms"},{"endpoint":"https://192.168.140.23:2379","health":true,"took":"16.036502ms"},{"endpoint":"https://192.168.140.22:2379","health":false,"took":"5.004788284s","error":"context deadline exceeded"}]

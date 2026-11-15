@@ -1,0 +1,35 @@
+track: a-soft-roce
+scenario: vm-rxe-reboot
+description: >-
+  PLAN A1 persistence. Both workers reboot, rfl-rxe.service recreates the device with no Ansible involved, and the
+  baseline tests pass again.
+required: true
+result_kind: software-rdma-measurement
+security:
+  privileged: false
+  device_exposure: Tests run as the SSH user against /dev/infiniband of the guest. Only tcpdump and process cleanup use sudo.
+checks:
+  - id: guests-rebooted
+    description: The boot id of each worker changed across the reboot the runner requested.
+  - id: rxe-restored-without-ansible
+    description: After boot, rfl-rxe.service is active, its journal of this boot shows it added the device, and the device is bound to the lab NIC.
+  - id: rxe-bound-to-lab-nic
+    description: On each worker exactly one RDMA link uses the lab NIC, it is the inventory device, and its port is ACTIVE.
+  - id: route-via-lab-nic
+    description: On each worker the kernel routes the peer RDMA address through the lab NIC.
+  - id: rping-verified
+    description: A finite rping with -V data validation completes on both ends over RDMA CM, every iteration printed.
+  - id: rdma-read
+    description: ib_read_bw with RDMA CM completes the configured iterations, both exit codes 0.
+  - id: rdma-write
+    description: ib_write_bw with RDMA CM completes the configured iterations, both exit codes 0.
+  - id: rdma-send
+    description: ib_send_bw with RDMA CM completes the configured iterations, both exit codes 0.
+  - id: roce-on-lab-nic
+    description: Captures on the lab NIC of both workers hold RoCEv2 frames in both directions, all between the two RDMA addresses.
+  - id: no-roce-on-mgmt-nic
+    description: >-
+      Captures on every other NIC of both workers over the same interval hold no RoCEv2 frame, and each shows it was live: SSH
+      connection setups on the NIC SSH arrives at, marker pings to the peer on the management NIC.
+  - id: no-process-left
+    description: After the run no process carrying this run id remains on either worker.

@@ -1,0 +1,34 @@
+track: a-soft-roce
+scenario: k8s-ha-vip
+description: >-
+  Fleet-shaped control plane on harness guests: three control planes joined with kubeadm join --control-plane behind
+  a kube-vip VIP on the management network. The guest holding the VIP loses power, and the API must answer on the VIP
+  again from the surviving control planes. The guest then boots and rejoins.
+required: false
+result_kind: software-rdma-measurement
+security:
+  privileged: false
+  device_exposure: >-
+    No test workload runs. kubectl and etcdctl run on the control planes against their admin.conf and etcd client
+    certificates, which never leave the guests. The probe loop on the worker reads only the unauthenticated /livez.
+checks:
+  - id: control-planes-joined
+    description: >-
+      Three Ready control-plane Nodes each run kube-apiserver and an etcd member, etcd lists three started members, and
+      kubeadm-config names the VIP as controlPlaneEndpoint.
+  - id: api-on-vip
+    description: >-
+      The worker gets ok from /livez on the VIP, and every control plane reaches /readyz through its admin.conf, whose
+      server is the VIP.
+  - id: vip-holder-identified
+    description: The kube-vip lease names one control plane, and only that control plane carries the VIP on its management NIC.
+  - id: api-survives-holder-loss
+    description: >-
+      After the VIP holder loses power, the worker's /livez probes on the VIP succeed again within the deadline, and the
+      lease and the VIP move to a surviving control plane.
+  - id: cluster-works-after-loss
+    description: Through the VIP a surviving control plane lists the nodes and writes and deletes a ConfigMap while etcd keeps quorum.
+  - id: holder-rejoins
+    description: The powered-off guest boots again, its Node returns Ready, and etcd reports every member healthy.
+  - id: no-process-left
+    description: After the run no process carrying this run id remains on any guest.

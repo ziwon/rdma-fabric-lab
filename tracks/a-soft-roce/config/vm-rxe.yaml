@@ -1,0 +1,25 @@
+# Parameters of the Track A VM scenarios. Every run records this file's sha256 and
+# writes the values it resolved against the inventory into resolved-config.yaml.
+server: worker1
+client: worker2
+readiness_timeout_s: 15
+server_drain_s: 15
+capture:
+  snaplen: 96
+  max_seconds: 900
+rping:
+  port: 7174
+  count: 10
+  size: 64
+  timeout_s: 30
+perftest:
+  port: 18515
+  size: 4096
+  iterations: 1000
+  timeout_s: 60
+  tests:
+    - { check: rdma-read, tool: ib_read_bw }
+    - { check: rdma-write, tool: ib_write_bw }
+    - { check: rdma-send, tool: ib_send_bw }
+reboot_timeout_s: 300
+ansible_timeout_s: 1800

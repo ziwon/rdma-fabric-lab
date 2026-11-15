@@ -1,0 +1,17 @@
+track: a-soft-roce
+scenario: vm-rxe-rerun
+description: >-
+  PLAN A1 idempotence. A second bootstrap and rxe-up against configured workers change nothing and leave one device
+  and one address on the lab NIC.
+required: true
+result_kind: software-rdma-measurement
+security:
+  privileged: false
+  device_exposure: Ansible runs with become on the workers. No test traffic runs in this scenario.
+checks:
+  - id: bootstrap-rerun-unchanged
+    description: ansible-playbook bootstrap.yml exits 0 and its recap shows changed=0, failed=0 and unreachable=0 on every worker.
+  - id: rxe-up-rerun-unchanged
+    description: ansible-playbook rxe.yml exits 0 and its recap shows changed=0, failed=0 and unreachable=0 on every worker.
+  - id: single-rxe-device
+    description: Each worker has one RDMA link on the lab NIC, one IPv4 address on it, one lab netplan file and one rfl-rxe unit.

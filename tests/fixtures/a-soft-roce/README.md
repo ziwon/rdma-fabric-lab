@@ -1,0 +1,32 @@
+# Track A fixtures
+
+Every file here is output captured from a real run on 2026-11-15. Nothing was typed by hand. Guests were the
+QEMU harness guests (Ubuntu 24.04.5, kernel 6.8.0-147-generic, rdma-core 50.0-2ubuntu0.2, perftest
+24.01.0+0.38-1build2). Run directories live under the gitignored `results/` of the machine that ran them.
+
+| fixture | source |
+|---|---|
+| `perftest/ib_{read,write,send}_bw.client.stdout`, `ib_{read,send}_bw.server.stdout` | run `20261115T020022Z` vm-rxe-baseline, `raw/rdma-*/worker{2-client,1-server}.stdout` |
+| `perftest/ib_read_bw.client-port-down.stderr` | run `20261115T020504Z`, lab link of worker2 down, `raw/rdma-read/worker2-client.stderr` |
+| `perftest/ib_read_bw.client-addr-error.stdout` | run `20261115T020658Z`, `netem loss 100%` on worker1, `raw/rdma-read/worker2-client.stdout` |
+| `rping/client.stdout`, `rping/server.stdout` | run `20261115T020022Z`, `raw/rping-verified/` |
+| `rping/client-enodev.stderr` | run `20261115T020504Z`, `raw/rping-verified/worker2-client.stderr` |
+| `rping/client-etimedout.stderr` | run `20261115T020658Z`, `raw/rping-verified/worker2-client.stderr` |
+| `rdma/link-active.json` | run `20261115T020022Z`, `raw/rxe-bound-to-lab-nic/worker1-rdma-link.json` |
+| `rdma/link-down.json` | run `20261115T020504Z`, `raw/rxe-bound-to-lab-nic/worker2-rdma-link.json` |
+| `rdma/cm_id-*-listen.json` | run `20261115T020022Z`, the readiness listing saved as `raw/*/worker1-server.cm_id.json` |
+| `pcap/mgmt.pcap` | run `20261115T020022Z`, `raw/traffic/worker2-mgmt.pcap`, whole file |
+| `pcap/lab-first-64-frames.pcap` | run `20261115T020022Z`, `raw/traffic/worker2-lab.pcap`, cut after its first 64 records |
+| `ansible/bootstrap-first-run.recap.txt` | first `make bootstrap` on fresh guests, from `PLAY RECAP` to the end |
+| `ansible/bootstrap-rerun.recap.txt` | run `20261115T020040Z` vm-rxe-rerun, `raw/bootstrap-rerun-unchanged/bootstrap.yml.log` from `PLAY RECAP` on |
+| `collect/guest-report.txt` | run `20261115T015858Z` vm-environment, `raw/versions/worker1.txt` |
+| `pcap/mgmt-markers.pcap` | run `20261115T045337Z` vm-rxe-baseline on the Kubernetes guests, `raw/traffic/worker1-mgmt.pcap`, whole file |
+| `k8s/get-nodes.json`, `k8s/cilium-pods.json`, `k8s/test-pods.json` | run `20261115T050159Z` k8s-baseline, stdout of `raw/nodes-ready/get-nodes.json`, `raw/cilium-agents-ready/pods.json`, `raw/test-pods-ready/pods.json`, each item reduced to the fields the parsers read |
+| `k8s/nslookup-kubernetes-default.stdout` | run `20261115T050159Z`, stdout of `raw/cluster-dns/kubernetes.default.svc.cluster.local.txt` |
+| `k8s/worker1-mgmt-vxlan.pcap`, `k8s/worker1-lab.pcap` | run `20261115T050159Z`, `raw/traffic/worker1-{mgmt,lab}.pcap`, whole files |
+| `k8s/worker1-mgmt-vxlan-dropped.pcap` | run `20261115T050030Z`, UDP 8472 dropped on worker1 INPUT, `raw/traffic/worker1-mgmt.pcap` |
+| `ha/probes.txt`, `ha/etcd-members.json`, `ha/ha-cp2-addr.json`, `ha/etcd-health-one-down.json` | run `20261115T052220Z` k8s-ha-vip, `raw/api-survives-holder-loss/probes.txt` and the stdout of `raw/control-planes-joined/etcd-members.json`, `raw/vip-holder-identified/ha-cp2-addr.json`, `raw/cluster-works-after-loss/etcd-health.json` |
+| `host/*` | the M1 verification host: `ip -j addr show dev docker0`, `ip -j route show table all dev docker0`, `ip -j route show table 52 100.100.100.100`, `docker network inspect bridge`, `virsh net-dumpxml default` |
+
+The recaps start at `PLAY RECAP` because the lines before it carry absolute paths of the machine.
+The host captures cover only default bridges and the Tailscale MagicDNS route, which name no person or site.

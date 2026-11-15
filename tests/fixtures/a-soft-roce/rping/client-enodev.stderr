@@ -1,0 +1,2 @@
+cma event RDMA_CM_EVENT_ADDR_ERROR, error -19
+waiting for addr/route resolution state 1

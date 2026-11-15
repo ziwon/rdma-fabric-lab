@@ -1,0 +1,42 @@
+track: a-soft-roce
+scenario: k8s-baseline
+description: >-
+  PLAN A2 baseline of the kubeadm cluster with Cilium in VXLAN tunnel mode and kube-proxy kept. Two test pods on
+  different workers exercise pod to pod traffic, cluster DNS, a ClusterIP Service and a NetworkPolicy, while the
+  management and lab NICs of both workers are captured.
+required: true
+result_kind: software-rdma-measurement
+security:
+  privileged: false
+  device_exposure: >-
+    Test pods are unprivileged busybox containers with no host path, host network or device. kubectl runs on the first
+    control plane with its admin.conf, which never leaves that guest. tcpdump and process cleanup use sudo on the workers.
+checks:
+  - id: nodes-ready
+    description: Every host of k8s_cluster is a Ready Node whose InternalIP is its k8s_node_ip.
+  - id: cilium-agents-ready
+    description: A Cilium agent pod runs with every container ready on every node.
+  - id: test-pods-ready
+    description: The server and client pods run Ready on their two workers, with pod IPs inside their nodes' pod CIDRs.
+  - id: pod-to-pod-cross-node
+    description: The client fetches the server pod's name over HTTP from the server pod IP on the other worker.
+  - id: cluster-dns
+    description: Cluster DNS in the client pod resolves the test Service and kubernetes.default to their ClusterIPs.
+  - id: clusterip-service
+    description: The client fetches the server pod's name over HTTP through the ClusterIP Service name.
+  - id: network-policy-blocks
+    description: After a default-deny ingress NetworkPolicy, the same request from the client times out.
+  - id: network-policy-allows
+    description: After a NetworkPolicy that admits the client label, the same request succeeds again.
+  - id: vxlan-on-mgmt-nic
+    description: >-
+      Management NIC captures of both workers hold VXLAN frames on Cilium's tunnel port between the two node IPs, with the
+      client and server pod IPs inside, in both directions.
+  - id: no-pod-traffic-on-lab-nic
+    description: >-
+      Lab NIC captures of both workers over the same interval hold no VXLAN frame and no frame to or from the pod CIDR,
+      while the marker pings over the lab NIC show the capture was live.
+  - id: test-namespace-removed
+    description: The run's namespace and every object in it are gone at the end.
+  - id: no-process-left
+    description: After the run no process carrying this run id remains on either worker.

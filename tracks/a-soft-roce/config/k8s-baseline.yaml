@@ -1,0 +1,15 @@
+# Parameters of the k8s-baseline scenario. Every run records this file's sha256 and writes the
+# values it resolved against the inventory into resolved-config.yaml.
+image: lab.k8s_test_image
+server_node: worker1
+client_node: worker2
+http_port: 8080
+service_port: 80
+ready_timeout_s: 180
+request_timeout_s: 5
+request_attempts: 3
+policy_timeout_s: 60
+delete_timeout_s: 120
+capture:
+  snaplen: 128
+  max_seconds: 900

@@ -1,0 +1,7 @@
+# Parameters of the k8s-ha-vip scenario. Every run records this file's sha256.
+probe_from: ha-w1
+probe_interval_s: 0.5
+probe_timeout_s: 1
+recovery_timeout_s: 120
+rejoin_timeout_s: 420
+lease: plndr-cp-lock

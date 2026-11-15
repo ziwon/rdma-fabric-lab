@@ -1,0 +1,172 @@
+{
+ "items": [
+  {
+   "metadata": {
+    "name": "client"
+   },
+   "spec": {
+    "nodeName": "worker2"
+   },
+   "status": {
+    "phase": "Running",
+    "podIP": "10.244.1.180",
+    "conditions": [
+     {
+      "lastProbeTime": null,
+      "lastTransitionTime": "2026-11-15T05:02:03Z",
+      "observedGeneration": 1,
+      "status": "True",
+      "type": "PodReadyToStartContainers"
+     },
+     {
+      "lastProbeTime": null,
+      "lastTransitionTime": "2026-11-15T05:02:03Z",
+      "observedGeneration": 1,
+      "status": "True",
+      "type": "Initialized"
+     },
+     {
+      "lastProbeTime": null,
+      "lastTransitionTime": "2026-11-15T05:02:03Z",
+      "observedGeneration": 1,
+      "status": "True",
+      "type": "Ready"
+     },
+     {
+      "lastProbeTime": null,
+      "lastTransitionTime": "2026-11-15T05:02:03Z",
+      "observedGeneration": 1,
+      "status": "True",
+      "type": "ContainersReady"
+     },
+     {
+      "lastProbeTime": null,
+      "lastTransitionTime": "2026-11-15T05:02:03Z",
+      "observedGeneration": 1,
+      "status": "True",
+      "type": "PodScheduled"
+     }
+    ],
+    "containerStatuses": [
+     {
+      "containerID": "containerd://d7e2c124e9b587bd6791263eb9aaf32b16d2b836f3672954af07b2e99cc3467f",
+      "image": "sha256:45a1d298552b4ed95d21af416e729f4340ef42a54050de7e0aebb37c1bee9606",
+      "imageID": "registry.k8s.io/e2e-test-images/busybox@sha256:302d6221f7d600725e0f926f9f04f8fbbb2a32678b4e991da760a5062d4dc7e1",
+      "lastState": {},
+      "name": "client",
+      "ready": true,
+      "resources": {},
+      "restartCount": 0,
+      "started": true,
+      "state": {
+       "running": {
+        "startedAt": "2026-11-15T05:02:03Z"
+       }
+      },
+      "user": {
+       "linux": {
+        "gid": 65534,
+        "supplementalGroups": [
+         65534
+        ],
+        "uid": 65534
+       }
+      },
+      "volumeMounts": [
+       {
+        "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount",
+        "name": "kube-api-access-hhpc4",
+        "readOnly": true,
+        "recursiveReadOnly": "Disabled"
+       }
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "metadata": {
+    "name": "server"
+   },
+   "spec": {
+    "nodeName": "worker1"
+   },
+   "status": {
+    "phase": "Running",
+    "podIP": "10.244.2.102",
+    "conditions": [
+     {
+      "lastProbeTime": null,
+      "lastTransitionTime": "2026-11-15T05:02:03Z",
+      "observedGeneration": 1,
+      "status": "True",
+      "type": "PodReadyToStartContainers"
+     },
+     {
+      "lastProbeTime": null,
+      "lastTransitionTime": "2026-11-15T05:02:03Z",
+      "observedGeneration": 1,
+      "status": "True",
+      "type": "Initialized"
+     },
+     {
+      "lastProbeTime": null,
+      "lastTransitionTime": "2026-11-15T05:02:03Z",
+      "observedGeneration": 1,
+      "status": "True",
+      "type": "Ready"
+     },
+     {
+      "lastProbeTime": null,
+      "lastTransitionTime": "2026-11-15T05:02:03Z",
+      "observedGeneration": 1,
+      "status": "True",
+      "type": "ContainersReady"
+     },
+     {
+      "lastProbeTime": null,
+      "lastTransitionTime": "2026-11-15T05:02:03Z",
+      "observedGeneration": 1,
+      "status": "True",
+      "type": "PodScheduled"
+     }
+    ],
+    "containerStatuses": [
+     {
+      "containerID": "containerd://88abedb78a2c2659cb691678c459196508af5f6c55c787f371be93e3c0c0cfb3",
+      "image": "sha256:45a1d298552b4ed95d21af416e729f4340ef42a54050de7e0aebb37c1bee9606",
+      "imageID": "registry.k8s.io/e2e-test-images/busybox@sha256:302d6221f7d600725e0f926f9f04f8fbbb2a32678b4e991da760a5062d4dc7e1",
+      "lastState": {},
+      "name": "server",
+      "ready": true,
+      "resources": {},
+      "restartCount": 0,
+      "started": true,
+      "state": {
+       "running": {
+        "startedAt": "2026-11-15T05:02:03Z"
+       }
+      },
+      "user": {
+       "linux": {
+        "gid": 65534,
+        "supplementalGroups": [
+         65534
+        ],
+        "uid": 65534
+       }
+      },
+      "volumeMounts": [
+       {
+        "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount",
+        "name": "kube-api-access-tz5ws",
+        "readOnly": true,
+        "recursiveReadOnly": "Disabled"
+       }
+      ]
+     }
+    ]
+   }
+  }
+ ]
+}

@@ -1,0 +1,8 @@
+Ubuntu 24.04.5 LTS
+6.8.0-147-generic
+serial: 20261017
+ibverbs-providers=50.0-2ubuntu0.2
+ibverbs-utils=50.0-2ubuntu0.2
+perftest=24.01.0+0.38-1build2
+rdma-core=50.0-2ubuntu0.2
+rdmacm-utils=50.0-2ubuntu0.2

@@ -1,0 +1,190 @@
+{
+ "items": [
+  {
+   "metadata": {
+    "name": "cp1"
+   },
+   "spec": {
+    "podCIDR": "10.244.0.0/24"
+   },
+   "status": {
+    "addresses": [
+     {
+      "address": "192.168.140.11",
+      "type": "InternalIP"
+     },
+     {
+      "address": "cp1",
+      "type": "Hostname"
+     }
+    ],
+    "conditions": [
+     {
+      "lastHeartbeatTime": "2026-11-15T04:51:02Z",
+      "lastTransitionTime": "2026-11-15T04:51:02Z",
+      "message": "Cilium is running on this node",
+      "reason": "CiliumIsUp",
+      "status": "False",
+      "type": "NetworkUnavailable"
+     },
+     {
+      "lastHeartbeatTime": "2026-11-15T05:00:14Z",
+      "lastTransitionTime": "2026-11-15T04:46:04Z",
+      "message": "kubelet has sufficient memory available",
+      "reason": "KubeletHasSufficientMemory",
+      "status": "False",
+      "type": "MemoryPressure"
+     },
+     {
+      "lastHeartbeatTime": "2026-11-15T05:00:14Z",
+      "lastTransitionTime": "2026-11-15T04:46:04Z",
+      "message": "kubelet has no disk pressure",
+      "reason": "KubeletHasNoDiskPressure",
+      "status": "False",
+      "type": "DiskPressure"
+     },
+     {
+      "lastHeartbeatTime": "2026-11-15T05:00:14Z",
+      "lastTransitionTime": "2026-11-15T04:46:04Z",
+      "message": "kubelet has sufficient PID available",
+      "reason": "KubeletHasSufficientPID",
+      "status": "False",
+      "type": "PIDPressure"
+     },
+     {
+      "lastHeartbeatTime": "2026-11-15T05:00:14Z",
+      "lastTransitionTime": "2026-11-15T04:51:03Z",
+      "message": "kubelet is posting ready status",
+      "reason": "KubeletReady",
+      "status": "True",
+      "type": "Ready"
+     }
+    ]
+   }
+  },
+  {
+   "metadata": {
+    "name": "worker1"
+   },
+   "spec": {
+    "podCIDR": "10.244.2.0/24"
+   },
+   "status": {
+    "addresses": [
+     {
+      "address": "192.168.140.12",
+      "type": "InternalIP"
+     },
+     {
+      "address": "worker1",
+      "type": "Hostname"
+     }
+    ],
+    "conditions": [
+     {
+      "lastHeartbeatTime": "2026-11-15T04:51:08Z",
+      "lastTransitionTime": "2026-11-15T04:51:08Z",
+      "message": "Cilium is running on this node",
+      "reason": "CiliumIsUp",
+      "status": "False",
+      "type": "NetworkUnavailable"
+     },
+     {
+      "lastHeartbeatTime": "2026-11-15T04:58:09Z",
+      "lastTransitionTime": "2026-11-15T04:46:17Z",
+      "message": "kubelet has sufficient memory available",
+      "reason": "KubeletHasSufficientMemory",
+      "status": "False",
+      "type": "MemoryPressure"
+     },
+     {
+      "lastHeartbeatTime": "2026-11-15T04:58:09Z",
+      "lastTransitionTime": "2026-11-15T04:46:17Z",
+      "message": "kubelet has no disk pressure",
+      "reason": "KubeletHasNoDiskPressure",
+      "status": "False",
+      "type": "DiskPressure"
+     },
+     {
+      "lastHeartbeatTime": "2026-11-15T04:58:09Z",
+      "lastTransitionTime": "2026-11-15T04:46:17Z",
+      "message": "kubelet has sufficient PID available",
+      "reason": "KubeletHasSufficientPID",
+      "status": "False",
+      "type": "PIDPressure"
+     },
+     {
+      "lastHeartbeatTime": "2026-11-15T04:58:09Z",
+      "lastTransitionTime": "2026-11-15T04:51:12Z",
+      "message": "kubelet is posting ready status",
+      "reason": "KubeletReady",
+      "status": "True",
+      "type": "Ready"
+     }
+    ]
+   }
+  },
+  {
+   "metadata": {
+    "name": "worker2"
+   },
+   "spec": {
+    "podCIDR": "10.244.1.0/24"
+   },
+   "status": {
+    "addresses": [
+     {
+      "address": "192.168.140.13",
+      "type": "InternalIP"
+     },
+     {
+      "address": "worker2",
+      "type": "Hostname"
+     }
+    ],
+    "conditions": [
+     {
+      "lastHeartbeatTime": "2026-11-15T04:50:59Z",
+      "lastTransitionTime": "2026-11-15T04:50:59Z",
+      "message": "Cilium is running on this node",
+      "reason": "CiliumIsUp",
+      "status": "False",
+      "type": "NetworkUnavailable"
+     },
+     {
+      "lastHeartbeatTime": "2026-11-15T04:59:51Z",
+      "lastTransitionTime": "2026-11-15T04:46:17Z",
+      "message": "kubelet has sufficient memory available",
+      "reason": "KubeletHasSufficientMemory",
+      "status": "False",
+      "type": "MemoryPressure"
+     },
+     {
+      "lastHeartbeatTime": "2026-11-15T04:59:51Z",
+      "lastTransitionTime": "2026-11-15T04:46:17Z",
+      "message": "kubelet has no disk pressure",
+      "reason": "KubeletHasNoDiskPressure",
+      "status": "False",
+      "type": "DiskPressure"
+     },
+     {
+      "lastHeartbeatTime": "2026-11-15T04:59:51Z",
+      "lastTransitionTime": "2026-11-15T04:46:17Z",
+      "message": "kubelet has sufficient PID available",
+      "reason": "KubeletHasSufficientPID",
+      "status": "False",
+      "type": "PIDPressure"
+     },
+     {
+      "lastHeartbeatTime": "2026-11-15T04:59:51Z",
+      "lastTransitionTime": "2026-11-15T04:51:01Z",
+      "message": "kubelet is posting ready status",
+      "reason": "KubeletReady",
+      "status": "True",
+      "type": "Ready"
+     }
+    ]
+   }
+  }
+ ]
+}
