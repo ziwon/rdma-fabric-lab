@@ -1,0 +1,6 @@
+59:      default_runtime_name = 'nvidia'
+64:        [plugins.'io.containerd.cri.v1.runtime'.containerd.runtimes.nvidia]
+80:          [plugins.'io.containerd.cri.v1.runtime'.containerd.runtimes.nvidia.options]
+81:            BinaryName = '/usr/bin/nvidia-container-runtime'
+84:        [plugins.'io.containerd.cri.v1.runtime'.containerd.runtimes.runc]
+ls: cannot access '/usr/bin/nvidia-container-runtime': No such file or directory

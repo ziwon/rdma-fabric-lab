@@ -1,0 +1,148 @@
+{
+  "schema_version": 1,
+  "run_id": "20261115T022311Z",
+  "track": "a-soft-roce",
+  "scenario": "vm-rxe-rerun",
+  "description": "PLAN A1 idempotence. A second bootstrap and rxe-up against configured workers change nothing and leave one device and one address on the lab NIC.",
+  "required": true,
+  "result_kind": "software-rdma-measurement",
+  "status": "passed",
+  "created_at": "2026-11-15T02:23:11Z",
+  "finished_at": "2026-11-15T02:23:27Z",
+  "repo": {
+    "commit": "04da8b31edff2b378ee5dd4ff7c89da65fc0f020",
+    "dirty": true
+  },
+  "environment": {
+    "host": {
+      "name": "<redacted>",
+      "os": "Ubuntu 24.04.5 LTS",
+      "kernel": "7.0.0-42-generic"
+    },
+    "guests": [
+      {
+        "name": "worker1",
+        "os": "Ubuntu 24.04.5 LTS",
+        "kernel": "6.8.0-147-generic"
+      },
+      {
+        "name": "worker2",
+        "os": "Ubuntu 24.04.5 LTS",
+        "kernel": "6.8.0-147-generic"
+      }
+    ],
+    "tools": {
+      "worker1 ibverbs-providers": "50.0-2ubuntu0.2",
+      "worker1 perftest": "24.01.0+0.38-1build2",
+      "worker1 rdma-core": "50.0-2ubuntu0.2",
+      "worker1 rdmacm-utils": "50.0-2ubuntu0.2",
+      "worker2 ibverbs-providers": "50.0-2ubuntu0.2",
+      "worker2 perftest": "24.01.0+0.38-1build2",
+      "worker2 rdma-core": "50.0-2ubuntu0.2",
+      "worker2 rdmacm-utils": "50.0-2ubuntu0.2"
+    }
+  },
+  "inputs": {
+    "files": [
+      {
+        "path": ".lab/inventory.yml",
+        "sha256": "981828ed7b6f06f8f75d32dfccf47c72af75ac2dae9901819268ebea29faa225"
+      },
+      {
+        "path": "ansible/inventories/lab/group_vars/all/lab.yml",
+        "sha256": "6c57b004d6b3fed8d95a971371f73e2ae4fef1333fe5ec2b4d357e96413f5f79"
+      },
+      {
+        "path": "ansible/inventories/lab/hosts.yml",
+        "sha256": "ef272dce45ebe978fcc43988acee3ea0d8891e8e7b4e562be70984645fec303c"
+      },
+      {
+        "path": "tracks/a-soft-roce/config/vm-rxe.yaml",
+        "sha256": "484a5d5f718c3e28f9f9b94f046f8b2ae27bd3686e15e02bc46806640471c0f9"
+      },
+      {
+        "path": "tracks/a-soft-roce/scenarios/vm-rxe-rerun.yaml",
+        "sha256": "f5c2217976b594d385b018980f9ea6e504dbe76415b946039e3cd1efb79df389"
+      }
+    ],
+    "seed": null,
+    "parameters": {
+      "server": "worker1",
+      "client": "worker2",
+      "rping": {
+        "port": 7174,
+        "count": 10,
+        "size": 64,
+        "timeout_s": 30
+      },
+      "perftest": {
+        "port": 18515,
+        "size": 4096,
+        "iterations": 1000,
+        "timeout_s": 60,
+        "tests": [
+          {
+            "check": "rdma-read",
+            "tool": "ib_read_bw"
+          },
+          {
+            "check": "rdma-write",
+            "tool": "ib_write_bw"
+          },
+          {
+            "check": "rdma-send",
+            "tool": "ib_send_bw"
+          }
+        ]
+      }
+    }
+  },
+  "commands_log": "commands.log",
+  "checks": [
+    {
+      "id": "bootstrap-rerun-unchanged",
+      "description": "ansible-playbook bootstrap.yml exits 0 and its recap shows changed=0, failed=0 and unreachable=0 on every worker.",
+      "status": "passed",
+      "exit_code": 0,
+      "failure_class": null,
+      "evidence": [
+        "raw/bootstrap-rerun-unchanged/bootstrap.yml.log",
+        "raw/bootstrap-rerun-unchanged/bootstrap.yml.stderr",
+        "raw/bootstrap-rerun-unchanged/bootstrap.yml.rc"
+      ],
+      "detail": "worker1 changed=0 failed=0 unreachable=0, worker2 changed=0 failed=0 unreachable=0"
+    },
+    {
+      "id": "rxe-up-rerun-unchanged",
+      "description": "ansible-playbook rxe.yml exits 0 and its recap shows changed=0, failed=0 and unreachable=0 on every worker.",
+      "status": "passed",
+      "exit_code": 0,
+      "failure_class": null,
+      "evidence": [
+        "raw/rxe-up-rerun-unchanged/rxe.yml.log",
+        "raw/rxe-up-rerun-unchanged/rxe.yml.rc"
+      ],
+      "detail": "worker1 changed=0 failed=0 unreachable=0, worker2 changed=0 failed=0 unreachable=0"
+    },
+    {
+      "id": "single-rxe-device",
+      "description": "Each worker has one RDMA link on the lab NIC, one IPv4 address on it, one lab netplan file and one rfl-rxe unit.",
+      "status": "passed",
+      "exit_code": 0,
+      "failure_class": null,
+      "evidence": [
+        "raw/single-rxe-device/worker1.txt",
+        "raw/single-rxe-device/worker2.txt"
+      ],
+      "detail": "one device, one address, one netplan file and one unit on each worker"
+    }
+  ],
+  "timing": {
+    "wall_clock_seconds": 15.4,
+    "simulated_seconds": null
+  },
+  "security": {
+    "privileged": false,
+    "device_exposure": "Ansible runs with become on the workers. No test traffic runs in this scenario."
+  }
+}

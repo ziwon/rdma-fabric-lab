@@ -1,0 +1,3 @@
+$ make inventory-check INVENTORY=tests/integration/qemu-lab/profiles/ha/inventory
+PYTHONPATH=scripts .venv/bin/python -m inventory check -i tests/integration/qemu-lab/profiles/ha/inventory --explicit
+tests/integration/qemu-lab/profiles/ha/inventory: contract holds, 0 violations over 4 hosts, every variable explicit

@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "result_kind": "software-rdma-measurement",
+  "metrics": [
+    {
+      "name": "ha_vip.api_unavailable_seconds",
+      "value": null,
+      "unit": "s",
+      "absent_reason": "the probes never succeeded after the power-off",
+      "source": "raw/api-survives-holder-loss/probes.txt",
+      "sample_count": 82,
+      "labels": {
+        "lost": "ha-cp3",
+        "new_holder": "",
+        "probe_from": "ha-w1",
+        "probe_interval_s": "0.5"
+      }
+    }
+  ]
+}

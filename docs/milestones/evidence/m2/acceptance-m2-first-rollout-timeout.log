@@ -1,0 +1,3 @@
+$ agents_back
+Waiting for daemon set "cilium" rollout to finish: 2 of 3 updated pods are available...
+error: timed out waiting for the condition

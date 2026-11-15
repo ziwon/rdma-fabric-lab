@@ -1,0 +1,16 @@
+$ cat v1.yaml v2.yaml
+a: 5
+b:
+  c: 3
+b: null
+l: [x]
+$ helm upgrade --install probe ./chart -f v1.yaml -f v2.yaml
+Release "probe" does not exist. Installing it now.
+NAME: probe
+LAST DEPLOYED: Sun Nov 15 13:50:20 2026
+$ helm get values probe -o json
+{"a":5,"b":null,"l":["x"]}
+
+$ helm get manifest probe | grep v:
+  v: "{\"a\":5,\"l\":[\"x\"]}"
+release "probe" uninstalled

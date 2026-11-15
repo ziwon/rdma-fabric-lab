@@ -1,0 +1,2 @@
+PYTHONPATH=scripts .venv/bin/python -m addons apply --env lab --kubeconfig .lab/kubeconfig  
+cilium: unchanged, chart 1.20.4 at revision 1

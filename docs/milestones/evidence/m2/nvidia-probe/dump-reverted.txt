@@ -1,0 +1,2 @@
+59:      default_runtime_name = 'runc'
+64:        [plugins.'io.containerd.cri.v1.runtime'.containerd.runtimes.runc]

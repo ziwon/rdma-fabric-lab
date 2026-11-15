@@ -1,0 +1,168 @@
+{
+  "schema_version": 1,
+  "result_kind": "software-rdma-measurement",
+  "metrics": [
+    {
+      "name": "rdma_read.bw_average",
+      "value": 0.43,
+      "unit": "Gb/sec",
+      "absent_reason": null,
+      "source": "raw/rdma-read/worker2-client.stdout",
+      "sample_count": 1000,
+      "labels": {
+        "tool": "ib_read_bw",
+        "side": "client",
+        "guest": "worker2",
+        "server": "worker1",
+        "bytes": "4096",
+        "iterations": "1000",
+        "device": "rxe0",
+        "gid_index_chosen_by_rdma_cm": "1"
+      }
+    },
+    {
+      "name": "rdma_read.bw_peak",
+      "value": 0.65,
+      "unit": "Gb/sec",
+      "absent_reason": null,
+      "source": "raw/rdma-read/worker2-client.stdout",
+      "sample_count": 1000,
+      "labels": {
+        "tool": "ib_read_bw",
+        "side": "client",
+        "guest": "worker2",
+        "server": "worker1",
+        "bytes": "4096",
+        "iterations": "1000",
+        "device": "rxe0",
+        "gid_index_chosen_by_rdma_cm": "1"
+      }
+    },
+    {
+      "name": "rdma_read.msg_rate",
+      "value": 0.013021,
+      "unit": "Mpps",
+      "absent_reason": null,
+      "source": "raw/rdma-read/worker2-client.stdout",
+      "sample_count": 1000,
+      "labels": {
+        "tool": "ib_read_bw",
+        "side": "client",
+        "guest": "worker2",
+        "server": "worker1",
+        "bytes": "4096",
+        "iterations": "1000",
+        "device": "rxe0",
+        "gid_index_chosen_by_rdma_cm": "1"
+      }
+    },
+    {
+      "name": "rdma_write.bw_average",
+      "value": 0.49,
+      "unit": "Gb/sec",
+      "absent_reason": null,
+      "source": "raw/rdma-write/worker2-client.stdout",
+      "sample_count": 1000,
+      "labels": {
+        "tool": "ib_write_bw",
+        "side": "client",
+        "guest": "worker2",
+        "server": "worker1",
+        "bytes": "4096",
+        "iterations": "1000",
+        "device": "rxe0",
+        "gid_index_chosen_by_rdma_cm": "1"
+      }
+    },
+    {
+      "name": "rdma_write.bw_peak",
+      "value": 0.73,
+      "unit": "Gb/sec",
+      "absent_reason": null,
+      "source": "raw/rdma-write/worker2-client.stdout",
+      "sample_count": 1000,
+      "labels": {
+        "tool": "ib_write_bw",
+        "side": "client",
+        "guest": "worker2",
+        "server": "worker1",
+        "bytes": "4096",
+        "iterations": "1000",
+        "device": "rxe0",
+        "gid_index_chosen_by_rdma_cm": "1"
+      }
+    },
+    {
+      "name": "rdma_write.msg_rate",
+      "value": 0.015,
+      "unit": "Mpps",
+      "absent_reason": null,
+      "source": "raw/rdma-write/worker2-client.stdout",
+      "sample_count": 1000,
+      "labels": {
+        "tool": "ib_write_bw",
+        "side": "client",
+        "guest": "worker2",
+        "server": "worker1",
+        "bytes": "4096",
+        "iterations": "1000",
+        "device": "rxe0",
+        "gid_index_chosen_by_rdma_cm": "1"
+      }
+    },
+    {
+      "name": "rdma_send.bw_average",
+      "value": 0.41,
+      "unit": "Gb/sec",
+      "absent_reason": null,
+      "source": "raw/rdma-send/worker2-client.stdout",
+      "sample_count": 1000,
+      "labels": {
+        "tool": "ib_send_bw",
+        "side": "client",
+        "guest": "worker2",
+        "server": "worker1",
+        "bytes": "4096",
+        "iterations": "1000",
+        "device": "rxe0",
+        "gid_index_chosen_by_rdma_cm": "1"
+      }
+    },
+    {
+      "name": "rdma_send.bw_peak",
+      "value": 0.91,
+      "unit": "Gb/sec",
+      "absent_reason": null,
+      "source": "raw/rdma-send/worker2-client.stdout",
+      "sample_count": 1000,
+      "labels": {
+        "tool": "ib_send_bw",
+        "side": "client",
+        "guest": "worker2",
+        "server": "worker1",
+        "bytes": "4096",
+        "iterations": "1000",
+        "device": "rxe0",
+        "gid_index_chosen_by_rdma_cm": "1"
+      }
+    },
+    {
+      "name": "rdma_send.msg_rate",
+      "value": 0.012364,
+      "unit": "Mpps",
+      "absent_reason": null,
+      "source": "raw/rdma-send/worker2-client.stdout",
+      "sample_count": 1000,
+      "labels": {
+        "tool": "ib_send_bw",
+        "side": "client",
+        "guest": "worker2",
+        "server": "worker1",
+        "bytes": "4096",
+        "iterations": "1000",
+        "device": "rxe0",
+        "gid_index_chosen_by_rdma_cm": "1"
+      }
+    }
+  ]
+}
