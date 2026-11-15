@@ -1,0 +1,136 @@
+== AppArmor label: docker-default (enforce)
+== after 30 s: 0 SUBNET UP lines
+== ibnetdiscover
+#
+# Topology file: generated on Sun Nov 15 13:57:28 2026
+#
+# Initiated from node 0000000000100000 port 0000000000100001
+
+vendid=0x0
+devid=0x0
+sysimgguid=0x200000
+switchguid=0x200000(200000)
+Switch	8 "S-0000000000200000"		# "Switch1" base port 0 lid 2 lmc 0
+[1]	"H-0000000000100000"[1](100001) 		# "Hca1" lid 1 4xSDR
+[4]	"H-0000000000100003"[1](100004) 		# "Hca2" lid 3 4xSDR
+
+vendid=0x0
+devid=0x0
+sysimgguid=0x100003
+caguid=0x100003
+Ca	2 "H-0000000000100003"		# "Hca2"
+[1](100004) 	"S-0000000000200000"[4]		# lid 3 lmc 0 "Switch1" lid 2 4xSDR
+
+vendid=0x0
+devid=0x0
+sysimgguid=0x100000
+caguid=0x100000
+Ca	2 "H-0000000000100000"		# "Hca1"
+[1](100001) 	"S-0000000000200000"[1]		# lid 1 lmc 0 "Switch1" lid 2 4xSDR
+rc=0
+== iblinkinfo
+CA: Hca2:
+      0x0000000000100004      3    1[  ] ==( 4X           2.5 Gbps Active/  LinkUp)==>       2    4[  ] "Switch1" (Could be 12X Could be 10.0 Gbps)
+Switch: 0x0000000000200000 Switch1:
+           2    1[  ] ==( 4X           2.5 Gbps Active/  LinkUp)==>       1    1[  ] "Hca1" (Could be 12X Could be 10.0 Gbps)
+           2    2[  ] ==(                Down/ Polling)==>             [  ] "" ( )
+           2    3[  ] ==(                Down/ Polling)==>             [  ] "" ( )
+           2    4[  ] ==( 4X           2.5 Gbps Active/  LinkUp)==>       3    1[  ] "Hca2" (Could be 12X Could be 10.0 Gbps)
+           2    5[  ] ==(                Down/ Polling)==>             [  ] "" ( )
+           2    6[  ] ==(                Down/ Polling)==>             [  ] "" ( )
+           2    7[  ] ==(                Down/ Polling)==>             [  ] "" ( )
+           2    8[  ] ==(                Down/ Polling)==>             [  ] "" ( )
+CA: Hca1:
+      0x0000000000100001      1    1[  ] ==( 4X           2.5 Gbps Active/  LinkUp)==>       2    1[  ] "Switch1" (Could be 12X Could be 10.0 Gbps)
+rc=0
+== ibswitches
+Switch	: 0x0000000000200000 ports 8 "Switch1" base port 0 lid 2 lmc 0
+rc=0
+== ibhosts
+Ca	: 0x0000000000100003 ports 2 "Hca2"
+Ca	: 0x0000000000100000 ports 2 "Hca1"
+rc=0
+== ibroute 1
+ibroute: iberror: failed: dump tables: not a switch
+rc=255
+== sminfo
+sminfo: sm lid 1 sm guid 0x100001, activity count 50 priority 0 state 3 SMINFO_MASTER
+rc=0
+== ibstat
+CA 'ibsim0'
+	CA type: simulator
+	Number of ports: 1
+	Firmware version: 1
+	Hardware version: a1
+	Node GUID: 0x0000000000100000
+	System image GUID: 0x0000000000100000
+	Port 1:
+		State: Active
+		Physical state: LinkUp
+		Rate: 10
+		Base lid: 1
+		LMC: 0
+		SM lid: 1
+		Capability mask: 0x0050c04a
+		Port GUID: 0x0000000000100001
+		Link layer: IB
+rc=0
+== saquery
+NodeRecord dump:
+		lid.....................1
+		reserved................0x0
+		base_version............0x1
+		class_version...........0x1
+		node_type...............Channel Adapter
+		num_ports...............2
+		sys_guid................0x0000000000100000
+		node_guid...............0x0000000000100000
+		port_guid...............0x0000000000100001
+		partition_cap...........0x40
+		device_id...............0x0
+		revision................0xA1
+		port_num................1
+		vendor_id...............0x0
+		NodeDescription.........Hca1
+rc=0
+== osm.out
+-------------------------------------------------
+OpenSM 3.3.23
+Config file is `/dev/null`:
+ Reading Cached Option File: /dev/null
+Command Line Arguments:
+ Log File: /tmp/osm/opensm.log
+-------------------------------------------------
+OpenSM 3.3.23
+
+Using default GUID 0x100001
+Entering DISCOVERING state
+
+Entering MASTER state
+
+== ibsim console
+ibwarn: [9] parse_port_connection_data: cannot parse remote lid and connection type
+ibwarn: [9] parse_port_connection_data: cannot parse remote lid and connection type
+ibwarn: [9] parse_port_connection_data: cannot parse remote lid and connection type
+ibwarn: [9] parse_port_connection_data: cannot parse remote lid and connection type
+parsing: /net-examples/net.1
+/net-examples/net.1: parsed 29 lines
+########################
+Network simulator ready.
+MaxNetNodes    = 2048
+MaxNetSwitches = 256
+MaxNetPorts    = 13312
+MaxLinearCap   = 30720
+MaxMcastCap    = 1024
+sim> == opensm.log tail
+Nov 15 13:56:58 712515 [58D53740] 0x03 -> OpenSM 3.3.23
+Nov 15 13:56:58 712534 [58D53740] 0x80 -> OpenSM 3.3.23
+Nov 15 13:56:58 714037 [58D53740] 0x02 -> osm_vendor_init: 1000 pending umads specified
+Nov 15 13:56:58 714370 [58D53740] 0x80 -> Entering DISCOVERING state
+Nov 15 13:56:58 714445 [58D53740] 0x02 -> osm_vendor_bind: Mgmt class 0x81 binding to port GUID 0x100001
+Nov 15 13:56:58 714946 [58D53740] 0x02 -> osm_vendor_bind: Mgmt class 0x03 binding to port GUID 0x100001
+Nov 15 13:56:58 714953 [58D53740] 0x02 -> osm_vendor_bind: Mgmt class 0x04 binding to port GUID 0x100001
+Nov 15 13:56:58 714959 [58D53740] 0x02 -> osm_vendor_bind: Mgmt class 0x21 binding to port GUID 0x100001
+Nov 15 13:56:58 714965 [58D53740] 0x02 -> osm_opensm_bind: Setting IS_SM on port 0x0000000000100001
+Nov 15 13:56:58 715706 [54D4A6C0] 0x80 -> Entering MASTER state
+docker rc=0

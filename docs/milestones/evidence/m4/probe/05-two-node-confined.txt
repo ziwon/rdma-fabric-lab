@@ -1,0 +1,49 @@
+== ibnetdiscover, SIM_HOST=Hca1
+#
+# Topology file: generated on Sun Nov 15 13:56:28 2026
+#
+# Initiated from node 0000000000100000 port 0000000000100001
+
+vendid=0x0
+devid=0x0
+sysimgguid=0x200000
+switchguid=0x200000(200000)
+Switch	8 "S-0000000000200000"		# "Switch1" base port 0 lid 0 lmc 0
+[1]	"H-0000000000100000"[1](100001) 		# "Hca1" lid 0 4xSDR
+[4]	"H-0000000000100003"[1](100004) 		# "Hca2" lid 0 4xSDR
+
+vendid=0x0
+devid=0x0
+sysimgguid=0x100003
+caguid=0x100003
+Ca	2 "H-0000000000100003"		# "Hca2"
+[1](100004) 	"S-0000000000200000"[4]		# lid 0 lmc 0 "Switch1" lid 0 4xSDR
+
+vendid=0x0
+devid=0x0
+sysimgguid=0x100000
+caguid=0x100000
+Ca	2 "H-0000000000100000"		# "Hca1"
+[1](100001) 	"S-0000000000200000"[1]		# lid 0 lmc 0 "Switch1" lid 0 4xSDR
+ibnetdiscover rc=0
+== ibsim console log
+ibwarn: [9] parse_port_connection_data: cannot parse remote lid and connection type
+ibwarn: [9] parse_port_connection_data: cannot parse remote lid and connection type
+ibwarn: [9] parse_port_connection_data: cannot parse remote lid and connection type
+ibwarn: [9] parse_port_connection_data: cannot parse remote lid and connection type
+parsing: /net-examples/net.1
+/net-examples/net.1: parsed 29 lines
+########################
+Network simulator ready.
+MaxNetNodes    = 2048
+MaxNetSwitches = 256
+MaxNetPorts    = 13312
+MaxLinearCap   = 30720
+MaxMcastCap    = 1024
+sim> == files under /tmp
+total 12
+drwxrwxrwt 1 root  root  4096 Nov 15 13:56 .
+drwxr-xr-x 1 root  root  4096 Nov 15 13:56 ..
+prw-r--r-- 1 10001 10001    0 Nov 15 13:56 ctl
+-rw-r--r-- 1 10001 10001  568 Nov 15 13:56 ibsim.out
+docker rc=0

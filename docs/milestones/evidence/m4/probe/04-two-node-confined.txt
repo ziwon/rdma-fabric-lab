@@ -1,0 +1,13 @@
+== ibnetdiscover, SIM_HOST=Hca1
+ibnetdiscover rc=124
+== ibsim console log
+ibwarn: [9] read_netconf: can't open net configuration file "/usr/share/doc/ibsim-utils/net-examples/net.1": No such file or directory
+ibpanic: [9] main: sim_init failed, status -1: No such file or directory
+parsing: /usr/share/doc/ibsim-utils/net-examples/net.1
+== files under /tmp
+total 12
+drwxrwxrwt 1 root  root  4096 Nov 15 13:55 .
+drwxr-xr-x 1 root  root  4096 Nov 15 13:55 ..
+prw-r--r-- 1 10001 10001    0 Nov 15 13:55 ctl
+-rw-r--r-- 1 10001 10001  263 Nov 15 13:55 ibsim.out
+docker rc=0

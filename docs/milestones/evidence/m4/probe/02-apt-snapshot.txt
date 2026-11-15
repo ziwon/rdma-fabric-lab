@@ -1,0 +1,25 @@
+#5 12.48 ibsim-utils:
+#5 12.48   Candidate: 0.10-2build1
+#5 12.48 libumad2sim0:
+#5 12.48   Candidate: 0.10-2build1
+#5 12.48 opensm:
+#5 12.48   Candidate: 3.3.23-2
+#5 12.48 infiniband-diags:
+#5 12.48   Candidate: 50.0-2ubuntu0.2
+#5 12.48 libibumad3:
+#5 12.48   Candidate: 50.0-2ubuntu0.2
+#5 12.48 libibmad5:
+#5 12.48   Candidate: 50.0-2ubuntu0.2
+
+#6 exporting to image
+#6 exporting layers
+#6 exporting layers 1.6s done
+#6 exporting manifest sha256:d0ce7ac707d22c22368779d837d814df7f6f9cc15fad95c5714459a5896a4cb7 0.0s done
+#6 exporting config sha256:318db3b8446fdf6f27bec2dcbfdf3ef2ce88b6ebcfe04228a348ee47c36f469b 0.0s done
+#6 exporting attestation manifest sha256:cf96e70c7b8c94c854fe0d0c92397dc3483f923366570a1dd4cbd56cb97dca97
+#6 exporting attestation manifest sha256:cf96e70c7b8c94c854fe0d0c92397dc3483f923366570a1dd4cbd56cb97dca97 0.2s done
+#6 exporting manifest list sha256:01b74330b5ad17071e9fe402a8a8701c41c2bd3ca607757f8546ddffcf84bc37
+#6 exporting manifest list sha256:01b74330b5ad17071e9fe402a8a8701c41c2bd3ca607757f8546ddffcf84bc37 0.0s done
+#6 naming to docker.io/library/rfl-ibsim-probe:snapshot done
+#6 unpacking to docker.io/library/rfl-ibsim-probe:snapshot
+#6 unpacking to docker.io/library/rfl-ibsim-probe:snapshot 0.4s done

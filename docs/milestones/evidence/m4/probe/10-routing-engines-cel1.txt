@@ -1,0 +1,79 @@
+== engine args [] SUBNET UP after 1794751465.208267805 1794751465.712763407 s, polls 2
+Nov 15 14:04:25 247044 [C35716C0] 0x02 -> osm_ucast_mgr_process: minhop tables configured on all switches
+Nov 15 14:04:25 253539 [C35716C0] 0x02 -> SUBNET UP
+== ibnetdiscover summary
+rc=0 switches=12 cas=64
+== ibroute leaf-r0 (lid from ibswitches)
+Switch	: 0x0000000000200007 ports 64 "cel1-ib-leaf-r7" base port 0 lid 12 lmc 0
+Switch	: 0x0000000000200006 ports 64 "cel1-ib-leaf-r6" base port 0 lid 10 lmc 0
+Switch	: 0x0000000000200005 ports 64 "cel1-ib-leaf-r5" base port 0 lid 9 lmc 0
+Switch	: 0x0000000000200004 ports 64 "cel1-ib-leaf-r4" base port 0 lid 7 lmc 0
+Switch	: 0x0000000000200003 ports 64 "cel1-ib-leaf-r3" base port 0 lid 6 lmc 0
+Switch	: 0x0000000000200002 ports 64 "cel1-ib-leaf-r2" base port 0 lid 4 lmc 0
+Switch	: 0x0000000000200001 ports 64 "cel1-ib-leaf-r1" base port 0 lid 3 lmc 0
+Switch	: 0x000000000020000b ports 64 "cel1-ib-spine-04" base port 0 lid 18 lmc 0
+Switch	: 0x000000000020000a ports 64 "cel1-ib-spine-03" base port 0 lid 16 lmc 0
+Switch	: 0x0000000000200009 ports 64 "cel1-ib-spine-02" base port 0 lid 15 lmc 0
+Switch	: 0x0000000000200008 ports 64 "cel1-ib-spine-01" base port 0 lid 13 lmc 0
+Switch	: 0x0000000000200000 ports 64 "cel1-ib-leaf-r0" base port 0 lid 2 lmc 0
+      1 000       1 001       1 002       1 003       1 004       1 005       1 006       1 007       1 008      15 033       7 034       8 035       7 036       8 037       7 038       8 039       7 040       1 valid 
+== opensm stdout
+Using default GUID 0x100001
+Entering DISCOVERING state
+
+Entering MASTER state
+
+docker rc=0
+== engine args [-R updn] SUBNET UP after 1794751466.596419557 1794751467.101105982 s, polls 2
+Nov 15 14:04:26 629749 [684BC6C0] 0x02 -> osm_ucast_mgr_process: updn tables configured on all switches
+Nov 15 14:04:26 636371 [684BC6C0] 0x02 -> SUBNET UP
+== ibnetdiscover summary
+rc=0 switches=12 cas=64
+== ibroute leaf-r0 (lid from ibswitches)
+Switch	: 0x0000000000200007 ports 64 "cel1-ib-leaf-r7" base port 0 lid 12 lmc 0
+Switch	: 0x0000000000200006 ports 64 "cel1-ib-leaf-r6" base port 0 lid 10 lmc 0
+Switch	: 0x0000000000200005 ports 64 "cel1-ib-leaf-r5" base port 0 lid 9 lmc 0
+Switch	: 0x0000000000200004 ports 64 "cel1-ib-leaf-r4" base port 0 lid 7 lmc 0
+Switch	: 0x0000000000200003 ports 64 "cel1-ib-leaf-r3" base port 0 lid 6 lmc 0
+Switch	: 0x0000000000200002 ports 64 "cel1-ib-leaf-r2" base port 0 lid 4 lmc 0
+Switch	: 0x0000000000200001 ports 64 "cel1-ib-leaf-r1" base port 0 lid 3 lmc 0
+Switch	: 0x000000000020000b ports 64 "cel1-ib-spine-04" base port 0 lid 18 lmc 0
+Switch	: 0x000000000020000a ports 64 "cel1-ib-spine-03" base port 0 lid 16 lmc 0
+Switch	: 0x0000000000200009 ports 64 "cel1-ib-spine-02" base port 0 lid 15 lmc 0
+Switch	: 0x0000000000200008 ports 64 "cel1-ib-spine-01" base port 0 lid 13 lmc 0
+Switch	: 0x0000000000200000 ports 64 "cel1-ib-leaf-r0" base port 0 lid 2 lmc 0
+      1 000       1 001       1 002       1 003       1 004       1 005       1 006       1 007       1 008      15 033       7 034       8 035       7 036       8 037       7 038       8 039       7 040       1 valid 
+== opensm stdout
+Using default GUID 0x100001
+Entering DISCOVERING state
+
+Entering MASTER state
+
+docker rc=0
+== engine args [-R ftree,no_fallback] SUBNET UP after 1794751467.964234304 1794751468.468842671 s, polls 2
+Nov 15 14:04:27 967989 [84B85740] 0x01 -> setup_routing_engines: Failed to setup routing engine 'no_fallback'
+Nov 15 14:04:27 991501 [80B7C6C0] 0x02 -> osm_ucast_mgr_process: ftree tables configured on all switches
+Nov 15 14:04:27 998301 [80B7C6C0] 0x02 -> SUBNET UP
+== ibnetdiscover summary
+rc=0 switches=12 cas=64
+== ibroute leaf-r0 (lid from ibswitches)
+Switch	: 0x0000000000200007 ports 64 "cel1-ib-leaf-r7" base port 0 lid 12 lmc 0
+Switch	: 0x0000000000200006 ports 64 "cel1-ib-leaf-r6" base port 0 lid 10 lmc 0
+Switch	: 0x0000000000200005 ports 64 "cel1-ib-leaf-r5" base port 0 lid 9 lmc 0
+Switch	: 0x0000000000200004 ports 64 "cel1-ib-leaf-r4" base port 0 lid 7 lmc 0
+Switch	: 0x0000000000200003 ports 64 "cel1-ib-leaf-r3" base port 0 lid 6 lmc 0
+Switch	: 0x0000000000200002 ports 64 "cel1-ib-leaf-r2" base port 0 lid 4 lmc 0
+Switch	: 0x0000000000200001 ports 64 "cel1-ib-leaf-r1" base port 0 lid 3 lmc 0
+Switch	: 0x000000000020000b ports 64 "cel1-ib-spine-04" base port 0 lid 18 lmc 0
+Switch	: 0x000000000020000a ports 64 "cel1-ib-spine-03" base port 0 lid 16 lmc 0
+Switch	: 0x0000000000200009 ports 64 "cel1-ib-spine-02" base port 0 lid 15 lmc 0
+Switch	: 0x0000000000200008 ports 64 "cel1-ib-spine-01" base port 0 lid 13 lmc 0
+Switch	: 0x0000000000200000 ports 64 "cel1-ib-leaf-r0" base port 0 lid 2 lmc 0
+      1 000       1 001       1 002       1 003       1 004       1 005       1 006       1 007       1 008      11 033      11 034       8 035       7 036       8 037       7 038       8 039       7 040       1 valid 
+== opensm stdout
+Using default GUID 0x100001
+Entering DISCOVERING state
+
+Entering MASTER state
+
+docker rc=0

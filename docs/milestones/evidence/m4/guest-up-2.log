@@ -1,0 +1,6 @@
+$ make lab-up LAB_PROFILE=ibsim
+tests/integration/qemu-lab/lab.sh up
+lab.sh: ibsim1 started, pid 655806, ssh 127.0.0.1:22231
+lab.sh: ibsim1 ready
+lab.sh: wrote <repo>/.lab/ibsim/inventory.yml
+rc=0

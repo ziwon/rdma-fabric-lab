@@ -1,0 +1,68 @@
+ibwarn: [9] parse_port_connection_data: cannot parse remote lid and connection type
+ibwarn: [9] parse_port_connection_data: cannot parse remote lid and connection type
+ibwarn: [9] parse_port_connection_data: cannot parse remote lid and connection type
+ibwarn: [9] parse_port_connection_data: cannot parse remote lid and connection type
+parsing: /net-examples/net.1
+/net-examples/net.1: parsed 29 lines
+########################
+Network simulator ready.
+MaxNetNodes    = 2048
+MaxNetSwitches = 256
+MaxNetPorts    = 13312
+MaxLinearCap   = 30720
+MaxMcastCap    = 1024
+sim> sim> Commands:
+	!<filename> - run commands from the file
+	Start network
+	Dump ["nodeid"] : dump node information in network
+	Route <from-lid> <to-lid>
+	Link "nodeid"[port] "remoteid"[port]
+	ReLink "nodeid" : restore previously unconnected link(s) of the node
+	ReLink "nodeid"[port] : restore previously unconnected link
+	Unlink "nodeid" : remove all links of the node
+	Unlink "nodeid"[port]
+	Clear "nodeid" : unlink & reset all links of the node
+	Clear "nodeid"[port] : unlink & reset port
+	Guid "nodeid" : set GUID value for this node
+	Guid "nodeid"[port] : set GUID value for this port
+	Error "nodeid"[port] <error-rate> [attribute]: set error rate for
+			port/node, optionally for specified attribute ID
+			Some common attribute IDs:
+				NodeDescription : 16
+				NodeInfo        : 17
+				SwitchInfo      : 18
+				PortInfo        : 21
+	PerformanceSet "nodeid"[port] [attribute].[field]=[value] : set perf. counters values
+	Baselid "nodeid"[port] <lid> [lmc] : change port's lid (lmc)
+	Verbose [newlevel] - show/set simulator verbosity
+			0 - silent
+			1 - debug verbose
+	Wait <sec> : suspend simulator prompt
+	Attached : list attached clients
+	X <client num> : (force) disconnect client
+	#... : comment line (for scripts) - ignored
+	Help/?
+	Quit
+sim> # Net status - Sun Nov 15 13:58:24 2026
+
+Switch 8 "Switch1"	nodeguid 200000	sysimgguid 200000
+#	linearcap 30720 FDBtop 0 portchange 1
+200000	[0]	"Sma Port"[0]	 lid 0 lmc 0 smlid 0  4x  2.5G Active/LinkUp
+200000	[1]	"Hca1"[1]	  4x  2.5G Init/LinkUp
+200000	[2]			  4x  2.5G Down/Polling
+200000	[3]			  4x  2.5G Down/Polling
+200000	[4]	"Hca2"[1]	  4x  2.5G Init/LinkUp
+200000	[5]			  4x  2.5G Down/Polling
+200000	[6]			  4x  2.5G Down/Polling
+200000	[7]			  4x  2.5G Down/Polling
+200000	[8]			  4x  2.5G Down/Polling
+
+Ca 2 "Hca1"	nodeguid 100000	sysimgguid 100000
+100001	[1]	"Switch1"[1]	 lid 0 lmc 0 smlid 0  4x  2.5G Init/LinkUp
+100002	[2]			 lid 0 lmc 0 smlid 0  4x  2.5G Down/Polling
+
+Ca 2 "Hca2"	nodeguid 100003	sysimgguid 100003
+100004	[1]	"Switch1"[4]	 lid 0 lmc 0 smlid 0  4x  2.5G Init/LinkUp
+100005	[2]			 lid 0 lmc 0 smlid 0  4x  2.5G Down/Polling
+#  dumped 3 nodes
+sim> docker rc=0

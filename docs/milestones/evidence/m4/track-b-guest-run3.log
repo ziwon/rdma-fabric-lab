@@ -1,0 +1,79 @@
+$ make track-b-guest
+PYTHONPATH=scripts .venv/bin/python -m rfl versions --scope m4
+47 components, 3 undecided
+scope m4: every component is pinned
+LAB_PROFILE=ibsim tests/integration/qemu-lab/lab.sh up
+lab.sh: ibsim1 already runs
+lab.sh: ibsim1 ready
+lab.sh: wrote <repo>/.lab/ibsim/inventory.yml
+.venv/bin/ansible-playbook -i tests/integration/qemu-lab/profiles/ibsim/inventory -i .lab/ibsim/inventory.yml ansible/playbooks/track-b-guest.yml
+
+PLAY [Prepare the Track B guest] ***********************************************
+
+TASK [Gathering Facts] *********************************************************
+Monday 16 November 2026  00:13:14 +0900 (0:00:00.013)       0:00:00.013 ******* 
+ok: [ibsim1]
+
+TASK [Refuse hosts other than the Track B guest] *******************************
+Monday 16 November 2026  00:13:15 +0900 (0:00:00.920)       0:00:00.934 ******* 
+ok: [ibsim1]
+
+TASK [Refuse a kernel other than the locked one] *******************************
+Monday 16 November 2026  00:13:15 +0900 (0:00:00.033)       0:00:00.968 ******* 
+ok: [ibsim1]
+
+TASK [Read the installed packages] *********************************************
+Monday 16 November 2026  00:13:15 +0900 (0:00:00.046)       0:00:01.014 ******* 
+ok: [ibsim1]
+
+TASK [Work out which locked packages are missing] ******************************
+Monday 16 November 2026  00:13:16 +0900 (0:00:00.855)       0:00:01.870 ******* 
+ok: [ibsim1]
+
+TASK [Install the container runtime at the locked versions] ********************
+Monday 16 November 2026  00:13:16 +0900 (0:00:00.042)       0:00:01.912 ******* 
+skipping: [ibsim1]
+
+TASK [Hold the container runtime on the locked versions] ***********************
+Monday 16 November 2026  00:13:16 +0900 (0:00:00.028)       0:00:01.941 ******* 
+ok: [ibsim1] => (item=docker.io)
+ok: [ibsim1] => (item=docker-buildx)
+ok: [ibsim1] => (item=containerd)
+ok: [ibsim1] => (item=runc)
+
+TASK [Panic on an Oops and reboot five seconds later] **************************
+Monday 16 November 2026  00:13:17 +0900 (0:00:00.634)       0:00:02.575 ******* 
+ok: [ibsim1] => (item=kernel.panic_on_oops=1)
+ok: [ibsim1] => (item=kernel.panic=5)
+
+TASK [Start Docker now and at boot] ********************************************
+Monday 16 November 2026  00:13:17 +0900 (0:00:00.331)       0:00:02.906 ******* 
+ok: [ibsim1]
+
+TASK [Create the marker directory] *********************************************
+Monday 16 November 2026  00:13:18 +0900 (0:00:00.312)       0:00:03.219 ******* 
+ok: [ibsim1]
+
+TASK [Mark this guest as the Track B guest] ************************************
+Monday 16 November 2026  00:13:18 +0900 (0:00:00.228)       0:00:03.448 ******* 
+ok: [ibsim1]
+
+PLAY RECAP *********************************************************************
+ibsim1                     : ok=10   changed=0    unreachable=0    failed=0    skipped=1    rescued=0    ignored=0   
+
+
+TASKS RECAP ********************************************************************
+Monday 16 November 2026  00:13:18 +0900 (0:00:00.374)       0:00:03.822 ******* 
+=============================================================================== 
+Gathering Facts --------------------------------------------------------- 0.92s
+Read the installed packages --------------------------------------------- 0.86s
+Hold the container runtime on the locked versions ----------------------- 0.63s
+Mark this guest as the Track B guest ------------------------------------ 0.37s
+Panic on an Oops and reboot five seconds later -------------------------- 0.33s
+Start Docker now and at boot -------------------------------------------- 0.31s
+Create the marker directory --------------------------------------------- 0.23s
+Refuse a kernel other than the locked one ------------------------------- 0.05s
+Work out which locked packages are missing ------------------------------ 0.04s
+Refuse hosts other than the Track B guest ------------------------------- 0.03s
+Install the container runtime at the locked versions -------------------- 0.03s
+rc=0

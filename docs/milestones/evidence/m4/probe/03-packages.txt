@@ -1,0 +1,81 @@
+#5 [2/2] RUN apt-get update --snapshot 20261115T000000Z -q  && apt-get install -y -q --no-install-recommends ibsim-utils=0.10-2build1 libumad2sim0=0.10-2build1 opensm=3.3.23-2 infiniband-diags=50.0-2ubuntu0.2  && ls /var/lib/apt/lists | head -3 && dpkg-query -W | grep -Ei "ib|osm|opensm|umad|rdma"
+#5 0.750 Ign:1 https://snapshot.ubuntu.com/ubuntu/20261115T000000Z noble InRelease
+#5 1.317 Ign:4 https://snapshot.ubuntu.com/ubuntu/20261115T000000Z noble-updates InRelease
+#5 1.833 Ign:5 https://snapshot.ubuntu.com/ubuntu/20261115T000000Z noble-backports InRelease
+#5 2.320 Ign:7 https://snapshot.ubuntu.com/ubuntu/20261115T000000Z noble-security InRelease
+#5 2.927 Ign:1 https://snapshot.ubuntu.com/ubuntu/20261115T000000Z noble InRelease
+#5 3.414 Ign:4 https://snapshot.ubuntu.com/ubuntu/20261115T000000Z noble-updates InRelease
+#5 3.942 Ign:5 https://snapshot.ubuntu.com/ubuntu/20261115T000000Z noble-backports InRelease
+#5 4.430 Ign:7 https://snapshot.ubuntu.com/ubuntu/20261115T000000Z noble-security InRelease
+#5 5.475 Ign:1 https://snapshot.ubuntu.com/ubuntu/20261115T000000Z noble InRelease
+#5 6.031 Ign:4 https://snapshot.ubuntu.com/ubuntu/20261115T000000Z noble-updates InRelease
+#5 6.569 Ign:5 https://snapshot.ubuntu.com/ubuntu/20261115T000000Z noble-backports InRelease
+#5 7.103 Ign:7 https://snapshot.ubuntu.com/ubuntu/20261115T000000Z noble-security InRelease
+#5 10.02 Err:1 https://snapshot.ubuntu.com/ubuntu/20261115T000000Z noble InRelease
+#5 10.58 Err:4 https://snapshot.ubuntu.com/ubuntu/20261115T000000Z noble-updates InRelease
+#5 11.14 Err:5 https://snapshot.ubuntu.com/ubuntu/20261115T000000Z noble-backports InRelease
+#5 11.73 Err:7 https://snapshot.ubuntu.com/ubuntu/20261115T000000Z noble-security InRelease
+#5 11.78 W: https://snapshot.ubuntu.com/ubuntu/20261115T000000Z/dists/noble/InRelease: No system certificates available. Try installing ca-certificates.
+#5 11.78 W: https://snapshot.ubuntu.com/ubuntu/20261115T000000Z/dists/noble-updates/InRelease: No system certificates available. Try installing ca-certificates.
+#5 11.78 W: https://snapshot.ubuntu.com/ubuntu/20261115T000000Z/dists/noble-backports/InRelease: No system certificates available. Try installing ca-certificates.
+#5 11.78 W: https://snapshot.ubuntu.com/ubuntu/20261115T000000Z/dists/noble-security/InRelease: No system certificates available. Try installing ca-certificates.
+#5 11.78 W: https://snapshot.ubuntu.com/ubuntu/20261115T000000Z/dists/noble/InRelease: No system certificates available. Try installing ca-certificates.
+#5 11.78 W: https://snapshot.ubuntu.com/ubuntu/20261115T000000Z/dists/noble-updates/InRelease: No system certificates available. Try installing ca-certificates.
+#5 11.78 W: https://snapshot.ubuntu.com/ubuntu/20261115T000000Z/dists/noble-backports/InRelease: No system certificates available. Try installing ca-certificates.
+#5 11.78 W: https://snapshot.ubuntu.com/ubuntu/20261115T000000Z/dists/noble-security/InRelease: No system certificates available. Try installing ca-certificates.
+#5 11.78 W: https://snapshot.ubuntu.com/ubuntu/20261115T000000Z/dists/noble/InRelease: No system certificates available. Try installing ca-certificates.
+#5 11.78 W: https://snapshot.ubuntu.com/ubuntu/20261115T000000Z/dists/noble-updates/InRelease: No system certificates available. Try installing ca-certificates.
+#5 11.78 W: https://snapshot.ubuntu.com/ubuntu/20261115T000000Z/dists/noble-backports/InRelease: No system certificates available. Try installing ca-certificates.
+#5 11.78 W: https://snapshot.ubuntu.com/ubuntu/20261115T000000Z/dists/noble-security/InRelease: No system certificates available. Try installing ca-certificates.
+#5 11.78 W: https://snapshot.ubuntu.com/ubuntu/20261115T000000Z/dists/noble/InRelease: No system certificates available. Try installing ca-certificates.
+#5 11.78 W: https://snapshot.ubuntu.com/ubuntu/20261115T000000Z/dists/noble-updates/InRelease: No system certificates available. Try installing ca-certificates.
+#5 11.78 W: https://snapshot.ubuntu.com/ubuntu/20261115T000000Z/dists/noble-backports/InRelease: No system certificates available. Try installing ca-certificates.
+#5 11.78 W: https://snapshot.ubuntu.com/ubuntu/20261115T000000Z/dists/noble-security/InRelease: No system certificates available. Try installing ca-certificates.
+#5 11.78 W: Failed to fetch https://snapshot.ubuntu.com/ubuntu/20261115T000000Z/dists/noble/InRelease  Certificate verification failed: The certificate is NOT trusted. The certificate issuer is unknown.  Could not handshake: Error in the certificate verification. [IP: 185.125.189.37 443]
+#5 11.78 W: Failed to fetch https://snapshot.ubuntu.com/ubuntu/20261115T000000Z/dists/noble-updates/InRelease  Certificate verification failed: The certificate is NOT trusted. The certificate issuer is unknown.  Could not handshake: Error in the certificate verification. [IP: 185.125.189.69 443]
+#5 11.78 W: Failed to fetch https://snapshot.ubuntu.com/ubuntu/20261115T000000Z/dists/noble-backports/InRelease  Certificate verification failed: The certificate is NOT trusted. The certificate issuer is unknown.  Could not handshake: Error in the certificate verification. [IP: 185.125.189.69 443]
+#5 11.78 W: Failed to fetch https://snapshot.ubuntu.com/ubuntu/20261115T000000Z/dists/noble-security/InRelease  Certificate verification failed: The certificate is NOT trusted. The certificate issuer is unknown.  Could not handshake: Error in the certificate verification. [IP: 185.125.189.36 443]
+#5 24.52 ibsim-utils	0.10-2build1
+#5 24.52 infiniband-diags	50.0-2ubuntu0.2
+#5 24.52 libacl1:amd64	2.3.2-1build1.1
+Usage: ibsim [-f outfile -d(ebug) -p(arse_debug) -s(tart) -v(erbose) -I(gnore_duplicate) -N nodes -S switches -P ports -L linearcap -M mcastcap -r(emote_mode) -l(isten_to_port) <port> -n(o-console)] <netfile>
+ibsim 0.10
+-------------------------------------------------
+OpenSM 3.3.23
+Command Line Arguments:
+ibnetdiscover BUILD VERSION: 50.0
+total 36
+-rw-r--r-- 1 root root 34896 Apr 22  2024 libumad2sim.so
+HTTP/1.1 301 Moved Permanently
+content-length: 0
+location: https://snapshot.ubuntu.com/ubuntu/20261115T000000Z/dists/noble-updates/InRelease
+
+---
+HTTP/2 200 
+server: nginx/1.18.0 (Ubuntu)
+date: Sun, 15 Nov 2026 13:55:10 GMT
+content-type: application/octet-stream
+content-length: 126125
+---
+archive.ubuntu.com_ubuntu_dists_noble-backports_InRelease
+archive.ubuntu.com_ubuntu_dists_noble-backports_main_binary-amd64_Packages.lz4
+archive.ubuntu.com_ubuntu_dists_noble-backports_multiverse_binary-amd64_Packages.lz4
+archive.ubuntu.com_ubuntu_dists_noble-backports_universe_binary-amd64_Packages.lz4
+archive.ubuntu.com_ubuntu_dists_noble-updates_InRelease
+archive.ubuntu.com_ubuntu_dists_noble-updates_main_binary-amd64_Packages.lz4
+archive.ubuntu.com_ubuntu_dists_noble-updates_multiverse_binary-amd64_Packages.lz4
+archive.ubuntu.com_ubuntu_dists_noble-updates_restricted_binary-amd64_Packages.lz4
+archive.ubuntu.com_ubuntu_dists_noble-updates_universe_binary-amd64_Packages.lz4
+archive.ubuntu.com_ubuntu_dists_noble_InRelease
+archive.ubuntu.com_ubuntu_dists_noble_main_binary-amd64_Packages.lz4
+archive.ubuntu.com_ubuntu_dists_noble_multiverse_binary-amd64_Packages.lz4
+archive.ubuntu.com_ubuntu_dists_noble_restricted_binary-amd64_Packages.lz4
+archive.ubuntu.com_ubuntu_dists_noble_universe_binary-amd64_Packages.lz4
+auxfiles
+lock
+partial
+security.ubuntu.com_ubuntu_dists_noble-security_InRelease
+security.ubuntu.com_ubuntu_dists_noble-security_main_binary-amd64_Packages.lz4
+security.ubuntu.com_ubuntu_dists_noble-security_multiverse_binary-amd64_Packages.lz4
+security.ubuntu.com_ubuntu_dists_noble-security_restricted_binary-amd64_Packages.lz4
+security.ubuntu.com_ubuntu_dists_noble-security_universe_binary-amd64_Packages.lz4

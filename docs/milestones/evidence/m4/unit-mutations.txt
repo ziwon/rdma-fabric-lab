@@ -1,0 +1,26 @@
+$ .venv/bin/python -I docs/milestones/evidence/m4/unit-mutations.py <repo> <scratch>/mut <repo>/.venv/bin/python
+routes direction: pytest rc=1; 1 failed, 116 passed in 0.55s
+    test_a_route_away_from_its_endpoint_fails
+duplicate LIDs: pytest rc=1; 1 failed, 116 passed in 0.54s
+    test_a_shared_zero_or_lmc_lid_fails[#
+asymmetric link: pytest rc=1; 1 failed, 116 passed in 0.54s
+    test_broken_netfiles_are_refused_with_the_reason[Switch\t2
+CapAdd: pytest rc=1; 1 failed, 116 passed in 0.55s
+    test_each_loosened_setting_is_reported[path4-value4-HostConfig.CapAdd
+guest marker: pytest rc=1; 8 failed, 109 passed in 0.58s
+    test_guest_sh_refuses_every_command_outside_the_guest[args0]
+    test_guest_sh_refuses_every_command_outside_the_guest[args1]
+    test_guest_sh_refuses_every_command_outside_the_guest[args2]
+    test_guest_sh_refuses_every_command_outside_the_guest[args3]
+qemu allowlist: pytest rc=1; 3 failed, 114 passed in 0.55s
+    test_any_other_qemu_flag_is_refused[-S]
+    test_any_other_qemu_flag_is_refused[-no-reboot
+    test_any_other_qemu_flag_is_refused[-snapshot]
+link peer: pytest rc=1; 5 failed, 112 passed in 0.55s
+    test_iblinkinfo_lists_every_port_with_state_and_peer
+    test_port_states_of_the_fabric_pass
+    test_a_port_down_where_the_topology_has_a_link_fails
+    test_a_port_active_where_the_topology_has_no_link_fails
+silent LIDs: pytest rc=1; 1 failed, 116 passed in 0.55s
+    test_a_cut_off_lid_must_stay_silent_and_the_others_must_answer
+rc=0

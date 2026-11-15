@@ -1,0 +1,143 @@
+$ make track-b-breaks
+PYTHONPATH=scripts .venv/bin/python -m rfl versions --scope m4
+47 components, 3 undecided
+scope m4: every component is pinned
+LAB_PROFILE=ibsim tests/integration/qemu-lab/lab.sh up
+lab.sh: ibsim1 already runs
+lab.sh: ibsim1 ready
+lab.sh: wrote <repo>/.lab/ibsim/inventory.yml
+.venv/bin/ansible-playbook -i tests/integration/qemu-lab/profiles/ibsim/inventory -i .lab/ibsim/inventory.yml ansible/playbooks/track-b-guest.yml
+
+PLAY [Prepare the Track B guest] ***********************************************
+
+TASK [Gathering Facts] *********************************************************
+Monday 16 November 2026  00:18:23 +0900 (0:00:00.013)       0:00:00.013 ******* 
+ok: [ibsim1]
+
+TASK [Refuse hosts other than the Track B guest] *******************************
+Monday 16 November 2026  00:18:24 +0900 (0:00:00.729)       0:00:00.743 ******* 
+ok: [ibsim1]
+
+TASK [Refuse a kernel other than the locked one] *******************************
+Monday 16 November 2026  00:18:24 +0900 (0:00:00.030)       0:00:00.773 ******* 
+ok: [ibsim1]
+
+TASK [Read the installed packages] *********************************************
+Monday 16 November 2026  00:18:24 +0900 (0:00:00.041)       0:00:00.815 ******* 
+ok: [ibsim1]
+
+TASK [Work out which locked packages are missing] ******************************
+Monday 16 November 2026  00:18:25 +0900 (0:00:00.792)       0:00:01.608 ******* 
+ok: [ibsim1]
+
+TASK [Install the container runtime at the locked versions] ********************
+Monday 16 November 2026  00:18:25 +0900 (0:00:00.042)       0:00:01.650 ******* 
+skipping: [ibsim1]
+
+TASK [Hold the container runtime on the locked versions] ***********************
+Monday 16 November 2026  00:18:25 +0900 (0:00:00.030)       0:00:01.681 ******* 
+ok: [ibsim1] => (item=docker.io)
+ok: [ibsim1] => (item=docker-buildx)
+ok: [ibsim1] => (item=containerd)
+ok: [ibsim1] => (item=runc)
+
+TASK [Panic on an Oops and reboot five seconds later] **************************
+Monday 16 November 2026  00:18:26 +0900 (0:00:00.612)       0:00:02.293 ******* 
+ok: [ibsim1] => (item=kernel.panic_on_oops=1)
+ok: [ibsim1] => (item=kernel.panic=5)
+
+TASK [Start Docker now and at boot] ********************************************
+Monday 16 November 2026  00:18:26 +0900 (0:00:00.358)       0:00:02.652 ******* 
+ok: [ibsim1]
+
+TASK [Create the marker directory] *********************************************
+Monday 16 November 2026  00:18:26 +0900 (0:00:00.313)       0:00:02.965 ******* 
+ok: [ibsim1]
+
+TASK [Mark this guest as the Track B guest] ************************************
+Monday 16 November 2026  00:18:27 +0900 (0:00:00.218)       0:00:03.183 ******* 
+ok: [ibsim1]
+
+PLAY RECAP *********************************************************************
+ibsim1                     : ok=10   changed=0    unreachable=0    failed=0    skipped=1    rescued=0    ignored=0   
+
+
+TASKS RECAP ********************************************************************
+Monday 16 November 2026  00:18:27 +0900 (0:00:00.355)       0:00:03.539 ******* 
+=============================================================================== 
+Read the installed packages --------------------------------------------- 0.79s
+Gathering Facts --------------------------------------------------------- 0.73s
+Hold the container runtime on the locked versions ----------------------- 0.61s
+Panic on an Oops and reboot five seconds later -------------------------- 0.36s
+Mark this guest as the Track B guest ------------------------------------ 0.36s
+Start Docker now and at boot -------------------------------------------- 0.31s
+Create the marker directory --------------------------------------------- 0.22s
+Work out which locked packages are missing ------------------------------ 0.04s
+Refuse a kernel other than the locked one ------------------------------- 0.04s
+Install the container runtime at the locked versions -------------------- 0.03s
+Refuse hosts other than the Track B guest ------------------------------- 0.03s
+PYTHONPATH=scripts .venv/bin/python -m ibsim image -i tests/integration/qemu-lab/profiles/ibsim/inventory -i .lab/ibsim/inventory.yml 
+rfl-ibsim:m4 in ibsim1: sha256:cb3e3550f4f60de5414abe55dbe81e45fd68106ef5ecc4cfa4d701b6083ee279
+matches ibsim.image in versions.lock.yaml
+00:18:29 run 20261115T151828Z scenario b-01 in <repo>/results/20261115T151828Z/b-ibsim/b-01, guest ibsim1, deliberate break: the simulated fabric lacks the link at "hca2"[1]
+00:18:30 image-pinned: passed - rfl-ibsim:m4 in ibsim1 is sha256:cb3e3550f4f60de5414abe55dbe81e45fd68106ef5ecc4cfa4d701b6083ee279, the ibsim.image pin
+00:18:30 container-locked-down: passed - ibsim1 is a kvm guest on kernel 6.8.0-147-generic; the container runs the locked image as 10001:10001 with no network, no device, no capabilities, no-new-privileges, a read-only root and AppArmor docker-default, and every process in it runs as UID 10001
+00:18:35 subnet-up: passed - master at LID 1, 1 SUBNET UP, every sweep routed by minhop
+00:18:35 topology-discovered: failed (assertion-failed) - 2 problems: missing link "hca2"[1]-"sw1"[2], missing node Hca hca2 (1 ports)
+00:18:35 lids-unique: failed (assertion-failed) - 1 problems: "hca2"[1] has no LID
+00:18:35 port-states: failed (assertion-failed) - 2 problems: "hca2"[1] is not listed, "sw1"[2] is Down/Polling to None, want Active/LinkUp to "hca2"[1]
+00:18:35 routes-shortest: passed - 1 switch routes to endpoint LIDs, each one hop closer to its endpoint
+00:18:35 lid-reachability: passed - 2 LIDs answer with their node name
+00:18:37 no-container-left: passed - guest.sh stop removed rfl-ibsim-20261115T151828Z-b-01; no Track B container remains
+00:18:37 host-untouched: passed - no simulator process and no Track B container on the host at the start and the end of the run
+00:18:37 <repo>/results/20261115T151828Z/b-ibsim/b-01: failed
+00:18:38 run 20261115T151828Z scenario b-02 in <repo>/results/20261115T151828Z/b-ibsim/b-02, guest ibsim1, deliberate break: the simulated fabric lacks the link at "sw1"[8]
+00:18:38 image-pinned: passed - rfl-ibsim:m4 in ibsim1 is sha256:cb3e3550f4f60de5414abe55dbe81e45fd68106ef5ecc4cfa4d701b6083ee279, the ibsim.image pin
+00:18:39 container-locked-down: passed - ibsim1 is a kvm guest on kernel 6.8.0-147-generic; the container runs the locked image as 10001:10001 with no network, no device, no capabilities, no-new-privileges, a read-only root and AppArmor docker-default, and every process in it runs as UID 10001
+00:18:44 subnet-up: passed - master at LID 1, 1 SUBNET UP, every sweep routed by minhop
+00:18:44 topology-discovered: failed (assertion-failed) - 1 problems: missing link "sw1"[8]-"sw2"[8]
+00:18:44 lids-unique: passed - 4 endpoint LIDs, non-zero, unique, LMC 0
+00:18:44 port-states: failed (assertion-failed) - 2 problems: "sw1"[8] is Down/Polling to None, want Active/LinkUp to "sw2"[8], "sw2"[8] is Down/Polling to None, want Active/LinkUp to "sw1"[8]
+00:18:44 routes-shortest: passed - 8 switch routes to endpoint LIDs, each one hop closer to its endpoint
+00:18:45 lid-reachability: passed - 6 LIDs answer with their node name
+00:18:46 no-container-left: passed - guest.sh stop removed rfl-ibsim-20261115T151828Z-b-02; no Track B container remains
+00:18:46 host-untouched: passed - no simulator process and no Track B container on the host at the start and the end of the run
+00:18:46 <repo>/results/20261115T151828Z/b-ibsim/b-02: failed
+00:18:47 run 20261115T151828Z scenario b-03 in <repo>/results/20261115T151828Z/b-ibsim/b-03, guest ibsim1, deliberate break: the simulated fabric lacks the link at "sw1"[7]
+00:18:48 image-pinned: passed - rfl-ibsim:m4 in ibsim1 is sha256:cb3e3550f4f60de5414abe55dbe81e45fd68106ef5ecc4cfa4d701b6083ee279, the ibsim.image pin
+00:18:48 container-locked-down: passed - ibsim1 is a kvm guest on kernel 6.8.0-147-generic; the container runs the locked image as 10001:10001 with no network, no device, no capabilities, no-new-privileges, a read-only root and AppArmor docker-default, and every process in it runs as UID 10001
+00:18:53 subnet-up: passed - master at LID 1, 1 SUBNET UP, every sweep routed by minhop
+00:18:53 topology-discovered: failed (assertion-failed) - 1 problems: missing link "sw1"[7]-"sw2"[7]
+00:18:53 lids-unique: passed - 4 endpoint LIDs, non-zero, unique, LMC 0
+00:18:54 port-states: failed (assertion-failed) - 2 problems: "sw1"[7] is Down/Polling to None, want Active/LinkUp to "sw2"[7], "sw2"[7] is Down/Polling to None, want Active/LinkUp to "sw1"[7]
+00:18:54 routes-shortest: passed - 8 switch routes to endpoint LIDs, each one hop closer to its endpoint
+00:18:54 lid-reachability: passed - 6 LIDs answer with their node name
+00:18:57 fault-resweep: passed - ibsim accepted Unlink "hca3"[1]; OpenSM logged SUBNET UP 1 more time(s), the first 0.048 s after the command
+00:18:59 fault-topology: failed (assertion-failed) - 1 problems: missing link "sw1"[7]-"sw2"[7]; 2 problems: "sw1"[7] is Down/Polling to None, want Active/LinkUp to "sw2"[7], "sw2"[7] is Down/Polling to None, want Active/LinkUp to "sw1"[7]; every endpoint kept its LID
+00:18:59 fault-routes: passed - 6 switch routes to endpoint LIDs, each one hop closer to its endpoint; 1 routes used the failed link: 0 moved to another port, 1 removed with their LID
+00:18:59 fault-reachability: passed - 5 LIDs answer with their node name, 1 cut-off LIDs stay silent
+00:19:02 recovery-resweep: passed - ibsim accepted ReLink "hca3"[1]; OpenSM logged SUBNET UP 1 more time(s), the first 0.053 s after the command
+00:19:04 recovered: failed (assertion-failed) - 1 problems: missing link "sw1"[7]-"sw2"[7]; 2 problems: "sw1"[7] is Down/Polling to None, want Active/LinkUp to "sw2"[7], "sw2"[7] is Down/Polling to None, want Active/LinkUp to "sw1"[7]; every endpoint kept its LID; 8 switch routes to endpoint LIDs, each one hop closer to its endpoint; 6 LIDs answer with their node name
+00:19:05 no-container-left: passed - guest.sh stop removed rfl-ibsim-20261115T151828Z-b-03; no Track B container remains
+00:19:06 host-untouched: passed - no simulator process and no Track B container on the host at the start and the end of the run
+00:19:06 <repo>/results/20261115T151828Z/b-ibsim/b-03: failed
+00:19:06 run 20261115T151828Z scenario b-04 in <repo>/results/20261115T151828Z/b-ibsim/b-04, guest ibsim1, deliberate break: the simulated fabric lacks the link at "cel1-ib-leaf-r0"[33]
+00:19:07 image-pinned: passed - rfl-ibsim:m4 in ibsim1 is sha256:cb3e3550f4f60de5414abe55dbe81e45fd68106ef5ecc4cfa4d701b6083ee279, the ibsim.image pin
+00:19:08 container-locked-down: passed - ibsim1 is a kvm guest on kernel 6.8.0-147-generic; the container runs the locked image as 10001:10001 with no network, no device, no capabilities, no-new-privileges, a read-only root and AppArmor docker-default, and every process in it runs as UID 10001
+00:19:18 subnet-up: passed - master at LID 1, 1 SUBNET UP, every sweep routed by updn
+00:19:18 topology-discovered: failed (assertion-failed) - 1 problems: missing link "cel1-ib-leaf-r0"[33]-"cel1-ib-spine-01"[1]
+00:19:18 lids-unique: passed - 64 endpoint LIDs, non-zero, unique, LMC 0
+00:19:19 port-states: failed (assertion-failed) - 2 problems: "cel1-ib-leaf-r0"[33] is Down/Polling to None, want Active/LinkUp to "cel1-ib-spine-01"[1], "cel1-ib-spine-01"[1] is Down/Polling to None, want Active/LinkUp to "cel1-ib-leaf-r0"[33]
+00:19:19 routes-shortest: passed - 768 switch routes to endpoint LIDs, each one hop closer to its endpoint
+00:19:19 lid-reachability: passed - 76 LIDs answer with their node name
+00:19:21 fault-resweep: passed - ibsim accepted Unlink "cel1-ib-leaf-r3"[35]; OpenSM logged SUBNET UP 1 more time(s), the first 0.056 s after the command
+00:19:29 fault-topology: failed (assertion-failed) - 1 problems: missing link "cel1-ib-leaf-r0"[33]-"cel1-ib-spine-01"[1]; 2 problems: "cel1-ib-leaf-r0"[33] is Down/Polling to None, want Active/LinkUp to "cel1-ib-spine-01"[1], "cel1-ib-spine-01"[1] is Down/Polling to None, want Active/LinkUp to "cel1-ib-leaf-r0"[33]; every endpoint kept its LID
+00:19:29 fault-routes: passed - 768 switch routes to endpoint LIDs, each one hop closer to its endpoint; 13 routes used the failed link: 13 moved to another port, 0 removed with their LID
+00:19:29 fault-reachability: passed - 76 LIDs answer with their node name
+00:19:32 recovery-resweep: passed - ibsim accepted ReLink "cel1-ib-leaf-r3"[35]; OpenSM logged SUBNET UP 1 more time(s), the first 0.063 s after the command
+00:19:40 recovered: failed (assertion-failed) - 1 problems: missing link "cel1-ib-leaf-r0"[33]-"cel1-ib-spine-01"[1]; 2 problems: "cel1-ib-leaf-r0"[33] is Down/Polling to None, want Active/LinkUp to "cel1-ib-spine-01"[1], "cel1-ib-spine-01"[1] is Down/Polling to None, want Active/LinkUp to "cel1-ib-leaf-r0"[33]; every endpoint kept its LID; 768 switch routes to endpoint LIDs, each one hop closer to its endpoint; 76 LIDs answer with their node name
+00:19:41 no-container-left: passed - guest.sh stop removed rfl-ibsim-20261115T151828Z-b-04; no Track B container remains
+00:19:41 host-untouched: passed - no simulator process and no Track B container on the host at the start and the end of the run
+00:19:42 <repo>/results/20261115T151828Z/b-ibsim/b-04: failed
+make track-b-breaks: run 20261115T151828Z, runs that did not end failed: none
+rc=0

@@ -1,0 +1,52 @@
+34:subnet_prefix 0xfe80000000000000
+37:lmc 0
+42:lmc_esp0 FALSE
+195:sweep_interval 10
+198:reassign_lids FALSE
+205:sweep_on_trap TRUE
+217:hop_weights_file (null)
+228:routing_engine (null)
+232:avoid_throttled_links FALSE
+238:use_ucast_cache FALSE
+248:root_guid_file (null)
+252:cn_guid_file (null)
+273:ids_guid_file (null)
+276:guid_routing_order_file (null)
+282:lash_start_vl 0
+296:port_shifting FALSE
+300:scatter_ports 0
+321:sm_priority 0
+330:polling_retry_number 4
+334:honor_guid2lid_file FALSE
+340:max_wire_smps 4
+344:max_wire_smps2 4
+351:transaction_timeout 200
+467:log_flags 0x03
+470:force_log_flush FALSE
+476:log_max_size 0
+--routing_engine, -R <engine name>
+          This option chooses routing engine(s) to use instead of default
+          Min Hop algorithm.  Multiple routing engines can be specified
+          separated by commas so that specific ordering of routing
+          algorithms will be tried if earlier routing engines fail.
+          If all configured routing engines fail, OpenSM will always
+          attempt to route with Min Hop unless 'no_fallback' is
+          included in the list of routing engines.
+          Supported engines: updn, dnup, file, ftree, lash, dor,
+                             torus-2QoS, nue, dfsssp, sssp
+
+--do_mesh_analysis
+          This option enables additional analysis for the lash
+          routing engine to precondition switch port assignments
+          in regular cartesian meshes which may reduce the number
+          of SLs required to give a deadlock free routing
+
+--lash_start_vl <vl number>
+          Sets the starting VL to use for the lash routing algorithm.
+          Defaults to 0.
+
+--sm_sl <sl number>
+          Sets the SL to use to communicate with the SM/SA. Defaults to 0.
+
+--nue_max_num_vls <vl number>
+          Sets the maximum number of VLs to be used by Nue routing.

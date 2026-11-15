@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "result_kind": "ib-management-simulation",
+  "metrics": [
+    {
+      "name": "opensm.first_subnet_up_s",
+      "value": 0.023,
+      "unit": "s",
+      "absent_reason": null,
+      "source": "raw/baseline/opensm.log",
+      "labels": {
+        "observation": "this simulator run"
+      }
+    },
+    {
+      "name": "opensm.resweep_after_fault_s",
+      "value": 0.056,
+      "unit": "s",
+      "absent_reason": null,
+      "source": "raw/fault/opensm-resweep.log",
+      "labels": {
+        "observation": "this simulator run"
+      }
+    },
+    {
+      "name": "opensm.resweep_after_recovered_s",
+      "value": 0.063,
+      "unit": "s",
+      "absent_reason": null,
+      "source": "raw/recovered/opensm-resweep.log",
+      "labels": {
+        "observation": "this simulator run"
+      }
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+$ . /etc/os-release; echo "os=$PRETTY_NAME"; echo "kernel=$(uname -r)"; echo "virt=$(systemd-detect-virt --vm || true)"; echo "marker=$(cat /etc/rfl/track-b-guest 2>/dev/null)"; echo "docker=$(sudo docker version --format '{{.Server.Version}}')"; echo "image=$(sudo docker image inspect --format '{{.Id}}' rfl-ibsim:m4 2>/dev/null)"; dpkg-query -W -f='package ${Package}=${Version}\n' docker.io docker-buildx containerd runc
+os=Ubuntu 24.04.5 LTS
+kernel=6.8.0-147-generic
+virt=kvm
+marker=ibsim1
+docker=29.1.3
+image=sha256:cb3e3550f4f60de5414abe55dbe81e45fd68106ef5ecc4cfa4d701b6083ee279
+package containerd=2.2.1-0ubuntu1~24.04.4
+package docker-buildx=0.30.1-0ubuntu1~24.04.1
+package docker.io=29.1.3-0ubuntu3~24.04.2
+package runc=1.3.4-0ubuntu1~24.04.1

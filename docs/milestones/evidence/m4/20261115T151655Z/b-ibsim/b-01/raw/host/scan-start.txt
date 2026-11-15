@@ -1,0 +1,3 @@
+host scan start: ps -eo pid=,comm=,args= lines whose command is one of ibhosts, iblinkinfo, ibnetdiscover, ibroute, ibsim, ibstat, ibswitches, ibtracert, opensm, saquery, sminfo, smpquery
+none
+docker ps --all --filter label=rfl.track=b-ibsim: rc=0 none 

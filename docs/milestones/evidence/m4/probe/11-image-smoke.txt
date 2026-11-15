@@ -1,0 +1,48 @@
+docker run --detach --name rfl-ibsim-20261115T000000Z-smoke --label rfl.track=b-ibsim --label rfl.run=20261115T000000Z-smoke --network none --cap-drop ALL --security-opt no-new-privileges --read-only --tmpfs /run/rfl:rw\,nosuid\,nodev\,noexec\,size=64m\,uid=10001\,gid=10001\,mode=0700 --user 10001:10001 --pids-limit 256 --memory 1g --cpus 2 --env SIM_HOST=hca1 --volume /var/tmp/rfl-track-b/runs/20261115T000000Z-smoke/topology.net:/topology.net:ro --volume /etc/rfl/track-b-guest:/run/rfl-guest/track-b-guest:ro sha256:78ea17ffc340a5d9bd3d4fe5a742d58d44ed6d7a1cc16163baa41b4b8d1d4b31 fabric /topology.net 
+rfl-ibsim-20261115T000000Z-smoke Up 3 seconds 78ea17ffc340
+Nov 15 14:10:18 902409 [F494D6C0] 0x02 -> osm_ucast_mgr_process: updn tables configured on all switches
+Nov 15 14:10:18 902633 [F494D6C0] 0x02 -> SUBNET UP
+0x0000000000100003 "                          hca2"      3    1[  ] ==( 4X           2.5 Gbps Active/  LinkUp)==>  0x0000000000200000      2    2[  ] "sw1" (Could be 12X Could be 10.0 Gbps)
+0x0000000000200000 "                           sw1"      2    1[  ] ==( 4X           2.5 Gbps Active/  LinkUp)==>  0x0000000000100001      1    1[  ] "hca1" (Could be 12X Could be 10.0 Gbps)
+0x0000000000200000 "                           sw1"      2    2[  ] ==( 4X           2.5 Gbps Active/  LinkUp)==>  0x0000000000100003      3    1[  ] "hca2" (Could be 12X Could be 10.0 Gbps)
+0x0000000000200000 "                           sw1"      2    3[  ] ==(                Down/ Polling)==>             [  ] "" ( )
+0x0000000000200000 "                           sw1"      2    4[  ] ==(                Down/ Polling)==>             [  ] "" ( )
+0x0000000000200000 "                           sw1"      2    5[  ] ==(                Down/ Polling)==>             [  ] "" ( )
+0x0000000000200000 "                           sw1"      2    6[  ] ==(                Down/ Polling)==>             [  ] "" ( )
+0x0000000000200000 "                           sw1"      2    7[  ] ==(                Down/ Polling)==>             [  ] "" ( )
+0x0000000000200000 "                           sw1"      2    8[  ] ==(                Down/ Polling)==>             [  ] "" ( )
+0x0000000000100001 "                          hca1"      1    1[  ] ==( 4X           2.5 Gbps Active/  LinkUp)==>  0x0000000000200000      2    1[  ] "sw1" (Could be 12X Could be 10.0 Gbps)
+[1](100003) 	"S-0000000000200000"[2]		# lid 3 lmc 0 "sw1" lid 2 4xSDR
+
+vendid=0x0
+devid=0x0
+sysimgguid=0x100000
+caguid=0x100000
+Ca	1 "H-0000000000100000"		# "hca1"
+[1](100001) 	"S-0000000000200000"[1]		# lid 1 lmc 0 "sw1" lid 2 4xSDR
+rfl-ibsim: ibsim printed no prompt within 10 s after: Unlink "hca2"[1]
+0x0000000000200000 "                           sw1"      2    1[  ] ==( 4X           2.5 Gbps Active/  LinkUp)==>  0x0000000000100001      1    1[  ] "hca1" (Could be 12X Could be 10.0 Gbps)
+0x0000000000200000 "                           sw1"      2    2[  ] ==(                Down/ Polling)==>             [  ] "" ( )
+0x0000000000200000 "                           sw1"      2    3[  ] ==(                Down/ Polling)==>             [  ] "" ( )
+0x0000000000200000 "                           sw1"      2    4[  ] ==(                Down/ Polling)==>             [  ] "" ( )
+0x0000000000200000 "                           sw1"      2    5[  ] ==(                Down/ Polling)==>             [  ] "" ( )
+0x0000000000200000 "                           sw1"      2    6[  ] ==(                Down/ Polling)==>             [  ] "" ( )
+0x0000000000200000 "                           sw1"      2    7[  ] ==(                Down/ Polling)==>             [  ] "" ( )
+0x0000000000200000 "                           sw1"      2    8[  ] ==(                Down/ Polling)==>             [  ] "" ( )
+0x0000000000100001 "                          hca1"      1    1[  ] ==( 4X           2.5 Gbps Active/  LinkUp)==>  0x0000000000200000      2    1[  ] "sw1" (Could be 12X Could be 10.0 Gbps)
+2
+rfl-ibsim: ibsim printed no prompt within 10 s after: ReLink "hca2"[1]
+0x0000000000100003 "                          hca2"      3    1[  ] ==( 4X           2.5 Gbps Active/  LinkUp)==>  0x0000000000200000      2    2[  ] "sw1" (Could be 12X Could be 10.0 Gbps)
+0x0000000000200000 "                           sw1"      2    1[  ] ==( 4X           2.5 Gbps Active/  LinkUp)==>  0x0000000000100001      1    1[  ] "hca1" (Could be 12X Could be 10.0 Gbps)
+0x0000000000200000 "                           sw1"      2    2[  ] ==( 4X           2.5 Gbps Active/  LinkUp)==>  0x0000000000100003      3    1[  ] "hca2" (Could be 12X Could be 10.0 Gbps)
+0x0000000000200000 "                           sw1"      2    3[  ] ==(                Down/ Polling)==>             [  ] "" ( )
+0x0000000000200000 "                           sw1"      2    4[  ] ==(                Down/ Polling)==>             [  ] "" ( )
+0x0000000000200000 "                           sw1"      2    5[  ] ==(                Down/ Polling)==>             [  ] "" ( )
+0x0000000000200000 "                           sw1"      2    6[  ] ==(                Down/ Polling)==>             [  ] "" ( )
+0x0000000000200000 "                           sw1"      2    7[  ] ==(                Down/ Polling)==>             [  ] "" ( )
+0x0000000000200000 "                           sw1"      2    8[  ] ==(                Down/ Polling)==>             [  ] "" ( )
+0x0000000000100001 "                          hca1"      1    1[  ] ==( 4X           2.5 Gbps Active/  LinkUp)==>  0x0000000000200000      2    1[  ] "sw1" (Could be 12X Could be 10.0 Gbps)
+Nov 15 14:10:18 902633 [F494D6C0] 0x02 -> SUBNET UP
+Nov 15 14:10:22 182063 [F494D6C0] 0x02 -> SUBNET UP
+Nov 15 14:10:35 248414 [F494D6C0] 0x02 -> SUBNET UP
+sha256:78ea17ffc340a5d9bd3d4fe5a742d58d44ed6d7a1cc16163baa41b4b8d1d4b31 10001:10001 False none None ['ALL'] ['no-new-privileges'] True docker-default

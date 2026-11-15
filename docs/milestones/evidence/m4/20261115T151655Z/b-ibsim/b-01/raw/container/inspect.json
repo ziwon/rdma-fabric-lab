@@ -1,0 +1,235 @@
+[
+    {
+        "Id": "b72bdd949545b098caae4687acc1243f39cf5c6f175acdaea4d355316eafe665",
+        "Created": "2026-11-15T15:16:56.718743639Z",
+        "Path": "/usr/local/bin/rfl-ibsim",
+        "Args": [
+            "fabric",
+            "/topology.net",
+            "-R",
+            "minhop"
+        ],
+        "State": {
+            "Status": "running",
+            "Running": true,
+            "Paused": false,
+            "Restarting": false,
+            "OOMKilled": false,
+            "Dead": false,
+            "Pid": 3311,
+            "ExitCode": 0,
+            "Error": "",
+            "StartedAt": "2026-11-15T15:16:56.788566449Z",
+            "FinishedAt": "0001-01-01T00:00:00Z"
+        },
+        "Image": "sha256:cb3e3550f4f60de5414abe55dbe81e45fd68106ef5ecc4cfa4d701b6083ee279",
+        "ResolvConfPath": "/var/lib/docker/containers/b72bdd949545b098caae4687acc1243f39cf5c6f175acdaea4d355316eafe665/resolv.conf",
+        "HostnamePath": "/var/lib/docker/containers/b72bdd949545b098caae4687acc1243f39cf5c6f175acdaea4d355316eafe665/hostname",
+        "HostsPath": "/var/lib/docker/containers/b72bdd949545b098caae4687acc1243f39cf5c6f175acdaea4d355316eafe665/hosts",
+        "LogPath": "/var/lib/docker/containers/b72bdd949545b098caae4687acc1243f39cf5c6f175acdaea4d355316eafe665/b72bdd949545b098caae4687acc1243f39cf5c6f175acdaea4d355316eafe665-json.log",
+        "Name": "/rfl-ibsim-20261115T151655Z-b-01",
+        "RestartCount": 0,
+        "Driver": "overlayfs",
+        "Platform": "linux",
+        "MountLabel": "",
+        "ProcessLabel": "",
+        "AppArmorProfile": "docker-default",
+        "ExecIDs": null,
+        "HostConfig": {
+            "Binds": [
+                "/var/tmp/rfl-track-b/runs/20261115T151655Z-b-01/topology.net:/topology.net:ro",
+                "/etc/rfl/track-b-guest:/run/rfl-guest/track-b-guest:ro"
+            ],
+            "ContainerIDFile": "",
+            "LogConfig": {
+                "Type": "json-file",
+                "Config": {}
+            },
+            "NetworkMode": "none",
+            "PortBindings": {},
+            "RestartPolicy": {
+                "Name": "no",
+                "MaximumRetryCount": 0
+            },
+            "AutoRemove": false,
+            "VolumeDriver": "",
+            "VolumesFrom": null,
+            "ConsoleSize": [
+                0,
+                0
+            ],
+            "CapAdd": null,
+            "CapDrop": [
+                "ALL"
+            ],
+            "CgroupnsMode": "private",
+            "Dns": null,
+            "DnsOptions": [],
+            "DnsSearch": [],
+            "ExtraHosts": null,
+            "GroupAdd": null,
+            "IpcMode": "private",
+            "Cgroup": "",
+            "Links": null,
+            "OomScoreAdj": 0,
+            "PidMode": "",
+            "Privileged": false,
+            "PublishAllPorts": false,
+            "ReadonlyRootfs": true,
+            "SecurityOpt": [
+                "no-new-privileges"
+            ],
+            "Tmpfs": {
+                "/run/rfl": "rw,nosuid,nodev,noexec,size=64m,uid=10001,gid=10001,mode=0700"
+            },
+            "UTSMode": "",
+            "UsernsMode": "",
+            "ShmSize": 67108864,
+            "Runtime": "runc",
+            "Isolation": "",
+            "CpuShares": 0,
+            "Memory": 1073741824,
+            "NanoCpus": 2000000000,
+            "CgroupParent": "",
+            "BlkioWeight": 0,
+            "BlkioWeightDevice": [],
+            "BlkioDeviceReadBps": [],
+            "BlkioDeviceWriteBps": [],
+            "BlkioDeviceReadIOps": [],
+            "BlkioDeviceWriteIOps": [],
+            "CpuPeriod": 0,
+            "CpuQuota": 0,
+            "CpuRealtimePeriod": 0,
+            "CpuRealtimeRuntime": 0,
+            "CpusetCpus": "",
+            "CpusetMems": "",
+            "Devices": [],
+            "DeviceCgroupRules": null,
+            "DeviceRequests": null,
+            "MemoryReservation": 0,
+            "MemorySwap": 2147483648,
+            "MemorySwappiness": null,
+            "OomKillDisable": null,
+            "PidsLimit": 256,
+            "Ulimits": [],
+            "CpuCount": 0,
+            "CpuPercent": 0,
+            "IOMaximumIOps": 0,
+            "IOMaximumBandwidth": 0,
+            "MaskedPaths": [
+                "/proc/acpi",
+                "/proc/asound",
+                "/proc/interrupts",
+                "/proc/kcore",
+                "/proc/keys",
+                "/proc/latency_stats",
+                "/proc/sched_debug",
+                "/proc/scsi",
+                "/proc/timer_list",
+                "/proc/timer_stats",
+                "/sys/devices/virtual/powercap",
+                "/sys/firmware"
+            ],
+            "ReadonlyPaths": [
+                "/proc/bus",
+                "/proc/fs",
+                "/proc/irq",
+                "/proc/sys",
+                "/proc/sysrq-trigger"
+            ]
+        },
+        "Storage": {
+            "RootFS": {
+                "Snapshot": {
+                    "Name": "overlayfs"
+                }
+            }
+        },
+        "Mounts": [
+            {
+                "Type": "bind",
+                "Source": "/var/tmp/rfl-track-b/runs/20261115T151655Z-b-01/topology.net",
+                "Destination": "/topology.net",
+                "Mode": "ro",
+                "RW": false,
+                "Propagation": "rprivate"
+            },
+            {
+                "Type": "bind",
+                "Source": "/etc/rfl/track-b-guest",
+                "Destination": "/run/rfl-guest/track-b-guest",
+                "Mode": "ro",
+                "RW": false,
+                "Propagation": "rprivate"
+            }
+        ],
+        "Config": {
+            "Hostname": "b72bdd949545",
+            "Domainname": "",
+            "User": "10001:10001",
+            "AttachStdin": false,
+            "AttachStdout": false,
+            "AttachStderr": false,
+            "Tty": false,
+            "OpenStdin": false,
+            "StdinOnce": false,
+            "Env": [
+                "SIM_HOST=hca1",
+                "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+            ],
+            "Cmd": [
+                "fabric",
+                "/topology.net",
+                "-R",
+                "minhop"
+            ],
+            "Image": "sha256:cb3e3550f4f60de5414abe55dbe81e45fd68106ef5ecc4cfa4d701b6083ee279",
+            "Volumes": null,
+            "WorkingDir": "/run/rfl",
+            "Entrypoint": [
+                "/usr/local/bin/rfl-ibsim"
+            ],
+            "Labels": {
+                "org.opencontainers.image.version": "24.04",
+                "rfl.run": "20261115T151655Z-b-01",
+                "rfl.track": "b-ibsim"
+            }
+        },
+        "NetworkSettings": {
+            "SandboxID": "187d09539992e24b0ebbe67f41c218be4a068fa696b0209c87aa1ed503edff62",
+            "SandboxKey": "/var/run/docker/netns/187d09539992",
+            "Ports": {},
+            "Networks": {
+                "none": {
+                    "IPAMConfig": null,
+                    "Links": null,
+                    "Aliases": null,
+                    "DriverOpts": null,
+                    "GwPriority": 0,
+                    "NetworkID": "bc601e32b0e4817ef92a9853769fbb39a7546398cd2da7a74fcf0369e365f128",
+                    "EndpointID": "56b8a3888ba9f4c65e9cd213b4d35b21208f63abf5afd076cfc072e2e068d079",
+                    "Gateway": "",
+                    "IPAddress": "",
+                    "MacAddress": "",
+                    "IPPrefixLen": 0,
+                    "IPv6Gateway": "",
+                    "GlobalIPv6Address": "",
+                    "GlobalIPv6PrefixLen": 0,
+                    "DNSNames": null
+                }
+            }
+        },
+        "ImageManifestDescriptor": {
+            "mediaType": "application/vnd.docker.distribution.manifest.v2+json",
+            "digest": "sha256:cb3e3550f4f60de5414abe55dbe81e45fd68106ef5ecc4cfa4d701b6083ee279",
+            "size": 1675,
+            "annotations": {
+                "config.digest": "sha256:fee8bde20ccecad8ca1dc0c17582c196cec969a061e101cef9642c1cb460db36"
+            },
+            "platform": {
+                "architecture": "amd64",
+                "os": "linux"
+            }
+        }
+    }
+]

@@ -1,0 +1,116 @@
+== polls 2
+40:Nov 15 13:57:49 661637 [66F03740] 0x10 -> osm_ucast_mgr_init: [
+41:Nov 15 13:57:49 661637 [66F03740] 0x10 -> osm_ucast_mgr_init: ]
+42:Nov 15 13:57:49 661650 [66F03740] 0x80 -> Entering DISCOVERING state
+55:Nov 15 13:57:49 661671 [62EFA6C0] 0x10 -> sm_sweeper: [
+75:Nov 15 13:57:49 661713 [66F03740] 0x04 -> setup_routing_engine: setup of routing engine 'minhop' ...
+76:Nov 15 13:57:49 661714 [66F03740] 0x08 -> setup_routing_engine: 'minhop' routing engine set up
+120:Nov 15 13:57:49 662115 [66F03740] 0x10 -> osm_sm_sweep: [
+121:Nov 15 13:57:49 662117 [66F03740] 0x10 -> osm_sm_sweep: ]
+122:Nov 15 13:57:49 662120 [62EFA6C0] 0x08 -> sm_sweeper: Off schedule sweep signalled
+125:Nov 15 13:57:49 662147 [62EFA6C0] 0x10 -> state_mgr_sweep_hop_0: [
+126:Nov 15 13:57:49 662148 [62EFA6C0] 0x04 -> state_mgr_sweep_hop_0:
+151:Nov 15 13:57:49 662163 [62EFA6C0] 0x10 -> state_mgr_sweep_hop_0: ]
+780:Nov 15 13:57:49 662575 [62EFA6C0] 0x10 -> state_mgr_sweep_hop_1: [
+781:Nov 15 13:57:49 662576 [62EFA6C0] 0x08 -> state_mgr_sweep_hop_1: Probing hop 1 on local port 1
+800:Nov 15 13:57:49 662590 [62EFA6C0] 0x10 -> state_mgr_sweep_hop_1: ]
+3745:Nov 15 13:57:49 665167 [62EFA6C0] 0x04 -> do_sweep:
+3768:Nov 15 13:57:49 665191 [62EFA6C0] 0x80 -> Entering MASTER state
+4217:Nov 15 13:57:49 665562 [62EFA6C0] 0x04 -> do_sweep:
+4226:Nov 15 13:57:49 665564 [62EFA6C0] 0x10 -> lid_mgr_init_sweep: [
+4227:Nov 15 13:57:49 665583 [62EFA6C0] 0x08 -> lid_mgr_init_sweep: final free lid range [1:30720]
+4228:Nov 15 13:57:49 665583 [62EFA6C0] 0x10 -> lid_mgr_init_sweep: ]
+4413:Nov 15 13:57:49 665688 [62EFA6C0] 0x04 -> do_sweep:
+4780:Nov 15 13:57:49 675163 [62EFA6C0] 0x04 -> do_sweep:
+4788:Nov 15 13:57:49 675164 [62EFA6C0] 0x10 -> osm_ucast_mgr_process: [
+4789:Nov 15 13:57:49 675166 [62EFA6C0] 0x04 -> ucast_mgr_route: building routing with 'minhop' routing algorithm...
+4790:Nov 15 13:57:49 675167 [62EFA6C0] 0x04 -> osm_ucast_mgr_build_lid_matrices: Starting switches' Min Hop Table Assignment
+4791:Nov 15 13:57:49 675168 [62EFA6C0] 0x08 -> osm_ucast_mgr_build_lid_matrices: Min-hop propagated in 0 steps
+4792:Nov 15 13:57:49 675170 [62EFA6C0] 0x10 -> ucast_mgr_process_tbl: [
+4793:Nov 15 13:57:49 675171 [62EFA6C0] 0x08 -> ucast_mgr_process_tbl: Processing switch 0x200000
+4794:Nov 15 13:57:49 675172 [62EFA6C0] 0x10 -> ucast_mgr_process_port: [
+4795:Nov 15 13:57:49 675173 [62EFA6C0] 0x08 -> ucast_mgr_process_port: Processing port 0x100001 ('Hca1' port 1), LID 1 [1,1]
+4796:Nov 15 13:57:49 675173 [62EFA6C0] 0x08 -> ucast_mgr_process_port: Routing LID 1 to port 1 for switch 0x200000
+4797:Nov 15 13:57:49 675178 [62EFA6C0] 0x10 -> ucast_mgr_process_port: ]
+4798:Nov 15 13:57:49 675179 [62EFA6C0] 0x10 -> ucast_mgr_process_port: [
+4799:Nov 15 13:57:49 675179 [62EFA6C0] 0x08 -> ucast_mgr_process_port: Processing port 0x100004 ('Hca2' port 1), LID 3 [3,3]
+4800:Nov 15 13:57:49 675180 [62EFA6C0] 0x08 -> ucast_mgr_process_port: Routing LID 3 to port 4 for switch 0x200000
+4801:Nov 15 13:57:49 675181 [62EFA6C0] 0x10 -> ucast_mgr_process_port: ]
+4802:Nov 15 13:57:49 675181 [62EFA6C0] 0x10 -> ucast_mgr_process_port: [
+4803:Nov 15 13:57:49 675182 [62EFA6C0] 0x08 -> ucast_mgr_process_port: Processing port 0x200000 ('Switch1' port 0), LID 2 [2,2]
+4804:Nov 15 13:57:49 675183 [62EFA6C0] 0x08 -> ucast_mgr_process_port: Routing LID 2 to port 0 for switch 0x200000
+4805:Nov 15 13:57:49 675183 [62EFA6C0] 0x10 -> ucast_mgr_process_port: ]
+4806:Nov 15 13:57:49 675184 [62EFA6C0] 0x10 -> ucast_mgr_process_tbl: ]
+4807:Nov 15 13:57:49 675184 [62EFA6C0] 0x10 -> ucast_mgr_set_fwd_top: [
+4808:Nov 15 13:57:49 675185 [62EFA6C0] 0x08 -> ucast_mgr_set_fwd_top: Setting switch FT top to LID 3
+4823:Nov 15 13:57:49 675196 [62EFA6C0] 0x10 -> ucast_mgr_set_fwd_top: ]
+4839:Nov 15 13:57:49 675206 [62EFA6C0] 0x02 -> osm_ucast_mgr_process: minhop tables configured on all switches
+4840:Nov 15 13:57:49 675207 [62EFA6C0] 0x10 -> osm_ucast_mgr_process: ]
+5012:Nov 15 13:57:49 675320 [61EF86C0] 0x08 -> sm_mad_ctrl_process_get_resp: Posting Dispatcher message OSM_MSG_MAD_LFT
+5027:Nov 15 13:57:49 675338 [62EFA6C0] 0x04 -> do_sweep:
+5048:Nov 15 13:57:49 675375 [62EFA6C0] 0x04 -> do_sweep:
+5059:Nov 15 13:57:49 675377 [62EFA6C0] 0x04 -> do_sweep:
+5754:Nov 15 13:57:49 675724 [62EFA6C0] 0x04 -> do_sweep:
+6417:Nov 15 13:57:49 676009 [62EFA6C0] 0x04 -> do_sweep:
+7082:Nov 15 13:57:49 676351 [62EFA6C0] 0x02 -> SUBNET UP
+7087:*************************** SUBNET UP ****************************
+== ibroute 2
+Unicast lids [0x0-0x3] of switch Lid 2 guid 0x0000000000200000 (Switch1):
+  Lid  Out   Destination
+       Port     Info 
+0x0001 001 : (Channel Adapter portguid 0x0000000000100001: 'Hca1')
+0x0002 000 : (Switch portguid 0x0000000000200000: 'Switch1')
+0x0003 004 : (Channel Adapter portguid 0x0000000000100004: 'Hca2')
+3 valid lids dumped 
+rc=0
+== ibroute -M 2
+Multicast mlids [0xc000-0xc3ff] of switch Lid 2 guid 0x0000000000200000 (Switch1):
+     Ports: 0 1 2 3 4 5 6 7 8 
+ MLid
+0 valid mlids dumped 
+rc=0
+== osm.out
+-------------------------------------------------
+OpenSM 3.3.23
+Config file is `/dev/null`:
+ Reading Cached Option File: /dev/null
+Command Line Arguments:
+ Big V selected
+ Log File: /tmp/osm/opensm.log
+-------------------------------------------------
+OpenSM 3.3.23
+
+Using default GUID 0x100001
+Entering DISCOVERING state
+
+Entering MASTER state
+
+dump_ucast_path_distribution: Switch 0x200000
+Port : Path Count Through Port
+ 000 : 0 (switch management port)
+ 001 : 1 (link to CA 0x100000)
+ 002 : 0
+ 003 : 0
+ 004 : 1 (link to CA 0x100003)
+ 005 : 0
+ 006 : 0
+ 007 : 0
+ 008 : 0
+
+=======================================================================================================
+Vendor      : Ty : #  : Sta : LID  : LMC : MTU  : LWA : LSA  : Port GUID        : Neighbor Port (Port #)
+Unknown     : CA : 01 : ACT : 0001 :  0  : 2048 : 4x  : 2.5  * 0000000000100001 * 0000000000200000 (01)
+------------------------------------------------------------------------------------------------------
+Unknown     : SW : 00 :     : 0002 :  0  :      :     :      : 0000000000200000 :
+Unknown     : SW : 01 : ACT :      :     : 2048 : 4x  : 2.5  : 0000000000200000 : 0000000000100001 (01)
+Unknown     : SW : 02 : DWN :      :     : ???  : ??? : ???? : 0000000000200000 :
+Unknown     : SW : 03 : DWN :      :     : ???  : ??? : ???? : 0000000000200000 :
+Unknown     : SW : 04 : ACT :      :     : 2048 : 4x  : 2.5  : 0000000000200000 : 0000000000100004 (01)
+Unknown     : SW : 05 : DWN :      :     : ???  : ??? : ???? : 0000000000200000 :
+Unknown     : SW : 06 : DWN :      :     : ???  : ??? : ???? : 0000000000200000 :
+Unknown     : SW : 07 : DWN :      :     : ???  : ??? : ???? : 0000000000200000 :
+Unknown     : SW : 08 : DWN :      :     : ???  : ??? : ???? : 0000000000200000 :
+------------------------------------------------------------------------------------------------------
+Unknown     : CA : 01 : ACT : 0003 :  0  : 2048 : 4x  : 2.5  : 0000000000100004 : 0000000000200000 (04)
+------------------------------------------------------------------------------------------------------
+docker rc=0
