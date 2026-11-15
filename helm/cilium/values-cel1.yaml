@@ -1,0 +1,24 @@
+# Cilium 1.20.4 for the cel1 GPU cluster. Every key exists in that chart's values.yaml, which
+# `make values-check ENV=cel1` proves. Addresses come from sites/cel1.yaml and
+# `make inventory-check INVENTORY=cel1` fails when they disagree with the inventory.
+
+# kubeadm installs no kube-proxy on cel1 (k8s_kube_proxy: false), so Cilium serves Services and
+# must reach the API before any Service exists: the kube-vip address of the control planes.
+kubeProxyReplacement: true
+k8sServiceHost: 10.140.0.10
+k8sServicePort: 6443
+
+# All nodes share one L2 management segment, so each node routes the other nodes' pod CIDRs
+# straight to their management address. No encapsulation, no MTU loss.
+# https://docs.cilium.io/en/v1.20/network/concepts/routing/
+routingMode: native
+autoDirectNodeRoutes: true
+ipv4NativeRoutingCIDR: 10.160.0.0/16
+
+# kube-controller-manager hands out node pod CIDRs from k8s_pod_cidr, Cilium takes them as given.
+ipam:
+  mode: kubernetes
+
+# The eBPF datapath attaches only to the management port. The InfiniBand rails and the storage
+# ports stay out of pod traffic and keep their bandwidth for RDMA and storage.
+devices: mgmt0

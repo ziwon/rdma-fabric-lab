@@ -1,0 +1,16 @@
+---
+# Every cluster node forwards its syslog, control planes included: kubelet, containerd and
+# kernel messages of any node can explain a failed job.
+- name: Forward syslog to the site syslog server
+  hosts: k8s_cluster
+  tags: [rsyslog]
+  pre_tasks:
+    - name: Refuse a host outside a fleet inventory
+      ansible.builtin.assert:
+        that:
+          - rfl_inventory is defined
+          - rfl_inventory != 'lab'
+        fail_msg: This play runs on a fleet inventory such as cel1. Nothing was changed.
+        quiet: true
+  roles:
+    - role: rsyslog_client

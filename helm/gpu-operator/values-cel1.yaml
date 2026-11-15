@@ -1,0 +1,15 @@
+# NVIDIA GPU Operator v26.7.2 for the cel1 GPU cluster. Every key exists in that chart's
+# values.yaml, which `make values-check ENV=cel1` proves.
+#
+# The chart deploys the driver and the container toolkit, and each node opts out by label.
+# PCIe GPU servers run plain Ubuntu and get both from the operator. DGX nodes register with
+# nvidia.com/gpu.deploy.driver=false and nvidia.com/gpu.deploy.container-toolkit=false through
+# k8s_node_labels, because DGX OS ships both. The operator only fills in deploy labels a node
+# lacks, and the driver and toolkit DaemonSets select nodes whose label is "true".
+#   https://docs.nvidia.com/datacenter/cloud-native/gpu-operator/latest/getting-started.html#preventing-installation-of-nvidia-gpu-driver-on-some-nodes
+#   controllers/state_manager.go addGPUStateLabels, assets/state-driver/0500_daemonset.yaml and
+#   assets/state-container-toolkit/0500_daemonset.yaml at tag v26.7.2 of github.com/NVIDIA/gpu-operator
+driver:
+  enabled: true
+toolkit:
+  enabled: true

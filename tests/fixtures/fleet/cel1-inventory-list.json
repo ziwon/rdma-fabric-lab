@@ -1,0 +1,304 @@
+{
+    "_meta": {
+        "hostvars": {
+            "cel1-cp-01": {
+                "k8s_api_endpoint": "10.140.0.10",
+                "k8s_api_port": 6443,
+                "k8s_api_vip": "10.140.0.10",
+                "k8s_api_vip_interface": "mgmt0",
+                "k8s_control_plane_schedulable": false,
+                "k8s_kube_proxy": false,
+                "k8s_node_ip": "10.140.0.11",
+                "k8s_node_labels": {
+                    "rfl.example/node-class": "control-plane"
+                },
+                "k8s_pod_cidr": "10.160.0.0/16",
+                "k8s_service_cidr": "10.170.0.0/16",
+                "rfl_inventory": "cel1",
+                "rsyslog_client_tcp_host": "10.140.0.5",
+                "rsyslog_client_tcp_port": 514
+            },
+            "cel1-cp-02": {
+                "k8s_api_endpoint": "10.140.0.10",
+                "k8s_api_port": 6443,
+                "k8s_api_vip": "10.140.0.10",
+                "k8s_api_vip_interface": "mgmt0",
+                "k8s_control_plane_schedulable": false,
+                "k8s_kube_proxy": false,
+                "k8s_node_ip": "10.140.0.12",
+                "k8s_node_labels": {
+                    "rfl.example/node-class": "control-plane"
+                },
+                "k8s_pod_cidr": "10.160.0.0/16",
+                "k8s_service_cidr": "10.170.0.0/16",
+                "rfl_inventory": "cel1",
+                "rsyslog_client_tcp_host": "10.140.0.5",
+                "rsyslog_client_tcp_port": 514
+            },
+            "cel1-cp-03": {
+                "k8s_api_endpoint": "10.140.0.10",
+                "k8s_api_port": 6443,
+                "k8s_api_vip": "10.140.0.10",
+                "k8s_api_vip_interface": "mgmt0",
+                "k8s_control_plane_schedulable": false,
+                "k8s_kube_proxy": false,
+                "k8s_node_ip": "10.140.0.13",
+                "k8s_node_labels": {
+                    "rfl.example/node-class": "control-plane"
+                },
+                "k8s_pod_cidr": "10.160.0.0/16",
+                "k8s_service_cidr": "10.170.0.0/16",
+                "rfl_inventory": "cel1",
+                "rsyslog_client_tcp_host": "10.140.0.5",
+                "rsyslog_client_tcp_port": 514
+            },
+            "cel1-dgx-01": {
+                "k8s_api_endpoint": "10.140.0.10",
+                "k8s_api_port": 6443,
+                "k8s_api_vip": "10.140.0.10",
+                "k8s_api_vip_interface": "mgmt0",
+                "k8s_control_plane_schedulable": false,
+                "k8s_kube_proxy": false,
+                "k8s_node_ip": "10.140.0.21",
+                "k8s_node_labels": {
+                    "nvidia.com/gpu.deploy.container-toolkit": "false",
+                    "nvidia.com/gpu.deploy.driver": "false",
+                    "rfl.example/node-class": "dgx-b200"
+                },
+                "k8s_pod_cidr": "10.160.0.0/16",
+                "k8s_service_cidr": "10.170.0.0/16",
+                "rfl_inventory": "cel1",
+                "rsyslog_client_tcp_host": "10.140.0.5",
+                "rsyslog_client_tcp_port": 514
+            },
+            "cel1-dgx-02": {
+                "k8s_api_endpoint": "10.140.0.10",
+                "k8s_api_port": 6443,
+                "k8s_api_vip": "10.140.0.10",
+                "k8s_api_vip_interface": "mgmt0",
+                "k8s_control_plane_schedulable": false,
+                "k8s_kube_proxy": false,
+                "k8s_node_ip": "10.140.0.22",
+                "k8s_node_labels": {
+                    "nvidia.com/gpu.deploy.container-toolkit": "false",
+                    "nvidia.com/gpu.deploy.driver": "false",
+                    "rfl.example/node-class": "dgx-b200"
+                },
+                "k8s_pod_cidr": "10.160.0.0/16",
+                "k8s_service_cidr": "10.170.0.0/16",
+                "rfl_inventory": "cel1",
+                "rsyslog_client_tcp_host": "10.140.0.5",
+                "rsyslog_client_tcp_port": 514
+            },
+            "cel1-dgx-03": {
+                "k8s_api_endpoint": "10.140.0.10",
+                "k8s_api_port": 6443,
+                "k8s_api_vip": "10.140.0.10",
+                "k8s_api_vip_interface": "mgmt0",
+                "k8s_control_plane_schedulable": false,
+                "k8s_kube_proxy": false,
+                "k8s_node_ip": "10.140.0.23",
+                "k8s_node_labels": {
+                    "nvidia.com/gpu.deploy.container-toolkit": "false",
+                    "nvidia.com/gpu.deploy.driver": "false",
+                    "rfl.example/node-class": "dgx-b200"
+                },
+                "k8s_pod_cidr": "10.160.0.0/16",
+                "k8s_service_cidr": "10.170.0.0/16",
+                "rfl_inventory": "cel1",
+                "rsyslog_client_tcp_host": "10.140.0.5",
+                "rsyslog_client_tcp_port": 514
+            },
+            "cel1-dgx-04": {
+                "k8s_api_endpoint": "10.140.0.10",
+                "k8s_api_port": 6443,
+                "k8s_api_vip": "10.140.0.10",
+                "k8s_api_vip_interface": "mgmt0",
+                "k8s_control_plane_schedulable": false,
+                "k8s_kube_proxy": false,
+                "k8s_node_ip": "10.140.0.24",
+                "k8s_node_labels": {
+                    "nvidia.com/gpu.deploy.container-toolkit": "false",
+                    "nvidia.com/gpu.deploy.driver": "false",
+                    "rfl.example/node-class": "dgx-b200"
+                },
+                "k8s_pod_cidr": "10.160.0.0/16",
+                "k8s_service_cidr": "10.170.0.0/16",
+                "rfl_inventory": "cel1",
+                "rsyslog_client_tcp_host": "10.140.0.5",
+                "rsyslog_client_tcp_port": 514
+            },
+            "cel1-dgx-05": {
+                "k8s_api_endpoint": "10.140.0.10",
+                "k8s_api_port": 6443,
+                "k8s_api_vip": "10.140.0.10",
+                "k8s_api_vip_interface": "mgmt0",
+                "k8s_control_plane_schedulable": false,
+                "k8s_kube_proxy": false,
+                "k8s_node_ip": "10.140.0.25",
+                "k8s_node_labels": {
+                    "nvidia.com/gpu.deploy.container-toolkit": "false",
+                    "nvidia.com/gpu.deploy.driver": "false",
+                    "rfl.example/node-class": "dgx-b200"
+                },
+                "k8s_pod_cidr": "10.160.0.0/16",
+                "k8s_service_cidr": "10.170.0.0/16",
+                "rfl_inventory": "cel1",
+                "rsyslog_client_tcp_host": "10.140.0.5",
+                "rsyslog_client_tcp_port": 514
+            },
+            "cel1-dgx-06": {
+                "k8s_api_endpoint": "10.140.0.10",
+                "k8s_api_port": 6443,
+                "k8s_api_vip": "10.140.0.10",
+                "k8s_api_vip_interface": "mgmt0",
+                "k8s_control_plane_schedulable": false,
+                "k8s_kube_proxy": false,
+                "k8s_node_ip": "10.140.0.26",
+                "k8s_node_labels": {
+                    "nvidia.com/gpu.deploy.container-toolkit": "false",
+                    "nvidia.com/gpu.deploy.driver": "false",
+                    "rfl.example/node-class": "dgx-b200"
+                },
+                "k8s_pod_cidr": "10.160.0.0/16",
+                "k8s_service_cidr": "10.170.0.0/16",
+                "rfl_inventory": "cel1",
+                "rsyslog_client_tcp_host": "10.140.0.5",
+                "rsyslog_client_tcp_port": 514
+            },
+            "cel1-dgx-07": {
+                "k8s_api_endpoint": "10.140.0.10",
+                "k8s_api_port": 6443,
+                "k8s_api_vip": "10.140.0.10",
+                "k8s_api_vip_interface": "mgmt0",
+                "k8s_control_plane_schedulable": false,
+                "k8s_kube_proxy": false,
+                "k8s_node_ip": "10.140.0.27",
+                "k8s_node_labels": {
+                    "nvidia.com/gpu.deploy.container-toolkit": "false",
+                    "nvidia.com/gpu.deploy.driver": "false",
+                    "rfl.example/node-class": "dgx-b200"
+                },
+                "k8s_pod_cidr": "10.160.0.0/16",
+                "k8s_service_cidr": "10.170.0.0/16",
+                "rfl_inventory": "cel1",
+                "rsyslog_client_tcp_host": "10.140.0.5",
+                "rsyslog_client_tcp_port": 514
+            },
+            "cel1-dgx-08": {
+                "k8s_api_endpoint": "10.140.0.10",
+                "k8s_api_port": 6443,
+                "k8s_api_vip": "10.140.0.10",
+                "k8s_api_vip_interface": "mgmt0",
+                "k8s_control_plane_schedulable": false,
+                "k8s_kube_proxy": false,
+                "k8s_node_ip": "10.140.0.28",
+                "k8s_node_labels": {
+                    "nvidia.com/gpu.deploy.container-toolkit": "false",
+                    "nvidia.com/gpu.deploy.driver": "false",
+                    "rfl.example/node-class": "dgx-b200"
+                },
+                "k8s_pod_cidr": "10.160.0.0/16",
+                "k8s_service_cidr": "10.170.0.0/16",
+                "rfl_inventory": "cel1",
+                "rsyslog_client_tcp_host": "10.140.0.5",
+                "rsyslog_client_tcp_port": 514
+            },
+            "cel1-pcie-01": {
+                "k8s_api_endpoint": "10.140.0.10",
+                "k8s_api_port": 6443,
+                "k8s_api_vip": "10.140.0.10",
+                "k8s_api_vip_interface": "mgmt0",
+                "k8s_control_plane_schedulable": false,
+                "k8s_kube_proxy": false,
+                "k8s_node_ip": "10.140.0.31",
+                "k8s_node_labels": {
+                    "rfl.example/node-class": "pcie-gpu"
+                },
+                "k8s_pod_cidr": "10.160.0.0/16",
+                "k8s_service_cidr": "10.170.0.0/16",
+                "rfl_inventory": "cel1",
+                "rsyslog_client_tcp_host": "10.140.0.5",
+                "rsyslog_client_tcp_port": 514
+            },
+            "cel1-pcie-02": {
+                "k8s_api_endpoint": "10.140.0.10",
+                "k8s_api_port": 6443,
+                "k8s_api_vip": "10.140.0.10",
+                "k8s_api_vip_interface": "mgmt0",
+                "k8s_control_plane_schedulable": false,
+                "k8s_kube_proxy": false,
+                "k8s_node_ip": "10.140.0.32",
+                "k8s_node_labels": {
+                    "rfl.example/node-class": "pcie-gpu"
+                },
+                "k8s_pod_cidr": "10.160.0.0/16",
+                "k8s_service_cidr": "10.170.0.0/16",
+                "rfl_inventory": "cel1",
+                "rsyslog_client_tcp_host": "10.140.0.5",
+                "rsyslog_client_tcp_port": 514
+            }
+        }
+    },
+    "all": {
+        "children": [
+            "ungrouped",
+            "k8s_cluster",
+            "control_plane",
+            "dgx_b200",
+            "pcie_gpu"
+        ]
+    },
+    "control_plane": {
+        "hosts": [
+            "cel1-cp-01",
+            "cel1-cp-02",
+            "cel1-cp-03"
+        ]
+    },
+    "dgx_b200": {
+        "hosts": [
+            "cel1-dgx-01",
+            "cel1-dgx-02",
+            "cel1-dgx-03",
+            "cel1-dgx-04",
+            "cel1-dgx-05",
+            "cel1-dgx-06",
+            "cel1-dgx-07",
+            "cel1-dgx-08"
+        ]
+    },
+    "k8s_cluster": {
+        "children": [
+            "kube_control_plane",
+            "kube_node"
+        ]
+    },
+    "kube_control_plane": {
+        "hosts": [
+            "cel1-cp-01",
+            "cel1-cp-02",
+            "cel1-cp-03"
+        ]
+    },
+    "kube_node": {
+        "hosts": [
+            "cel1-dgx-01",
+            "cel1-dgx-02",
+            "cel1-dgx-03",
+            "cel1-dgx-04",
+            "cel1-dgx-05",
+            "cel1-dgx-06",
+            "cel1-dgx-07",
+            "cel1-dgx-08",
+            "cel1-pcie-01",
+            "cel1-pcie-02"
+        ]
+    },
+    "pcie_gpu": {
+        "hosts": [
+            "cel1-pcie-01",
+            "cel1-pcie-02"
+        ]
+    }
+}

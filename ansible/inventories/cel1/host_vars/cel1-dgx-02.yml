@@ -1,0 +1,2 @@
+# Rendered by `make fleet-render` from the cel1 site model. Edit the model, not this file.
+k8s_node_ip: 10.140.0.22

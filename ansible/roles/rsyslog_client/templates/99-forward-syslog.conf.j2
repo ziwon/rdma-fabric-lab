@@ -1,0 +1,5 @@
+# {{ ansible_managed }}
+# The disk-assisted queue holds messages while the server is unreachable and resends them,
+# so a server outage loses no node log.
+action(type="omfwd" Target="{{ rsyslog_client_tcp_host }}" Port="{{ rsyslog_client_tcp_port }}" Protocol="tcp"
+       queue.type="LinkedList" queue.filename="forward-syslog" queue.saveOnShutdown="on" action.resumeRetryCount="-1")

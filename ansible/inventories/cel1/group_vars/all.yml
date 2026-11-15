@@ -1,0 +1,12 @@
+# Rendered by `make fleet-render` from the cel1 site model. Edit the model, not this file.
+rfl_inventory: cel1
+k8s_api_endpoint: 10.140.0.10
+k8s_api_port: 6443
+k8s_api_vip: 10.140.0.10
+k8s_api_vip_interface: mgmt0
+k8s_pod_cidr: 10.160.0.0/16
+k8s_service_cidr: 10.170.0.0/16
+k8s_kube_proxy: false
+k8s_control_plane_schedulable: false
+rsyslog_client_tcp_host: 10.140.0.5
+rsyslog_client_tcp_port: 514
