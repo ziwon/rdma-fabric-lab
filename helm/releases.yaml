@@ -1,0 +1,20 @@
+---
+# Every Helm release this repository installs, in install order. `version` names the
+# versions.lock.yaml component that holds the chart version. `values` lists files under
+# helm/, applied in order, where {env} is the inventory name. Every listed file must exist
+# for every environment the release names. `make addons ENV=<env>` installs them.
+releases:
+  - name: cilium
+    namespace: kube-system
+    chart: cilium
+    repo: https://helm.cilium.io
+    version: cni.cilium_chart
+    environments: [lab, cel1]
+    values: ["cilium/values-{env}.yaml"]
+  - name: gpu-operator
+    namespace: gpu-operator
+    chart: gpu-operator
+    repo: https://helm.ngc.nvidia.com/nvidia
+    version: addons.gpu_operator_chart
+    environments: [cel1]
+    values: ["gpu-operator/values-{env}.yaml"]

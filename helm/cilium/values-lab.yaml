@@ -1,0 +1,16 @@
+# PLAN A2 on the Cilium 1.20.4 chart. kube-proxy stays and Cilium adds pod networking only: a
+# VXLAN tunnel between the node IPs, with each node's pod CIDR taken from its Node object.
+cni:
+  # Other CNI configuration files stay in place, so Multus can be added at M3.
+  exclusive: false
+kubeProxyReplacement: false
+routingMode: tunnel
+tunnelProtocol: vxlan
+ipam:
+  mode: kubernetes
+# The kubeadm role publishes k8s_api_endpoint in this ConfigMap. Through the ClusterIP, a restarted
+# agent on a node whose default route is on another NIC than the node IP never reached the API.
+k8sServiceHostRef:
+  name: rfl-api-endpoint
+  key: host
+k8sServicePort: 6443
