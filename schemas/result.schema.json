@@ -9,7 +9,7 @@
   "properties": {
     "schema_version": {"const": 1},
     "result_kind": {
-      "enum": ["software-rdma-measurement", "ib-management-simulation", "packet-model-simulation"]
+      "enum": ["software-rdma-measurement", "software-cluster-test", "ib-management-simulation", "packet-model-simulation"]
     },
     "metrics": {
       "type": "array",

@@ -19,6 +19,7 @@ LABEL_NAME = re.compile(r"^[A-Za-z0-9]([-A-Za-z0-9_.]{0,61}[A-Za-z0-9])?$")
 LABEL_PREFIX = re.compile(r"^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$")
 REFERENCE = re.compile(r"^\{\{\s*([A-Za-z_][A-Za-z0-9_]*)\s*\}\}$")
 REQUIRED = object()
+CONTAINER_RUNTIMES = ("runc", "nvidia")
 
 
 @dataclass(frozen=True)
@@ -66,6 +67,12 @@ def _bool(value) -> bool:
     return value
 
 
+def _runtime(value) -> str:
+    if value not in CONTAINER_RUNTIMES:
+        raise ValueError(f"is not one of {', '.join(CONTAINER_RUNTIMES)}")
+    return value
+
+
 def _labels(value) -> dict:
     if not isinstance(value, dict):
         raise ValueError("is not a map")
@@ -93,6 +100,8 @@ VARIABLES = (
     Variable("k8s_kube_proxy", True, _bool),
     Variable("k8s_control_plane_schedulable", False, _bool, False),
     Variable("k8s_node_labels", False, _labels, {}),
+    Variable("k8s_container_runtime_default", False, _runtime, "runc"),
+    Variable("k8s_admin_kubeconfig", True, _text, None),
 )
 
 

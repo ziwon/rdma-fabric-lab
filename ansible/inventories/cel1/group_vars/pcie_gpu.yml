@@ -1,3 +1,4 @@
 # Rendered by `make fleet-render` from the cel1 site model. Edit the model, not this file.
 k8s_node_labels:
   rfl.example/node-class: pcie-gpu
+k8s_container_runtime_default: runc

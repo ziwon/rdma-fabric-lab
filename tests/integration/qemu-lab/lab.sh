@@ -299,9 +299,9 @@ cmd_status() {
   local name port pid net
   while IFS=$'\t' read -r name port _; do
     if pid=$(qemu_pid "$lab/guests/$name/qemu.pid"); then
-      printf '%-8s running  pid %-8s ssh 127.0.0.1:%s\n' "$name" "$pid" "$port"
+      printf '%-16s running  pid %-8s ssh 127.0.0.1:%s\n' "$name" "$pid" "$port"
     else
-      printf '%-8s stopped\n' "$name"
+      printf '%-16s stopped\n' "$name"
     fi
   done < <(guest_rows)
   while read -r net _; do

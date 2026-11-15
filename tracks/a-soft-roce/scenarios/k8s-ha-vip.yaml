@@ -5,7 +5,7 @@ description: >-
   a kube-vip VIP on the management network. The guest holding the VIP loses power, and the API must answer on the VIP
   again from the surviving control planes. The guest then boots and rejoins.
 required: false
-result_kind: software-rdma-measurement
+result_kind: software-cluster-test
 security:
   privileged: false
   device_exposure: >-

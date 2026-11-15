@@ -1,0 +1,79 @@
+track: cel1
+scenario: cel1-sim-baseline
+description: >-
+  The cel1 GPU cluster as QEMU guests on this host, built by the fleet targets from wiped guests: 3 control planes behind
+  the kube-vip VIP, 8 DGX B200 nodes and 2 PCIe GPU nodes, Cilium with kube-proxy replacement and native routing, and the
+  GPU Operator. The guests have no GPU and no InfiniBand, and the rails carry Ethernet frames. The scenario checks the
+  cluster against the site model, then cuts the power of the VIP holder and shows the API answers on the VIP again.
+required: false
+result_kind: software-cluster-test
+security:
+  privileged: false
+  device_exposure: >-
+    No device is exposed. The test pods run as user 65534 with every capability dropped. kubectl, crictl, etcdctl and
+    tcpdump run on the guests over SSH through 127.0.0.1 forwards, and no kubeconfig or key leaves a guest.
+checks:
+  - id: interfaces-match-site-model
+    description: Every interface the site model names for a host exists in its guest under that name with the model's address.
+  - id: nodes-ready-with-class-labels
+    description: >-
+      The 13 hosts are Ready Nodes with their k8s_node_ip as InternalIP. Each kubelet registers exactly the k8s_node_labels
+      of its class, and each Node carries those labels and no label of another class. The GPU Operator owns the
+      nvidia.com/gpu.deploy labels of a running Node and removes them from a node without GPUs, so their live values are
+      recorded and not required.
+  - id: control-planes-joined
+    description: >-
+      Three Ready control-plane Nodes each run kube-apiserver and an etcd member, etcd lists three members, and
+      kubeadm-config names the VIP as controlPlaneEndpoint.
+  - id: api-on-vip
+    description: A worker gets ok from /livez on the VIP, and every control plane reaches /readyz through its admin.conf on the VIP.
+  - id: no-kube-proxy
+    description: >-
+      No kube-proxy DaemonSet or pod exists, no node has KUBE-SVC iptables chains, and every Cilium agent reports
+      KubeProxyReplacement True on mgmt0 only.
+  - id: cilium-api-direct
+    description: >-
+      Cilium is configured with the VIP as its API address, and a Cilium agent pod deleted on a DGX node comes back Ready,
+      so a restarted agent reaches the API without a ClusterIP.
+  - id: test-pods-ready
+    description: The server pod on one DGX node and the client pod on another DGX node are Ready inside their node pod CIDRs.
+  - id: pod-to-pod-native-routing
+    description: >-
+      The client fetches from the server pod IP across nodes. The route to the server pod goes via the server node IP on
+      mgmt0, no VXLAN or Geneve device exists, and the mgmt0 captures hold pod-to-pod frames with the pod IPs as outer
+      addresses and no VXLAN or Geneve frame.
+  - id: cluster-dns
+    description: The client resolves the test Service and kubernetes.default to their ClusterIPs through cluster DNS.
+  - id: clusterip-service
+    description: The client fetches from the server through the ClusterIP Service name.
+  - id: no-pod-traffic-on-storage-or-rail-nics
+    description: >-
+      Captures on the storage and rail NICs of both DGX test nodes hold marker pings, so they were live, and no frame
+      to or from the pod or Service ranges and no VXLAN or Geneve frame.
+  - id: dgx-containerd-defaults-to-nvidia
+    description: >-
+      containerd on every DGX node defaults to the nvidia runtime with /usr/bin/nvidia-container-runtime and every other
+      node defaults to runc, and the server pod container on its DGX node was created through that runtime.
+  - id: gpu-operator-installed
+    description: >-
+      The GPU Operator and its node feature discovery run, its ClusterPolicy exists, and the kubelet of every DGX node
+      registers the driver and toolkit opt-out labels. The operand state that follows from guests without GPUs is
+      recorded as found, the live nvidia.com/gpu.deploy labels included.
+  - id: syslog-to-central-address
+    description: >-
+      A marker logged on every node arrives at the stand-in syslog server on the site syslog address, and every node
+      holds a TCP connection from its node IP to that address.
+  - id: test-namespace-removed
+    description: The run's namespace and every object labeled with the run id are gone.
+  - id: vip-holder-identified
+    description: The kube-vip lease names one control plane, and only that control plane carries the VIP on mgmt0.
+  - id: api-survives-holder-loss
+    description: >-
+      After the VIP holder loses power, the /livez probes of a worker on the VIP succeed again within the deadline, and the
+      lease and the VIP move to a surviving control plane.
+  - id: cluster-works-after-loss
+    description: Through the VIP a surviving control plane lists the nodes and writes and deletes a ConfigMap while etcd keeps quorum.
+  - id: holder-rejoins
+    description: The powered-off guest boots again, its Node returns Ready, and etcd reports every member healthy.
+  - id: no-process-left
+    description: After the run no process carrying this run id remains on any guest.

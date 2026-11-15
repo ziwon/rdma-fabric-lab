@@ -12,6 +12,8 @@ kubernetes:
   # Cilium replaces kube-proxy. helm/cilium/values-cel1.yaml must agree.
   kube_proxy: false
   control_plane_schedulable: false
+  # Control node path of the admin kubeconfig, outside every path git tracks (ADR 0001 section 5).
+  admin_kubeconfig: ${XDG_STATE_HOME:-~/.local/state}/rdma-fabric-lab/cel1/kubeconfig
 
 services:
   syslog: { address: 10.140.0.5, port: 514 }
@@ -41,8 +43,10 @@ classes:
       rfl.example/node-class: control-plane
   dgx_b200:
     kube_role: node
-    # DGX OS ships the NVIDIA driver and container toolkit, so the GPU Operator leaves both alone.
+    # DGX OS ships the NVIDIA driver and container toolkit, so the GPU Operator leaves both alone
+    # and containerd runs every container through the toolkit's runtime.
     os: DGX OS 7
+    container_runtime: nvidia
     interfaces:
       mgmt0: management
       stor0: storage-a

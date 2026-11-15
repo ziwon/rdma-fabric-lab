@@ -8,6 +8,7 @@
       service_cidr: <cidr>
       kube_proxy: <bool>
       control_plane_schedulable: <bool>
+      admin_kubeconfig: <path>         control node path of the admin kubeconfig, as ADR 0001 section 5 names it
     services:
       syslog: {address: <ipv4>, port: <int>}
     networks:                          one L2 segment each
@@ -16,6 +17,7 @@
       <class>:
         kube_role: control_plane|node
         os: <text>
+        container_runtime: runc|nvidia default runtime of containerd, runc when absent
         interfaces:                    Linux names after the systemd .link rename
           <iface>: <network> | {network: <network>, hca: <device>}
         labels: {<key>: <string>}      k8s_node_labels of every host of the class
@@ -46,6 +48,7 @@ from typing import Iterable
 import yaml
 
 KUBE_ROLES = ("control_plane", "node")
+CONTAINER_RUNTIMES = ("runc", "nvidia")
 NETWORK_KINDS = ("ethernet", "infiniband")
 SWITCH_ROLES = ("leaf", "spine")
 TOPOLOGIES = ("rail-optimized",)
@@ -88,6 +91,7 @@ class NodeClass:
     os: str
     interfaces: tuple[Interface, ...]
     labels: dict[str, str]
+    container_runtime: str
 
 
 @dataclass(frozen=True)
@@ -136,6 +140,7 @@ class Site:
     service_cidr: ipaddress.IPv4Network
     kube_proxy: bool
     control_plane_schedulable: bool
+    admin_kubeconfig: str
     syslog_address: ipaddress.IPv4Address
     syslog_port: int
     networks: dict[str, Network]
@@ -224,6 +229,12 @@ def _choice(value, choices: tuple[str, ...], where: str) -> str:
     return value
 
 
+def _path(value, where: str) -> str:
+    if not isinstance(value, str) or not value.strip():
+        raise SiteError(f"{where}: {value!r} is not a path")
+    return value
+
+
 def _endpoint(value, where: str) -> Endpoint:
     node, sep, port = str(value).rpartition("/")
     if not sep or not node or not port:
@@ -286,7 +297,8 @@ def parse(raw) -> Site:
     raw = _map(raw, "site model")
     _keys(raw, "site model", ("site", "kubernetes", "services", "networks", "classes", "hosts", "fabrics"))
     kube = _map(raw["kubernetes"], "kubernetes")
-    _keys(kube, "kubernetes", ("node_network", "api", "pod_cidr", "service_cidr", "kube_proxy", "control_plane_schedulable"))
+    _keys(kube, "kubernetes", ("node_network", "api", "pod_cidr", "service_cidr", "kube_proxy", "control_plane_schedulable",
+                               "admin_kubeconfig"))
     api = _map(kube["api"], "kubernetes.api")
     _keys(api, "kubernetes.api", ("vip", "port"))
     services = _map(raw["services"], "services")
@@ -309,7 +321,7 @@ def parse(raw) -> Site:
     for name, spec in _map(raw["classes"], "classes").items():
         at = f"classes.{name}"
         spec = _map(spec, at)
-        _keys(spec, at, ("kube_role", "os", "interfaces"), ("labels",))
+        _keys(spec, at, ("kube_role", "os", "interfaces"), ("labels", "container_runtime"))
         interfaces = []
         for iface, attach in _map(spec["interfaces"], f"{at}.interfaces").items():
             attach = {"network": attach} if isinstance(attach, str) else _map(attach, f"{at}.interfaces.{iface}")
@@ -321,6 +333,7 @@ def parse(raw) -> Site:
             os=str(spec["os"]),
             interfaces=tuple(interfaces),
             labels=_labels(spec.get("labels"), f"{at}.labels"),
+            container_runtime=_choice(spec.get("container_runtime", "runc"), CONTAINER_RUNTIMES, f"{at}.container_runtime"),
         )
 
     hosts = {}
@@ -342,6 +355,7 @@ def parse(raw) -> Site:
         service_cidr=_network(kube["service_cidr"], "kubernetes.service_cidr"),
         kube_proxy=_bool(kube["kube_proxy"], "kubernetes.kube_proxy"),
         control_plane_schedulable=_bool(kube["control_plane_schedulable"], "kubernetes.control_plane_schedulable"),
+        admin_kubeconfig=_path(kube["admin_kubeconfig"], "kubernetes.admin_kubeconfig"),
         syslog_address=_address(syslog["address"], "services.syslog.address"),
         syslog_port=_int(syslog["port"], "services.syslog.port"),
         networks=networks,

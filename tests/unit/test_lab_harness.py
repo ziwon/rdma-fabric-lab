@@ -85,7 +85,7 @@ ROW = "a\t1\t1\t1\t1\tmac=52:54:00:00:00:01,net=user"
         ("a\t1\t1\t1\t1\tmac=aa:bb:cc:00:00:01,net=user", "QEMU MAC"),
         (ROW + " mac=52:54:00:00:00:02,net=cable:b", "unknown guest b"),
         (ROW + "\nb\t1\t1\t1\t1\tmac=52:54:00:00:00:03,net=user", "host port used twice"),
-        (ROW + ",ip=k8s_node_ip", "ip= needs a switch NIC"),
+        (ROW + ",ip=k8s_node_ip", "ip= and addr= need a switch NIC"),
         ("a\t1\t1\t1\t1\tmac=52:54:00:00:00:01,net=switch:mgmt", "first NIC, and only it, must be net=user"),
         (ROW + " mac=52:54:00:00:00:02,net=switch:other", "has no #network line"),
     ],
@@ -128,3 +128,39 @@ def test_switch_relearns_a_moved_mac_and_drops_a_frame_back_to_its_source_port()
     assert sw.route("cp1", frame(A, B)) == ["worker1"]
     assert sw.route("worker1", frame(A, C)) == []
     assert sw.route("cp1", b"short") == []
+
+
+STANDIN = guests.parse(
+    "#inventory x\n#network mgmt 192.168.140.0/24\n#group stand_ins s\n"
+    "a\t1\t1\t1\t1\tmac=52:54:00:00:00:01,net=user,fwd=9:6443 mac=52:54:00:00:00:02,net=switch:mgmt,ip=k8s_node_ip\n"
+    "s\t2\t1\t1\t1\tmac=52:54:00:00:00:03,net=user mac=52:54:00:00:00:04,net=switch:mgmt,name=mgmt0,addr=192.168.140.5\n")
+
+
+def test_a_profile_address_needs_no_inventory_variable():
+    config = guests.network_config(STANDIN, STANDIN.guest("s"), {})
+    assert config["ethernets"]["mgmt0"]["addresses"] == ["192.168.140.5/24"]
+
+
+def test_grouped_guests_land_in_their_group_and_the_first_control_plane_gets_the_api_forward():
+    found = {"a": {"52:54:00:00:00:01": "enp0s3", "52:54:00:00:00:02": "enp0s4"},
+             "s": {"52:54:00:00:00:03": "enp0s3", "52:54:00:00:00:04": "mgmt0"}}
+    tree = guests.override_inventory(STANDIN, found, "/k", "/kh", api=("a", "https://127.0.0.1:9"))["all"]
+    assert list(tree["hosts"]) == ["a"] and tree["hosts"]["a"]["rfl_kubeconfig_server"] == "https://127.0.0.1:9"
+    assert tree["children"] == {"stand_ins": {"hosts": {"s": tree["children"]["stand_ins"]["hosts"]["s"]}}}
+    assert tree["children"]["stand_ins"]["hosts"]["s"]["ansible_port"] == 2
+    assert "rfl_kubeconfig_server" not in tree["children"]["stand_ins"]["hosts"]["s"]
+
+
+@pytest.mark.parametrize(
+    ("body", "message"),
+    [
+        (ROW + " mac=52:54:00:00:00:02,net=switch:mgmt,addr=192.168.141.5", "lies outside mgmt"),
+        (ROW + " mac=52:54:00:00:00:02,net=switch:mgmt,addr=192.168.140.5,ip=k8s_node_ip", "ip= or addr=, not both"),
+        (ROW + " mac=52:54:00:00:00:02,net=switch:mgmt,addr=192.168.140.300", "is not an IPv4 address"),
+        ("#group g b\n" + ROW, "unknown guest b"),
+        ("#group g a\n#group h a\n" + ROW, "a guest belongs to one group only"),
+    ],
+)
+def test_broken_addresses_and_groups_are_refused(body, message):
+    with pytest.raises(guests.ProfileError, match=message):
+        guests.parse(HEADER + body + "\n")

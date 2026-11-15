@@ -1,0 +1,27 @@
+# Parameters of the cel1-sim-baseline scenario. Every run records this file's sha256.
+site: sites/cel1.yaml
+image: lab.k8s_test_image
+server_node: cel1-dgx-01
+client_node: cel1-dgx-02
+restart_agent_on: cel1-dgx-03
+http_port: 8080
+service_port: 80
+ready_timeout_s: 240
+request_timeout_s: 5
+request_attempts: 3
+policy_timeout_s: 60
+delete_timeout_s: 120
+agent_ready_timeout_s: 300
+syslog_timeout_s: 90
+nvidia_runtime: /usr/bin/nvidia-container-runtime
+nvidia_runtime_log: /var/log/rfl-nvidia-container-runtime.log
+gpu_operator_namespace: gpu-operator
+capture:
+  snaplen: 128
+  max_seconds: 900
+probe_from: cel1-pcie-01
+probe_interval_s: 0.5
+probe_timeout_s: 1
+recovery_timeout_s: 120
+rejoin_timeout_s: 420
+lease: plndr-cp-lock

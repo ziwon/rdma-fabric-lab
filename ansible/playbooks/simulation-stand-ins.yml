@@ -1,0 +1,69 @@
+---
+# Simulation only. Guests of an invented site stand in for two things the site model names but a
+# guest lacks: the NVIDIA container runtime that DGX OS ships, and the central syslog server that
+# the model names only by address. Neither belongs in the fleet inventory or the fleet roles.
+- name: Refuse every host that is not a simulation guest
+  hosts: all
+  gather_facts: false
+  any_errors_fatal: true
+  tasks:
+    - name: Check the host is a harness guest behind 127.0.0.1
+      ansible.builtin.assert:
+        that: ansible_host | default('') == '127.0.0.1'
+        fail_msg: "{{ inventory_hostname }} is not a simulation guest on 127.0.0.1. Nothing was changed."
+        quiet: true
+
+- name: Stand in for the NVIDIA container runtime of DGX OS
+  hosts: k8s_cluster
+  become: true
+  tasks:
+    # The guests have no GPU and no NVIDIA software. The stand-in keeps the nvidia runtime path of
+    # containerd in use: it logs each call, so a check can find the containers it ran, and execs runc.
+    - name: Install the runtime stand-in on nodes whose containerd defaults to nvidia
+      ansible.builtin.copy:
+        dest: /usr/bin/nvidia-container-runtime
+        owner: root
+        group: root
+        mode: "0755"
+        content: |
+          #!/bin/sh
+          # Simulation stand-in for the NVIDIA container runtime. It changes nothing and execs runc.
+          printf '%s %s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$*" >> /var/log/rfl-nvidia-container-runtime.log
+          exec /usr/local/sbin/runc "$@"
+      when: k8s_container_runtime_default | default('runc') == 'nvidia'
+
+- name: Stand in for the central syslog server
+  hosts: simulation_syslog
+  become: true
+  handlers:
+    - name: Restart rsyslog
+      ansible.builtin.service:
+        name: rsyslog
+        state: restarted
+  tasks:
+    - name: Create the directory of the received logs
+      ansible.builtin.file:
+        path: /var/log/remote
+        state: directory
+        owner: syslog
+        group: adm
+        mode: "0755"
+
+    - name: Receive syslog over TCP on the site syslog address, one file per sending host
+      ansible.builtin.copy:
+        dest: /etc/rsyslog.d/10-rfl-receive.conf
+        owner: root
+        group: root
+        mode: "0644"
+        content: |
+          module(load="imtcp")
+          template(name="rfl-per-host" type="string" string="/var/log/remote/%HOSTNAME%.log")
+          ruleset(name="rfl-remote") { action(type="omfile" dynaFile="rfl-per-host") }
+          input(type="imtcp" address="{{ rsyslog_client_tcp_host }}" port="{{ rsyslog_client_tcp_port }}" ruleset="rfl-remote")
+      notify: Restart rsyslog
+
+    - name: Ensure rsyslog runs
+      ansible.builtin.service:
+        name: rsyslog
+        state: started
+        enabled: true

@@ -18,6 +18,7 @@ MODEL = {
         "service_cidr": "203.0.113.128/26",
         "kube_proxy": False,
         "control_plane_schedulable": False,
+        "admin_kubeconfig": "${XDG_STATE_HOME:-~/.local/state}/rdma-fabric-lab/t1/kubeconfig",
     },
     "services": {"syslog": {"address": "192.0.2.5", "port": 514}},
     "networks": {
@@ -30,6 +31,7 @@ MODEL = {
         "gpu": {
             "kube_role": "node",
             "os": "DGX OS 7",
+            "container_runtime": "nvidia",
             "interfaces": {
                 "mgmt0": "management",
                 "rail0": {"network": "rail0", "hca": "mlx5_0"},
@@ -329,6 +331,12 @@ def test_a_range_overlapping_the_lab_plan_is_named_by_its_lab_entry():
         ),
         pytest.param(set_in(["fabrics", "compute", "links"], [["t1-gpu-01/rail0"]]), "must be a pair of endpoints", id="half-a-link"),
         pytest.param(set_in(["fabrics", "compute", "link", "speed"], "XDR9"), "is not one of SDR", id="unknown-link-speed"),
+        pytest.param(
+            set_in(["classes", "gpu", "container_runtime"], "crun"),
+            "classes.gpu.container_runtime: 'crun' is not one of runc, nvidia",
+            id="unknown-container-runtime",
+        ),
+        pytest.param(remove(["kubernetes", "admin_kubeconfig"]), "kubernetes: missing admin_kubeconfig", id="no-kubeconfig-path"),
     ],
 )
 def test_a_wrong_shape_is_refused_while_parsing(change, expected):
@@ -345,3 +353,9 @@ def test_a_name_defined_twice_in_the_file_is_refused(tmp_path):
     (tmp_path / "s.yaml").write_text(doubled)
     with pytest.raises(site.SiteError, match="t1-gpu-01 defined twice"):
         site.load(tmp_path / "s.yaml")
+
+
+def test_a_class_without_a_container_runtime_defaults_to_runc():
+    cel1 = site.load(REPO / "sites/cel1.yaml")
+    assert {c.name: c.container_runtime for c in cel1.classes.values()} == {
+        "control_plane": "runc", "dgx_b200": "nvidia", "pcie_gpu": "runc"}

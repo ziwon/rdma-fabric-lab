@@ -1,9 +1,10 @@
-"""Offline checks for the GPU fleet: site model, rendered inventory and values keys.
-Nothing here connects to a host."""
+"""Offline checks for the GPU fleet: site model, rendered inventory, simulation profile, values keys
+and the gate of the targets that change an invented site. Nothing here connects to a host."""
 
 from __future__ import annotations
 
 import argparse
+import json
 import subprocess
 import sys
 from pathlib import Path
@@ -11,9 +12,9 @@ from pathlib import Path
 import yaml
 
 from addons import releases
+from inventory.__main__ import _ansible_inventory
 
-from . import render, site, values_keys
-
+from . import gate, render, sim, site, values_keys
 
 
 def _load_site(path: Path) -> site.Site | None:
@@ -69,6 +70,56 @@ def _cmd_render(args: argparse.Namespace) -> int:
     return 1 if foreign else 0
 
 
+def _cmd_sim_profile(args: argparse.Namespace) -> int:
+    model = _load_site(args.site)
+    if model is None:
+        return 1
+    found = site.problems(model)
+    if found:
+        for problem in found:
+            print(f"{args.site}: {problem}", file=sys.stderr)
+        return 1
+    try:
+        text = sim.profile(model, args.inventory)
+    except sim.SimError as exc:
+        print(f"{args.site}: {exc}", file=sys.stderr)
+        return 1
+    size = sim.footprint(model)
+    sizes = f"{size['guests']} guests, {size['vcpus']} vCPUs, {size['mem_mib']} MiB, {size['disk_gib']} GiB of virtual disk"
+    if args.check:
+        same = args.out.is_file() and args.out.read_text() == text
+        print(f"{args.out}: {'equals' if same else 'differs from'} what {args.site} renders, {sizes}", file=sys.stdout if same else sys.stderr)
+        return 0 if same else 1
+    args.out.write_text(text)
+    print(f"{args.out}: wrote {sizes} from {args.site}")
+    return 0
+
+
+def _cmd_sim_gate(args: argparse.Namespace) -> int:
+    invented = {site.load(path).name for path in args.site}
+    argv = [_ansible_inventory(), *(x for i in args.inventory for x in ("-i", str(i))), "--list"]
+    listed = subprocess.run(argv, capture_output=True, text=True)
+    if listed.returncode != 0:
+        print(f"make {args.target}: ansible-inventory exited {listed.returncode}. Nothing was contacted.\n{listed.stderr}", file=sys.stderr)
+        return 2
+    found = gate.inventory_refusals(json.loads(listed.stdout), invented)
+    if args.kubeconfig:
+        if not args.kubeconfig.is_file():
+            found.append(f"no kubeconfig at {args.kubeconfig}")
+        else:
+            found += gate.kubeconfig_refusals(yaml.safe_load(args.kubeconfig.read_text()) or {})
+    where = " + ".join(map(str, args.inventory)) + (f" and {args.kubeconfig}" if args.kubeconfig else "")
+    if found:
+        for reason in found:
+            print(f"make {args.target}: {reason}", file=sys.stderr)
+        print(f"make {args.target}: refused. {', '.join(sorted(invented))} has no real hosts, and {where} could reach something "
+              f"other than a simulation guest on {gate.LOOPBACK}. Nothing was contacted. Pass FLEET_CONNECT=<the inventory.yml "
+              f"that lab.sh up wrote for the simulation>.", file=sys.stderr)
+        return 2
+    print(f"make {args.target}: {where} points every host at {gate.LOOPBACK}")
+    return 0
+
+
 def _chart_defaults(helm: str, release: releases.Release, lock: dict) -> dict:
     argv = [helm, "show", "values", release.chart, "--repo", release.repo, "--version", releases.chart_version(release, lock)]
     return yaml.safe_load(subprocess.run(argv, check=True, capture_output=True, text=True).stdout) or {}
@@ -109,6 +160,20 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--out", type=Path, required=True)
     p.add_argument("--check", action="store_true", help="Change nothing, exit 1 when the directory differs")
     p.set_defaults(func=_cmd_render)
+
+    p = sub.add_parser("sim-profile", help="Write the QEMU harness profile that simulates a site model, or with --check compare it")
+    p.add_argument("site", type=Path)
+    p.add_argument("--out", type=Path, required=True)
+    p.add_argument("--inventory", required=True, help="the rendered inventory of the site, relative to the repository")
+    p.add_argument("--check", action="store_true", help="Change nothing, exit 1 when the file differs")
+    p.set_defaults(func=_cmd_sim_profile)
+
+    p = sub.add_parser("sim-gate", help="Exit 2 unless every host of an invented site points at a simulation guest on 127.0.0.1")
+    p.add_argument("--target", required=True, help="the make target the gate guards, for the messages")
+    p.add_argument("--site", type=Path, action="append", required=True, help="a site model whose site is invented")
+    p.add_argument("-i", "--inventory", type=Path, action="append", required=True)
+    p.add_argument("--kubeconfig", type=Path, help="also require every cluster server of this kubeconfig on 127.0.0.1")
+    p.set_defaults(func=_cmd_sim_gate)
 
     p = sub.add_parser("values-keys", help="Every key of an environment's values files must exist in the chart's values.yaml")
     p.add_argument("--env", required=True)

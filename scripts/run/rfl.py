@@ -66,3 +66,10 @@ def add_inputs(run_dir: Path, files: list[Path]) -> None:
 def finalize(run_dir: Path) -> tuple[int, str]:
     out = _rfl("run-finalize", str(run_dir), check=False)
     return out.returncode, (out.stdout + out.stderr).strip()
+
+
+def write_metrics(run_dir: Path, metrics: list[dict]) -> None:
+    """Write metrics.json with the result kind the run's scenario spec declared."""
+    kind = json.loads((run_dir / "manifest.json").read_text())["result_kind"]
+    (run_dir / "metrics.json").write_text(
+        json.dumps({"schema_version": 1, "result_kind": kind, "metrics": metrics}, indent=2) + "\n")

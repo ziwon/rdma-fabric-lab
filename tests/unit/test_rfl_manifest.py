@@ -192,3 +192,16 @@ def test_report_tallies_optional_runs_apart_from_required(tmp_path, capsys):
     optional_line = next(line for line in report.splitlines() if line.startswith("optional"))
     assert "passed=1" in required_line and "blocked=0" in required_line
     assert "blocked=1" in optional_line and "passed=0" in optional_line
+
+
+def test_runner_metrics_take_the_result_kind_of_the_scenario(tmp_path, capsys):
+    from run import rfl as runner_rfl
+    spec = tmp_path / "cluster.yaml"
+    spec.write_text(SPEC.read_text().replace("software-rdma-measurement", "software-cluster-test"))
+    assert main(["run-init", "--spec", str(spec), "--results-root", str(tmp_path), "--run-id", RUN_ID]) == 0
+    run_dir = Path(capsys.readouterr().out.strip())
+    source = evidence(run_dir, "gap.log")
+    runner_rfl.write_metrics(run_dir, [{"name": "api_unavailable_seconds", "value": 6.0, "unit": "s",
+                                        "absent_reason": None, "source": source}])
+    assert json.loads((run_dir / "metrics.json").read_text())["result_kind"] == "software-cluster-test"
+    assert main(["validate", str(run_dir)]) == 0

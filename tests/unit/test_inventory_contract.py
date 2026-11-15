@@ -157,6 +157,24 @@ def test_the_captured_cel1_inventory_holds_the_contract_with_every_variable_expl
             "k8s_node_labels ['gpu'] is not a map",
             id="labels-not-a-map",
         ),
+        pytest.param(
+            lambda i: hostvars(i, "cel1-dgx-03").update(k8s_container_runtime_default="crun"),
+            "bad-value",
+            "cel1-dgx-03: k8s_container_runtime_default 'crun' is not one of runc, nvidia",
+            id="runtime-not-runc-or-nvidia",
+        ),
+        pytest.param(
+            lambda i: hostvars(i, "cel1-pcie-01").update(k8s_container_runtime_default="Nvidia"),
+            "bad-value",
+            "cel1-pcie-01: k8s_container_runtime_default 'Nvidia' is not one of runc, nvidia",
+            id="runtime-in-another-case",
+        ),
+        pytest.param(
+            lambda i: [h.update(k8s_admin_kubeconfig="") for h in every_host(i)],
+            "bad-value",
+            "k8s_admin_kubeconfig '' is not a non-empty string",
+            id="empty-kubeconfig-path",
+        ),
     ],
 )
 def test_each_violation_is_named(change, code, text):
@@ -227,3 +245,15 @@ def test_cilium_values_merge_in_release_order(tmp_path):
     table = [releases.Release("cilium", "kube-system", "cilium", "r", "cni.cilium_chart", ("cel1",), ("cilium/base.yaml", "cilium/values-{env}.yaml"))]
     assert cilium_values(table, tmp_path, "cel1") == {"ipam": {"mode": "kubernetes", "keep": 1}, "devices": "a"}
     assert cilium_values(table, tmp_path, "lab") is None
+
+
+def test_the_dgx_nodes_default_to_the_nvidia_runtime_and_every_other_node_to_runc():
+    runtimes = {h: v["k8s_container_runtime_default"] for h, v in FIXTURE["_meta"]["hostvars"].items()}
+    assert {h for h, r in runtimes.items() if r == "nvidia"} == {f"cel1-dgx-0{n}" for n in range(1, 9)}
+    assert set(runtimes.values()) == {"runc", "nvidia"}
+
+
+def test_the_lab_may_leave_the_runtime_to_the_role_default_of_runc():
+    inventory = edited(lambda i: [h.pop("k8s_container_runtime_default") for h in every_host(i)])
+    assert codes(inventory, CILIUM, explicit=False) == ([], [])
+    assert "missing-variable" in codes(inventory, CILIUM, explicit=True)[0]

@@ -564,8 +564,7 @@ def main(argv: list[str] | None = None) -> int:
         for remote in run.remote.values():
             remote.remove_dir()
         if run.metrics:
-            (run.dir / "metrics.json").write_text(json.dumps(
-                {"schema_version": 1, "result_kind": "software-rdma-measurement", "metrics": run.metrics}, indent=2) + "\n")
+            rfl.write_metrics(run.dir, run.metrics)
         rfl.set_section(run.dir, "timing", {"wall_clock_seconds": round(time.monotonic() - run.started, 1)})
         code, message = rfl.finalize(run.dir)
         write_summary(run)

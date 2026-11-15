@@ -18,7 +18,7 @@
     "description": {"type": "string", "minLength": 1},
     "required": {"type": "boolean"},
     "result_kind": {
-      "enum": ["software-rdma-measurement", "ib-management-simulation", "packet-model-simulation"]
+      "enum": ["software-rdma-measurement", "software-cluster-test", "ib-management-simulation", "packet-model-simulation"]
     },
     "status": {"$ref": "#/$defs/status"},
     "created_at": {"type": "string", "format": "date-time"},

@@ -15,7 +15,7 @@
       "description": "true for MVP scenarios, false for optional experiments. The report tallies the two groups separately."
     },
     "result_kind": {
-      "enum": ["software-rdma-measurement", "ib-management-simulation", "packet-model-simulation"]
+      "enum": ["software-rdma-measurement", "software-cluster-test", "ib-management-simulation", "packet-model-simulation"]
     },
     "security": {
       "type": "object",

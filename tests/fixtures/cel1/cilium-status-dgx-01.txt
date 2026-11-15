@@ -1,0 +1,28 @@
+KVStore:                 Disabled   
+Kubernetes:              Ok         1.36 (v1.36.6) [linux/amd64]
+Kubernetes APIs:         ["cilium/v2::CiliumCIDRGroup", "cilium/v2::CiliumClusterwideNetworkPolicy", "cilium/v2::CiliumEndpoint", "cilium/v2::CiliumNetworkPolicy", "cilium/v2::CiliumNode", "core/v1::Pods", "networking.k8s.io/v1::NetworkPolicy"]
+KubeProxyReplacement:    True   [mgmt0   10.140.0.21 fe80::5054:ff:fec1:401 (Direct Routing)]
+Host firewall:           Disabled
+SRv6:                    Disabled
+CNI Chaining:            none
+CNI Config file:         successfully wrote CNI configuration file to /host/etc/cni/net.d/05-cilium.conflist
+Cilium:                  Ok   1.20.4 (v1.20.4-beb276d2)
+NodeMonitor:             Listening for events on 2 CPUs with 64x4096 of shared memory
+Cilium health daemon:    Ok   
+IPAM:                    IPv4: 3/254 allocated from 10.160.3.0/24, 
+IPv4 BIG TCP:            Disabled
+IPv6 BIG TCP:            Disabled
+BandwidthManager:        Disabled
+Routing:                 Network: Native   Host: Legacy
+Attach Mode:             TCX
+Device Mode:             veth
+Masquerading:            IPTables [IPv4: Enabled, IPv6: Disabled]
+Controller Status:       18/18 healthy
+Proxy Status:            OK, ip 10.160.3.138, 0 redirects active on ports 10000-20000, Envoy: external
+Global Identity Range:   min 256, max 65535
+Hubble:                  Ok                Current/Max Flows: 336/4095 (8.21%), Flows/s: 2.66   Metrics: Disabled
+Encryption:              Disabled          
+Cluster health:          13/13 reachable   (2026-11-15T16:12:07Z)   (Probe interval: 3m17.75021196s)
+Name                     IP                Node                     Endpoints
+Modules Health:          Stopped(0) Degraded(0) OK(79)
+

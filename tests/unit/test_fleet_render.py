@@ -35,11 +35,13 @@ def test_variables_follow_the_contract_and_labels_stay_strings():
         "k8s_service_cidr": "203.0.113.128/26",
         "k8s_kube_proxy": False,
         "k8s_control_plane_schedulable": False,
+        "k8s_admin_kubeconfig": "${XDG_STATE_HOME:-~/.local/state}/rdma-fabric-lab/t1/kubeconfig",
         "rsyslog_client_tcp_host": "192.0.2.5",
         "rsyslog_client_tcp_port": 514,
     }
-    assert yaml.safe_load(files["group_vars/gpu.yml"]) == {"k8s_node_labels": {"nvidia.com/gpu.deploy.driver": "false"}}
-    assert yaml.safe_load(files["group_vars/control_plane.yml"]) == {"k8s_node_labels": {}}
+    assert yaml.safe_load(files["group_vars/gpu.yml"]) == {
+        "k8s_node_labels": {"nvidia.com/gpu.deploy.driver": "false"}, "k8s_container_runtime_default": "nvidia"}
+    assert yaml.safe_load(files["group_vars/control_plane.yml"]) == {"k8s_node_labels": {}, "k8s_container_runtime_default": "runc"}
     assert yaml.safe_load(files["host_vars/t1-gpu-02.yml"]) == {"k8s_node_ip": "192.0.2.22"}
     assert not any("ansible_host" in text for text in files.values())
 

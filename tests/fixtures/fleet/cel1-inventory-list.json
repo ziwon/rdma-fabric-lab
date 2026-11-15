@@ -2,10 +2,12 @@
     "_meta": {
         "hostvars": {
             "cel1-cp-01": {
+                "k8s_admin_kubeconfig": "${XDG_STATE_HOME:-~/.local/state}/rdma-fabric-lab/cel1/kubeconfig",
                 "k8s_api_endpoint": "10.140.0.10",
                 "k8s_api_port": 6443,
                 "k8s_api_vip": "10.140.0.10",
                 "k8s_api_vip_interface": "mgmt0",
+                "k8s_container_runtime_default": "runc",
                 "k8s_control_plane_schedulable": false,
                 "k8s_kube_proxy": false,
                 "k8s_node_ip": "10.140.0.11",
@@ -19,10 +21,12 @@
                 "rsyslog_client_tcp_port": 514
             },
             "cel1-cp-02": {
+                "k8s_admin_kubeconfig": "${XDG_STATE_HOME:-~/.local/state}/rdma-fabric-lab/cel1/kubeconfig",
                 "k8s_api_endpoint": "10.140.0.10",
                 "k8s_api_port": 6443,
                 "k8s_api_vip": "10.140.0.10",
                 "k8s_api_vip_interface": "mgmt0",
+                "k8s_container_runtime_default": "runc",
                 "k8s_control_plane_schedulable": false,
                 "k8s_kube_proxy": false,
                 "k8s_node_ip": "10.140.0.12",
@@ -36,10 +40,12 @@
                 "rsyslog_client_tcp_port": 514
             },
             "cel1-cp-03": {
+                "k8s_admin_kubeconfig": "${XDG_STATE_HOME:-~/.local/state}/rdma-fabric-lab/cel1/kubeconfig",
                 "k8s_api_endpoint": "10.140.0.10",
                 "k8s_api_port": 6443,
                 "k8s_api_vip": "10.140.0.10",
                 "k8s_api_vip_interface": "mgmt0",
+                "k8s_container_runtime_default": "runc",
                 "k8s_control_plane_schedulable": false,
                 "k8s_kube_proxy": false,
                 "k8s_node_ip": "10.140.0.13",
@@ -53,10 +59,12 @@
                 "rsyslog_client_tcp_port": 514
             },
             "cel1-dgx-01": {
+                "k8s_admin_kubeconfig": "${XDG_STATE_HOME:-~/.local/state}/rdma-fabric-lab/cel1/kubeconfig",
                 "k8s_api_endpoint": "10.140.0.10",
                 "k8s_api_port": 6443,
                 "k8s_api_vip": "10.140.0.10",
                 "k8s_api_vip_interface": "mgmt0",
+                "k8s_container_runtime_default": "nvidia",
                 "k8s_control_plane_schedulable": false,
                 "k8s_kube_proxy": false,
                 "k8s_node_ip": "10.140.0.21",
@@ -72,10 +80,12 @@
                 "rsyslog_client_tcp_port": 514
             },
             "cel1-dgx-02": {
+                "k8s_admin_kubeconfig": "${XDG_STATE_HOME:-~/.local/state}/rdma-fabric-lab/cel1/kubeconfig",
                 "k8s_api_endpoint": "10.140.0.10",
                 "k8s_api_port": 6443,
                 "k8s_api_vip": "10.140.0.10",
                 "k8s_api_vip_interface": "mgmt0",
+                "k8s_container_runtime_default": "nvidia",
                 "k8s_control_plane_schedulable": false,
                 "k8s_kube_proxy": false,
                 "k8s_node_ip": "10.140.0.22",
@@ -91,10 +101,12 @@
                 "rsyslog_client_tcp_port": 514
             },
             "cel1-dgx-03": {
+                "k8s_admin_kubeconfig": "${XDG_STATE_HOME:-~/.local/state}/rdma-fabric-lab/cel1/kubeconfig",
                 "k8s_api_endpoint": "10.140.0.10",
                 "k8s_api_port": 6443,
                 "k8s_api_vip": "10.140.0.10",
                 "k8s_api_vip_interface": "mgmt0",
+                "k8s_container_runtime_default": "nvidia",
                 "k8s_control_plane_schedulable": false,
                 "k8s_kube_proxy": false,
                 "k8s_node_ip": "10.140.0.23",
@@ -110,10 +122,12 @@
                 "rsyslog_client_tcp_port": 514
             },
             "cel1-dgx-04": {
+                "k8s_admin_kubeconfig": "${XDG_STATE_HOME:-~/.local/state}/rdma-fabric-lab/cel1/kubeconfig",
                 "k8s_api_endpoint": "10.140.0.10",
                 "k8s_api_port": 6443,
                 "k8s_api_vip": "10.140.0.10",
                 "k8s_api_vip_interface": "mgmt0",
+                "k8s_container_runtime_default": "nvidia",
                 "k8s_control_plane_schedulable": false,
                 "k8s_kube_proxy": false,
                 "k8s_node_ip": "10.140.0.24",
@@ -129,10 +143,12 @@
                 "rsyslog_client_tcp_port": 514
             },
             "cel1-dgx-05": {
+                "k8s_admin_kubeconfig": "${XDG_STATE_HOME:-~/.local/state}/rdma-fabric-lab/cel1/kubeconfig",
                 "k8s_api_endpoint": "10.140.0.10",
                 "k8s_api_port": 6443,
                 "k8s_api_vip": "10.140.0.10",
                 "k8s_api_vip_interface": "mgmt0",
+                "k8s_container_runtime_default": "nvidia",
                 "k8s_control_plane_schedulable": false,
                 "k8s_kube_proxy": false,
                 "k8s_node_ip": "10.140.0.25",
@@ -148,10 +164,12 @@
                 "rsyslog_client_tcp_port": 514
             },
             "cel1-dgx-06": {
+                "k8s_admin_kubeconfig": "${XDG_STATE_HOME:-~/.local/state}/rdma-fabric-lab/cel1/kubeconfig",
                 "k8s_api_endpoint": "10.140.0.10",
                 "k8s_api_port": 6443,
                 "k8s_api_vip": "10.140.0.10",
                 "k8s_api_vip_interface": "mgmt0",
+                "k8s_container_runtime_default": "nvidia",
                 "k8s_control_plane_schedulable": false,
                 "k8s_kube_proxy": false,
                 "k8s_node_ip": "10.140.0.26",
@@ -167,10 +185,12 @@
                 "rsyslog_client_tcp_port": 514
             },
             "cel1-dgx-07": {
+                "k8s_admin_kubeconfig": "${XDG_STATE_HOME:-~/.local/state}/rdma-fabric-lab/cel1/kubeconfig",
                 "k8s_api_endpoint": "10.140.0.10",
                 "k8s_api_port": 6443,
                 "k8s_api_vip": "10.140.0.10",
                 "k8s_api_vip_interface": "mgmt0",
+                "k8s_container_runtime_default": "nvidia",
                 "k8s_control_plane_schedulable": false,
                 "k8s_kube_proxy": false,
                 "k8s_node_ip": "10.140.0.27",
@@ -186,10 +206,12 @@
                 "rsyslog_client_tcp_port": 514
             },
             "cel1-dgx-08": {
+                "k8s_admin_kubeconfig": "${XDG_STATE_HOME:-~/.local/state}/rdma-fabric-lab/cel1/kubeconfig",
                 "k8s_api_endpoint": "10.140.0.10",
                 "k8s_api_port": 6443,
                 "k8s_api_vip": "10.140.0.10",
                 "k8s_api_vip_interface": "mgmt0",
+                "k8s_container_runtime_default": "nvidia",
                 "k8s_control_plane_schedulable": false,
                 "k8s_kube_proxy": false,
                 "k8s_node_ip": "10.140.0.28",
@@ -205,10 +227,12 @@
                 "rsyslog_client_tcp_port": 514
             },
             "cel1-pcie-01": {
+                "k8s_admin_kubeconfig": "${XDG_STATE_HOME:-~/.local/state}/rdma-fabric-lab/cel1/kubeconfig",
                 "k8s_api_endpoint": "10.140.0.10",
                 "k8s_api_port": 6443,
                 "k8s_api_vip": "10.140.0.10",
                 "k8s_api_vip_interface": "mgmt0",
+                "k8s_container_runtime_default": "runc",
                 "k8s_control_plane_schedulable": false,
                 "k8s_kube_proxy": false,
                 "k8s_node_ip": "10.140.0.31",
@@ -222,10 +246,12 @@
                 "rsyslog_client_tcp_port": 514
             },
             "cel1-pcie-02": {
+                "k8s_admin_kubeconfig": "${XDG_STATE_HOME:-~/.local/state}/rdma-fabric-lab/cel1/kubeconfig",
                 "k8s_api_endpoint": "10.140.0.10",
                 "k8s_api_port": 6443,
                 "k8s_api_vip": "10.140.0.10",
                 "k8s_api_vip_interface": "mgmt0",
+                "k8s_container_runtime_default": "runc",
                 "k8s_control_plane_schedulable": false,
                 "k8s_kube_proxy": false,
                 "k8s_node_ip": "10.140.0.32",

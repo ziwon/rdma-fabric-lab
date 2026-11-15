@@ -90,12 +90,14 @@ def healthy_endpoints(health: list[dict]) -> list[str]:
 
 
 class Run(RunBase):
-    def __init__(self, inventories: list[Path], config: dict, power_off: str, power_on: str, run_id: str | None):
-        super().__init__(SPEC, run_id)
+    def __init__(self, inventories: list[Path], config: dict, power_off: str, power_on: str, run_id: str | None,
+                 spec: Path = SPEC):
+        super().__init__(spec, run_id)
         self.inventories, self.config = inventories, config
         self.power_off, self.power_on = power_off, power_on
         listing = json.loads(subprocess.run(["ansible-inventory", "--list", *[a for i in inventories for a in ("-i", str(i))]],
                                             capture_output=True, text=True, check=True).stdout)
+        self.listing = listing
         self.nodes, self.first_cp, _ = cluster_from_listing(listing)
         self.cps = group_hosts(listing, "kube_control_plane")
         hv = listing["_meta"]["hostvars"][self.first_cp]
@@ -352,8 +354,7 @@ def main(argv: list[str] | None = None) -> int:
         for remote in run.remote.values():
             remote.remove_dir()
         if run.metrics:
-            (run.dir / "metrics.json").write_text(json.dumps(
-                {"schema_version": 1, "result_kind": "software-rdma-measurement", "metrics": run.metrics}, indent=2) + "\n")
+            rfl.write_metrics(run.dir, run.metrics)
         rfl.set_section(run.dir, "timing", {"wall_clock_seconds": round(time.monotonic() - run.started, 1)})
         code, message = rfl.finalize(run.dir)
         write_summary(run)

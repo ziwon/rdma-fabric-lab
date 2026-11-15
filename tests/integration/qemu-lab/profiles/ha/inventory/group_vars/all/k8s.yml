@@ -8,3 +8,4 @@ k8s_service_cidr: 10.96.0.0/12
 k8s_kube_proxy: true
 k8s_admin_kubeconfig: .lab/ha/kubeconfig
 lab_mgmt_nic: mgmt0
+k8s_container_runtime_default: runc

@@ -2,7 +2,7 @@
 
     hosts.yml                 k8s_cluster of kube_control_plane and kube_node, one group per class
     group_vars/all.yml        the cluster-wide contract variables and the syslog target
-    group_vars/<class>.yml    k8s_node_labels of the class
+    group_vars/<class>.yml    k8s_node_labels and k8s_container_runtime_default of the class
     host_vars/<host>.yml      k8s_node_ip
 
 The inventory sets no ansible_host. A second inventory passed after it says how to reach each
@@ -56,13 +56,15 @@ def render(site: Site) -> dict[str, str]:
                 "k8s_service_cidr": str(site.service_cidr),
                 "k8s_kube_proxy": site.kube_proxy,
                 "k8s_control_plane_schedulable": site.control_plane_schedulable,
+                "k8s_admin_kubeconfig": site.admin_kubeconfig,
                 "rsyslog_client_tcp_host": str(site.syslog_address),
                 "rsyslog_client_tcp_port": site.syslog_port,
             },
         ),
     }
     for node_class in site.classes.values():
-        files[f"group_vars/{node_class.name}.yml"] = _file(site, {"k8s_node_labels": dict(node_class.labels)})
+        files[f"group_vars/{node_class.name}.yml"] = _file(
+            site, {"k8s_node_labels": dict(node_class.labels), "k8s_container_runtime_default": node_class.container_runtime})
     for host in site.hosts.values():
         files[f"host_vars/{host.name}.yml"] = _file(site, {"k8s_node_ip": str(site.node_ip(host))})
     return files

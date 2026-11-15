@@ -1,11 +1,13 @@
 """Guest profiles of the QEMU harness: which guests boot, with which NICs on which networks.
 
 A profile is a TSV file under profiles/. Header lines name the inventory the profile belongs to,
-the CIDR of each switched network and, optionally, extra QEMU flags for every guest of the profile:
+the CIDR of each switched network and, optionally, extra QEMU flags for every guest of the profile
+and override groups of guests that stand in for something outside that inventory:
 
     #inventory ansible/inventories/lab
     #network mgmt 192.168.140.0/24
     #qemu -no-reboot
+    #group <group> <guest>...      the override puts these guests in <group> instead of the inventory
 
 Each guest row is: name, ssh_port, vcpus, mem_mib, disk_gib, then NIC specs separated by spaces.
 A NIC spec is comma separated key=value pairs:
@@ -17,6 +19,7 @@ A NIC spec is comma separated key=value pairs:
     vars=a|b               inventory variables the harness sets to the NIC name it finds by MAC
     name=<ifname>          rename the NIC at first boot; then no variable is written for it
     ip=<hostvar>           a static address from that host variable, prefixed by the network CIDR
+    addr=<ipv4>            a static address given in the profile, prefixed by the network CIDR
     fwd=<host>:<guest>     extra TCP forwards from 127.0.0.1 on a user NIC
 
 lab.sh calls the subcommands below; every rendering is a pure function of the profile.
@@ -58,6 +61,7 @@ class Nic:
     name: str | None = None
     ip_var: str | None = None
     forwards: tuple[tuple[int, int], ...] = ()
+    address: str | None = None
 
 
 @dataclass(frozen=True)
@@ -76,6 +80,10 @@ class Profile:
     networks: dict[str, ipaddress.IPv4Network] = field(default_factory=dict)
     guests: list[Guest] = field(default_factory=list)
     qemu_flags: tuple[str, ...] = ()
+    groups: dict[str, tuple[str, ...]] = field(default_factory=dict)
+
+    def grouped(self) -> set[str]:
+        return {g for members in self.groups.values() for g in members}
 
     def guest(self, name: str) -> Guest:
         for g in self.guests:
@@ -91,7 +99,7 @@ def parse_nic(text: str, where: str) -> Nic:
         if not sep or key in pairs:
             raise ProfileError(f"{where}: NIC spec {text!r} needs unique key=value pairs")
         pairs[key] = value
-    unknown = set(pairs) - {"mac", "net", "vars", "name", "ip", "fwd"}
+    unknown = set(pairs) - {"mac", "net", "vars", "name", "ip", "addr", "fwd"}
     if unknown:
         raise ProfileError(f"{where}: unknown NIC keys {sorted(unknown)}")
     mac = pairs.get("mac", "").lower()
@@ -111,7 +119,15 @@ def parse_nic(text: str, where: str) -> Nic:
         if not (host.isdigit() and guest.isdigit()) or kind != "user":
             raise ProfileError(f"{where}: fwd={item!r} needs <host port>:<guest port> on a user NIC")
         forwards.append((int(host), int(guest)))
-    return Nic(mac, kind, target or None, variables, name, pairs.get("ip") or None, tuple(forwards))
+    address = pairs.get("addr") or None
+    if address is not None:
+        try:
+            address = str(ipaddress.IPv4Address(address))
+        except ValueError:
+            raise ProfileError(f"{where}: addr={address!r} is not an IPv4 address") from None
+        if "ip" in pairs:
+            raise ProfileError(f"{where}: a NIC takes ip= or addr=, not both")
+    return Nic(mac, kind, target or None, variables, name, pairs.get("ip") or None, tuple(forwards), address)
 
 
 def parse(text: str) -> Profile:
@@ -129,6 +145,11 @@ def parse(text: str) -> Profile:
             if unknown:
                 raise ProfileError(f"{where}: QEMU flags {unknown} are not allowed. Allowed: {sorted(QEMU_FLAGS)}")
             profile.qemu_flags += flags
+        elif line.startswith("#group "):
+            _, group, *members = line.split()
+            if not VAR.match(group) or not members or group in profile.groups:
+                raise ProfileError(f"{where}: #group needs a new group name and at least one guest")
+            profile.groups[group] = tuple(members)
         elif line.strip() and not line.startswith("#"):
             cols = line.split("\t")
             if len(cols) != 6:
@@ -163,8 +184,16 @@ def validate(profile: Profile) -> None:
                 peer = profile.guest(n.target)
                 if not any(p.kind == "cable" and p.target == g.name for p in peer.nics):
                     raise ProfileError(f"{g.name}: cable to {n.target} has no NIC on {n.target} that names {g.name}")
-            if n.ip_var and n.kind != "switch":
-                raise ProfileError(f"{g.name}: ip= needs a switch NIC, whose #network gives the prefix")
+            if (n.ip_var or n.address) and n.kind != "switch":
+                raise ProfileError(f"{g.name}: ip= and addr= need a switch NIC, whose #network gives the prefix")
+            if n.address and ipaddress.ip_address(n.address) not in profile.networks[n.target]:
+                raise ProfileError(f"{g.name}: addr={n.address} lies outside {n.target} {profile.networks[n.target]}")
+    grouped = [m for members in profile.groups.values() for m in members]
+    for member in grouped:
+        profile.guest(member)
+    twice = sorted({m for m in grouped if grouped.count(m) > 1})
+    if twice:
+        raise ProfileError(f"#group: a guest belongs to one group only, not {', '.join(twice)}")
     for name, net in profile.networks.items():
         if net.overlaps(USER_NET):
             raise ProfileError(f"network {name} {net} overlaps the user network {USER_NET} inside the guests")
@@ -211,10 +240,10 @@ def network_config(profile: Profile, guest: Guest, hostvars: dict) -> dict:
             entry["set-name"] = nic.name
         if nic.kind == "user":
             entry["dhcp4"] = True
-        elif nic.ip_var:
-            if nic.ip_var not in hostvars:
+        elif nic.ip_var or nic.address:
+            if nic.ip_var and nic.ip_var not in hostvars:
                 raise ProfileError(f"{guest.name}: ip={nic.ip_var}, but the inventory gives {guest.name} no {nic.ip_var}")
-            address = ipaddress.ip_address(str(hostvars[nic.ip_var]))
+            address = ipaddress.ip_address(nic.address or str(hostvars[nic.ip_var]))
             net = profile.networks[nic.target]
             if address not in net:
                 raise ProfileError(f"{guest.name}: {nic.ip_var} {address} lies outside {nic.target} {net}")
@@ -226,8 +255,12 @@ def network_config(profile: Profile, guest: Guest, hostvars: dict) -> dict:
 
 
 def override_inventory(profile: Profile, discovered: dict[str, dict[str, str]], key: str, known_hosts: str,
-                       user: str = "ubuntu") -> dict:
-    """Connection variables and found NIC names. discovered maps guest -> MAC -> interface name."""
+                       user: str = "ubuntu", api: tuple[str, str] | None = None) -> dict:
+    """Connection variables and found NIC names. discovered maps guest -> MAC -> interface name.
+
+    api is (first control plane, forwarded API URL). That host gets rfl_kubeconfig_server, so the admin
+    kubeconfig the playbook writes names the forward and never the endpoint inside the guests.
+    """
     hosts = {}
     for g in profile.guests:
         found = discovered.get(g.name, {})
@@ -246,8 +279,14 @@ def override_inventory(profile: Profile, discovered: dict[str, dict[str, str]], 
             if nic.vars and nic.mac not in found:
                 raise ProfileError(f"{g.name}: no interface carries {nic.mac}")
             entry |= {var: found[nic.mac] for var in nic.vars}
+        if api and api[0] == g.name:
+            entry["rfl_kubeconfig_server"] = api[1]
         hosts[g.name] = entry
-    return {"all": {"hosts": hosts}}
+    grouped = profile.grouped()
+    tree: dict = {"hosts": {name: entry for name, entry in hosts.items() if name not in grouped}}
+    if profile.groups:
+        tree["children"] = {group: {"hosts": {m: hosts[m] for m in members}} for group, members in profile.groups.items()}
+    return {"all": tree}
 
 
 def api_url(profile: Profile, listing: dict) -> str | None:
@@ -304,12 +343,18 @@ def main(argv: list[str] | None = None) -> int:
             print(yaml.safe_dump(network_config(profile, profile.guest(args.guest), hostvars), sort_keys=False), end="")
         elif args.command == "override":
             members = set(_flatten(listing, "all"))
-            stray = [g.name for g in profile.guests if g.name not in members]
-            if stray:
-                raise ProfileError(f"guests {', '.join(stray)} are not hosts of {profile.inventory}")
+            grouped = profile.grouped()
+            stray = [g.name for g in profile.guests if g.name not in members and g.name not in grouped]
+            inside = sorted(grouped & members)
+            if stray or inside:
+                raise ProfileError(f"guests {', '.join(stray)} are not hosts of {profile.inventory}" if stray else
+                                   f"grouped guests {', '.join(inside)} are hosts of {profile.inventory}")
             discovered = json.loads(args.discovered.read_text())
+            first = (listing.get("kube_control_plane", {}).get("hosts") or [None])[0]
+            url = api_url(profile, listing)
             header = f"# Written by tests/integration/qemu-lab/lab.sh up. Pass it as a second -i after {profile.inventory}.\n"
-            print(header + yaml.safe_dump(override_inventory(profile, discovered, args.key, args.known_hosts), sort_keys=False), end="")
+            inventory = override_inventory(profile, discovered, args.key, args.known_hosts, api=(first, url) if url else None)
+            print(header + yaml.safe_dump(inventory, sort_keys=False), end="")
         elif args.command == "api-url":
             print(api_url(profile, listing) or "")
     except ProfileError as exc:

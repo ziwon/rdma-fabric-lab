@@ -86,10 +86,13 @@ kubeadm_cp_tainted: >-
      | selectattr('effect', 'equalto', 'NoSchedule') | list | length > 0 }}
 
 # Where the control node keeps the admin kubeconfig. A relative k8s_admin_kubeconfig is relative to the
-# repository root. Without one, the path of ADR 0001 section 5 for this inventory.
+# repository root. Without one, the path of ADR 0001 section 5 for this inventory. The state home of that
+# section, written as the ADR writes it, becomes the state home of the control node.
+kubeadm_state_home_token: ${XDG_STATE_HOME:-~/.local/state}
 kubeadm_state_home: "{{ lookup('ansible.builtin.env', 'XDG_STATE_HOME') or lookup('ansible.builtin.env', 'HOME') ~ '/.local/state' }}"
 kubeadm_kubeconfig_wanted: >-
-  {{ k8s_admin_kubeconfig | default(kubeadm_state_home ~ '/rdma-fabric-lab/' ~ rfl_inventory ~ '/kubeconfig', true) | expanduser }}
+  {{ k8s_admin_kubeconfig | default(kubeadm_state_home_token ~ '/rdma-fabric-lab/' ~ rfl_inventory ~ '/kubeconfig', true)
+     | replace(kubeadm_state_home_token, kubeadm_state_home) | expanduser }}
 kubeadm_kubeconfig_path: >-
   {{ kubeadm_kubeconfig_wanted if kubeadm_kubeconfig_wanted.startswith('/')
      else (role_path ~ '/../../../' ~ kubeadm_kubeconfig_wanted) | realpath }}

@@ -8,5 +8,6 @@ k8s_pod_cidr: 10.160.0.0/16
 k8s_service_cidr: 10.170.0.0/16
 k8s_kube_proxy: false
 k8s_control_plane_schedulable: false
+k8s_admin_kubeconfig: ${XDG_STATE_HOME:-~/.local/state}/rdma-fabric-lab/cel1/kubeconfig
 rsyslog_client_tcp_host: 10.140.0.5
 rsyslog_client_tcp_port: 514
