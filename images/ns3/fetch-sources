@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+# Fetch SimAI and the two submodules its ns3 build uses, each at one commit, and refuse any commit
+# other than the one the SimAI tree records for that submodule.
+#
+#   fetch-sources <dir> <simai-sha> <ns3-alibabacloud-sha> <simccl-sha>
+#
+# aicb and SimAI-CLEM generate workloads and are not part of the ns3 build, so they stay empty.
+# Prints "<name> <commit> <tree>" for each repository, the record the image keeps.
+set -euo pipefail
+
+[[ $# -eq 4 ]] || { echo "usage: fetch-sources <dir> <simai-sha> <ns3-alibabacloud-sha> <simccl-sha>" >&2; exit 2; }
+dir=$1 simai=$2 ns3=$3 simccl=$4
+for sha in "$simai" "$ns3" "$simccl"; do
+  [[ $sha =~ ^[0-9a-f]{40}$ ]] || { echo "$sha is not a commit SHA" >&2; exit 2; }
+done
+
+fetch() {
+  local path=$1 url=$2 sha=$3
+  rm -rf "$path"
+  git init -q "$path"
+  git -C "$path" remote add origin "$url"
+  git -C "$path" fetch -q --depth 1 origin "$sha"
+  git -C "$path" checkout -q --detach FETCH_HEAD
+  [[ $(git -C "$path" rev-parse HEAD) == "$sha" ]] || { echo "$path is not at $sha" >&2; exit 1; }
+  printf '%s\t%s\t%s\n' "${path##*/}" "$sha" "$(git -C "$path" rev-parse 'HEAD^{tree}')"
+}
+
+gitlink() { git -C "$dir" ls-tree HEAD "$1" | awk '$2 == "commit" {print $3}'; }
+
+fetch "$dir" https://github.com/aliyun/SimAI.git "$simai"
+for pair in "ns-3-alibabacloud $ns3" "SimCCL $simccl"; do
+  read -r name sha <<< "$pair"
+  [[ $(gitlink "$name") == "$sha" ]] || { echo "SimAI $simai records $name at $(gitlink "$name"), not $sha" >&2; exit 1; }
+done
+fetch "$dir/ns-3-alibabacloud" https://github.com/aliyun/ns-3-alibabacloud.git "$ns3"
+fetch "$dir/SimCCL" https://github.com/aliyun/SimCCL "$simccl"

@@ -1,0 +1,28 @@
+track: c-ns3
+scenario: c-01-example
+description: The quick smoke test that SimAI ships, unchanged. Its topology generator and the SimAI ns-3 simulator run the
+  microAllReduce workload on eight H20 GPUs behind one switch, twice with the same inputs. A packet-model simulation, not hardware.
+required: true
+result_kind: packet-model-simulation
+security:
+  privileged: false
+  device_exposure: None. Each run is one unprivileged container with no network inside the Track C guest, as 10001:10001 with a
+    read-only root. Its only writable mount is the run's output directory.
+checks:
+  - id: image-pinned
+    description: rfl-ns3:m5 in the Track C guest is the image the lock pins as ns3.image, and every container of the run starts that digest.
+  - id: container-locked-down
+    description: The guest is a VM with the Track C marker on the locked kernel. The container runs as 10001:10001, not privileged, with
+      no network, no device, every capability dropped, no-new-privileges, a read-only root, AppArmor docker-default and one writable
+      mount, the output directory. The entry point reports uid and gid 10001.
+  - id: example-completes
+    description: In both runs every step exits 0 and the simulator's stdout reports that the last node received all its data.
+  - id: result-files-written
+    description: Both runs write every result file the scenario names. The six that carry results are non-empty.
+  - id: rerun-identical
+    description: The two runs give byte-identical result files and no file the scenario does not name. A difference names the file and
+      its first differing line.
+  - id: no-container-left
+    description: After the run, guest.sh stop removed both containers and guest.sh ls lists no container of this run.
+  - id: host-untouched
+    description: At the start and the end of the run the host runs no simulator process and lists no Track C container.

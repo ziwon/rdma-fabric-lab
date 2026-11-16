@@ -1,0 +1,7 @@
+# Track C: one guest whose container runtime builds and runs the pinned ns-3 image, so the simulator
+# and its build never run on the host. It has no switched network or cable. A panic inside it ends
+# its QEMU process and leaves the console in serial.log.
+#inventory tests/integration/qemu-lab/profiles/ns3/inventory
+#qemu -no-reboot
+# name	ssh_port	vcpus	mem_mib	disk_gib	nics
+ns3sim1	22241	12	16384	100	mac=52:54:00:8c:02:41,net=user

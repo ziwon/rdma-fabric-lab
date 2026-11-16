@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+# Install Ubuntu packages from one archive snapshot only, then delete the apt and dpkg files that
+# carry the build time, so two builds from the same snapshot write the same bytes.
+#
+#   apt-snapshot-install <snapshot> <package>...
+#
+# The snapshot service is HTTPS only and the base image has no CA bundle, so the build mounts the
+# guest's bundle at /run/guest-ca for apt alone. apt still checks every index against the keyring.
+set -euo pipefail
+
+snapshot=$1
+shift
+[[ $snapshot =~ ^[0-9]{8}T[0-9]{6}Z$ && $# -gt 0 ]] || { echo "usage: apt-snapshot-install <snapshot> <package>..." >&2; exit 2; }
+# shellcheck source=/dev/null
+. /etc/os-release
+rm -f /etc/apt/sources.list /etc/apt/sources.list.d/*
+printf 'Types: deb\nURIs: https://snapshot.ubuntu.com/ubuntu/%s/\nSuites: %s %s-updates %s-security\nComponents: main universe\nSigned-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg\n' \
+  "$snapshot" "$VERSION_CODENAME" "$VERSION_CODENAME" "$VERSION_CODENAME" > /etc/apt/sources.list.d/ubuntu-snapshot.sources
+ca=(-o Acquire::https::CaInfo=/run/guest-ca/ca-certificates.crt)
+apt-get "${ca[@]}" update --error-on=any
+DEBIAN_FRONTEND=noninteractive apt-get "${ca[@]}" install -y --no-install-recommends "$@"
+dpkg-query -W -f='installed ${Package}=${Version}\n' "$@"
+rm -rf /var/lib/apt/lists/* /var/cache/apt/*.bin /var/log/apt /var/log/dpkg.log /var/log/alternatives.log \
+  /var/cache/ldconfig/aux-cache /var/cache/debconf/*-old /var/lib/dpkg/*-old
+find /usr -name __pycache__ -type d -prune -exec rm -rf {} +

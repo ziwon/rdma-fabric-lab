@@ -301,21 +301,76 @@ components:
       ID. Every Track B scenario ran on it.
     source: docker image inspect --format {{.Id}} rfl-ibsim:m4 inside ibsim1 after guest.sh build
       (docs/milestones/evidence/m4/image-build-final-1.log, image-build-final-2.log)
+  ns3.guest_kernel:
+    kind: observed
+    value: 6.8.0-147-generic
+    reason: Kernel the lab.guest_image boots in the ns3 harness guest. The ns-3 build and every simulator run happen on this kernel,
+      never on the host kernel. track-c-guest.yml refuses any other.
+    source: uname -r inside ns3sim1 of tests/integration/qemu-lab/profiles/ns3.tsv (docs/milestones/evidence/m5/guest-facts.txt)
   ns3.simai:
     kind: git-sha
-    value: null
-    reason: Selected at milestone M5 after the build probe succeeds.
-    source: not selected yet, milestone M5
+    value: a57d765c5478f319c5f5ab6fdc53f9cc7f461743
+    ref: master of github.com/aliyun/SimAI on 2026-11-16, committed 2026-09-20
+    reason: Newest SimAI commit. Its ./scripts/build.sh -c ns3 builds the ns-3 network backend and the shipped quick-start example
+      runs on it. The build probe in ns3sim1 built it with gcc 13.3.0, CMake 3.28.3 and Python 3.12.3 in 62 s and ran the example twice.
+    source: git ls-remote and the probe in docs/milestones/evidence/m5/probe/02-simai-noble-inner.log
   ns3.ns3_alibabacloud:
     kind: git-sha
-    value: null
-    reason: Submodule commit that the selected SimAI commit resolves to.
-    source: not selected yet, milestone M5
+    value: 3e0c7c1bfbbe9f77890ddcf5e5b9c79fc6dd7437
+    ref: gitlink ns-3-alibabacloud of SimAI a57d765
+    reason: Submodule commit that ns3.simai records. It is the master HEAD of github.com/aliyun/ns-3-alibabacloud on 2026-11-16, ns-3
+      3.36.1 with the RDMA, PFC, ECN and DCQCN model. images/ns3/fetch-sources refuses any other commit.
+    source: git ls-tree a57d765 ns-3-alibabacloud (docs/milestones/evidence/m5/probe/00-source-reading.txt)
+  ns3.simccl:
+    kind: git-sha
+    value: fd7cd57d16f9bd42e3ccb70911c977e18ec294b9
+    ref: gitlink SimCCL of SimAI a57d765
+    reason: Submodule commit that ns3.simai records. The ns3 build copies its mock NCCL v2.30 sources into the ns-3 applications module.
+      aicb and SimAI-CLEM generate workloads and are not fetched.
+    source: git ls-tree a57d765 SimCCL (docs/milestones/evidence/m5/probe/00-source-reading.txt)
+  ns3.base_image:
+    kind: image-digest
+    value: sha256:2198e4c65076e9cb0b3d695219df667c0e3b0072da64ca3c2648aca17dcecaf5
+    ref: ubuntu:24.04
+    reason: The ubuntu:24.04 index that ibsim.base_image pins, created 2026-11-10. Both stages of images/ns3/Dockerfile start from it by
+      digest. The probe built SimAI on it, so no older userspace is needed. The tag ubuntu:24.04 has moved since.
+    source: docker pull and docker image inspect inside ns3sim1 (docs/milestones/evidence/m5/probe/01-base-image.txt)
+  ns3.apt_snapshot:
+    kind: version
+    value: 20261115T000000Z
+    reason: Ubuntu archive snapshot that both image stages install every package from, the one ibsim.apt_snapshot pins.
+      images/ns3/apt-snapshot-install replaces the base image's sources with it alone.
+    source: https://snapshot.ubuntu.com/ubuntu/20261115T000000Z/
+  ns3.source_date_epoch:
+    kind: version
+    value: '1789890942'
+    reason: SOURCE_DATE_EPOCH of the image build, the commit time of ns3.simai (2026-09-20T15:55:42+08:00). BuildKit sets every file
+      time and the image creation time to it, so a rebuild writes no build time.
+    source: git log -1 --format=%ct a57d765c5478f319c5f5ab6fdc53f9cc7f461743
+  ns3.gcc:
+    kind: observed
+    value: 13.3.0-6ubuntu2~24.04.1
+    reason: gcc and g++ that ns3.apt_snapshot installs for build-essential on the base image. SimAI asks for 9.4 or newer with C++17.
+    source: g++ --version in the probe container (docs/milestones/evidence/m5/probe/02-simai-noble-inner.log)
+  ns3.cmake:
+    kind: observed
+    value: 3.28.3-1build7
+    reason: cmake from ns3.apt_snapshot. SimAI asks for 3.14 or newer. ninja is absent, as SimAI requires.
+    source: dpkg-query in the probe container (docs/milestones/evidence/m5/probe/02-simai-noble-inner.log)
+  ns3.python:
+    kind: observed
+    value: 3.12.3-0ubuntu2.1
+    reason: python3 from ns3.apt_snapshot. It runs the ./ns3 build wrapper and SimAI's topology generator. SimAI asks for 3.8 or newer.
+    source: dpkg-query in the probe container (docs/milestones/evidence/m5/probe/02-simai-noble-inner.log)
   ns3.image:
     kind: image-digest
-    value: null
-    reason: Built at milestone M5.
-    source: not selected yet, milestone M5
+    value: sha256:81d839a74436b429f9439bc9039072818cb12a32cc4f23dbe001102695470713
+    ref: rfl-ns3:m5
+    reason: Built from images/ns3/Dockerfile inside ns3sim1 by make track-c-image. The first build and a build after guest.sh clean,
+      which deleted the tag, the base image and every BuildKit cache entry, gave this same manifest digest with no cached step.
+      BuildKit rewrote every layer to ns3.source_date_epoch. Every Track C scenario ran on it.
+    source: docker image inspect --format {{.Id}} rfl-ns3:m5 inside ns3sim1 after guest.sh build (docs/milestones/evidence/m5/image-build-1.log,
+      image-build-clean-1.log)
 scopes:
   tooling:
     - tooling.python
@@ -387,6 +442,18 @@ scopes:
     - ibsim.infiniband_diags
     - ibsim.image
   m5:
+    - ns3.guest_kernel
+    - ibsim.guest_docker
+    - ibsim.guest_buildx
+    - ibsim.guest_containerd
+    - ibsim.guest_runc
     - ns3.simai
     - ns3.ns3_alibabacloud
+    - ns3.simccl
+    - ns3.base_image
+    - ns3.apt_snapshot
+    - ns3.source_date_epoch
+    - ns3.gcc
+    - ns3.cmake
+    - ns3.python
     - ns3.image

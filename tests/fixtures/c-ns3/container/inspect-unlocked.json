@@ -1,0 +1,239 @@
+[
+    {
+        "Id": "e4a5726b2145b2d295a7a9f868da2d9c870c5f75e018e87e7fe22a7a2b7e42f4",
+        "Created": "2026-11-16T13:58:41.21903738Z",
+        "Path": "/usr/local/bin/rfl-ns3",
+        "Args": [
+            "steps"
+        ],
+        "State": {
+            "Status": "exited",
+            "Running": false,
+            "Paused": false,
+            "Restarting": false,
+            "OOMKilled": false,
+            "Dead": false,
+            "Pid": 0,
+            "ExitCode": 0,
+            "Error": "",
+            "StartedAt": "2026-11-16T13:58:41.295459614Z",
+            "FinishedAt": "2026-11-16T13:58:41.450061385Z"
+        },
+        "Image": "sha256:81d839a74436b429f9439bc9039072818cb12a32cc4f23dbe001102695470713",
+        "ResolvConfPath": "/var/lib/docker/containers/e4a5726b2145b2d295a7a9f868da2d9c870c5f75e018e87e7fe22a7a2b7e42f4/resolv.conf",
+        "HostnamePath": "/var/lib/docker/containers/e4a5726b2145b2d295a7a9f868da2d9c870c5f75e018e87e7fe22a7a2b7e42f4/hostname",
+        "HostsPath": "/var/lib/docker/containers/e4a5726b2145b2d295a7a9f868da2d9c870c5f75e018e87e7fe22a7a2b7e42f4/hosts",
+        "LogPath": "/var/lib/docker/containers/e4a5726b2145b2d295a7a9f868da2d9c870c5f75e018e87e7fe22a7a2b7e42f4/e4a5726b2145b2d295a7a9f868da2d9c870c5f75e018e87e7fe22a7a2b7e42f4-json.log",
+        "Name": "/rfl-ns3-20261116T135839Z-c-02-single-flow-run1",
+        "RestartCount": 0,
+        "Driver": "overlayfs",
+        "Platform": "linux",
+        "MountLabel": "",
+        "ProcessLabel": "",
+        "AppArmorProfile": "docker-default",
+        "ExecIDs": null,
+        "HostConfig": {
+            "Binds": [
+                "/var/tmp/rfl-track-c/runs/20261116T135839Z-c-02-single-flow/run1/in:/run/rfl/in:ro",
+                "/var/tmp/rfl-track-c/runs/20261116T135839Z-c-02-single-flow/run1/out:/run/rfl/out:rw",
+                "/etc/rfl/track-c-guest:/run/rfl-guest/track-c-guest:ro"
+            ],
+            "ContainerIDFile": "",
+            "LogConfig": {
+                "Type": "json-file",
+                "Config": {}
+            },
+            "NetworkMode": "none",
+            "PortBindings": {},
+            "RestartPolicy": {
+                "Name": "no",
+                "MaximumRetryCount": 0
+            },
+            "AutoRemove": false,
+            "VolumeDriver": "",
+            "VolumesFrom": null,
+            "ConsoleSize": [
+                0,
+                0
+            ],
+            "CapAdd": null,
+            "CapDrop": [
+                "ALL"
+            ],
+            "CgroupnsMode": "private",
+            "Dns": null,
+            "DnsOptions": [],
+            "DnsSearch": [],
+            "ExtraHosts": null,
+            "GroupAdd": null,
+            "IpcMode": "private",
+            "Cgroup": "",
+            "Links": null,
+            "OomScoreAdj": 0,
+            "PidMode": "",
+            "Privileged": false,
+            "PublishAllPorts": false,
+            "ReadonlyRootfs": false,
+            "SecurityOpt": [
+                "no-new-privileges"
+            ],
+            "Tmpfs": {
+                "/tmp": "rw,nosuid,nodev,noexec,size=64m"
+            },
+            "UTSMode": "",
+            "UsernsMode": "",
+            "ShmSize": 67108864,
+            "Runtime": "runc",
+            "Isolation": "",
+            "CpuShares": 0,
+            "Memory": 8589934592,
+            "NanoCpus": 8000000000,
+            "CgroupParent": "",
+            "BlkioWeight": 0,
+            "BlkioWeightDevice": [],
+            "BlkioDeviceReadBps": [],
+            "BlkioDeviceWriteBps": [],
+            "BlkioDeviceReadIOps": [],
+            "BlkioDeviceWriteIOps": [],
+            "CpuPeriod": 0,
+            "CpuQuota": 0,
+            "CpuRealtimePeriod": 0,
+            "CpuRealtimeRuntime": 0,
+            "CpusetCpus": "",
+            "CpusetMems": "",
+            "Devices": [],
+            "DeviceCgroupRules": null,
+            "DeviceRequests": null,
+            "MemoryReservation": 0,
+            "MemorySwap": 17179869184,
+            "MemorySwappiness": null,
+            "OomKillDisable": null,
+            "PidsLimit": 256,
+            "Ulimits": [],
+            "CpuCount": 0,
+            "CpuPercent": 0,
+            "IOMaximumIOps": 0,
+            "IOMaximumBandwidth": 0,
+            "MaskedPaths": [
+                "/proc/acpi",
+                "/proc/asound",
+                "/proc/interrupts",
+                "/proc/kcore",
+                "/proc/keys",
+                "/proc/latency_stats",
+                "/proc/sched_debug",
+                "/proc/scsi",
+                "/proc/timer_list",
+                "/proc/timer_stats",
+                "/sys/devices/virtual/powercap",
+                "/sys/firmware"
+            ],
+            "ReadonlyPaths": [
+                "/proc/bus",
+                "/proc/fs",
+                "/proc/irq",
+                "/proc/sys",
+                "/proc/sysrq-trigger"
+            ]
+        },
+        "Storage": {
+            "RootFS": {
+                "Snapshot": {
+                    "Name": "overlayfs"
+                }
+            }
+        },
+        "Mounts": [
+            {
+                "Type": "bind",
+                "Source": "/var/tmp/rfl-track-c/runs/20261116T135839Z-c-02-single-flow/run1/in",
+                "Destination": "/run/rfl/in",
+                "Mode": "ro",
+                "RW": false,
+                "Propagation": "rprivate"
+            },
+            {
+                "Type": "bind",
+                "Source": "/var/tmp/rfl-track-c/runs/20261116T135839Z-c-02-single-flow/run1/out",
+                "Destination": "/run/rfl/out",
+                "Mode": "rw",
+                "RW": true,
+                "Propagation": "rprivate"
+            },
+            {
+                "Type": "bind",
+                "Source": "/etc/rfl/track-c-guest",
+                "Destination": "/run/rfl-guest/track-c-guest",
+                "Mode": "ro",
+                "RW": false,
+                "Propagation": "rprivate"
+            }
+        ],
+        "Config": {
+            "Hostname": "e4a5726b2145",
+            "Domainname": "",
+            "User": "10001:10001",
+            "AttachStdin": false,
+            "AttachStdout": true,
+            "AttachStderr": true,
+            "Tty": false,
+            "OpenStdin": false,
+            "StdinOnce": false,
+            "Env": [
+                "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+                "HOME=/run/rfl/out",
+                "PYTHONDONTWRITEBYTECODE=1"
+            ],
+            "Cmd": [
+                "steps"
+            ],
+            "Image": "sha256:81d839a74436b429f9439bc9039072818cb12a32cc4f23dbe001102695470713",
+            "Volumes": null,
+            "WorkingDir": "/run/rfl/out",
+            "Entrypoint": [
+                "/usr/local/bin/rfl-ns3"
+            ],
+            "Labels": {
+                "org.opencontainers.image.version": "24.04",
+                "rfl.run": "20261116T135839Z-c-02-single-flow",
+                "rfl.track": "c-ns3"
+            }
+        },
+        "NetworkSettings": {
+            "SandboxID": "",
+            "SandboxKey": "",
+            "Ports": {},
+            "Networks": {
+                "none": {
+                    "IPAMConfig": null,
+                    "Links": null,
+                    "Aliases": null,
+                    "DriverOpts": null,
+                    "GwPriority": 0,
+                    "NetworkID": "af4d7118d5f4910f182257aca66b9dd04f709058745351f08dd580001095e7fd",
+                    "EndpointID": "",
+                    "Gateway": "",
+                    "IPAddress": "",
+                    "MacAddress": "",
+                    "IPPrefixLen": 0,
+                    "IPv6Gateway": "",
+                    "GlobalIPv6Address": "",
+                    "GlobalIPv6PrefixLen": 0,
+                    "DNSNames": null
+                }
+            }
+        },
+        "ImageManifestDescriptor": {
+            "mediaType": "application/vnd.docker.distribution.manifest.v2+json",
+            "digest": "sha256:81d839a74436b429f9439bc9039072818cb12a32cc4f23dbe001102695470713",
+            "size": 2069,
+            "annotations": {
+                "config.digest": "sha256:deba0e45e11bd2b43872c3df535fb6701c8334e094b4c51a6e56dc6367f80b19"
+            },
+            "platform": {
+                "architecture": "amd64",
+                "os": "linux"
+            }
+        }
+    }
+]
