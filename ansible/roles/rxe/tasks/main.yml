@@ -66,12 +66,21 @@
 - name: Run changed device settings through the unit
   ansible.builtin.meta: flush_handlers
 
-- name: Enable and start the unit
+- name: Read the RDMA links after the unit settings
+  ansible.builtin.command: rdma -j link show
+  register: rxe_links_settled
+  changed_when: false
+  check_mode: false
+
+# The unit is a oneshot that stays active, so a device deleted since boot comes back only through a restart.
+- name: Enable and start the unit, and run it again when the device is missing
   ansible.builtin.systemd_service:
     name: rfl-rxe.service
     enabled: true
-    state: started
+    state: "{{ 'restarted' if rxe_missing else 'started' }}"
     daemon_reload: true
+  vars:
+    rxe_missing: "{{ rxe_links_settled.stdout | from_json | selectattr('ifname', 'equalto', lab_rxe_device) | list | length == 0 }}"
 
 - name: Read the RDMA links again
   ansible.builtin.command: rdma -j link show

@@ -1,0 +1,24 @@
+{
+  "items": [
+    {
+      "metadata": {
+        "name": "10.77.0.0-24"
+      },
+      "spec": {
+        "allocations": {
+          "100": {
+            "id": "2b5f384c4c2427b49bad8e0a2f809638d08a804b0a92c62a29c18ebee21f9b38",
+            "ifname": "net1",
+            "podref": "rdma-lab/net1-server"
+          },
+          "101": {
+            "id": "a19c1056122278553ed10578bccaa9285df17189bd775f9ed1c86dcd0e66161b",
+            "ifname": "net1",
+            "podref": "rdma-lab/net1-client"
+          }
+        },
+        "range": "10.77.0.0/24"
+      }
+    }
+  ]
+}

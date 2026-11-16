@@ -1,0 +1,6 @@
+17: eth0@if18: <BROADCAST,MULTICAST,UP,LOWER_UP,M-DOWN> mtu 1500 qdisc noqueue 
+    inet 10.244.2.46/32 scope global eth0
+       valid_lft forever preferred_lft forever
+2: net1@if3: <BROADCAST,MULTICAST,UP,LOWER_UP,M-DOWN> mtu 1500 qdisc noqueue qlen 1000
+    inet 10.77.0.100/24 brd 10.77.0.255 scope global net1
+       valid_lft forever preferred_lft forever

@@ -1,8 +1,10 @@
 # Lab profile: cp1 and two workers at the lab budget sizes. The user NIC carries SSH and package
 # downloads, the switched mgmt network carries Kubernetes, and the cable joins the two RDMA NICs.
+# Both RDMA NICs are renamed lab0 at first boot, so one Multus NetworkAttachmentDefinition names the
+# same master on every worker.
 #inventory ansible/inventories/lab
 #network mgmt 192.168.140.0/24
 # name	ssh_port	vcpus	mem_mib	disk_gib	nics
 cp1	22211	2	4096	30	mac=52:54:00:8c:00:11,net=user,vars=lab_uplink_nic,fwd=22643:6443 mac=52:54:00:6d:00:11,net=switch:mgmt,vars=lab_mgmt_nic,ip=k8s_node_ip
-worker1	22212	4	6144	40	mac=52:54:00:8c:00:12,net=user,vars=lab_uplink_nic mac=52:54:00:4d:00:12,net=cable:worker2,vars=lab_rdma_nic mac=52:54:00:6d:00:12,net=switch:mgmt,vars=lab_mgmt_nic,ip=k8s_node_ip
-worker2	22213	4	6144	40	mac=52:54:00:8c:00:13,net=user,vars=lab_uplink_nic mac=52:54:00:4d:00:13,net=cable:worker1,vars=lab_rdma_nic mac=52:54:00:6d:00:13,net=switch:mgmt,vars=lab_mgmt_nic,ip=k8s_node_ip
+worker1	22212	4	6144	40	mac=52:54:00:8c:00:12,net=user,vars=lab_uplink_nic mac=52:54:00:4d:00:12,net=cable:worker2,name=lab0,vars=lab_rdma_nic mac=52:54:00:6d:00:12,net=switch:mgmt,vars=lab_mgmt_nic,ip=k8s_node_ip
+worker2	22213	4	6144	40	mac=52:54:00:8c:00:13,net=user,vars=lab_uplink_nic mac=52:54:00:4d:00:13,net=cable:worker1,name=lab0,vars=lab_rdma_nic mac=52:54:00:6d:00:13,net=switch:mgmt,vars=lab_mgmt_nic,ip=k8s_node_ip

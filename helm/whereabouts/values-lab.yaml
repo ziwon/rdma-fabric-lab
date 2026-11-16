@@ -1,0 +1,4 @@
+# Whereabouts IPAM for the Multus secondary network of the lab, on the 0.9.4 chart.
+# The lab's NetworkAttachmentDefinition sets no node_slice_size, so the node slice controller has no work.
+nodeSliceController:
+  enabled: false

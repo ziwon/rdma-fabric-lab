@@ -1,0 +1,28 @@
+{
+  "items": [
+    {
+      "metadata": {
+        "name": "net1-client",
+        "annotations": {
+          "k8s.v1.cni.cncf.io/network-status": "[{\n    \"name\": \"cilium\",\n    \"interface\": \"eth0\",\n    \"ips\": [\n        \"10.244.1.70\"\n    ],\n    \"mac\": \"96:6f:47:c9:79:d8\",\n    \"default\": true,\n    \"dns\": {},\n    \"gateway\": [\n        \"10.244.1.109\"\n    ]\n},{\n    \"name\": \"rdma-lab/rdma-lab-net\",\n    \"interface\": \"net1\",\n    \"ips\": [\n        \"10.77.0.101\"\n    ],\n    \"mac\": \"06:b6:b7:36:45:c6\",\n    \"dns\": {}\n}]",
+          "k8s.v1.cni.cncf.io/networks": "rdma-lab-net"
+        }
+      },
+      "spec": {
+        "nodeName": "worker2"
+      }
+    },
+    {
+      "metadata": {
+        "name": "net1-server",
+        "annotations": {
+          "k8s.v1.cni.cncf.io/network-status": "[{\n    \"name\": \"cilium\",\n    \"interface\": \"eth0\",\n    \"ips\": [\n        \"10.244.2.46\"\n    ],\n    \"mac\": \"36:7c:63:41:bc:60\",\n    \"default\": true,\n    \"dns\": {},\n    \"gateway\": [\n        \"10.244.2.64\"\n    ]\n},{\n    \"name\": \"rdma-lab/rdma-lab-net\",\n    \"interface\": \"net1\",\n    \"ips\": [\n        \"10.77.0.100\"\n    ],\n    \"mac\": \"42:ba:76:9b:1e:ca\",\n    \"dns\": {}\n}]",
+          "k8s.v1.cni.cncf.io/networks": "rdma-lab-net"
+        }
+      },
+      "spec": {
+        "nodeName": "worker1"
+      }
+    }
+  ]
+}

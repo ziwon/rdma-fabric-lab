@@ -16,7 +16,7 @@ import signal
 import subprocess
 import sys
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 import yaml
@@ -33,13 +33,15 @@ PLAYBOOKS = REPO_ROOT / "ansible" / "playbooks"
 
 @dataclass(frozen=True)
 class Proc:
-    """One guest process of a check: its exit code (None if it never finished) and output."""
+    """One process of a check: its exit code (None if it never finished), output, command and where it ran."""
 
     guest: str
     role: str
     rc: int | None
     stdout: str
     stderr: str
+    command: str = ""
+    where: dict = field(default_factory=dict)
 
     @property
     def output(self) -> str:
@@ -63,11 +65,13 @@ class Run(RunBase):
             self.raw(f"{base}.rc", f"{'still running at the deadline' if proc.rc is None else proc.rc}\n"),
             self.raw(f"{base}.stdout", proc.stdout),
             self.raw(f"{base}.stderr", proc.stderr),
+            self.raw(f"{base}.context.json", json.dumps({**proc.where, "role": proc.role, "command": proc.command}, indent=2) + "\n"),
         ]
 
 
-def peer_of(run: Run, remote: Remote) -> Remote:
-    return run.client if remote is run.server else run.server
+def peer_of(run: Run, remote) -> Remote:
+    """The other end of the server and client pair, by guest, whatever runs the processes there."""
+    return run.client if remote.guest.name == run.server.guest.name else run.server
 
 
 # ---------------------------------------------------------------- environment
@@ -165,8 +169,8 @@ def check_route(run: Run) -> Outcome:
 # ---------------------------------------------------------------- client and server pairs
 
 
-def collect_proc(remote: Remote, name: str, role: str, rc: int | None) -> Proc:
-    return Proc(remote.guest.name, role, rc, remote.read(f"{name}.out"), remote.read(f"{name}.err"))
+def collect_proc(remote: Remote, name: str, role: str, rc: int | None, command: str) -> Proc:
+    return Proc(remote.guest.name, role, rc, remote.read(f"{name}.out"), remote.read(f"{name}.err"), command, remote.where())
 
 
 def wait_listening(run: Run, check_id: str, name: str, comm: str, port: int) -> tuple[str, int | None]:
@@ -187,13 +191,6 @@ def wait_listening(run: Run, check_id: str, name: str, comm: str, port: int) -> 
         time.sleep(0.5)
 
 
-def stop_session(remote: Remote, name: str) -> None:
-    remote.sh(
-        f"sid=$(cat {remote.dir}/{name}.pid 2>/dev/null) && [ -n \"$sid\" ] && "
-        "{ sudo pkill -TERM -s \"$sid\"; sleep 1; sudo pkill -KILL -s \"$sid\"; }; true"
-    )
-
-
 def run_pair(run: Run, check_id: str, comm: str, port: int, server_cmd: str, client_cmd: str,
              timeout_s: int) -> tuple[Proc, Proc | None, str]:
     """Server first, client once the server listens. Returns both processes and why the pair ended."""
@@ -206,12 +203,12 @@ def run_pair(run: Run, check_id: str, comm: str, port: int, server_cmd: str, cli
         run.client.start(c_name, client_cmd, timeout_s)
         c_rc = run.client.wait(c_name, timeout_s + KILL_AFTER_S + 10)
         if c_rc is None:
-            stop_session(run.client, c_name)
-        client = collect_proc(run.client, c_name, "client", c_rc)
+            run.client.stop_session(c_name)
+        client = collect_proc(run.client, c_name, "client", c_rc, client_cmd)
         s_rc = run.server.wait(s_name, run.config["server_drain_s"])
     if s_rc is None:
-        stop_session(run.server, s_name)
-    server = collect_proc(run.server, s_name, "server", s_rc)
+        run.server.stop_session(s_name)
+    server = collect_proc(run.server, s_name, "server", s_rc, server_cmd)
     return server, client, state
 
 

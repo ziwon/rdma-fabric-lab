@@ -37,12 +37,18 @@ def test_switch_and_cable_nics_are_unix_datagram_sockets_under_the_lab_dir():
     assert "local.path=/lab/net/mgmt/worker1.nic" in netdevs[1] and "remote.path=/lab/net/mgmt/worker1.port" in netdevs[1]
 
 
-def test_network_config_gives_the_node_ip_to_the_switched_nic_and_leaves_the_rdma_nic_to_ansible():
+def test_network_config_gives_the_node_ip_to_the_switched_nic_and_leaves_the_rdma_address_to_ansible():
     config = guests.network_config(LAB, LAB.guest("worker1"), HOSTVARS["worker1"])
     entries = list(config["ethernets"].values())
     assert entries[0] == {"match": {"macaddress": "52:54:00:8c:00:12"}, "dhcp4": True}
-    assert entries[1]["addresses"] == ["192.168.140.12/24"] and entries[1]["dhcp4"] is False
-    assert len(entries) == 2
+    assert entries[1] == {"match": {"macaddress": "52:54:00:4d:00:12"}, "set-name": "lab0"}
+    assert entries[2]["addresses"] == ["192.168.140.12/24"] and entries[2]["dhcp4"] is False
+    assert len(entries) == 3
+
+
+def test_both_workers_name_their_lab_nic_alike_so_one_network_attachment_fits_both():
+    names = {g.name: [n.name for n in g.nics if "lab_rdma_nic" in n.vars] for g in LAB.guests}
+    assert names == {"cp1": [], "worker1": ["lab0"], "worker2": ["lab0"]}
 
 
 def test_declared_names_are_renamed_at_first_boot_and_get_no_inventory_variable():
@@ -60,14 +66,22 @@ def test_a_declared_name_the_guest_does_not_carry_is_refused():
         guests.override_inventory(HA, found, "/k", "/kh")
 
 
-def test_found_nic_names_land_in_the_variables_the_profile_names():
-    found = {"cp1": {"52:54:00:8c:00:11": "enp0s3", "52:54:00:6d:00:11": "enp0s4"},
-             "worker1": {"52:54:00:8c:00:12": "enp0s3", "52:54:00:4d:00:12": "enp0s4", "52:54:00:6d:00:12": "enp0s5"},
-             "worker2": {"52:54:00:8c:00:13": "enp0s3", "52:54:00:4d:00:13": "enp0s4", "52:54:00:6d:00:13": "enp0s5"}}
-    hosts = guests.override_inventory(LAB, found, "/k", "/kh")["all"]["hosts"]
-    want = {"lab_uplink_nic": "enp0s3", "lab_rdma_nic": "enp0s4", "lab_mgmt_nic": "enp0s5", "ansible_port": 22212,
+LAB_FOUND = {"cp1": {"52:54:00:8c:00:11": "enp0s3", "52:54:00:6d:00:11": "enp0s4"},
+             "worker1": {"52:54:00:8c:00:12": "enp0s3", "52:54:00:4d:00:12": "lab0", "52:54:00:6d:00:12": "enp0s5"},
+             "worker2": {"52:54:00:8c:00:13": "enp0s3", "52:54:00:4d:00:13": "lab0", "52:54:00:6d:00:13": "enp0s5"}}
+
+
+def test_found_and_declared_nic_names_land_in_the_variables_the_profile_names():
+    hosts = guests.override_inventory(LAB, LAB_FOUND, "/k", "/kh")["all"]["hosts"]
+    want = {"lab_uplink_nic": "enp0s3", "lab_rdma_nic": "lab0", "lab_mgmt_nic": "enp0s5", "ansible_port": 22212,
             "ansible_host": "127.0.0.1"}
     assert {k: hosts["worker1"][k] for k in want} == want
+
+
+def test_a_lab_nic_that_kept_its_kernel_name_is_refused():
+    found = {**LAB_FOUND, "worker2": {**LAB_FOUND["worker2"], "52:54:00:4d:00:13": "enp0s4"}}
+    with pytest.raises(guests.ProfileError, match="worker2: 52:54:00:4d:00:13 is enp0s4, not the declared lab0"):
+        guests.override_inventory(LAB, found, "/k", "/kh")
 
 
 def test_api_url_is_the_forward_of_the_first_control_plane():

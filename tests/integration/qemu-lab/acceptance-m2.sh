@@ -3,10 +3,12 @@
 # Every step's output lands in .lab/acceptance-m2/<UTC time>/NN-<step>.log and its exit code
 # in steps.tsv next to the exit code the step should have.
 # It deletes the lab profile guests first, so it never runs against anything else.
+# LAB_DIR moves the guests' files, as for lab.sh.
 set -euo pipefail
 
 here=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 repo=$(cd "$here/../../.." && pwd)
+lab_dir=${LAB_DIR:-$repo/.lab}
 out=$repo/.lab/acceptance-m2/$(date -u +%Y%m%dT%H%M%SZ)
 mkdir -p "$out"
 cd "$repo"
@@ -48,8 +50,8 @@ one_revision() {
 
 # The harness sockets are AF_UNIX only, and the switch runs without capabilities.
 harness_sockets() {
-  ss -xlp | grep -F "$repo/.lab/net/"
-  grep -E '^Cap(Inh|Prm|Eff)' "/proc/$(cat .lab/net/mgmt/switch.pid)/status"
+  ss -xlp | grep -F "$lab_dir/net/"
+  grep -E '^Cap(Inh|Prm|Eff)' "/proc/$(cat "$lab_dir/net/mgmt/switch.pid")/status"
 }
 
 # sha256 of every release file the containerd role installed, and a byte comparison of each

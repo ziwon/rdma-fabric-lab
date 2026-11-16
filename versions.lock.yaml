@@ -174,11 +174,60 @@ components:
     value: v4.3.2
     reason: Newest Multus release on 2026-11-15. Applied from the pinned upstream manifest at milestone M3.
     source: https://github.com/k8snetworkplumbingwg/multus-cni/releases/tag/v4.3.2
+  cni.multus_manifest:
+    kind: checksum
+    value: sha256:5e25393b382931836b48a77a085c536b133d545dc2a1254702442ea4c0f2ed73
+    ref: v4.3.2
+    reason: deployments/multus-daemonset-thick.yml at tag v4.3.2, commit 1d81062afcb32eb7290fa28bcbc482c3d0c5cae9. Multus publishes
+      no Helm chart for v4.3.2, so helm/multus/chart carries this file byte for byte and swaps only its snapshot-thick image for
+      cni.multus_image. A unit test checks the sha256 and that the chart renders the same objects.
+    source: https://raw.githubusercontent.com/k8snetworkplumbingwg/multus-cni/1d81062afcb32eb7290fa28bcbc482c3d0c5cae9/deployments/multus-daemonset-thick.yml
+  cni.multus_image:
+    kind: image-digest
+    value: sha256:109b885d8752fe7a7bc3b2371750bfad6789b8b8e2d0b0820b337386ba9b93c9
+    ref: ghcr.io/k8snetworkplumbingwg/multus-cni:v4.3.2-thick
+    reason: OCI image index of the v4.3.2 thick plugin, the daemon and its install init container. The registry returned it as
+      Docker-Content-Digest and sha256 of the index body equals it. make addons sets it as tag and digest.
+    source: https://ghcr.io/v2/k8snetworkplumbingwg/multus-cni/manifests/v4.3.2-thick
   cni.whereabouts:
     kind: version
     value: v0.9.4
     reason: Newest Whereabouts release on 2026-11-15.
     source: https://github.com/k8snetworkplumbingwg/whereabouts/releases/tag/v0.9.4
+  cni.whereabouts_chart:
+    kind: version
+    value: 0.9.4
+    reason: The chart the Whereabouts release workflow pushes for tag v0.9.4, appVersion v0.9.4. helm pull gave OCI manifest digest
+      sha256:3a12f4d67dcdeb3e171460197534f61879d54114f08f390c0ab4f2b20cd6840a on 2026-11-16.
+    source: oci://ghcr.io/k8snetworkplumbingwg/whereabouts-chart
+  cni.whereabouts_image:
+    kind: image-digest
+    value: sha256:f279fd7dc1124d7819330fb2e07357990b2b4c5d8733aef1b028573c29f05e14
+    ref: ghcr.io/k8snetworkplumbingwg/whereabouts:v0.9.4
+    reason: OCI image index of Whereabouts v0.9.4. The daemon and the reconciler of the chart both run it. The registry returned it as
+      Docker-Content-Digest and sha256 of the index body equals it. make addons sets it as tag and digest.
+    source: https://ghcr.io/v2/k8snetworkplumbingwg/whereabouts/manifests/v0.9.4
+  lab.rdma_tools_base_image:
+    kind: image-digest
+    value: sha256:2198e4c65076e9cb0b3d695219df667c0e3b0072da64ca3c2648aca17dcecaf5
+    ref: ubuntu:24.04
+    reason: OCI index of ubuntu:24.04 that Docker Hub served on 2026-11-15, the same base as ibsim.base_image. images/rdma-tools/Dockerfile
+      starts FROM it by digest.
+    source: docker pull ubuntu:24.04 and docker image inspect RepoDigests inside ibsim1
+  lab.rdma_tools_apt_snapshot:
+    kind: version
+    value: 20261115T000000Z
+    reason: Ubuntu archive snapshot the RDMA test image installs every package from. It serves lab.rdma_core and lab.perftest, the
+      versions the workers run.
+    source: https://snapshot.ubuntu.com/ubuntu/20261115T000000Z/
+  lab.rdma_tools_image:
+    kind: image-digest
+    value: sha256:756e51cfbd6399905cef22945b3be3daa143f258b688f081f9e1c8b5fe5e280d
+    ref: docker.io/library/rfl-rdma-tools:m3
+    reason: OCI index of the archive make rdma-tools-image builds from images/rdma-tools/Dockerfile inside the Track B guest,
+      without cache and with every time clamped to lab.rdma_tools_apt_snapshot. Separate builds gave the same archive bytes.
+      ctr import --digests names the image by this digest on each worker, and the hostNetwork RDMA pods reference it.
+    source: sha256 of index.json in the archive that images/rdma-tools/build.sh writes inside ibsim1
   addons.gpu_operator_chart:
     kind: version
     value: v26.7.2
@@ -300,8 +349,17 @@ scopes:
     - cni.cilium_chart
     - lab.k8s_test_image
   m3:
+    - lab.rdma_core
+    - lab.perftest
     - cni.multus
+    - cni.multus_manifest
+    - cni.multus_image
     - cni.whereabouts
+    - cni.whereabouts_chart
+    - cni.whereabouts_image
+    - lab.rdma_tools_base_image
+    - lab.rdma_tools_apt_snapshot
+    - lab.rdma_tools_image
   fleet:
     - k8s.kubernetes
     - k8s.kubeadm_package

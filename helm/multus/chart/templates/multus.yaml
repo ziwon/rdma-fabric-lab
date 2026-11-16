@@ -1,0 +1,8 @@
+# yamllint disable-file
+{{- $manifest := .Files.Get "files/multus-daemonset-thick.yml.upstream" }}
+{{- $snapshot := "ghcr.io/k8snetworkplumbingwg/multus-cni:snapshot-thick" }}
+{{- $image := printf "%s:%s" (required "image.repository comes from cni.multus_image" .Values.image.repository) (required "image.tag comes from cni.multus_image" .Values.image.tag) }}
+{{- if ne (len (splitList $snapshot $manifest)) 3 }}
+{{- fail (printf "the upstream manifest must name %s exactly twice, for the daemon and its init container" $snapshot) }}
+{{- end }}
+{{ $manifest | replace $snapshot $image }}
