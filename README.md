@@ -32,7 +32,8 @@ The tracks share the repository, the result format and the version lock, not a d
 | M4 ibsim and OpenSM | done. B-01 to B-04 pass inside the Track B guest: discovery, unique LIDs, port states, a link fault and its recovery, and rerouting on the cel1 rail fabric. Each scenario fails on its deliberate break | `docs/milestones/M4.md` |
 | cel1 region, simulated as 13 guests | done. `make fleet-k8s`, `fleet-addons` and `fleet-rsyslog` built the cluster on 13 guests from wiped disks. All 13 nodes Ready with their class labels, kube-proxy replacement with native routing, the nvidia runtime default on the DGX guests, and the API back on the VIP after its holder lost power | `docs/milestones/cel1-sim.md` |
 | M3 hostNetwork RDMA pods and Multus | done. Pods on the two workers repeat the M1 baseline over the node's RXE device, and Multus adds `net1` from Whereabouts beside Cilium through pod recreation and a worker reboot. The pods need `privileged` | `docs/milestones/M3.md` |
-| M5 and M6 ns-3, M7 wrap-up | not started | |
+| M5 ns-3 baseline | done. SimAI's ns-3 RDMA model builds in a pinned image inside the Track C guest, and a rebuild from clean gives the same digest. Its smoke test repeats byte for byte, and one flow through one switch completes 7.43% above the payload bound, with the gap accounted for to the nanosecond | `docs/milestones/M5.md` |
+| M6 congestion profiles, M7 wrap-up | not started | |
 
 Nothing in this repository has run against GPU hardware.
 
@@ -88,6 +89,14 @@ Track B boots its own guest and runs everything inside it:
 make track-b                         # B-01 to B-04 in the Track B guest
 make track-b-breaks                  # every scenario must fail on its deliberate break
 make lab-down LAB_PROFILE=ibsim
+```
+
+Track C builds and runs the ns-3 model in its own guest, never on the host:
+
+```bash
+make track-c                         # c-01-example and c-02-single-flow in the Track C guest
+make track-c-breaks                  # every scenario must fail on its deliberate breaks
+make lab-down LAB_PROFILE=ns3
 ```
 
 The cel1 simulation boots 13 guests and needs about 40 GB of disk. Put the disks where there is room:
