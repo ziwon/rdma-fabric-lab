@@ -80,6 +80,16 @@ Use a key that is already enrolled when you hold its private key. Ubuntu's DKMS 
 
 Otherwise create a key and enroll it. Enrollment finishes only in the MokManager screen at the next boot.
 
+Enrolling a key only adds it to the trust list. The kernel and modules that already boot keep booting. If MokManager times out, the machine boots normally without the key and `mokutil --import` can run again. The risk at this reboot is elsewhere: the installer starts `vmware.service` at boot (`S01vmware` in `/etc/rc2.d` to `rc4.d`), and that service loads vmmon and vmnet. Once they are signed, a module that faults while loading on a host with `kernel.panic_on_oops=1` and `kernel.panic=10` panics the kernel, reboots after 10 s and faults again on the next boot. So before this reboot, keep the service from starting, and make the GRUB menu reachable in case an older kernel or recovery mode is needed:
+
+```bash
+sudo systemctl disable vmware
+sysctl kernel.panic_on_oops kernel.panic
+grep -E '^GRUB_TIMEOUT(_STYLE)?=' /etc/default/grub   # hidden and 0 means hold Shift or press Esc during boot
+```
+
+After the boot, load the modules by hand once (`sudo modprobe vmmon && sudo modprobe vmnet && sudo systemctl start vmware`). Enable the service again with `sudo systemctl enable vmware` only after that worked. If the load faults, the machine reboots once and comes up without VMware, and the oops is in `/var/lib/systemd/pstore/`.
+
 ```bash
 openssl req -new -x509 -newkey rsa:2048 -nodes -days 3650 -subj "/CN=VMware module signing/" \
   -keyout MOK.priv -outform DER -out MOK.der
