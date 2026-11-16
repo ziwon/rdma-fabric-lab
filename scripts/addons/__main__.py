@@ -38,10 +38,11 @@ def _cmd_apply(args: argparse.Namespace) -> int:
     helm = str(TOOLS / "helm")
     for release in releases.select(releases.load(HELM_DIR / "releases.yaml"), args.env, args.release):
         version = releases.chart_version(release, lock)
-        desired = releases.load_values(releases.values_files(release, args.env, HELM_DIR))
+        desired = releases.desired_values(release, args.env, HELM_DIR, lock)
         metadata = _helm_json(releases.get_argv(helm, "metadata", release, args.kubeconfig))
         deployed = _helm_json(releases.get_argv(helm, "values", release, args.kubeconfig)) if metadata else None
-        if not args.force and releases.unchanged(release, version, desired, metadata, deployed):
+        chart = releases.chart_name(release, REPO_ROOT)
+        if not args.force and releases.unchanged(chart, version, desired, metadata, deployed):
             print(f"{release.name}: unchanged, chart {version} at revision {metadata['revision']}", flush=True)
             continue
         argv = releases.apply_argv(helm, release, args.env, lock, HELM_DIR, args.kubeconfig)

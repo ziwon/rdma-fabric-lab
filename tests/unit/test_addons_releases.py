@@ -133,9 +133,8 @@ DEPLOYED = {"name": "cilium", "chart": "cilium", "version": "1.20.4", "revision"
         (DEPLOYED, None, False),
     ],
 )
-def test_a_release_is_unchanged_only_when_deployed_with_the_locked_chart_and_the_same_values(tmp_path, metadata, deployed, expected):
-    cilium = releases.load(table(tmp_path, TABLE))[0]
-    assert releases.unchanged(cilium, "1.20.4", {"ipam": {"mode": "kubernetes"}}, metadata, deployed) is expected
+def test_a_release_is_unchanged_only_when_deployed_with_the_locked_chart_and_the_same_values(metadata, deployed, expected):
+    assert releases.unchanged("cilium", "1.20.4", {"ipam": {"mode": "kubernetes"}}, metadata, deployed) is expected
 
 
 def test_get_reads_the_release_as_json_from_its_namespace(tmp_path):
@@ -143,3 +142,71 @@ def test_get_reads_the_release_as_json_from_its_namespace(tmp_path):
     argv = releases.get_argv("helm", "values", cilium, Path("kc"))
     assert argv[:4] == ["helm", "get", "values", "cilium"]
     assert argv[argv.index("--namespace") + 1] == "kube-system" and argv[argv.index("--output") + 1] == "json"
+
+
+DIGEST = "sha256:" + "ab" * 32
+SOURCES = """
+releases:
+  - {name: wa, namespace: kube-system, chart: "oci://registry.example/charts/wa-chart", version: cni.wa_chart,
+     environments: [lab], values: [],
+     images: [{lock: cni.wa_image, repository: image.repository, tag: image.tag}]}
+  - {name: local, namespace: kube-system, chart: ./helm/local/chart, version: cni.local, environments: [lab], values: []}
+"""
+SOURCE_LOCK = {"components": {
+    "cni.wa_chart": {"value": "0.9.4"},
+    "cni.local": {"value": "v4.3.2"},
+    "cni.wa_image": {"kind": "image-digest", "value": DIGEST, "ref": "registry.example:5000/team/wa:v0.9.4"},
+}}
+
+
+@pytest.fixture
+def sources(tmp_path):
+    root = tmp_path / "repo"
+    chart = root / "helm" / "local" / "chart"
+    chart.mkdir(parents=True)
+    (chart / "Chart.yaml").write_text("apiVersion: v2\nname: local-cni\nversion: v4.3.2\n")
+    return root, releases.load(table(tmp_path, SOURCES))
+
+
+def test_an_oci_chart_is_pulled_at_the_locked_version_without_a_repository(sources):
+    root, (wa, _) = sources
+    argv = releases.template_argv("helm", wa, "lab", SOURCE_LOCK, root / "helm", "v1.36.6")
+    assert argv[2:5] == ["wa", "oci://registry.example/charts/wa-chart", "--version"] and "--repo" not in argv
+    assert releases.chart_name(wa, root) == "wa-chart"
+
+
+def test_image_pins_come_from_the_lock_as_repository_and_tag_with_digest(sources):
+    root, (wa, _) = sources
+    argv = releases.apply_argv("helm", wa, "lab", SOURCE_LOCK, root / "helm", Path("kc"))
+    pins = [argv[i + 1] for i, a in enumerate(argv) if a == "--set-string"]
+    assert pins == ["image.repository=registry.example:5000/team/wa", f"image.tag=v0.9.4@{DIGEST}"]
+    assert releases.desired_values(wa, "lab", root / "helm", SOURCE_LOCK) == {
+        "image": {"repository": "registry.example:5000/team/wa", "tag": f"v0.9.4@{DIGEST}"}}
+
+
+@pytest.mark.parametrize("component", [{"kind": "version", "value": "v1"}, {"kind": "image-digest", "value": None},
+                                       {"kind": "image-digest", "value": DIGEST, "ref": "wa@sha256:x"}])
+def test_an_image_pin_needs_a_pinned_digest_and_a_tagged_ref(sources, component):
+    root, (wa, _) = sources
+    lock = {"components": {**SOURCE_LOCK["components"], "cni.wa_image": component}}
+    with pytest.raises(releases.ReleaseError, match="cni.wa_image"):
+        releases.apply_argv("helm", wa, "lab", lock, root / "helm", Path("kc"))
+
+
+def test_a_local_chart_renders_from_its_directory_under_the_repository(sources):
+    root, (_, local) = sources
+    argv = releases.template_argv("helm", local, "lab", SOURCE_LOCK, root / "helm", "v1.36.6")
+    assert argv[2:4] == ["local", str(root / "helm/local/chart")] and "--repo" not in argv
+    assert releases.chart_name(local, root) == "local-cni"
+
+
+def test_a_local_chart_whose_version_is_not_the_locked_one_is_refused(sources):
+    root, (_, local) = sources
+    lock = {"components": {**SOURCE_LOCK["components"], "cni.local": {"value": "v4.3.3"}}}
+    with pytest.raises(releases.ReleaseError, match="has version v4.3.2, the lock pins cni.local v4.3.3"):
+        releases.apply_argv("helm", local, "lab", lock, root / "helm", Path("kc"))
+
+
+def test_a_chart_without_repo_oci_or_local_path_is_refused(tmp_path):
+    with pytest.raises(releases.ReleaseError, match="needs a repo"):
+        releases.load(table(tmp_path, SOURCES.replace("./helm/local/chart", "helm/local/chart")))

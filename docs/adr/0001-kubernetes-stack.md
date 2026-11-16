@@ -8,7 +8,7 @@
 - The lab (`ansible/inventories/lab`) and the GPU cluster of the virtual region cel1 (`ansible/inventories/cel1`) use the same playbook `ansible/playbooks/kubernetes.yml` and the same roles `containerd` and `kubeadm`. They differ only in inventory variables.
 - cel1 is a data center that does not exist. It has 3 control planes, 8 DGX B200 nodes and 2 previous-generation PCIe GPU servers. All names and addresses are invented.
 - Another site keeps an inventory that follows the same contract outside the repository and uses the same playbook.
-- Helm installs the add-ons, Cilium among them. The release list is the single file `helm/releases.yaml`, and `make addons ENV=<env>` installs the releases in that order. The values files are `helm/<release>/values-<env>.yaml`.
+- Helm installs the add-ons, Cilium among them. The release list is the single file `helm/releases.yaml`, and `make addons ENV=<env>` installs the releases in that order. The values files are `helm/<release>/values-<env>.yaml`. A release takes its chart from a chart repository, an `oci://` reference, or a repo-local `./` path when the project publishes no chart for the locked version, as for Multus. Its `images` entries pin images by tag and digest from image-digest lock components.
 - Every version comes only from `versions.lock.yaml`. Roles and values files do not hard-code versions.
 
 ## 2. Reasons
