@@ -1,3 +1,0 @@
-$ make inventory-check INVENTORY=cel1
-PYTHONPATH=scripts .venv/bin/python -m inventory check -i ansible/inventories/cel1 --explicit
-ansible/inventories/cel1: contract holds, 0 violations over 13 hosts, every variable explicit

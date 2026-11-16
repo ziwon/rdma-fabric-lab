@@ -1,0 +1,4 @@
+# The lock component of the image. Its ref names the image, its value is the digest of the archive's OCI index.
+rdma_tools_lock_component: lab.rdma_tools_image
+rdma_tools_ctr: /usr/local/bin/ctr --namespace k8s.io
+rdma_tools_cache_dir: /var/cache/rfl/images

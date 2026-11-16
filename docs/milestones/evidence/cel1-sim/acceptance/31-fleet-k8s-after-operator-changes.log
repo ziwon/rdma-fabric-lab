@@ -1,9 +1,0 @@
-$ only_label_changes fleet-k8s-after-operator
-kubeadm : Set the node labels the inventory names on [cel1-dgx-01
-kubeadm : Set the node labels the inventory names on [cel1-dgx-02
-kubeadm : Set the node labels the inventory names on [cel1-dgx-05
-kubeadm : Set the node labels the inventory names on [cel1-dgx-03
-kubeadm : Set the node labels the inventory names on [cel1-dgx-07
-kubeadm : Set the node labels the inventory names on [cel1-dgx-08
-kubeadm : Set the node labels the inventory names on [cel1-dgx-06
-kubeadm : Set the node labels the inventory names on [cel1-dgx-04

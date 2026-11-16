@@ -1,4 +1,0 @@
-$ refused fleet-rsyslog
-make fleet-rsyslog changes every cel1 host. Nothing was changed. Rerun with CONFIRM=cel1.
-make: *** [mk/fleet.mk:83: fleet-rsyslog] Error 2
-exit 2, 0 calls to an IPv4 or IPv6 address in .lab/acceptance-cel1/20261115T163759Z/strace-12.txt

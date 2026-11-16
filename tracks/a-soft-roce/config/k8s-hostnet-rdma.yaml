@@ -1,0 +1,33 @@
+# Parameters of the k8s-hostnet-rdma scenario. The RDMA tests take server, client, rping, perftest,
+# capture and time limits from vm-rxe.yaml, so the pods repeat the VM baseline unchanged. Every run
+# records both files' sha256 and writes the values it resolved into resolved-config.yaml.
+image: lab.rdma_tools_image
+container: rdma
+pod_lifetime_s: 1800
+ready_timeout_s: 180
+delete_timeout_s: 120
+# The profile the pods run with, and the narrower ones each run shows cannot reach the device.
+profile: privileged-nonroot
+profiles:
+  unprivileged:
+    securityContext: &narrow
+      allowPrivilegeEscalation: false
+      runAsNonRoot: true
+      runAsUser: 65534
+      runAsGroup: 65534
+      capabilities: {drop: [ALL]}
+      seccompProfile: {type: RuntimeDefault}
+  unprivileged-device-files:
+    securityContext: *narrow
+    device_files: true
+  privileged-nonroot:
+    securityContext:
+      privileged: true
+      runAsNonRoot: true
+      runAsUser: 65534
+      runAsGroup: 65534
+narrower_profiles:
+  - {profile: unprivileged, probe: ibv_devinfo, expect: No IB devices found}
+  - {profile: unprivileged-device-files, probe: exec 3<> /dev/infiniband/rdma_cm, expect: Operation not permitted}
+# hostNetwork needs the PodSecurity privileged level. A dry-run relabel must refuse every test pod at these.
+podsecurity_levels_refused: [baseline, restricted]

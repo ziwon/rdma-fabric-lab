@@ -1,0 +1,24 @@
+# Parameters of the k8s-multus-net1 scenario. The network attachment's namespace, master NIC and
+# range come from the inventory. Every run records this file's sha256 and writes the values it
+# resolved into resolved-config.yaml.
+image: lab.k8s_test_image
+network: rdma-lab-net
+# macvlan carries extra MACs over the lab link, which the probe showed the harness passes. ipvlan in
+# L2 mode is the IP alternative; one parent never carries both.
+secondary: macvlan
+modes: {macvlan: bridge, ipvlan: l2}
+cni_version: 0.3.1
+server_node: worker1
+client_node: worker2
+reboot_node: worker2
+http_port: 8080
+ready_timeout_s: 180
+request_timeout_s: 5
+request_attempts: 3
+delete_timeout_s: 120
+reboot_timeout_s: 300
+# Multus writes its CNI file only once its daemon runs again, a moment after its pod turns Ready.
+cni_settle_timeout_s: 60
+capture:
+  snaplen: 128
+  max_seconds: 900

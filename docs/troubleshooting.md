@@ -1,6 +1,6 @@
 # Track A troubleshooting
 
-This document records failures actually observed in M0, M1 and M2 and their causes. The evidence for each item is the run logs and result directories. Items without a confirmed cause are left out.
+This document records failures actually observed in M0 to M3 and their causes. The evidence for each item is the run logs and result directories. Items without a confirmed cause are left out.
 
 ## 1. `make doctor` fails
 
@@ -112,3 +112,32 @@ In `k8s-ha-vip`, when the power of the control plane that holds the VIP is cut, 
 - `/etc/kubernetes/manifests/kube-vip.yaml` on the surviving control planes. With this file removed from two nodes, the VIP was nowhere for 120 seconds. `make k8s` writes the file again.
 - The holderIdentity in `kubectl -n kube-system get lease plndr-cp-lock`, and the VIP in `ip -4 addr` on each node.
 - kube-vip on the first control plane uses `super-admin.conf` until init finishes, because since Kubernetes 1.29 the group permissions of `admin.conf` appear only partway through init.
+
+## 11. `k8s-hostnet-rdma` fails
+
+| Failed check | Observed cause |
+|---|---|
+| `rdma-pods-ready` times out, the pod waits in `ErrImageNeverPull` | The worker's containerd has no `docker.io/library/rfl-rdma-tools@<lab.rdma_tools_image>`. The pods never pull. Run `make rdma-tools-load` |
+| `pod-tools-match-lock` | The image, the workers and the lock disagree on rdma-core or perftest. Rebuild with `make rdma-tools-image`, set the new digest and load it |
+| `ibv-devinfo-in-pods`, `rxe-bound-to-lab-nic`, `rping-verified`, `rdma-*`, `roce-on-lab-nic` together | The RXE device of one worker is gone. `make rxe-up` restarts `rfl-rxe.service`, which creates it again |
+| `route-via-lab-nic` | The lab address of one worker is gone, so the peer address goes out the default route. `networkctl reconfigure <lab NIC>` restores it |
+| `memlock-in-pods` | The two ends run under different memlock limits. Pods inherit the limits of containerd's service, 8 MiB by default. A `LimitMEMLOCK` drop-in for containerd on one worker produced this |
+| `no-roce-on-mgmt-nic` with no RoCEv2 but "may not have been live" | The marker pings over the management NIC did not leave, here because an OUTPUT rule dropped ICMP echo |
+
+An unprivileged container sees no `/dev/infiniband`, and `ibv_devinfo` prints `No IB devices found`. Mounting `/dev/infiniband` as a hostPath shows the files, but the device cgroup refuses the open with `Operation not permitted` although the files are mode 0666. Capabilities do not change the device cgroup. Only `privileged` opens it without a device plugin.
+
+## 12. `k8s-multus-net1` fails
+
+| Failed check | Observed cause |
+|---|---|
+| `multus-config-first`, then `pods-have-eth0-and-net1` | Another CNI file sorts before `00-multus.conf`, so containerd runs it and the pod gets no `net1`. Remove it |
+| `reboot-keeps-cni-order` | The Multus thick daemon deletes `00-multus.conf` when it stops and writes it again only when it starts. After a boot, until then, Cilium's conflist is the first file, and a pod created in that gap gets eth0 and no `net1`, without an error. The check waits up to `cni_settle_timeout_s` for the settled order and records the gap |
+| `multus-config-first` with `the default delegate ... is not JSON`, and every new pod on that node stays in `ContainerCreating` | Multus chose its default delegate when its daemon started and keeps it. A CNI file that sorted before Cilium's at that moment became the delegate, and once that file is gone, `00-multus.conf` names a missing file. The Multus log shows `failed to get clusterNetwork` on every ADD and no regeneration. Delete the stray file, then restart the Multus pod on that node: `kubectl -n kube-system delete pod -l name=multus --field-selector spec.nodeName=<node>` |
+| `network-attachment-from-inventory` with `command-failed` | The NetworkAttachmentDefinition CRD is missing. `make addons ENV=lab KUBECONFIG_FILE=.lab/kubeconfig RELEASE=multus FORCE=1` creates it again |
+| `no-duplicate-addresses` and `recreate-releases-addresses` | Whereabouts holds an address for a pod that does not exist. The detail names the address and the pod. Remove the allocation from the IPPool in `kube-system`, or let the Whereabouts reconciler remove it |
+| `net1-on-lab-nic` with an empty capture on one worker | tcpdump without `--immediate-mode` hands packets to the file in batches, and a stop right after the traffic loses the last batch. The runner uses immediate mode |
+| `run.multus` stops before the run with `lab_rdma_nic differs across the workers` | One attachment names one macvlan master for every node. Give the lab NIC the same name on every worker. The QEMU harness renames it `lab0` at first boot. A VMware lab renames the NICs, then sets `lab_rdma_nic` in its own override inventory |
+
+## 13. The RDMA test image
+
+`make rdma-tools-image` builds in the Track B guest, because no new container runs on this host. `BUILDER_LAB_DIR` moves that guest's files, by default next to `LAB_DIR` when that is set. The build has no cache and clamps every time to the archive snapshot, so a changed digest means changed inputs: the Dockerfile, the snapshot or a locked version. Set `lab.rdma_tools_image` to the printed digest only after you know which input changed.

@@ -1,5 +1,0 @@
-NAME           READY   STATUS     RESTARTS   AGE     IP               NODE     NOMINATED NODE   READINESS GATES
-cilium-g7h26   1/1     Running    0          10m     192.168.140.21   ha-cp1   <none>           <none>
-cilium-pmdxq   1/1     Running    0          10m     192.168.140.23   ha-cp3   <none>           <none>
-cilium-szdql   0/1     Init:0/6   0          3s      192.168.140.31   ha-w1    <none>           <none>
-cilium-w7qbg   1/1     Running    0          9m51s   192.168.140.22   ha-cp2   <none>           <none>

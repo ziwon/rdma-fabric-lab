@@ -1,0 +1,15 @@
+- name: Put the RDMA test image into containerd on each worker, by its locked digest
+  hosts: workers
+  become: true
+  vars:
+    rdma_tools_pin: "{{ lab_lock.components[rdma_tools_lock_component] }}"
+    rdma_tools_repository: "{{ rdma_tools_pin.ref | regex_replace(':[^:/]+$', '') }}"
+    rdma_tools_digest_ref: "{{ rdma_tools_repository }}@{{ rdma_tools_pin.value }}"
+  pre_tasks:
+    - name: Refuse hosts outside the lab inventory
+      ansible.builtin.assert:
+        that: lab_inventory | default('') == 'rdma-fabric-lab'
+        fail_msg: "{{ inventory_hostname }} is not from ansible/inventories/lab. Lab playbooks run only there."
+        quiet: true
+  roles:
+    - rdma_tools

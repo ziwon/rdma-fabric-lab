@@ -1,4 +1,0 @@
-UID                 PID                 COMMAND
-10001               6986                bash
-10001               7001                ibsim
-10001               7071                opensm

@@ -1,3 +1,0 @@
-level=WARN msg="upgrade failed" name=cilium error="resource DaemonSet/kube-system/cilium not ready. status: InProgress, message: Available: 3/4\ncontext deadline exceeded"
-Error: UPGRADE FAILED: resource DaemonSet/kube-system/cilium not ready. status: InProgress, message: Available: 3/4
-context deadline exceeded

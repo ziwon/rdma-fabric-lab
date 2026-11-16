@@ -35,7 +35,7 @@ lint: venv ## yamllint, ansible-lint, shellcheck, scenario specs, version lock
 	git ls-files -co --exclude-standard -z -- '*.sh' | xargs -0 -r shellcheck
 	$(RFL) specs $$(git ls-files -co --exclude-standard -- 'tracks/*/scenarios/*.yaml')
 	$(RFL) versions --environment
-	@! git grep --untracked -nE '\bP''LAN\b' -- . ':!.gitignore' ':!docs/milestones/evidence' || { echo "tracked files must not point at the local design draft" >&2; exit 1; }
+	@! git grep --untracked -nE '\bP''LAN\b' -- . ':!.gitignore' || { echo "tracked files must not point at the local design draft" >&2; exit 1; }
 
 test: venv ## Unit tests
 	$(BIN)/pytest -q tests/unit

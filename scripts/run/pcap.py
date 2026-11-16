@@ -38,6 +38,7 @@ class Summary:
     tunnel_flows: Counter = field(default_factory=Counter)
     tunnel_inner_flows: Counter = field(default_factory=Counter)
     watch_net_frames: int = 0
+    watch_net_flows: Counter = field(default_factory=Counter)
     first_ts: float | None = None
     last_ts: float | None = None
 
@@ -52,6 +53,7 @@ class Summary:
             "tunnel_flows": dict(sorted(self.tunnel_flows.items())),
             "tunnel_inner_flows": dict(sorted(self.tunnel_inner_flows.items())),
             "watch_net_frames": self.watch_net_frames,
+            "watch_net_flows": dict(sorted(self.watch_net_flows.items())),
             "first_ts": self.first_ts,
             "last_ts": self.last_ts,
         }
@@ -73,7 +75,7 @@ def _l4(frame: bytes) -> tuple[str, str, int, bytes] | None:
 
 def summarize(data: bytes, tunnel_port: int | None = None, watch_net: str | None = None) -> Summary:
     """Frame counts of a capture. tunnel_port names the UDP port of a VXLAN tunnel, whose inner IP
-    flows are counted too. watch_net counts frames with an outer address in that network."""
+    flows are counted too. watch_net counts frames with an outer address in that network, per flow too."""
     if len(data) < 24 or data[:4] not in _MAGIC:
         raise PcapError("not a classic pcap file")
     order, divisor = _MAGIC[data[:4]]
@@ -99,6 +101,7 @@ def summarize(data: bytes, tunnel_port: int | None = None, watch_net: str | None
         src, dst, proto, l4 = parsed
         if watched and (ipaddress.ip_address(src) in watched or ipaddress.ip_address(dst) in watched):
             out.watch_net_frames += 1
+            out.watch_net_flows[f"{src}>{dst}"] += 1
         if proto == 17 and tunnel_port and len(l4) >= 4 and struct.unpack("!H", l4[2:4])[0] == tunnel_port:
             out.tunnel_frames += 1
             out.tunnel_flows[f"{src}>{dst}"] += 1

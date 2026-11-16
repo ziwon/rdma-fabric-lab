@@ -1,0 +1,4 @@
+# make addons sets both from cni.multus_image in versions.lock.yaml, the tag with its digest.
+image:
+  repository: ""
+  tag: ""

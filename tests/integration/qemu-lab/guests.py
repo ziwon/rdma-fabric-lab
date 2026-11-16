@@ -17,7 +17,7 @@ A NIC spec is comma separated key=value pairs:
     net=switch:<name>      a shared L2 network through switch.py, AF_UNIX datagrams only
     net=cable:<peer>       a point-to-point cable to the NIC of <peer> that names this guest
     vars=a|b               inventory variables the harness sets to the NIC name it finds by MAC
-    name=<ifname>          rename the NIC at first boot; then no variable is written for it
+    name=<ifname>          rename the NIC at first boot; vars= then receive that declared name
     ip=<hostvar>           a static address from that host variable, prefixed by the network CIDR
     addr=<ipv4>            a static address given in the profile, prefixed by the network CIDR
     fwd=<host>:<guest>     extra TCP forwards from 127.0.0.1 on a user NIC
@@ -272,10 +272,8 @@ def override_inventory(profile: Profile, discovered: dict[str, dict[str, str]], 
             "ansible_ssh_common_args": f"-o IdentitiesOnly=yes -o UserKnownHostsFile={known_hosts}",
         }
         for nic in g.nics:
-            if nic.name:
-                if found.get(nic.mac) != nic.name:
-                    raise ProfileError(f"{g.name}: {nic.mac} is {found.get(nic.mac)}, not the declared {nic.name}")
-                continue
+            if nic.name and found.get(nic.mac) != nic.name:
+                raise ProfileError(f"{g.name}: {nic.mac} is {found.get(nic.mac)}, not the declared {nic.name}")
             if nic.vars and nic.mac not in found:
                 raise ProfileError(f"{g.name}: no interface carries {nic.mac}")
             entry |= {var: found[nic.mac] for var in nic.vars}

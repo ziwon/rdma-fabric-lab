@@ -1,4 +1,0 @@
-$ make lab-down LAB_PROFILE=ibsim
-tests/integration/qemu-lab/lab.sh down
-lab.sh: ibsim1 stopped
-rc=0

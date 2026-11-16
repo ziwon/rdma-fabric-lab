@@ -123,6 +123,17 @@ class Remote:
         done = self.sh(f"cat {self.dir}/{filename}", binary=binary)
         return done.stdout if done.rc == 0 else (b"" if binary else "")
 
+    def where(self) -> dict:
+        """Where this executor runs a process, for the run's raw logs."""
+        g = self.guest
+        return {"node": g.name, "pod": None, "rdma_device": getattr(g, "rxe_device", None),
+                "lab_address": getattr(g, "rdma_ip", None), "runs_as": "the SSH user of the node"}
+
+    def stop_session(self, name: str) -> None:
+        """Stop every process in the session that <name> started."""
+        self.sh(f"sid=$(cat {self.dir}/{name}.pid 2>/dev/null) && [ -n \"$sid\" ] && "
+                "{ sudo pkill -TERM -s \"$sid\"; sleep 1; sudo pkill -KILL -s \"$sid\"; }; true")
+
     def signal(self, name: str, signal: str, process: str) -> Done:
         """Send signal to the named process inside the session that <name> started."""
         return self.sh(f"sudo pkill -{signal} -s \"$(cat {self.dir}/{name}.pid)\" -x {shlex.quote(process)}")

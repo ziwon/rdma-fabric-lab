@@ -1,5 +1,0 @@
-NAME                   STATUS   AGE
-rfl-20261115t060022z   Active   20s
-NAME     READY   STATUS    RESTARTS   AGE
-client   1/1     Running   0          20s
-server   1/1     Running   0          20s

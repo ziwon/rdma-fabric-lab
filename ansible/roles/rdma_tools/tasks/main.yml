@@ -1,0 +1,60 @@
+- name: Check the archive is given and the image is pinned
+  ansible.builtin.assert:
+    that:
+      - rdma_tools_archive is defined
+      - rdma_tools_pin.value | default("", true) | length > 0
+    fail_msg: >-
+      Pass -e rdma_tools_archive=<path of the archive make rdma-tools-image wrote>, and pin {{ rdma_tools_lock_component }}
+      in versions.lock.yaml.
+    quiet: true
+
+- name: Read the images containerd holds for Kubernetes
+  ansible.builtin.command: "{{ rdma_tools_ctr }} images list --quiet"
+  register: rdma_tools_images
+  changed_when: false
+  check_mode: false
+
+- name: Import the archive when the digest is not there yet
+  when: rdma_tools_digest_ref not in rdma_tools_images.stdout_lines
+  block:
+    - name: Create the archive cache directory
+      ansible.builtin.file:
+        path: "{{ rdma_tools_cache_dir }}"
+        state: directory
+        owner: root
+        group: root
+        mode: "0700"
+
+    - name: Copy the archive
+      ansible.builtin.copy:
+        src: "{{ rdma_tools_archive }}"
+        dest: "{{ rdma_tools_cache_dir }}/rdma-tools.tar"
+        owner: root
+        group: root
+        mode: "0600"
+
+    # --digests names the image <repository>@<digest of the archive index>, the name a pod's image@digest resolves to.
+    - name: Import the archive into containerd
+      ansible.builtin.command: >-
+        {{ rdma_tools_ctr }} images import --base-name {{ rdma_tools_repository }} --digests --platform linux/amd64
+        {{ rdma_tools_cache_dir }}/rdma-tools.tar
+      changed_when: true
+
+    - name: Delete the copied archive
+      ansible.builtin.file:
+        path: "{{ rdma_tools_cache_dir }}/rdma-tools.tar"
+        state: absent
+
+- name: Read the images again
+  ansible.builtin.command: "{{ rdma_tools_ctr }} images list --quiet"
+  register: rdma_tools_images_after
+  changed_when: false
+  check_mode: false
+
+- name: Check the image is there by its locked digest
+  ansible.builtin.assert:
+    that: rdma_tools_digest_ref in rdma_tools_images_after.stdout_lines
+    fail_msg: >-
+      {{ inventory_hostname }} has no {{ rdma_tools_digest_ref }} after the import. The archive's index digest differs from
+      {{ rdma_tools_lock_component }}. Rebuild with make rdma-tools-image.
+    quiet: true

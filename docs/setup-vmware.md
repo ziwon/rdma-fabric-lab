@@ -73,6 +73,8 @@ all:
 
 The NIC names above are examples that show the format. Find the real names with the method in section 4. `ansible_host` uses the management IP from `hosts.yml` unchanged.
 
+Give the RDMA NIC the same name on both workers, for example with a systemd `.link` file or a netplan `set-name` on its MAC. The Multus NetworkAttachmentDefinition names one macvlan master for every node and takes it from `lab_rdma_nic`, and `python -m run.multus render` refuses when the workers disagree. The QEMU harness renames the NIC `lab0` at first boot for the same reason (`docs/milestones/M3.md` section 3).
+
 ```bash
 make doctor
 make versions SCOPE=m1
@@ -83,7 +85,12 @@ make rxe-test  LAB_OVERRIDE=$HOME/rdma-lab/vmware-inventory.yml
 make k8s       LAB_OVERRIDE=$HOME/rdma-lab/vmware-inventory.yml LAB_API_URL=
 make addons ENV=lab KUBECONFIG_FILE=.lab/kubeconfig
 make k8s-test  LAB_OVERRIDE=$HOME/rdma-lab/vmware-inventory.yml
+make rdma-tools-load      LAB_OVERRIDE=$HOME/rdma-lab/vmware-inventory.yml
+make k8s-hostnet-test    LAB_OVERRIDE=$HOME/rdma-lab/vmware-inventory.yml
+make k8s-multus-test     LAB_OVERRIDE=$HOME/rdma-lab/vmware-inventory.yml
 ```
+
+`make rdma-tools-load` imports the archive that `make rdma-tools-image` builds. That build runs in the Track B guest of the QEMU harness, so it needs `/dev/kvm` on the machine that builds the image.
 
 In a VMware lab, one management NIC carries the default route, SSH and Kubernetes. So there is no `lab_uplink_nic`. The host reaches `192.168.140.11:6443` directly through the host adapter of the NAT VMnet, so `LAB_API_URL` stays empty and the kubeconfig address stays as it is. Section 3 of `docs/milestones/M2.md` lists the differences from the QEMU harness.
 
@@ -91,6 +98,7 @@ In a VMware lab, one management NIC carries the default route, SSH and Kubernete
 
 - Whether the VMware Host-only VMnet forwards RoCEv2 UDP 4791 frames between the two guests.
 - RXE performance and error behavior on vmxnet3 and e1000e.
+- Whether the Host-only VMnet passes the extra MAC addresses of macvlan children. `tests/integration/qemu-lab/probe-m3.sh macvlan` is the probe the harness ran. If they do not pass, ipvlan L2 is the IP alternative.
 - Whether disconnecting a VMware NIC shows up in the guest as carrier loss. In the QEMU harness, systemd-networkd removes the static address of the RDMA NIC when carrier goes away (`docs/troubleshooting.md` section 5).
 
 - Whether the NAT VMnet forwards Cilium VXLAN (UDP 8472) between the three guests, and whether the host reaches the API.

@@ -1,0 +1,58 @@
+track: a-soft-roce
+scenario: k8s-hostnet-rdma
+description: >-
+  The vm-rxe-baseline tests repeated between a hostNetwork pod on each worker. The pods run the pinned RDMA test image
+  and use the node's RXE device against the lab NIC addresses, while every NIC of both nodes is captured. This shows a
+  container can use the node's RDMA device. It does not show a pod-private interface, device isolation or Cilium's pod
+  data path. Bandwidth is a software measurement of this host and guest pair.
+required: true
+result_kind: software-rdma-measurement
+security:
+  privileged: true
+  device_exposure: >-
+    The two test pods run in the lab namespace at the PodSecurity privileged level, which hostNetwork needs. Each is pinned
+    to its worker by the kubernetes.io/hostname label, uses the node's network, sets securityContext.privileged so the
+    device cgroup admits /dev/infiniband, and runs as uid 65534 with no effective capability. No hostPID, no host IPC,
+    no volume and no container runtime socket. Narrower profiles were tried and fail, and every run shows it again in
+    narrower-profiles-fail. kubectl runs on the first control plane; tcpdump and process cleanup use sudo on the workers.
+checks:
+  - id: rdma-pods-ready
+    description: >-
+      One pod per worker runs Ready on its node with the node's address, by the image digest the lock pins, in a lab
+      namespace this run created.
+  - id: pod-tools-match-lock
+    description: The RDMA provider, ibverbs-utils, rdmacm-utils and perftest versions inside each pod equal the node's and the lock's.
+  - id: pod-security-as-declared
+    description: >-
+      Each pod's spec is the declared profile with host network only, no host PID or IPC and no volume, and a dry-run
+      relabel of the namespace to each refused PodSecurity level would refuse every pod.
+  - id: narrower-profiles-fail
+    description: Each narrower profile of the config, started on the server node, fails its device probe with the recorded error.
+  - id: ibv-devinfo-in-pods
+    description: ibv_devinfo inside each pod shows the inventory RXE device with an active port on the Ethernet link layer.
+  - id: memlock-in-pods
+    description: >-
+      The soft and hard memlock limits inside each pod are read and recorded beside those of the node's SSH user, and both
+      ends of the pair run under the same limits.
+  - id: rxe-bound-to-lab-nic
+    description: On each worker exactly one RDMA link uses the lab NIC, it is the inventory device, and its port is ACTIVE.
+  - id: route-via-lab-nic
+    description: On each worker the kernel routes the peer RDMA address through the lab NIC.
+  - id: rping-verified
+    description: A finite rping with -V data validation completes between the pods over RDMA CM, every iteration printed.
+  - id: rdma-read
+    description: ib_read_bw with RDMA CM between the pods completes the configured iterations, both exit codes 0.
+  - id: rdma-write
+    description: ib_write_bw with RDMA CM between the pods completes the configured iterations, both exit codes 0.
+  - id: rdma-send
+    description: ib_send_bw with RDMA CM between the pods completes the configured iterations, both exit codes 0.
+  - id: roce-on-lab-nic
+    description: Captures on the lab NIC of both workers hold RoCEv2 frames in both directions, all between the two RDMA addresses.
+  - id: no-roce-on-mgmt-nic
+    description: >-
+      Captures on every other NIC of both workers over the same interval hold no RoCEv2 frame, and each shows it was live: SSH
+      connection setups on the NIC SSH arrives at, marker pings to the peer on the management NIC.
+  - id: rdma-pods-removed
+    description: The lab namespace of the run and every pod labeled with the run id are gone at the end.
+  - id: no-process-left
+    description: After the run no process carrying this run id remains on either worker, inside a pod or not.

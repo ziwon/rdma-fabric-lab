@@ -27,6 +27,15 @@ QEMU harness guests (Ubuntu 24.04.5, kernel 6.8.0-147-generic, rdma-core 50.0-2u
 | `k8s/worker1-mgmt-vxlan-dropped.pcap` | run `20261115T050030Z`, UDP 8472 dropped on worker1 INPUT, `raw/traffic/worker1-mgmt.pcap` |
 | `ha/probes.txt`, `ha/etcd-members.json`, `ha/ha-cp2-addr.json`, `ha/etcd-health-one-down.json` | run `20261115T052220Z` k8s-ha-vip, `raw/api-survives-holder-loss/probes.txt` and the stdout of `raw/control-planes-joined/etcd-members.json`, `raw/vip-holder-identified/ha-cp2-addr.json`, `raw/cluster-works-after-loss/etcd-health.json` |
 | `host/*` | the M1 verification host: `ip -j addr show dev docker0`, `ip -j route show table all dev docker0`, `ip -j route show table 52 100.100.100.100`, `docker network inspect bridge`, `virsh net-dumpxml default` |
+| `m3/podsecurity-dry-run-baseline.stderr` | run `20261115T221204Z` k8s-hostnet-rdma, stderr of `raw/pod-security-as-declared/dry-run-baseline.txt` |
+| `m3/ibv-devinfo.stdout` | run `20261115T221204Z`, stdout of `raw/ibv-devinfo-in-pods/worker1-rdma-server.txt` |
+| `m3/limits-pod.stdout`, `m3/limits-ssh-user.stdout` | run `20261115T222929Z` k8s-hostnet-rdma, stdout of `raw/memlock-in-pods/worker1-rdma-server.txt` and `raw/memlock-in-pods/worker1-ssh-user.txt` |
+| `m3/cni-ls.stdout`, `m3/00-multus.conf`, `m3/05-cilium.conflist` | run `20261115T222245Z` k8s-multus-net1, stdout of `raw/multus-config-first/worker1-ls.txt`, `worker1-00-multus.conf` and `worker1-delegate.txt` |
+| `m3/net1-server-ip-addr.stdout` | run `20261115T222245Z`, stdout of `raw/pods-have-eth0-and-net1/net1-server-ip-addr.txt` |
+| `m3/net1-server-ip-route.stdout` | run `20261115T222245Z`, stdout of `raw/default-route-on-eth0/net1-server.txt` |
+| `m3/net1-server-ip-route-get.stdout` | run `20261115T223641Z` k8s-multus-net1, stdout of `raw/default-route-on-eth0/net1-server-get.txt` |
+| `m3/ippools.json` | run `20261115T222245Z`, stdout of `raw/no-duplicate-addresses/ippools.json`, each item reduced to its name and spec |
+| `m3/net1-pods.json` | run `20261115T222245Z`, stdout of `raw/pods-have-eth0-and-net1/pods.json`, each item reduced to its name, its `k8s.v1.cni.cncf.io/` annotations and its node |
 
 The recaps start at `PLAY RECAP` because the lines before it carry absolute paths of the machine.
 The host captures cover only default bridges and the Tailscale MagicDNS route, which name no person or site.

@@ -1,6 +1,0 @@
-kubeadm : Download the pkgs.k8s.io signing key -------------------------- 0.50s
-containerd : Enable and start containerd -------------------------------- 0.49s
-containerd : Keep dpkg out of /opt/cni/bin ------------------------------ 0.43s
-kubeadm : Wait for the Node object of this host ------------------------- 0.43s
-containerd : Install the containerd unit -------------------------------- 0.42s
-containerd : Write the containerd configuration ------------------------- 0.42s

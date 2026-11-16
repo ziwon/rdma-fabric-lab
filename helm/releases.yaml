@@ -1,8 +1,11 @@
 ---
-# Every Helm release this repository installs, in install order. `version` names the
-# versions.lock.yaml component that holds the chart version. `values` lists files under
-# helm/, applied in order, where {env} is the inventory name. Every listed file must exist
-# for every environment the release names. `make addons ENV=<env>` installs them.
+# Every Helm release this repository installs, in install order. `chart` is a chart name that
+# `repo` serves, an oci:// reference, or a ./ path from the repository root to a repo-local
+# chart. `version` names the versions.lock.yaml component that holds the chart version. `values`
+# lists files under helm/, applied in order, where {env} is the inventory name. Every listed
+# file must exist for every environment the release names. `images` sets chart values from
+# image-digest lock components: `repository` gets the ref's repository, `tag` its tag with the
+# digest. `make addons ENV=<env>` installs them.
 releases:
   - name: cilium
     namespace: kube-system
@@ -18,3 +21,19 @@ releases:
     version: addons.gpu_operator_chart
     environments: [cel1]
     values: ["gpu-operator/values-{env}.yaml"]
+  - name: multus
+    namespace: kube-system
+    chart: ./helm/multus/chart
+    version: cni.multus
+    environments: [lab]
+    values: []
+    images:
+      - {lock: cni.multus_image, repository: image.repository, tag: image.tag}
+  - name: whereabouts
+    namespace: kube-system
+    chart: oci://ghcr.io/k8snetworkplumbingwg/whereabouts-chart
+    version: cni.whereabouts_chart
+    environments: [lab]
+    values: ["whereabouts/values-{env}.yaml"]
+    images:
+      - {lock: cni.whereabouts_image, repository: image.repository, tag: image.tag}

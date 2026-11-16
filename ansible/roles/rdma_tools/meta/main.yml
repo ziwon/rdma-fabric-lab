@@ -1,0 +1,12 @@
+galaxy_info:
+  role_name: rdma_tools
+  namespace: rfl
+  author: rdma-fabric-lab
+  description: The RDMA test image in the node's containerd, imported from an OCI archive without a registry
+  license: MIT
+  min_ansible_version: "2.16"
+  platforms:
+    - name: Ubuntu
+      versions:
+        - noble
+dependencies: []

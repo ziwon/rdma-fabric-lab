@@ -4,7 +4,8 @@
 LAB_PROFILE ?= lab
 export LAB_PROFILE
 LAB_HARNESS := tests/integration/qemu-lab/lab.sh
-LAB_STATE := .lab$(if $(filter-out lab,$(LAB_PROFILE)),/$(LAB_PROFILE))
+# LAB_DIR moves the guests' files of the profile, as for lab.sh.
+LAB_STATE := $(or $(LAB_DIR),.lab$(if $(filter-out lab,$(LAB_PROFILE)),/$(LAB_PROFILE)))
 LAB_PAIR = $(shell $(LAB_HARNESS) inventories)
 LAB_INVENTORY = $(word 1,$(LAB_PAIR))
 LAB_OVERRIDE ?= $(wildcard $(word 2,$(LAB_PAIR)))
@@ -44,7 +45,7 @@ rxe-up: lab-lock ## Preflight checks, then rxe0 on the RDMA NIC through rfl-rxe.
 k8s-lock: venv
 	$(RFL) versions --scope m2
 
-k8s: k8s-lock ## kubeadm cluster of ansible/playbooks/kubernetes.yml, admin kubeconfig to .lab/kubeconfig. Cilium follows with make addons ENV=lab
+k8s: k8s-lock ## kubeadm cluster of ansible/playbooks/kubernetes.yml, admin kubeconfig to .lab/kubeconfig. Cilium, Multus and Whereabouts follow with make addons ENV=lab
 	$(LAB_PLAYBOOK) ansible/playbooks/kubernetes.yml $(if $(LAB_API_URL),-e rfl_kubeconfig_server=$(LAB_API_URL))
 
 .PHONY: doctor
@@ -67,6 +68,16 @@ k8s-ha-test: k8s-lock ## LAB_PROFILE=ha: cut the power of the VIP holder and sho
 	$(LAB_RUN) run.ha $(foreach i,$(LAB_INVENTORIES),-i $(i)) $(if $(RUN),--run-id $(RUN)) \
 		--power-off '$(LAB_HARNESS) kill {guest}' --power-on '$(LAB_HARNESS) start {guest}'
 
+.PHONY: k8s-hostnet-test
+k8s-hostnet-test: k8s-lock ## Run k8s-hostnet-rdma: the vm-rxe-baseline tests between hostNetwork pods on the two workers
+	$(RFL) versions --scope m3
+	$(LAB_RUN) run.hostnet $(foreach i,$(LAB_INVENTORIES),-i $(i)) $(if $(RUN),--run-id $(RUN))
+
+.PHONY: k8s-multus-test
+k8s-multus-test: k8s-lock ## Run k8s-multus-net1: Multus net1 with Whereabouts beside Cilium, pod recreation and a worker reboot
+	$(RFL) versions --scope m3
+	$(LAB_RUN) run.multus test $(foreach i,$(LAB_INVENTORIES),-i $(i)) $(if $(RUN),--run-id $(RUN))
+
 .PHONY: cleanup
 cleanup: venv ## Stop the processes and delete the guest files of run RUN=<run-id>. The device and the guests stay
 	@test -n "$(RUN)" || { echo "make cleanup needs RUN=<run-id>" >&2; exit 2; }
@@ -80,3 +91,18 @@ collect: lab-lock ## Snapshot host and workers as a run and compare every lab.* 
 reset-lab: venv ## Delete rxe0, rfl-rxe.service and the RDMA NIC address on the workers. Refuses without CONFIRM=lab
 	@test "$(CONFIRM)" = lab || { echo "make reset-lab deletes rxe0 and the RDMA NIC address on every worker. Nothing was changed. Rerun with CONFIRM=lab." >&2; exit 2; }
 	$(LAB_PLAYBOOK) ansible/playbooks/reset.yml -e lab_reset_confirm=$(CONFIRM)
+
+# The RDMA test image of the hostNetwork RDMA pods. The Track B guest builds it, so the host starts no
+# container. BUILDER_LAB_DIR moves that guest's files, by default next to LAB_DIR when that is set.
+RDMA_TOOLS_ARCHIVE ?= $(LAB_STATE)/images/rdma-tools.tar
+BUILDER_LAB_DIR ?= $(if $(LAB_DIR),$(LAB_DIR)/builder)
+BUILDER_ENV = env LAB_PROFILE=ibsim $(if $(BUILDER_LAB_DIR),LAB_DIR=$(BUILDER_LAB_DIR))
+
+.PHONY: rdma-tools-image rdma-tools-load
+rdma-tools-image: venv ## Build images/rdma-tools inside the Track B guest into RDMA_TOOLS_ARCHIVE. Fails when its digest is not lab.rdma_tools_image
+	$(BUILDER_ENV) $(MAKE) --no-print-directory track-b-guest
+	$(LAB_RUN) run.image $(foreach i,$(shell $(BUILDER_ENV) $(LAB_HARNESS) inventories),-i $(i)) --out $(RDMA_TOOLS_ARCHIVE)
+
+rdma-tools-load: lab-lock ## Import RDMA_TOOLS_ARCHIVE into containerd on every worker without a registry, by its locked digest
+	$(RFL) versions --scope m3
+	$(LAB_PLAYBOOK) ansible/playbooks/rdma-tools.yml -e rdma_tools_archive=$(abspath $(RDMA_TOOLS_ARCHIVE))
