@@ -1,0 +1,4 @@
+$ releases_unchanged addons-again
+cilium: unchanged, chart 1.20.4 at revision 1
+multus: unchanged, chart v4.3.2 at revision 1
+whereabouts: unchanged, chart 0.9.4 at revision 1

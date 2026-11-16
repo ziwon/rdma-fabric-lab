@@ -1,0 +1,9 @@
+break	broken_run	broken_status	failed_checks	repaired_run	repaired_status
+worker2-cordoned	20261115T231420Z	failed	test-pods-ready	20261115T231739Z	passed
+net1-routes-off-network	20261115T232031Z	failed	default-route-on-eth0,eth0-cross-node	20261115T232307Z	passed
+vxlan-dropped-on-worker1	20261115T232544Z	failed	eth0-cross-node	20261115T232838Z	passed
+lab-egress-lost-on-worker1	20261115T233114Z	failed	net1-cross-node,net1-on-lab-nic,new-pod-after-reboot-gets-net1	20261115T233416Z	passed
+ghost-allocation	20261115T233711Z	failed	no-duplicate-addresses,recreate-releases-addresses,new-pod-after-reboot-gets-net1,test-namespace-removed	20261115T233948Z	passed
+shadow-cni-file-at-boot-on-worker2	20261115T234224Z	failed	reboot-keeps-cni-order	20261115T234506Z	failed
+delete-timeout-1s-multus	20261115T234826Z	failed	multus-config-first,test-pods-ready,test-namespace-removed	20261115T235143Z	failed
+respawning-run-process-multus	20261115T235500Z	failed	multus-config-first,test-pods-ready,no-process-left	20261115T235823Z	failed

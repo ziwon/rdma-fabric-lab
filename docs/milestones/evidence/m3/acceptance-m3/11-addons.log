@@ -1,0 +1,6 @@
++ <repo>/.tools/bin/helm upgrade --install cilium cilium --repo https://helm.cilium.io --version 1.20.4 --namespace kube-system --values <repo>/helm/cilium/values-lab.yaml --create-namespace --wait --timeout 10m --kubeconfig .lab/kubeconfig
+cilium: upgraded, chart 1.20.4 at revision 1
++ <repo>/.tools/bin/helm upgrade --install multus <repo>/helm/multus/chart --namespace kube-system --set-string image.repository=ghcr.io/k8snetworkplumbingwg/multus-cni --set-string image.tag=v4.3.2-thick@sha256:109b885d8752fe7a7bc3b2371750bfad6789b8b8e2d0b0820b337386ba9b93c9 --create-namespace --wait --timeout 10m --kubeconfig .lab/kubeconfig
+multus: upgraded, chart v4.3.2 at revision 1
++ <repo>/.tools/bin/helm upgrade --install whereabouts oci://ghcr.io/k8snetworkplumbingwg/whereabouts-chart --version 0.9.4 --namespace kube-system --values <repo>/helm/whereabouts/values-lab.yaml --set-string image.repository=ghcr.io/k8snetworkplumbingwg/whereabouts --set-string image.tag=v0.9.4@sha256:f279fd7dc1124d7819330fb2e07357990b2b4c5d8733aef1b028573c29f05e14 --create-namespace --wait --timeout 10m --kubeconfig .lab/kubeconfig
+whereabouts: upgraded, chart 0.9.4 at revision 1

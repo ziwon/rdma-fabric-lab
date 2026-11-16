@@ -1,0 +1,1 @@
+{"cniVersion":"0.3.1","logLevel":"verbose","logToStderr":true,"name":"multus-cni-network","clusterNetwork":"/host/etc/cni/net.d/00-0-rfl-break.conflist","type":"multus-shim"}

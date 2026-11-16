@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "result_kind": "software-cluster-test",
+  "metrics": [
+    {
+      "name": "ha_vip.api_unavailable_seconds",
+      "value": 9.041,
+      "unit": "s",
+      "absent_reason": null,
+      "source": "raw/api-survives-holder-loss/probes.txt",
+      "sample_count": 12,
+      "labels": {
+        "lost": "ha-cp1",
+        "new_holder": "ha-cp2",
+        "probe_from": "ha-w1",
+        "probe_interval_s": "0.5"
+      }
+    }
+  ]
+}

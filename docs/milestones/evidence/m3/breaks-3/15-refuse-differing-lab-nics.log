@@ -1,0 +1,2 @@
+$ env PYTHONPATH=scripts python -m run.multus render -i ansible/inventories/lab -i /data/rfl-lab/m3/inventory.yml -i <repo>/.lab/breaks-m3/20261116T000255Z/configs/nic-differs.yml
+run.multus: lab_rdma_nic differs across the workers (worker1 lab0, worker2 other0). One NetworkAttachmentDefinition names one macvlan master for every node, so the lab NIC needs one name on every worker. The QEMU harness renames it lab0 at first boot. Rename the NICs, then set lab_rdma_nic to that name.

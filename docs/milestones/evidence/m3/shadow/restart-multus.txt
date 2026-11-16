@@ -1,0 +1,3 @@
+pod "kube-multus-ds-gczqw" deleted from kube-system namespace
+Waiting for daemon set "kube-multus-ds" rollout to finish: 2 of 3 updated pods are available...
+daemon set "kube-multus-ds" successfully rolled out

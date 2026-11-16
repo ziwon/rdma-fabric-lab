@@ -1,0 +1,192 @@
+### apply ns-restricted
+namespace/rfl-psprobe created
+### exit 0
+### apply p-narrow
+Error from server (Forbidden): error when creating "STDIN": pods "narrow" is forbidden: violates PodSecurity "restricted:latest": host namespaces (hostNetwork=true)
+### exit 1
+### apply ns-baseline
+namespace/rfl-psprobe configured
+### exit 0
+### apply p-narrow
+Error from server (Forbidden): error when creating "STDIN": pods "narrow" is forbidden: violates PodSecurity "baseline:latest": host namespaces (hostNetwork=true)
+### exit 1
+### apply ns-privileged
+namespace/rfl-psprobe configured
+### exit 0
+### apply p-narrow
+pod/narrow created
+### exit 0
+### $ kubectl -n rfl-psprobe wait --for=condition=Ready pod/narrow --timeout=90s
+pod/narrow condition met
+### exit 0
+### $ kubectl -n rfl-psprobe exec narrow -- sh -c 'id; ls -la /dev/infiniband /sys/class/infiniband; ibv_devinfo; echo ibv_devinfo_exit=$?; ulimit -S -l; ulimit -H -l'
+uid=65534(nobody) gid=65534(nogroup) groups=65534(nogroup)
+ls: cannot access '/dev/infiniband': No such file or directory
+/sys/class/infiniband:
+total 0
+drwxr-xr-x  2 root root 0 Nov 15 22:04 .
+drwxr-xr-x 76 root root 0 Nov 15 21:50 ..
+lrwxrwxrwx  1 root root 0 Nov 15 21:53 rxe0 -> ../../devices/virtual/infiniband/rxe0
+No IB devices found
+ibv_devinfo_exit=255
+8192
+8192
+### exit 0
+### $ kubectl -n rfl-psprobe delete pod narrow --wait
+pod "narrow" deleted from rfl-psprobe namespace
+### exit 0
+### apply p-devmount
+pod/devmount created
+### exit 0
+### $ kubectl -n rfl-psprobe wait --for=condition=Ready pod/devmount --timeout=90s
+pod/devmount condition met
+### exit 0
+### $ kubectl -n rfl-psprobe exec devmount -- sh -c 'id; ls -la /dev/infiniband; ibv_devinfo; echo ibv_devinfo_exit=$?; ibv_devices; rping -s -a 0.0.0.0 -p 7999 -C 1 -v & sleep 2; kill %1; echo; cat /proc/self/status | grep -E "^Cap(Eff|Prm|Bnd)"'
+uid=65534(nobody) gid=65534(nogroup) groups=65534(nogroup)
+total 0
+drwxr-xr-x 3 root root      100 Nov 15 21:53 .
+drwxr-xr-x 6 root root      380 Nov 15 22:04 ..
+drwxr-xr-x 2 root root       60 Nov 15 21:53 by-ibdev
+crw-rw-rw- 1 root root  10, 261 Nov 15 21:53 rdma_cm
+crw-rw-rw- 1 root root 231, 192 Nov 15 21:53 uverbs0
+Failed to open device
+ibv_devinfo_exit=1
+    device          	   node GUID
+    ------          	----------------
+    rxe0            	505400fffe4d0012
+failed to create RDMA CM event channel: No such file or directory
+
+CapPrm:	0000000000000000
+CapEff:	0000000000000000
+CapBnd:	0000000000000000
+sh: 1: kill: No such process
+
+### exit 0
+### $ kubectl -n rfl-psprobe delete pod devmount --wait
+pod "devmount" deleted from rfl-psprobe namespace
+### exit 0
+### apply p-priv
+pod/priv created
+### exit 0
+### $ kubectl -n rfl-psprobe wait --for=condition=Ready pod/priv --timeout=90s
+pod/priv condition met
+### exit 0
+### $ kubectl -n rfl-psprobe exec priv -- sh -c 'id; ls -la /dev/infiniband; ibv_devinfo; echo ibv_devinfo_exit=$?; ulimit -S -l; ulimit -H -l; grep -E "^Cap(Eff|Prm|Bnd)" /proc/self/status'
+uid=65534(nobody) gid=65534(nogroup) groups=65534(nogroup)
+total 0
+drwxr-xr-x  2 root root       80 Nov 15 22:04 .
+drwxr-xr-x 14 root root     3780 Nov 15 22:04 ..
+crw-rw-rw-  1 root root  10, 261 Nov 15 22:04 rdma_cm
+crw-rw-rw-  1 root root 231, 192 Nov 15 22:04 uverbs0
+hca_id:	rxe0
+	transport:			InfiniBand (0)
+	fw_ver:				0.0.0
+	node_guid:			5054:00ff:fe4d:0012
+	sys_image_guid:			5054:00ff:fe4d:0012
+	vendor_id:			0xffffff
+	vendor_part_id:			0
+	hw_ver:				0x0
+	phys_port_cnt:			1
+		port:	1
+			state:			PORT_ACTIVE (4)
+			max_mtu:		4096 (5)
+			active_mtu:		1024 (3)
+			sm_lid:			0
+			port_lid:		0
+			port_lmc:		0x00
+			link_layer:		Ethernet
+
+ibv_devinfo_exit=0
+8192
+8192
+CapPrm:	0000000000000000
+CapEff:	0000000000000000
+CapBnd:	000001ffffffffff
+### exit 0
+### apply p-devmount
+pod/devmount created
+### exit 0
+### $ kubectl -n rfl-psprobe wait --for=condition=Ready pod/devmount --timeout=90s
+pod/devmount condition met
+### exit 0
+### $ kubectl -n rfl-psprobe exec devmount -- sh -c 'exec 3<> /dev/infiniband/uverbs0; echo open_exit=$?'
+sh: 1: cannot create /dev/infiniband/uverbs0: Operation not permitted
+command terminated with exit code 2
+### exit 2
+### $ kubectl -n rfl-psprobe exec devmount -- sh -c 'exec 3<> /dev/infiniband/rdma_cm; echo open_exit=$?'
+sh: 1: cannot create /dev/infiniband/rdma_cm: Operation not permitted
+command terminated with exit code 2
+### exit 2
+### $ kubectl -n rfl-psprobe exec priv -- sh -c 'exec 3<> /dev/infiniband/uverbs0 && echo open uverbs0 ok'
+open uverbs0 ok
+### exit 0
+### $ kubectl -n rfl-psprobe delete pod devmount --wait
+pod "devmount" deleted from rfl-psprobe namespace
+### exit 0
+### apply p-priv2
+pod/priv2 created
+### exit 0
+### $ kubectl -n rfl-psprobe wait --for=condition=Ready pod/priv2 --timeout=90s
+pod/priv2 condition met
+### exit 0
+### $ kubectl -n rfl-psprobe exec priv -- sh -c 'timeout 40 ib_write_bw -d rxe0 -R -p 18515 -s 4096 -n 1000 -F --report_gbits > /tmp/s.out 2>&1 &'
+### exit 0
+### $ kubectl -n rfl-psprobe exec priv2 -- sh -c 'sleep 3; timeout 30 ib_write_bw -d rxe0 -R -p 18515 -s 4096 -n 1000 -F --report_gbits 10.77.0.12; echo client_exit=$?'
+---------------------------------------------------------------------------------------
+                    RDMA_Write BW Test
+ Dual-port       : OFF		Device         : rxe0
+ Number of qps   : 1		Transport type : IB
+ Connection type : RC		Using SRQ      : OFF
+ PCIe relax order: ON
+ ibv_wr* API     : OFF
+ TX depth        : 128
+ CQ Moderation   : 100
+ Mtu             : 1024[B]
+ Link type       : Ethernet
+ GID index       : 1
+ Max inline data : 0[B]
+ rdma_cm QPs	 : ON
+ Data ex. method : rdma_cm
+---------------------------------------------------------------------------------------
+ local address: LID 0000 QPN 0x0012 PSN 0x234dba
+ GID: 00:00:00:00:00:00:00:00:00:00:255:255:10:77:00:13
+ remote address: LID 0000 QPN 0x0012 PSN 0x68ea06
+ GID: 00:00:00:00:00:00:00:00:00:00:255:255:10:77:00:12
+---------------------------------------------------------------------------------------
+ #bytes     #iterations    BW peak[Gb/sec]    BW average[Gb/sec]   MsgRate[Mpps]
+ 4096       1000             1.94               1.82   		   0.055604
+---------------------------------------------------------------------------------------
+client_exit=0
+### exit 0
+### $ kubectl -n rfl-psprobe exec priv -- sh -c 'sleep 2; cat /tmp/s.out'
+
+************************************
+* Waiting for client to connect... *
+************************************
+---------------------------------------------------------------------------------------
+                    RDMA_Write BW Test
+ Dual-port       : OFF		Device         : rxe0
+ Number of qps   : 1		Transport type : IB
+ Connection type : RC		Using SRQ      : OFF
+ PCIe relax order: ON
+ ibv_wr* API     : OFF
+ CQ Moderation   : 100
+ Mtu             : 1024[B]
+ Link type       : Ethernet
+ GID index       : 1
+ Max inline data : 0[B]
+ rdma_cm QPs	 : ON
+ Data ex. method : rdma_cm
+---------------------------------------------------------------------------------------
+ Waiting for client rdma_cm QP to connect
+ Please run the same command with the IB/RoCE interface IP
+---------------------------------------------------------------------------------------
+ local address: LID 0000 QPN 0x0012 PSN 0x68ea06
+ GID: 00:00:00:00:00:00:00:00:00:00:255:255:10:77:00:12
+ remote address: LID 0000 QPN 0x0012 PSN 0x234dba
+ GID: 00:00:00:00:00:00:00:00:00:00:255:255:10:77:00:13
+---------------------------------------------------------------------------------------
+ #bytes     #iterations    BW peak[Gb/sec]    BW average[Gb/sec]   MsgRate[Mpps]
+ 4096       1000             1.94               1.82   		   0.055604
+---------------------------------------------------------------------------------------
+### exit 0

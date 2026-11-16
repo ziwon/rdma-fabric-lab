@@ -31,7 +31,8 @@ The tracks share the repository, the result format and the version lock, not a d
 | cel1 region, offline | done. Site model, generated inventory, contract check and rendered charts pass | `docs/fleet.md` |
 | M4 ibsim and OpenSM | done. B-01 to B-04 pass inside the Track B guest: discovery, unique LIDs, port states, a link fault and its recovery, and rerouting on the cel1 rail fabric. Each scenario fails on its deliberate break | `docs/milestones/M4.md` |
 | cel1 region, simulated as 13 guests | done. `make fleet-k8s`, `fleet-addons` and `fleet-rsyslog` built the cluster on 13 guests from wiped disks. All 13 nodes Ready with their class labels, kube-proxy replacement with native routing, the nvidia runtime default on the DGX guests, and the API back on the VIP after its holder lost power | `docs/milestones/cel1-sim.md` |
-| M3 Multus and hostNetwork RDMA pods, M5 and M6 ns-3, M7 wrap-up | not started | |
+| M3 hostNetwork RDMA pods and Multus | done. Pods on the two workers repeat the M1 baseline over the node's RXE device, and Multus adds `net1` from Whereabouts beside Cilium through pod recreation and a worker reboot. The pods need `privileged` | `docs/milestones/M3.md` |
+| M5 and M6 ns-3, M7 wrap-up | not started | |
 
 Nothing in this repository has run against GPU hardware.
 
@@ -63,13 +64,23 @@ make lab-wipe lab-up                 # boot cp1, worker1 and worker2
 make bootstrap rxe-up                # packages, lab NIC address, rxe0
 make rxe-test                        # RDMA between the workers, recorded under results/
 make k8s                             # kubeadm cluster, kubeconfig in .lab/kubeconfig
-make addons ENV=lab KUBECONFIG_FILE=.lab/kubeconfig   # Cilium by Helm
+make addons ENV=lab KUBECONFIG_FILE=.lab/kubeconfig   # Cilium, Multus and Whereabouts by Helm
 make k8s-test                        # nodes, pod traffic, DNS, Service, NetworkPolicy
 make validate report                 # check and tally every run directory
 make lab-down
 ```
 
-The three-control-plane profile runs with `LAB_PROFILE=ha`.
+M3 runs on the same cluster. The RDMA test image is built inside the Track B guest, never on the host, and loaded into the workers' containerd without a registry:
+
+```bash
+make rdma-tools-image               # build in the Track B guest, fails unless the digest is lab.rdma_tools_image
+make lab-down LAB_PROFILE=ibsim     # free the builder before measuring
+make rdma-tools-load                # import the image on both workers
+make k8s-hostnet-test               # the M1 RDMA tests between hostNetwork pods
+make k8s-multus-test                # net1 from Whereabouts beside Cilium, recreation, worker reboot
+```
+
+`tests/integration/qemu-lab/acceptance-m3.sh` runs all of M1, M2 and M3 from wiped guests. The three-control-plane profile runs with `LAB_PROFILE=ha`.
 
 Track B boots its own guest and runs everything inside it:
 
@@ -107,8 +118,9 @@ Every scenario declares its checks in `tracks/<track>/scenarios/*.yaml`. A run w
 
 | Path | Contents |
 |---|---|
-| `ansible/` | Inventories for `lab` and `cel1`, playbooks, and the roles of the shared stack (`containerd`, `kubeadm`) and the lab (`preflight`, `common`, `network`, `rxe`) |
-| `helm/` | `releases.yaml`, the Helm releases in install order, and values per environment |
+| `ansible/` | Inventories for `lab` and `cel1`, playbooks, and the roles of the shared stack (`containerd`, `kubeadm`) and the lab (`preflight`, `common`, `network`, `rxe`, `rdma_tools`) |
+| `helm/` | `releases.yaml`, the Helm releases in install order, values per environment, and the repo-local Multus chart |
+| `images/` | The pinned Track B image and the RDMA test image, both built inside a harness guest |
 | `sites/` | Site models |
 | `scripts/` | Result contract (`rfl`), scenario runners, doctor, addons runner, fleet and inventory checks |
 | `tracks/` | Scenario specs and their configuration |

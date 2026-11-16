@@ -1,0 +1,301 @@
+{
+  "schema_version": 1,
+  "run_id": "20261116T003040Z",
+  "track": "a-soft-roce",
+  "scenario": "k8s-multus-net1",
+  "description": "A Multus secondary IP network beside Cilium. Two ordinary pods on different workers get eth0 from Cilium and net1, a macvlan child of the lab NIC with a cluster-wide Whereabouts address from the inventory's Multus pool. The run checks both networks across nodes, the default route, address bookkeeping when the pods are recreated, and the CNI configuration of a worker after a reboot. net1 is an IP network only. It shows no RDMA device, provider or permission inside a pod.",
+  "required": true,
+  "result_kind": "software-cluster-test",
+  "status": "passed",
+  "created_at": "2026-11-16T00:30:40Z",
+  "finished_at": "2026-11-16T00:33:20Z",
+  "repo": {
+    "commit": "387651ee3a270d3730b07f2d16bbcc444a3e5bdc",
+    "dirty": true
+  },
+  "environment": {
+    "host": {
+      "os": "Ubuntu 24.04.5 LTS",
+      "kernel": "7.0.0-43-generic"
+    },
+    "guests": [
+      {
+        "name": "cp1",
+        "os": "Ubuntu 24.04.5 LTS",
+        "kernel": "6.8.0-147-generic"
+      },
+      {
+        "name": "worker1",
+        "os": "Ubuntu 24.04.5 LTS",
+        "kernel": "6.8.0-147-generic"
+      },
+      {
+        "name": "worker2",
+        "os": "Ubuntu 24.04.5 LTS",
+        "kernel": "6.8.0-147-generic"
+      }
+    ],
+    "tools": {
+      "cilium image": "quay.io/cilium/cilium:v1.20.4@sha256:20fe92e4c86641233a450098c158d2d29085f3419931ab6bf681d2485dedf16e",
+      "cilium-envoy image": "quay.io/cilium/cilium-envoy:v1.39.5-1792733054-8c73b2816bc8239e27f1fd53b271884688137459@sha256:547ab45f6092f681d9f54f3be9fa8fb1e705c9c5dc2df388efe3a52aa6965629",
+      "kube-multus-ds image": "ghcr.io/k8snetworkplumbingwg/multus-cni:v4.3.2-thick@sha256:109b885d8752fe7a7bc3b2371750bfad6789b8b8e2d0b0820b337386ba9b93c9",
+      "kube-proxy image": "registry.k8s.io/kube-proxy:v1.36.6",
+      "whereabouts-whereabouts-chart image": "ghcr.io/k8snetworkplumbingwg/whereabouts:v0.9.4@sha256:f279fd7dc1124d7819330fb2e07357990b2b4c5d8733aef1b028573c29f05e14",
+      "test image": "registry.k8s.io/e2e-test-images/busybox:1.38.0-1@sha256:302d6221f7d600725e0f926f9f04f8fbbb2a32678b4e991da760a5062d4dc7e1"
+    }
+  },
+  "inputs": {
+    "files": [
+      {
+        "path": "/data/rfl-lab/m3/inventory.yml",
+        "sha256": "d5ecece5aed30ce0c7e3fdab1df3eee8a5d89b53dedf9223dc6235660325381d"
+      },
+      {
+        "path": "ansible/inventories/lab/group_vars/all/k8s.yml",
+        "sha256": "08bd1678da6f39fb5e116de3122c49a39a19d9c403b2ab65e5dbb00d88e33c61"
+      },
+      {
+        "path": "ansible/inventories/lab/group_vars/all/lab.yml",
+        "sha256": "bd939643b7fb0eacf523b7277a801aabf476c1dd50f167ec8a677dbc72b61fd6"
+      },
+      {
+        "path": "ansible/inventories/lab/hosts.yml",
+        "sha256": "3fda19d2b7c230220d547d24d36608e1ded8b51dc9a13ca44ea11efa58aea593"
+      },
+      {
+        "path": "tracks/a-soft-roce/config/k8s-multus-net1.yaml",
+        "sha256": "cdbac74091439cabfd7e135196db21935853848c81c4712f6ea962664d8b63dc"
+      },
+      {
+        "path": "tracks/a-soft-roce/scenarios/k8s-multus-net1.yaml",
+        "sha256": "b8b419a0f0780380246e3f3a0480122ca8c1acc83f69cb7488b05719b5cfe10f"
+      },
+      {
+        "path": "versions.lock.yaml",
+        "sha256": "bec8218f11f4782e6afe2d917dc810710184cdda21e3bf2e82ef91645a46db17"
+      }
+    ],
+    "seed": null,
+    "parameters": {
+      "namespace": "rdma-lab",
+      "image": "registry.k8s.io/e2e-test-images/busybox:1.38.0-1@sha256:302d6221f7d600725e0f926f9f04f8fbbb2a32678b4e991da760a5062d4dc7e1",
+      "secondary": "macvlan",
+      "master": "lab0",
+      "range": "10.77.0.100-10.77.0.199"
+    }
+  },
+  "commands_log": "commands.log",
+  "checks": [
+    {
+      "id": "multus-config-first",
+      "description": "On every node the first file containerd loads from /etc/cni/net.d is Multus's 00-multus.conf, and its default delegate is the Cilium conflist.",
+      "status": "passed",
+      "exit_code": 0,
+      "failure_class": null,
+      "evidence": [
+        "raw/multus-config-first/cp1-ls.txt",
+        "raw/multus-config-first/cp1-00-multus.conf",
+        "raw/multus-config-first/cp1-delegate.txt",
+        "raw/multus-config-first/worker1-ls.txt",
+        "raw/multus-config-first/worker1-00-multus.conf",
+        "raw/multus-config-first/worker1-delegate.txt",
+        "raw/multus-config-first/worker2-ls.txt",
+        "raw/multus-config-first/worker2-00-multus.conf",
+        "raw/multus-config-first/worker2-delegate.txt"
+      ],
+      "detail": "cp1 00-multus.conf first, delegate /etc/cni/net.d/05-cilium.conflist; worker1 00-multus.conf first, delegate /etc/cni/net.d/05-cilium.conflist; worker2 00-multus.conf first, delegate /etc/cni/net.d/05-cilium.conflist"
+    },
+    {
+      "id": "network-attachment-from-inventory",
+      "description": "The NetworkAttachmentDefinition in the inventory's lab namespace names the workers' lab_rdma_nic as master and the inventory's Multus pool as its Whereabouts range.",
+      "status": "passed",
+      "exit_code": 0,
+      "failure_class": null,
+      "evidence": [
+        "raw/network-attachment-from-inventory/apply.txt",
+        "raw/network-attachment-from-inventory/nad.json"
+      ],
+      "detail": "rdma-lab-net in rdma-lab: macvlan bridge on master lab0, Whereabouts 10.77.0.100-10.77.0.199 in 10.77.0.0/24, no gateway and no route"
+    },
+    {
+      "id": "test-pods-ready",
+      "description": "The server and client pods run Ready on their two workers in the lab namespace at the PodSecurity restricted level.",
+      "status": "passed",
+      "exit_code": 0,
+      "failure_class": null,
+      "evidence": [
+        "raw/test-pods-ready/apply.txt",
+        "raw/test-pods-ready/objects.json",
+        "raw/test-pods-ready/wait.txt",
+        "raw/test-pods-ready/pods.json"
+      ],
+      "detail": "net1-server on worker1, net1-client on worker2, admitted by PodSecurity restricted in rdma-lab"
+    },
+    {
+      "id": "pods-have-eth0-and-net1",
+      "description": "Each pod has eth0 from Cilium inside its node's pod CIDR and net1 from the attachment inside the pool, the same addresses in the Multus network status and inside the pod.",
+      "status": "passed",
+      "exit_code": 0,
+      "failure_class": null,
+      "evidence": [
+        "raw/pods-have-eth0-and-net1/pods.json",
+        "raw/pods-have-eth0-and-net1/net1-server-ip-addr.txt",
+        "raw/pods-have-eth0-and-net1/net1-client-ip-addr.txt"
+      ],
+      "detail": "net1-server on worker1: eth0 10.244.2.89 from cilium, net1 10.77.0.100; net1-client on worker2: eth0 10.244.1.136 from cilium, net1 10.77.0.101"
+    },
+    {
+      "id": "default-route-on-eth0",
+      "description": "Each pod has exactly one default route, through eth0, and sends the node address of the first control plane, which lies off both pod networks, through eth0.",
+      "status": "passed",
+      "exit_code": 0,
+      "failure_class": null,
+      "evidence": [
+        "raw/default-route-on-eth0/net1-server.txt",
+        "raw/default-route-on-eth0/net1-server-get.txt",
+        "raw/default-route-on-eth0/net1-client.txt",
+        "raw/default-route-on-eth0/net1-client-get.txt"
+      ],
+      "detail": "net1-server default via 10.244.2.91 dev eth0 , 192.168.140.11 via eth0; net1-client default via 10.244.1.101 dev eth0 , 192.168.140.11 via eth0"
+    },
+    {
+      "id": "eth0-cross-node",
+      "description": "The client fetches the server pod's name over HTTP from the server's eth0 address on the other worker.",
+      "status": "passed",
+      "exit_code": 0,
+      "failure_class": null,
+      "evidence": [
+        "raw/eth0-cross-node/route.txt",
+        "raw/eth0-cross-node/attempt-1.txt"
+      ],
+      "detail": "net1-client fetched 'net1-server' from http://10.244.2.89:8080/ through eth0 on attempt 1"
+    },
+    {
+      "id": "net1-cross-node",
+      "description": "The client routes the server's net1 address through net1 and fetches the server pod's name over HTTP from it.",
+      "status": "passed",
+      "exit_code": 0,
+      "failure_class": null,
+      "evidence": [
+        "raw/net1-cross-node/route.txt",
+        "raw/net1-cross-node/attempt-1.txt"
+      ],
+      "detail": "net1-client fetched 'net1-server' from http://10.77.0.100:8080/ through net1 on attempt 1"
+    },
+    {
+      "id": "net1-on-lab-nic",
+      "description": "Lab NIC captures of both workers hold frames between the two net1 addresses in both directions.",
+      "status": "passed",
+      "exit_code": 0,
+      "failure_class": null,
+      "evidence": [
+        "raw/traffic/summary.json",
+        "raw/traffic/worker1-lab.pcap",
+        "raw/traffic/worker2-lab.pcap"
+      ],
+      "detail": "worker1 lab0 5 frames 10.77.0.100>10.77.0.101, 5 frames 10.77.0.101>10.77.0.100; worker2 lab0 5 frames 10.77.0.100>10.77.0.101, 5 frames 10.77.0.101>10.77.0.100"
+    },
+    {
+      "id": "no-duplicate-addresses",
+      "description": "No net1 address appears twice across the pods or the Whereabouts allocations, and each pod's address is held once for it.",
+      "status": "passed",
+      "exit_code": 0,
+      "failure_class": null,
+      "evidence": [
+        "raw/no-duplicate-addresses/ippools.json"
+      ],
+      "detail": "net1 {'net1-server': '10.77.0.100', 'net1-client': '10.77.0.101'} each held once by Whereabouts, 2 allocations in all, none twice"
+    },
+    {
+      "id": "recreate-releases-addresses",
+      "description": "Deleting both pods releases their Whereabouts allocations, and the recreated pods get pool addresses held once each, so nothing leaks.",
+      "status": "passed",
+      "exit_code": 0,
+      "failure_class": null,
+      "evidence": [
+        "raw/recreate-releases-addresses/delete.txt",
+        "raw/recreate-releases-addresses/ippools-after-delete.json",
+        "raw/recreate-releases-addresses/apply.txt",
+        "raw/recreate-releases-addresses/objects.json",
+        "raw/recreate-releases-addresses/wait.txt",
+        "raw/recreate-releases-addresses/pods.json",
+        "raw/recreate-releases-addresses/net1-server-ip-addr.txt",
+        "raw/recreate-releases-addresses/net1-client-ip-addr.txt",
+        "raw/recreate-releases-addresses/ippools-after-recreate.json"
+      ],
+      "detail": "deletion released {'net1-server': '10.77.0.100', 'net1-client': '10.77.0.101'}; the recreated pods got {'net1-server': '10.77.0.100', 'net1-client': '10.77.0.101'}, each held once"
+    },
+    {
+      "id": "reboot-keeps-cni-order",
+      "description": "After one worker reboots, its kubelet reports the new boot, Multus restarts there, and Multus's file is still first in /etc/cni/net.d with Cilium as its default delegate.",
+      "status": "passed",
+      "exit_code": 0,
+      "failure_class": null,
+      "evidence": [
+        "raw/reboot-keeps-cni-order/delete.txt",
+        "raw/reboot-keeps-cni-order/ippools-after-delete.json",
+        "raw/reboot-keeps-cni-order/boot-ids.json",
+        "raw/reboot-keeps-cni-order/multus-pod.json",
+        "raw/reboot-keeps-cni-order/at-multus-ready/worker2-ls.txt",
+        "raw/reboot-keeps-cni-order/at-multus-ready/worker2-00-multus.conf",
+        "raw/reboot-keeps-cni-order/at-multus-ready/worker2-delegate.txt",
+        "raw/reboot-keeps-cni-order/settled/worker2-ls.txt",
+        "raw/reboot-keeps-cni-order/settled/worker2-00-multus.conf",
+        "raw/reboot-keeps-cni-order/settled/worker2-delegate.txt",
+        "raw/reboot-keeps-cni-order/multus-conf-mtime.txt"
+      ],
+      "detail": "worker2 booted e5353e6e -> cf23404d, kubelet reports the new boot, Multus restarted; at Multus Ready the file was present; 00-multus.conf written 18 s after boot; worker2 00-multus.conf first, delegate /etc/cni/net.d/05-cilium.conflist"
+    },
+    {
+      "id": "new-pod-after-reboot-gets-net1",
+      "description": "A new pod on the rebooted worker gets eth0 and net1 from the pool, held once, and reaches the server over net1.",
+      "status": "passed",
+      "exit_code": 0,
+      "failure_class": null,
+      "evidence": [
+        "raw/new-pod-after-reboot-gets-net1/apply.txt",
+        "raw/new-pod-after-reboot-gets-net1/objects.json",
+        "raw/new-pod-after-reboot-gets-net1/wait.txt",
+        "raw/new-pod-after-reboot-gets-net1/pods.json",
+        "raw/new-pod-after-reboot-gets-net1/net1-client-ip-addr.txt",
+        "raw/new-pod-after-reboot-gets-net1/ippools.json",
+        "raw/new-pod-after-reboot-gets-net1/net1/route.txt",
+        "raw/new-pod-after-reboot-gets-net1/net1/attempt-1.txt"
+      ],
+      "detail": "net1-client on worker2: eth0 10.244.1.46 from cilium, net1 10.77.0.101; net1-client reached net1-server over net1 again"
+    },
+    {
+      "id": "test-namespace-removed",
+      "description": "The lab namespace of the run, its pods and every Whereabouts allocation of it are gone at the end.",
+      "status": "passed",
+      "exit_code": 0,
+      "failure_class": null,
+      "evidence": [
+        "raw/test-namespace-removed/delete.txt",
+        "raw/test-namespace-removed/left.txt",
+        "raw/test-namespace-removed/pods.txt",
+        "raw/test-namespace-removed/ippools.json"
+      ],
+      "detail": "namespace rdma-lab, its pods and every Whereabouts allocation of it are gone"
+    },
+    {
+      "id": "no-process-left",
+      "description": "After the run no process carrying this run id remains on any node.",
+      "status": "passed",
+      "exit_code": 0,
+      "failure_class": null,
+      "evidence": [
+        "raw/no-process-left/processes.txt"
+      ],
+      "detail": "cp1: 0 stopped by the runner, 0 remaining; worker1: 0 stopped by the runner, 0 remaining; worker2: 0 stopped by the runner, 0 remaining"
+    }
+  ],
+  "timing": {
+    "wall_clock_seconds": 159.6,
+    "simulated_seconds": null
+  },
+  "security": {
+    "privileged": false,
+    "device_exposure": "The test pods are unprivileged busybox containers admitted at the PodSecurity restricted level, with no host path, host network or device. kubectl runs on the first control plane with its admin.conf, which never leaves that guest. tcpdump, the reboot and process cleanup use sudo on the workers."
+  }
+}

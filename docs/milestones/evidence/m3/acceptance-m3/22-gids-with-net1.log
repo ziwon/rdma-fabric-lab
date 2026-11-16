@@ -1,0 +1,7 @@
+$ gids
+== worker1
+      2 lab0
+      2 net1
+== worker2
+      2 lab0
+      2 net1

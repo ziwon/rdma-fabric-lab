@@ -1,0 +1,33 @@
+make --no-print-directory .tools/bin/.helm-v4.3.2 .tools/bin/.kubeconform-v0.8.0
+make[1]: '.tools/bin/.helm-v4.3.2' is up to date.
+make[1]: '.tools/bin/.kubeconform-v0.8.0' is up to date.
+PYTHONPATH=scripts .venv/bin/python -m addons apply --env lab --kubeconfig .lab/kubeconfig  
+cilium: unchanged, chart 1.20.4 at revision 1
++ <repo>/.tools/bin/helm upgrade --install multus <repo>/helm/multus/chart --namespace kube-system --set-string image.repository=ghcr.io/k8snetworkplumbingwg/multus-cni --set-string image.tag=v4.3.2-thick@sha256:109b885d8752fe7a7bc3b2371750bfad6789b8b8e2d0b0820b337386ba9b93c9 --create-namespace --wait --timeout 10m --kubeconfig .lab/kubeconfig
+Release "multus" does not exist. Installing it now.
+NAME: multus
+LAST DEPLOYED: Mon Nov 16 07:02:40 2026
+NAMESPACE: kube-system
+STATUS: deployed
+REVISION: 1
+DESCRIPTION: Install complete
+TEST SUITE: None
+multus: upgraded, chart v4.3.2 at revision 1
++ <repo>/.tools/bin/helm upgrade --install whereabouts oci://ghcr.io/k8snetworkplumbingwg/whereabouts-chart --version 0.9.4 --namespace kube-system --values <repo>/helm/whereabouts/values-lab.yaml --set-string image.repository=ghcr.io/k8snetworkplumbingwg/whereabouts --set-string image.tag=v0.9.4@sha256:f279fd7dc1124d7819330fb2e07357990b2b4c5d8733aef1b028573c29f05e14 --create-namespace --wait --timeout 10m --kubeconfig .lab/kubeconfig
+Release "whereabouts" does not exist. Installing it now.
+Pulled: ghcr.io/k8snetworkplumbingwg/whereabouts-chart:0.9.4
+Digest: sha256:3a12f4d67dcdeb3e171460197534f61879d54114f08f390c0ab4f2b20cd6840a
+NAME: whereabouts
+LAST DEPLOYED: Mon Nov 16 07:03:03 2026
+NAMESPACE: kube-system
+STATUS: deployed
+REVISION: 1
+DESCRIPTION: Install complete
+TEST SUITE: None
+NOTES:
+Whereabouts is installed!!
+
+You can view the pods with the following command:
+
+kubectl get pods -n kube-system -l app=whereabouts
+whereabouts: upgraded, chart 0.9.4 at revision 1

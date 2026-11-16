@@ -1,0 +1,4 @@
+PYTHONPATH=scripts .venv/bin/python -m rfl versions --scope m4
+PYTHONPATH=scripts .venv/bin/python -m run.image -i tests/integration/qemu-lab/profiles/ibsim/inventory -i /data/rfl-lab/m3/builder/inventory.yml --out /data/rfl-lab/m3/images/rdma-tools.tar
+docker.io/library/rfl-rdma-tools:m3 built in ibsim1: sha256:756e51cfbd6399905cef22945b3be3daa143f258b688f081f9e1c8b5fe5e280d, archive /data/rfl-lab/m3/images/rdma-tools.tar
+versions.lock.yaml pins lab.rdma_tools_image sha256:2750242deade5f687847c6623b1aa689acf4e9f3d2d7661ed9464fd2d618dbf1, the build in ibsim1 gave sha256:756e51cfbd6399905cef22945b3be3daa143f258b688f081f9e1c8b5fe5e280d. Set lab.rdma_tools_image to the new digest, then rerun every scenario on it.

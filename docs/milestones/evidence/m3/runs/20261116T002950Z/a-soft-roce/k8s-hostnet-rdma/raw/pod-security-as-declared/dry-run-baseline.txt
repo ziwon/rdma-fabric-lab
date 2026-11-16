@@ -1,0 +1,7 @@
+$ kubectl label --dry-run=server --overwrite namespace rdma-lab pod-security.kubernetes.io/enforce=baseline
+exit 0
+--- stdout
+namespace/rdma-lab labeled (server dry run)
+--- stderr
+Warning: existing pods in namespace "rdma-lab" violate the new PodSecurity enforce level "baseline:latest"
+Warning: rdma-client (and 1 other pod): host namespaces, privileged

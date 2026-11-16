@@ -1,0 +1,13 @@
+break	broken_run	broken_status	failed_checks	repaired_run	repaired_status
+image-missing	20261115T224241Z	failed	rdma-pods-ready	20261115T224600Z	passed
+lock-perftest-differs	20261115T224648Z	failed	pod-tools-match-lock	20261115T224739Z	passed
+podsecurity-privileged-refused	20261115T224832Z	failed	pod-security-as-declared	20261115T224923Z	passed
+narrower-is-the-working-profile	20261115T225012Z	failed	narrower-profiles-fail	20261115T225107Z	passed
+rxe-deleted-on-worker2	20261115T225159Z	failed	ibv-devinfo-in-pods,rxe-bound-to-lab-nic,rping-verified,rdma-read,rdma-write,rdma-send,roce-on-lab-nic	20261115T225329Z	passed
+lab-address-removed-on-worker2	20261115T225417Z	failed	route-via-lab-nic,rping-verified,rdma-read,rdma-write,rdma-send,roce-on-lab-nic	20261115T225540Z	passed
+memlock-64k-on-worker2	20261115T225629Z	failed	memlock-in-pods	20261115T225718Z	passed
+marker-pings-dropped	20261115T225805Z	failed	no-roce-on-mgmt-nic	20261115T225902Z	passed
+delete-timeout-1s	20261115T225952Z	failed	rdma-pods-removed	20261115T230039Z	passed
+respawning-run-process	20261115T230130Z	failed	no-process-left	20261115T230220Z	passed
+shadow-cni-file-on-worker1	20261115T230310Z	failed	multus-config-first,pods-have-eth0-and-net1	20261115T230328Z	passed
+attachment-crd-deleted	20261115T230536Z	failed	network-attachment-from-inventory	20261115T230550Z	passed

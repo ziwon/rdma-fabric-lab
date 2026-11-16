@@ -1,0 +1,2 @@
+docker.io/library/rfl-rdma-tools:m3 built in ibsim1: sha256:756e51cfbd6399905cef22945b3be3daa143f258b688f081f9e1c8b5fe5e280d, archive /data/rfl-lab/m3/images/rdma-tools.tar
+matches lab.rdma_tools_image in versions.lock.yaml

@@ -1,0 +1,159 @@
+type macvlan mode bridge
+worker1 lab0 rxe0 10.77.0.199/24 10.77.0.199
+worker2 lab0 rxe0 10.77.0.198/24 10.77.0.198
+
+### worker1 $ for g in /sys/class/infiniband/rxe0/ports/1/gids/*; do v=$(cat $g 2>/dev/null) || continue; case $v in 0000:0000:0000:0000:0000:0000:0000:0000) ;; *) echo "${g##*/} $v $(cat /sys/class/infiniband/rxe0/ports/1/gid_attrs/ndevs/${g##*/} 2>/dev/null)";; esac; done; rdma link show
+0 fe80:0000:0000:0000:5054:00ff:fe4d:0012 lab0
+1 0000:0000:0000:0000:0000:ffff:0a4d:000c lab0
+link rxe0/1 state ACTIVE physical_state LINK_UP netdev lab0 
+### exit 0
+
+### worker2 $ for g in /sys/class/infiniband/rxe0/ports/1/gids/*; do v=$(cat $g 2>/dev/null) || continue; case $v in 0000:0000:0000:0000:0000:0000:0000:0000) ;; *) echo "${g##*/} $v $(cat /sys/class/infiniband/rxe0/ports/1/gid_attrs/ndevs/${g##*/} 2>/dev/null)";; esac; done; rdma link show
+0 fe80:0000:0000:0000:5054:00ff:fe4d:0013 lab0
+1 0000:0000:0000:0000:0000:ffff:0a4d:000d lab0
+link rxe0/1 state ACTIVE physical_state LINK_UP netdev lab0 
+### exit 0
+
+### worker1 $ sudo ip netns add rfl-probe-m3 && sudo ip link add rfl-probe-m3-c link lab0 type macvlan mode bridge && sudo ip link set rfl-probe-m3-c netns rfl-probe-m3     && sudo ip -n rfl-probe-m3 addr add 10.77.0.199/24 dev rfl-probe-m3-c && sudo ip -n rfl-probe-m3 link set rfl-probe-m3-c up && sudo ip -n rfl-probe-m3 link set lo up     && sudo ip -n rfl-probe-m3 -d link show rfl-probe-m3-c && ip -d link show lab0
+5: rfl-probe-m3-c@if3: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UP mode DEFAULT group default qlen 1000
+    link/ether 42:37:32:85:de:21 brd ff:ff:ff:ff:ff:ff link-netnsid 0 promiscuity 0  allmulti 0 minmtu 68 maxmtu 65535 
+    macvlan mode bridge bcqueuelen 1000 usedbcqueuelen 1000 addrgenmode eui64 numtxqueues 1 numrxqueues 1 gso_max_size 65536 gso_max_segs 65535 tso_max_size 65536 tso_max_segs 65535 gro_max_size 65536 
+3: lab0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP mode DEFAULT group default qlen 1000
+    link/ether 52:54:00:4d:00:12 brd ff:ff:ff:ff:ff:ff promiscuity 0  allmulti 0 minmtu 68 maxmtu 65535 addrgenmode eui64 numtxqueues 1 numrxqueues 1 gso_max_size 65536 gso_max_segs 65535 tso_max_size 65536 tso_max_segs 65535 gro_max_size 65536 parentbus virtio parentdev virtio2 
+### exit 0
+
+### worker1 $ sudo setsid timeout 60 tcpdump -n -e -i lab0 -w /tmp/rfl-probe-m3.pcap 'icmp or arp' > /dev/null 2>&1 < /dev/null & sleep 2; pgrep -a tcpdump
+9722 tcpdump -n -e -i lab0 -w /tmp/rfl-probe-m3.pcap icmp or arp
+### exit 0
+
+### worker2 $ sudo ip netns add rfl-probe-m3 && sudo ip link add rfl-probe-m3-c link lab0 type macvlan mode bridge && sudo ip link set rfl-probe-m3-c netns rfl-probe-m3     && sudo ip -n rfl-probe-m3 addr add 10.77.0.198/24 dev rfl-probe-m3-c && sudo ip -n rfl-probe-m3 link set rfl-probe-m3-c up && sudo ip -n rfl-probe-m3 link set lo up     && sudo ip -n rfl-probe-m3 -d link show rfl-probe-m3-c && ip -d link show lab0
+5: rfl-probe-m3-c@if3: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UP mode DEFAULT group default qlen 1000
+    link/ether 86:74:87:7f:96:b9 brd ff:ff:ff:ff:ff:ff link-netnsid 0 promiscuity 0  allmulti 0 minmtu 68 maxmtu 65535 
+    macvlan mode bridge bcqueuelen 1000 usedbcqueuelen 1000 addrgenmode eui64 numtxqueues 1 numrxqueues 1 gso_max_size 65536 gso_max_segs 65535 tso_max_size 65536 tso_max_segs 65535 gro_max_size 65536 
+3: lab0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP mode DEFAULT group default qlen 1000
+    link/ether 52:54:00:4d:00:13 brd ff:ff:ff:ff:ff:ff promiscuity 0  allmulti 0 minmtu 68 maxmtu 65535 addrgenmode eui64 numtxqueues 1 numrxqueues 1 gso_max_size 65536 gso_max_segs 65535 tso_max_size 65536 tso_max_segs 65535 gro_max_size 65536 parentbus virtio parentdev virtio2 
+### exit 0
+
+### worker2 $ sudo setsid timeout 60 tcpdump -n -e -i lab0 -w /tmp/rfl-probe-m3.pcap 'icmp or arp' > /dev/null 2>&1 < /dev/null & sleep 2; pgrep -a tcpdump
+9711 tcpdump -n -e -i lab0 -w /tmp/rfl-probe-m3.pcap icmp or arp
+### exit 0
+
+### worker1 $ for g in /sys/class/infiniband/rxe0/ports/1/gids/*; do v=$(cat $g 2>/dev/null) || continue; case $v in 0000:0000:0000:0000:0000:0000:0000:0000) ;; *) echo "${g##*/} $v $(cat /sys/class/infiniband/rxe0/ports/1/gid_attrs/ndevs/${g##*/} 2>/dev/null)";; esac; done; rdma link show
+0 fe80:0000:0000:0000:5054:00ff:fe4d:0012 lab0
+1 0000:0000:0000:0000:0000:ffff:0a4d:000c lab0
+2 0000:0000:0000:0000:0000:ffff:0a4d:00c7 rfl-probe-m3-c
+3 fe80:0000:0000:0000:4037:32ff:fe85:de21 rfl-probe-m3-c
+link rxe0/1 state ACTIVE physical_state LINK_UP netdev lab0 
+### exit 0
+
+### worker2 $ for g in /sys/class/infiniband/rxe0/ports/1/gids/*; do v=$(cat $g 2>/dev/null) || continue; case $v in 0000:0000:0000:0000:0000:0000:0000:0000) ;; *) echo "${g##*/} $v $(cat /sys/class/infiniband/rxe0/ports/1/gid_attrs/ndevs/${g##*/} 2>/dev/null)";; esac; done; rdma link show
+0 fe80:0000:0000:0000:5054:00ff:fe4d:0013 lab0
+1 0000:0000:0000:0000:0000:ffff:0a4d:000d lab0
+2 0000:0000:0000:0000:0000:ffff:0a4d:00c6 rfl-probe-m3-c
+3 fe80:0000:0000:0000:8474:87ff:fe7f:96b9 rfl-probe-m3-c
+link rxe0/1 state ACTIVE physical_state LINK_UP netdev lab0 
+### exit 0
+
+### worker1 $ sudo ip netns exec rfl-probe-m3 ping -c 5 -W 2 10.77.0.198
+PING 10.77.0.198 (10.77.0.198) 56(84) bytes of data.
+64 bytes from 10.77.0.198: icmp_seq=1 ttl=64 time=0.583 ms
+64 bytes from 10.77.0.198: icmp_seq=2 ttl=64 time=0.578 ms
+64 bytes from 10.77.0.198: icmp_seq=3 ttl=64 time=0.281 ms
+64 bytes from 10.77.0.198: icmp_seq=4 ttl=64 time=0.493 ms
+64 bytes from 10.77.0.198: icmp_seq=5 ttl=64 time=0.301 ms
+
+--- 10.77.0.198 ping statistics ---
+5 packets transmitted, 5 received, 0% packet loss, time 4098ms
+rtt min/avg/max/mdev = 0.281/0.447/0.583/0.131 ms
+### exit 0
+
+### worker2 $ sudo ip netns exec rfl-probe-m3 ping -c 5 -W 2 10.77.0.199
+PING 10.77.0.199 (10.77.0.199) 56(84) bytes of data.
+64 bytes from 10.77.0.199: icmp_seq=1 ttl=64 time=0.235 ms
+64 bytes from 10.77.0.199: icmp_seq=2 ttl=64 time=0.537 ms
+64 bytes from 10.77.0.199: icmp_seq=3 ttl=64 time=0.478 ms
+64 bytes from 10.77.0.199: icmp_seq=4 ttl=64 time=1.01 ms
+64 bytes from 10.77.0.199: icmp_seq=5 ttl=64 time=0.301 ms
+
+--- 10.77.0.199 ping statistics ---
+5 packets transmitted, 5 received, 0% packet loss, time 4107ms
+rtt min/avg/max/mdev = 0.235/0.511/1.008/0.271 ms
+### exit 0
+
+### worker1 $ sudo ip -n rfl-probe-m3 neigh show; sleep 1; sudo pkill -INT -f 'tcpdump -n -e -i lab0 -w /tmp/rfl-probe-m3'; sleep 1;     sudo tcpdump -n -e -r /tmp/rfl-probe-m3.pcap 2>/dev/null | head -n 40; sudo rm -f /tmp/rfl-probe-m3.pcap
+10.77.0.198 dev rfl-probe-m3-c lladdr 86:74:87:7f:96:b9 REACHABLE 
+21:54:27.319657 42:37:32:85:de:21 > ff:ff:ff:ff:ff:ff, ethertype ARP (0x0806), length 42: Request who-has 10.77.0.198 tell 10.77.0.199, length 28
+21:54:27.320105 86:74:87:7f:96:b9 > 42:37:32:85:de:21, ethertype ARP (0x0806), length 42: Reply 10.77.0.198 is-at 86:74:87:7f:96:b9, length 28
+21:54:27.320112 42:37:32:85:de:21 > 86:74:87:7f:96:b9, ethertype IPv4 (0x0800), length 98: 10.77.0.199 > 10.77.0.198: ICMP echo request, id 11879, seq 1, length 64
+21:54:27.320229 86:74:87:7f:96:b9 > 42:37:32:85:de:21, ethertype IPv4 (0x0800), length 98: 10.77.0.198 > 10.77.0.199: ICMP echo reply, id 11879, seq 1, length 64
+21:54:28.346650 42:37:32:85:de:21 > 86:74:87:7f:96:b9, ethertype IPv4 (0x0800), length 98: 10.77.0.199 > 10.77.0.198: ICMP echo request, id 11879, seq 2, length 64
+21:54:28.347203 86:74:87:7f:96:b9 > 42:37:32:85:de:21, ethertype IPv4 (0x0800), length 98: 10.77.0.198 > 10.77.0.199: ICMP echo reply, id 11879, seq 2, length 64
+21:54:29.370629 42:37:32:85:de:21 > 86:74:87:7f:96:b9, ethertype IPv4 (0x0800), length 98: 10.77.0.199 > 10.77.0.198: ICMP echo request, id 11879, seq 3, length 64
+21:54:29.370884 86:74:87:7f:96:b9 > 42:37:32:85:de:21, ethertype IPv4 (0x0800), length 98: 10.77.0.198 > 10.77.0.199: ICMP echo reply, id 11879, seq 3, length 64
+21:54:30.394665 42:37:32:85:de:21 > 86:74:87:7f:96:b9, ethertype IPv4 (0x0800), length 98: 10.77.0.199 > 10.77.0.198: ICMP echo request, id 11879, seq 4, length 64
+21:54:30.395131 86:74:87:7f:96:b9 > 42:37:32:85:de:21, ethertype IPv4 (0x0800), length 98: 10.77.0.198 > 10.77.0.199: ICMP echo reply, id 11879, seq 4, length 64
+21:54:31.418685 42:37:32:85:de:21 > 86:74:87:7f:96:b9, ethertype IPv4 (0x0800), length 98: 10.77.0.199 > 10.77.0.198: ICMP echo request, id 11879, seq 5, length 64
+21:54:31.418952 86:74:87:7f:96:b9 > 42:37:32:85:de:21, ethertype IPv4 (0x0800), length 98: 10.77.0.198 > 10.77.0.199: ICMP echo reply, id 11879, seq 5, length 64
+21:54:31.631024 86:74:87:7f:96:b9 > 42:37:32:85:de:21, ethertype IPv4 (0x0800), length 98: 10.77.0.198 > 10.77.0.199: ICMP echo request, id 11868, seq 1, length 64
+21:54:31.631062 42:37:32:85:de:21 > 86:74:87:7f:96:b9, ethertype IPv4 (0x0800), length 98: 10.77.0.199 > 10.77.0.198: ICMP echo reply, id 11868, seq 1, length 64
+21:54:32.433616 86:74:87:7f:96:b9 > 42:37:32:85:de:21, ethertype ARP (0x0806), length 42: Request who-has 10.77.0.199 tell 10.77.0.198, length 28
+21:54:32.433641 42:37:32:85:de:21 > 86:74:87:7f:96:b9, ethertype ARP (0x0806), length 42: Reply 10.77.0.199 is-at 42:37:32:85:de:21, length 28
+21:54:32.689903 86:74:87:7f:96:b9 > 42:37:32:85:de:21, ethertype IPv4 (0x0800), length 98: 10.77.0.198 > 10.77.0.199: ICMP echo request, id 11868, seq 2, length 64
+21:54:32.689948 42:37:32:85:de:21 > 86:74:87:7f:96:b9, ethertype IPv4 (0x0800), length 98: 10.77.0.199 > 10.77.0.198: ICMP echo reply, id 11868, seq 2, length 64
+21:54:33.714027 86:74:87:7f:96:b9 > 42:37:32:85:de:21, ethertype IPv4 (0x0800), length 98: 10.77.0.198 > 10.77.0.199: ICMP echo request, id 11868, seq 3, length 64
+21:54:33.714072 42:37:32:85:de:21 > 86:74:87:7f:96:b9, ethertype IPv4 (0x0800), length 98: 10.77.0.199 > 10.77.0.198: ICMP echo reply, id 11868, seq 3, length 64
+21:54:34.738382 86:74:87:7f:96:b9 > 42:37:32:85:de:21, ethertype IPv4 (0x0800), length 98: 10.77.0.198 > 10.77.0.199: ICMP echo request, id 11868, seq 4, length 64
+21:54:34.738420 42:37:32:85:de:21 > 86:74:87:7f:96:b9, ethertype IPv4 (0x0800), length 98: 10.77.0.199 > 10.77.0.198: ICMP echo reply, id 11868, seq 4, length 64
+21:54:35.739226 86:74:87:7f:96:b9 > 42:37:32:85:de:21, ethertype IPv4 (0x0800), length 98: 10.77.0.198 > 10.77.0.199: ICMP echo request, id 11868, seq 5, length 64
+21:54:35.739267 42:37:32:85:de:21 > 86:74:87:7f:96:b9, ethertype IPv4 (0x0800), length 98: 10.77.0.199 > 10.77.0.198: ICMP echo reply, id 11868, seq 5, length 64
+### exit 0
+
+### worker2 $ sudo ip -n rfl-probe-m3 neigh show; sleep 1; sudo pkill -INT -f 'tcpdump -n -e -i lab0 -w /tmp/rfl-probe-m3'; sleep 1;     sudo tcpdump -n -e -r /tmp/rfl-probe-m3.pcap 2>/dev/null | head -n 40; sudo rm -f /tmp/rfl-probe-m3.pcap
+10.77.0.199 dev rfl-probe-m3-c lladdr 42:37:32:85:de:21 REACHABLE 
+21:54:27.336139 42:37:32:85:de:21 > ff:ff:ff:ff:ff:ff, ethertype ARP (0x0806), length 42: Request who-has 10.77.0.198 tell 10.77.0.199, length 28
+21:54:27.336281 86:74:87:7f:96:b9 > 42:37:32:85:de:21, ethertype ARP (0x0806), length 42: Reply 10.77.0.198 is-at 86:74:87:7f:96:b9, length 28
+21:54:27.336483 42:37:32:85:de:21 > 86:74:87:7f:96:b9, ethertype IPv4 (0x0800), length 98: 10.77.0.199 > 10.77.0.198: ICMP echo request, id 11879, seq 1, length 64
+21:54:27.336508 86:74:87:7f:96:b9 > 42:37:32:85:de:21, ethertype IPv4 (0x0800), length 98: 10.77.0.198 > 10.77.0.199: ICMP echo reply, id 11879, seq 1, length 64
+21:54:28.363126 42:37:32:85:de:21 > 86:74:87:7f:96:b9, ethertype IPv4 (0x0800), length 98: 10.77.0.199 > 10.77.0.198: ICMP echo request, id 11879, seq 2, length 64
+21:54:28.363155 86:74:87:7f:96:b9 > 42:37:32:85:de:21, ethertype IPv4 (0x0800), length 98: 10.77.0.198 > 10.77.0.199: ICMP echo reply, id 11879, seq 2, length 64
+21:54:29.386773 42:37:32:85:de:21 > 86:74:87:7f:96:b9, ethertype IPv4 (0x0800), length 98: 10.77.0.199 > 10.77.0.198: ICMP echo request, id 11879, seq 3, length 64
+21:54:29.386801 86:74:87:7f:96:b9 > 42:37:32:85:de:21, ethertype IPv4 (0x0800), length 98: 10.77.0.198 > 10.77.0.199: ICMP echo reply, id 11879, seq 3, length 64
+21:54:30.410823 42:37:32:85:de:21 > 86:74:87:7f:96:b9, ethertype IPv4 (0x0800), length 98: 10.77.0.199 > 10.77.0.198: ICMP echo request, id 11879, seq 4, length 64
+21:54:30.410853 86:74:87:7f:96:b9 > 42:37:32:85:de:21, ethertype IPv4 (0x0800), length 98: 10.77.0.198 > 10.77.0.199: ICMP echo reply, id 11879, seq 4, length 64
+21:54:31.434502 42:37:32:85:de:21 > 86:74:87:7f:96:b9, ethertype IPv4 (0x0800), length 98: 10.77.0.199 > 10.77.0.198: ICMP echo request, id 11879, seq 5, length 64
+21:54:31.434536 86:74:87:7f:96:b9 > 42:37:32:85:de:21, ethertype IPv4 (0x0800), length 98: 10.77.0.198 > 10.77.0.199: ICMP echo reply, id 11879, seq 5, length 64
+21:54:31.646519 86:74:87:7f:96:b9 > 42:37:32:85:de:21, ethertype IPv4 (0x0800), length 98: 10.77.0.198 > 10.77.0.199: ICMP echo request, id 11868, seq 1, length 64
+21:54:31.646745 42:37:32:85:de:21 > 86:74:87:7f:96:b9, ethertype IPv4 (0x0800), length 98: 10.77.0.199 > 10.77.0.198: ICMP echo reply, id 11868, seq 1, length 64
+21:54:32.448943 86:74:87:7f:96:b9 > 42:37:32:85:de:21, ethertype ARP (0x0806), length 42: Request who-has 10.77.0.199 tell 10.77.0.198, length 28
+21:54:32.449205 42:37:32:85:de:21 > 86:74:87:7f:96:b9, ethertype ARP (0x0806), length 42: Reply 10.77.0.199 is-at 42:37:32:85:de:21, length 28
+21:54:32.704985 86:74:87:7f:96:b9 > 42:37:32:85:de:21, ethertype IPv4 (0x0800), length 98: 10.77.0.198 > 10.77.0.199: ICMP echo request, id 11868, seq 2, length 64
+21:54:32.705498 42:37:32:85:de:21 > 86:74:87:7f:96:b9, ethertype IPv4 (0x0800), length 98: 10.77.0.199 > 10.77.0.198: ICMP echo reply, id 11868, seq 2, length 64
+21:54:33.729020 86:74:87:7f:96:b9 > 42:37:32:85:de:21, ethertype IPv4 (0x0800), length 98: 10.77.0.198 > 10.77.0.199: ICMP echo request, id 11868, seq 3, length 64
+21:54:33.729468 42:37:32:85:de:21 > 86:74:87:7f:96:b9, ethertype IPv4 (0x0800), length 98: 10.77.0.199 > 10.77.0.198: ICMP echo reply, id 11868, seq 3, length 64
+21:54:34.752975 86:74:87:7f:96:b9 > 42:37:32:85:de:21, ethertype IPv4 (0x0800), length 98: 10.77.0.198 > 10.77.0.199: ICMP echo request, id 11868, seq 4, length 64
+21:54:34.753957 42:37:32:85:de:21 > 86:74:87:7f:96:b9, ethertype IPv4 (0x0800), length 98: 10.77.0.199 > 10.77.0.198: ICMP echo reply, id 11868, seq 4, length 64
+21:54:35.754082 86:74:87:7f:96:b9 > 42:37:32:85:de:21, ethertype IPv4 (0x0800), length 98: 10.77.0.198 > 10.77.0.199: ICMP echo request, id 11868, seq 5, length 64
+21:54:35.754358 42:37:32:85:de:21 > 86:74:87:7f:96:b9, ethertype IPv4 (0x0800), length 98: 10.77.0.199 > 10.77.0.198: ICMP echo reply, id 11868, seq 5, length 64
+### exit 0
+
+### worker1 $ sudo pkill -INT -f 'tcpdump -n -e -i lab0 -w /tmp/rfl-probe-m3' ; sudo ip netns del rfl-probe-m3 2>/dev/null; ip -br link | grep -c rfl-probe-m3-c || true
+0
+### exit 0
+
+### worker2 $ sudo pkill -INT -f 'tcpdump -n -e -i lab0 -w /tmp/rfl-probe-m3' ; sudo ip netns del rfl-probe-m3 2>/dev/null; ip -br link | grep -c rfl-probe-m3-c || true
+0
+### exit 0
+
+### worker1 $ for g in /sys/class/infiniband/rxe0/ports/1/gids/*; do v=$(cat $g 2>/dev/null) || continue; case $v in 0000:0000:0000:0000:0000:0000:0000:0000) ;; *) echo "${g##*/} $v $(cat /sys/class/infiniband/rxe0/ports/1/gid_attrs/ndevs/${g##*/} 2>/dev/null)";; esac; done; rdma link show
+0 fe80:0000:0000:0000:5054:00ff:fe4d:0012 lab0
+1 0000:0000:0000:0000:0000:ffff:0a4d:000c lab0
+link rxe0/1 state ACTIVE physical_state LINK_UP netdev lab0 
+### exit 0
+
+### worker2 $ for g in /sys/class/infiniband/rxe0/ports/1/gids/*; do v=$(cat $g 2>/dev/null) || continue; case $v in 0000:0000:0000:0000:0000:0000:0000:0000) ;; *) echo "${g##*/} $v $(cat /sys/class/infiniband/rxe0/ports/1/gid_attrs/ndevs/${g##*/} 2>/dev/null)";; esac; done; rdma link show
+0 fe80:0000:0000:0000:5054:00ff:fe4d:0013 lab0
+1 0000:0000:0000:0000:0000:ffff:0a4d:000d lab0
+link rxe0/1 state ACTIVE physical_state LINK_UP netdev lab0 
+### exit 0
+
+verdict: cross-node ping between macvlan children passed

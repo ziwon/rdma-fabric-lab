@@ -1,0 +1,2 @@
+PYTHONPATH=scripts .venv/bin/python -m ibsim render --site sites/cel1.yaml --fabric compute --out tracks/b-ibsim/topologies/cel1-compute.net --check
+tracks/b-ibsim/topologies/cel1-compute.net matches sites/cel1.yaml fabrics.compute

@@ -1,0 +1,52 @@
+== cp1
+total 12
+drwxr-xr-x 2 root root 4096 Nov 15 21:57 .
+drwxr-xr-x 3 root root 4096 Nov 15 21:55 ..
+-rw------- 1 root root  191 Nov 15 21:57 05-cilium.conflist
+-rw-r--r-- 1 root root    0 Apr 24  2026 .kubernetes-cni-keep
+
+{
+  "cniVersion": "1.0.0",
+  "name": "cilium",
+  "plugins": [
+    {
+       "type": "cilium-cni",
+       "enable-debug": false,
+       "log-file": "/var/run/cilium/cilium-cni.log"
+    }
+  ]
+}== worker1
+total 12
+drwxr-xr-x 2 root root 4096 Nov 15 21:57 .
+drwxr-xr-x 3 root root 4096 Nov 15 21:55 ..
+-rw------- 1 root root  191 Nov 15 21:57 05-cilium.conflist
+-rw-r--r-- 1 root root    0 Apr 24  2026 .kubernetes-cni-keep
+
+{
+  "cniVersion": "1.0.0",
+  "name": "cilium",
+  "plugins": [
+    {
+       "type": "cilium-cni",
+       "enable-debug": false,
+       "log-file": "/var/run/cilium/cilium-cni.log"
+    }
+  ]
+}== worker2
+total 12
+drwxr-xr-x 2 root root 4096 Nov 15 21:57 .
+drwxr-xr-x 3 root root 4096 Nov 15 21:55 ..
+-rw------- 1 root root  191 Nov 15 21:57 05-cilium.conflist
+-rw-r--r-- 1 root root    0 Apr 24  2026 .kubernetes-cni-keep
+
+{
+  "cniVersion": "1.0.0",
+  "name": "cilium",
+  "plugins": [
+    {
+       "type": "cilium-cni",
+       "enable-debug": false,
+       "log-file": "/var/run/cilium/cilium-cni.log"
+    }
+  ]
+}

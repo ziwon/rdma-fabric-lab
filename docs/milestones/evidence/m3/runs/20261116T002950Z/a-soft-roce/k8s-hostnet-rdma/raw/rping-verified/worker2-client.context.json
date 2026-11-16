@@ -1,0 +1,10 @@
+{
+  "node": "worker2",
+  "pod": "rdma-lab/rdma-client",
+  "container": "rdma",
+  "rdma_device": "rxe0",
+  "lab_address": "10.77.0.13",
+  "runs_as": "the container user of the pod",
+  "role": "client",
+  "command": "rping -c -a 10.77.0.12 -p 7174 -C 10 -S 64 -V -v"
+}

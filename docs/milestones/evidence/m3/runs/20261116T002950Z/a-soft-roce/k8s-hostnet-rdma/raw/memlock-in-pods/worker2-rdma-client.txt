@@ -1,0 +1,5 @@
+$ node worker2 pod rdma-lab/rdma-client: grep -E '^Max locked memory' /proc/self/limits
+exit 0
+--- stdout
+Max locked memory         8388608              8388608              bytes     
+--- stderr
