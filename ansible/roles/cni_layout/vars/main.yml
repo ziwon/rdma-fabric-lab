@@ -1,0 +1,5 @@
+cni_layout_cilium_dir: "{{ (lookup('ansible.builtin.file', cni_layout_cilium_values) | from_yaml).cni.confPath | regex_replace('/$', '') }}"
+cni_layout_delegate: "{{ cni_layout_cilium_dir }}/{{ cni_layout_cilium_file }}"
+cni_layout_first_cp: "{{ groups['kube_control_plane'][0] }}"
+cni_layout_kubectl: kubectl --kubeconfig /etc/kubernetes/admin.conf
+cni_layout_node_name: "{{ ansible_facts.nodename | lower }}"

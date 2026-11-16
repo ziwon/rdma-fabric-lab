@@ -2,3 +2,7 @@
 image:
   repository: ""
   tag: ""
+# multusAutoconfigDir of the daemon config, as the daemon's container sees it. The daemon takes the first CNI file there
+# as its default delegate. The default is the upstream value.
+daemonConfig:
+  multusAutoconfigDir: /host/etc/cni/net.d

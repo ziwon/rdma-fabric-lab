@@ -1,6 +1,11 @@
 # The lab's first Kubernetes stage on the Cilium 1.20.4 chart. kube-proxy stays and Cilium adds pod networking only: a
 # VXLAN tunnel between the node IPs, with each node's pod CIDR taken from its Node object.
 cni:
+  # containerd reads only /etc/cni/net.d, and Multus's 00-multus.conf is the one file there. Cilium writes its conflist to
+  # this directory, which only the Multus daemon reads, as its default delegate. Multus removes its file when its daemon
+  # stops, so after a boot containerd finds no network until Multus runs again, and new pods wait instead of starting
+  # without net1.
+  confPath: /etc/cni/multus/net.d
   # Other CNI configuration files stay in place, so Multus can be added at M3.
   exclusive: false
 kubeProxyReplacement: false

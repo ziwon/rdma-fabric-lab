@@ -2,7 +2,12 @@
 {{- $manifest := .Files.Get "files/multus-daemonset-thick.yml.upstream" }}
 {{- $snapshot := "ghcr.io/k8snetworkplumbingwg/multus-cni:snapshot-thick" }}
 {{- $image := printf "%s:%s" (required "image.repository comes from cni.multus_image" .Values.image.repository) (required "image.tag comes from cni.multus_image" .Values.image.tag) }}
+{{- $autoconfig := "\"multusAutoconfigDir\": \"/host/etc/cni/net.d\"," }}
+{{- $delegateDir := required "daemonConfig.multusAutoconfigDir names where the daemon finds its default delegate" .Values.daemonConfig.multusAutoconfigDir }}
 {{- if ne (len (splitList $snapshot $manifest)) 3 }}
 {{- fail (printf "the upstream manifest must name %s exactly twice, for the daemon and its init container" $snapshot) }}
 {{- end }}
-{{ $manifest | replace $snapshot $image }}
+{{- if ne (len (splitList $autoconfig $manifest)) 2 }}
+{{- fail (printf "the upstream daemon config must hold %s exactly once" $autoconfig) }}
+{{- end }}
+{{ $manifest | replace $snapshot $image | replace $autoconfig (printf "\"multusAutoconfigDir\": %s," (toJson $delegateDir)) }}

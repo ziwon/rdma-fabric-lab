@@ -1,0 +1,12 @@
+galaxy_info:
+  role_name: cni_layout
+  namespace: rfl
+  author: rdma-fabric-lab
+  description: Removes Cilium's conflist from the CNI directory containerd reads, once Cilium writes it where only Multus reads it
+  license: MIT
+  min_ansible_version: "2.16"
+  platforms:
+    - name: Ubuntu
+      versions:
+        - noble
+dependencies: []

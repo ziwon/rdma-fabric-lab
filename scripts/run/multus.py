@@ -7,13 +7,13 @@ The NetworkAttachmentDefinition comes from the inventory alone: the namespace la
 master lab_rdma_nic, which every worker must name alike, and the range lab_address_plan.multus_pool
 inside lab_address_plan.rdma. Two ordinary pods on different workers get eth0 from Cilium and net1
 from Whereabouts. The run checks both networks, the default route, address bookkeeping across pod
-recreation, and the CNI configuration after one worker reboots.
+recreation, the CNI layout of every node, and a pod created on a worker right after its boot, before
+Multus writes its file, which must wait and then start with net1.
 """
 
 from __future__ import annotations
 
 import argparse
-import datetime as dt
 import ipaddress
 import json
 import re
@@ -39,12 +39,19 @@ SCENARIO = "k8s-multus-net1"
 SPEC = TRACK / "scenarios" / f"{SCENARIO}.yaml"
 CONFIG = TRACK / "config" / f"{SCENARIO}.yaml"
 LOCK = REPO_ROOT / "versions.lock.yaml"
+HELM_DIR = REPO_ROOT / "helm"
 NETWORKS = "k8s.v1.cni.cncf.io/networks"
 NETWORK_STATUS = "k8s.v1.cni.cncf.io/network-status"
+# containerd's conf_dir, which the containerd role leaves at its default. containerd loads the first file there with one
+# of these extensions, in name order.
 CNI_DIR = "/etc/cni/net.d"
-# containerd loads the first file of the CNI directory with one of these extensions, in name order.
 CNI_EXTENSIONS = (".conf", ".conflist", ".json")
 MULTUS_FILE = "00-multus.conf"
+CILIUM_FILE = "05-cilium.conflist"
+CRICTL = "sudo crictl --runtime-endpoint unix:///run/containerd/containerd.sock"
+# The pod of the boot check tolerates every NoSchedule taint, as the Multus DaemonSet does, so the scheduler binds it while
+# the node still carries its boot taints and only the container runtime can hold it.
+BOOT_TOLERATIONS = [{"operator": "Exists", "effect": "NoSchedule"}]
 PSA = "pod-security.kubernetes.io"
 SERVER, CLIENT = "net1-server", "net1-client"
 
@@ -100,6 +107,26 @@ def attachment_from_listing(listing: dict) -> Attachment:
     return Attachment(str(first["lab_k8s_namespace"]), next(iter(nics.values())), str(cidr), str(first_ip), str(last_ip))
 
 
+@dataclass(frozen=True)
+class CniLayout:
+    """containerd reads only conf_dir. Cilium writes its conflist only to cilium_dir, and the Multus daemon mounts that
+    host directory at the same path and takes its default delegate from there. So conf_dir holds Multus's file alone,
+    and while Multus is down containerd has no network at all."""
+
+    conf_dir: str
+    cilium_dir: str
+
+    @property
+    def delegate(self) -> str:
+        return f"{self.cilium_dir}/{CILIUM_FILE}"
+
+
+def layout_from_values(env: str, helm_dir: Path = HELM_DIR) -> CniLayout:
+    """The layout that helm/cilium/values-<env>.yaml gives, with the chart default when it sets no cni.confPath."""
+    values = yaml.safe_load((helm_dir / "cilium" / f"values-{env}.yaml").read_text()) or {}
+    return CniLayout(CNI_DIR, str((values.get("cni") or {}).get("confPath", CNI_DIR)).rstrip("/"))
+
+
 def network_attachment(att: Attachment, name: str, kind: str, mode: str, cni_version: str, ipam_extra: dict | None = None) -> dict:
     """The NetworkAttachmentDefinition: a child of the lab NIC with a Whereabouts address and no gateway."""
     config = {
@@ -111,7 +138,8 @@ def network_attachment(att: Attachment, name: str, kind: str, mode: str, cni_ver
             "metadata": {"name": name, "namespace": att.namespace}, "spec": {"config": json.dumps(config)}}
 
 
-def test_pod(ns: str, run_id: str, name: str, node: str, image: str, network: str, command: str, port: int | None) -> dict:
+def test_pod(ns: str, run_id: str, name: str, node: str, image: str, network: str, command: str, port: int | None,
+             tolerations: list[dict] | None = None) -> dict:
     """An ordinary pod at the PodSecurity restricted level with net1 from the network attachment."""
     container = {
         "name": name, "image": image, "command": ["sh", "-c", command],
@@ -120,35 +148,117 @@ def test_pod(ns: str, run_id: str, name: str, node: str, image: str, network: st
     }
     if port:
         container["ports"] = [{"containerPort": port, "name": "http"}]
+    spec = {"nodeSelector": {"kubernetes.io/hostname": node}, "terminationGracePeriodSeconds": 1,
+            "automountServiceAccountToken": False, "enableServiceLinks": False, "containers": [container]}
+    if tolerations:
+        spec["tolerations"] = tolerations
     return {"apiVersion": "v1", "kind": "Pod",
             "metadata": {"name": name, "namespace": ns, "labels": {RUN_LABEL: run_id, "role": name},
                          "annotations": {NETWORKS: network}},
-            "spec": {"nodeSelector": {"kubernetes.io/hostname": node}, "terminationGracePeriodSeconds": 1,
-                     "automountServiceAccountToken": False, "enableServiceLinks": False, "containers": [container]}}
+            "spec": spec}
 
 
 # ---------------------------------------------------------------- parsing
 
 
-def cni_problems(listing: str, multus: str, delegate: str) -> list[str]:
-    """Why containerd would not run Multus with Cilium as its default delegate, from ls -1 of the CNI dir and two files."""
+def layout_problems(listing: str, multus: str, delegate: str, layout: CniLayout) -> list[str]:
+    """Why a node's CNI files differ from the layout, from ls -1 of conf_dir, Multus's file and the file at layout.delegate."""
     files = [f for f in listing.split() if f.endswith(CNI_EXTENSIONS)]
     problems = []
-    if not files or files[0] != MULTUS_FILE:
-        problems.append(f"the first CNI file is {files[0] if files else 'none'}, not {MULTUS_FILE} (files {files})")
+    if files != [MULTUS_FILE]:
+        problems.append(f"{layout.conf_dir} holds the CNI files {files}, want {MULTUS_FILE} alone")
     try:
         conf = json.loads(multus)
     except json.JSONDecodeError:
         return problems + [f"{MULTUS_FILE} is not JSON"]
-    cluster = str(conf.get("clusterNetwork", ""))
     if conf.get("type") != "multus-shim":
         problems.append(f"{MULTUS_FILE} type is {conf.get('type')}, not multus-shim")
+    if conf.get("clusterNetwork") != layout.delegate:
+        problems.append(f"{MULTUS_FILE} clusterNetwork is {conf.get('clusterNetwork')!r}, want {layout.delegate}")
     try:
         target = json.loads(delegate)
     except json.JSONDecodeError:
-        return problems + [f"the default delegate {cluster} is not JSON"]
+        return problems + [f"{layout.delegate} is not JSON"]
     if [p.get("type") for p in target.get("plugins", [])][:1] != ["cilium-cni"]:
-        problems.append(f"the default delegate {cluster} runs {[p.get('type') for p in target.get('plugins', [])]}, not cilium-cni")
+        problems.append(f"{layout.delegate} runs {[p.get('type') for p in target.get('plugins', [])]}, not cilium-cni")
+    return problems
+
+
+@dataclass(frozen=True)
+class Sample:
+    """One look at a node while Multus's file was absent: containerd's NetworkReady (true, false or down), then the CNI
+    directory's entries. A listing without Multus's file shows the read before it saw none either. A listing with it
+    straddled the write and shows nothing about the window."""
+
+    at: float
+    network: str
+    files: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class BootWindow:
+    """What a node showed for a pod created right after its boot, all on the node's clock: the boot, every sample taken
+    after the pod existed and before Multus's file did, the birth of that file and the pod's first RunPodSandbox."""
+
+    boot: float
+    samples: tuple[Sample, ...]
+    multus_born: float | None
+    sandbox_started: float | None
+
+
+def window_command(layout: CniLayout, timeout_s: int) -> str:
+    """Samples NetworkReady and the CNI directory every half second while Multus's file is absent, then prints its birth."""
+    multus = f"{layout.conf_dir}/{MULTUS_FILE}"
+    network = (f"$({CRICTL} info -o go-template --template "
+               "'{{range .status.conditions}}{{if eq .type \"NetworkReady\"}}{{.status}}{{end}}{{end}}' 2>/dev/null || true)")
+    return (f"end=$((SECONDS + {timeout_s})); while [ ! -e {multus} ] && [ $SECONDS -lt $end ]; do "
+            f"n={network}; echo \"sample $(date +%s.%N) ${{n:-down}} $(ls -1A {layout.conf_dir} | paste -sd, -)\"; sleep 0.5; done; "
+            f"echo \"born $(stat -c %.W {multus} 2>/dev/null || echo missing)\"")
+
+
+def parse_window(text: str) -> tuple[tuple[Sample, ...], float | None]:
+    """The samples and the birth time of Multus's file from the output of window_command."""
+    samples, born = [], None
+    for line in text.splitlines():
+        kind, _, rest = line.partition(" ")
+        fields = rest.split()
+        if kind == "sample" and len(fields) >= 2:
+            samples.append(Sample(float(fields[0]), fields[1], tuple(f for f in (fields[2] if len(fields) > 2 else "").split(",") if f)))
+        elif kind == "born" and fields and fields[0] != "missing" and float(fields[0]) > 0:
+            born = float(fields[0])
+    return tuple(samples), born
+
+
+def sandbox_start(journal: str) -> float | None:
+    """The first RunPodSandbox call among containerd's journal lines of one pod, journalctl -o short-unix."""
+    for line in journal.splitlines():
+        if "RunPodSandbox for" in line and "returns sandbox id" not in line:
+            return float(line.split()[0])
+    return None
+
+
+def inside_window(w: BootWindow) -> list[Sample]:
+    return [s for s in w.samples if MULTUS_FILE not in s.files]
+
+
+def window_problems(w: BootWindow) -> list[str]:
+    """Why the pod did not wait for Multus: no look inside the window, a network without Multus, or a sandbox before it."""
+    after = lambda t: f"boot+{t - w.boot:.1f} s"  # noqa: E731
+    inside = inside_window(w)
+    if not inside:
+        return [f"{MULTUS_FILE} already existed at the first look after the pod was created, so the run missed the window"]
+    problems = []
+    networked = [s for s in inside if s.network == "true"]
+    if networked:
+        problems.append(f"containerd reported a network in {len(networked)} of {len(inside)} samples while {MULTUS_FILE} "
+                        f"was absent, first at {after(networked[0].at)} with {list(networked[0].files)}")
+    if w.multus_born is None:
+        problems.append(f"{MULTUS_FILE} did not appear")
+    if w.sandbox_started is None:
+        problems.append("containerd's journal of this boot holds no RunPodSandbox for the pod")
+    elif w.multus_born is not None and w.sandbox_started < w.multus_born:
+        problems.append(f"containerd began the pod's sandbox at {after(w.sandbox_started)}, before Multus wrote its file at "
+                        f"{after(w.multus_born)}")
     return problems
 
 
@@ -216,10 +326,6 @@ def bookkeeping_problems(pod_ips: dict[str, str], found: list[dict], ns: str, at
     return problems
 
 
-def rfc3339(text: str) -> float:
-    return dt.datetime.strptime(text, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=dt.timezone.utc).timestamp()
-
-
 # ---------------------------------------------------------------- run
 
 
@@ -233,6 +339,8 @@ class Run(RunBase):
         self.config = config = yaml.safe_load(config_path.read_text())
         self.attachment = attachment
         self.nodes, self.first_cp, self.contract = cluster_from_listing(listing)
+        self.env = str(listing["_meta"]["hostvars"][self.first_cp]["rfl_inventory"])
+        self.layout = layout_from_values(self.env)
         self.remote = {name: Remote(n, self.run_id, self.log) for name, n in self.nodes.items()}
         self.kubectl = Kubectl(self.remote[self.first_cp])
         self.workers = [self.remote[config["server_node"]], self.remote[config["client_node"]]]
@@ -250,9 +358,9 @@ class Run(RunBase):
                                                      f"exec httpd -f -p {port} -h /tmp/www", port),
                 CLIENT: (self.config["client_node"], "exec sleep 86400", None)}
 
-    def pod_object(self, name: str) -> dict:
+    def pod_object(self, name: str, tolerations: list[dict] | None = None) -> dict:
         node, command, port = self.pods()[name]
-        return test_pod(self.ns, self.run_id, name, node, self.image, self.config["network"], command, port)
+        return test_pod(self.ns, self.run_id, name, node, self.image, self.config["network"], command, port, tolerations)
 
     def exec(self, pod: str, command: str, timeout_s: float = 60):
         return self.kubectl(self.kubectl.exec_argv(self.ns, pod, pod, command), timeout_s=timeout_s)
@@ -279,12 +387,13 @@ def write_resolved_config(run: Run) -> None:
         "run_id": run.run_id, "scenario": SCENARIO, "namespace": run.ns, "image": run.image,
         "attachment": asdict(run.attachment), "network_attachment": run.nad,
         "inventories": [str(i) for i in run.inventories], "first_control_plane": run.first_cp,
+        "cni_layout": {**asdict(run.layout), "delegate": run.layout.delegate, "cilium_values": f"helm/cilium/values-{run.env}.yaml"},
         "nodes": {n: {"node_ip": g.node_ip, "mgmt_nic": g.mgmt_nic, "rdma_nic": g.rdma_nic, "rdma_ip": g.rdma_ip}
                   for n, g in run.nodes.items()},
         "config": run.config,
     }
     (run.dir / "resolved-config.yaml").write_text(yaml.safe_dump(resolved, sort_keys=False))
-    inputs = [run.config_path, LOCK] + [p for i in run.inventories for p in sorted(Path(i).rglob("*.yml") if Path(i).is_dir() else [Path(i)])]
+    inputs = [run.config_path, LOCK, HELM_DIR / "cilium" / f"values-{run.env}.yaml"] + [p for i in run.inventories for p in sorted(Path(i).rglob("*.yml") if Path(i).is_dir() else [Path(i)])]
     rfl.add_inputs(run.dir, inputs)
     rfl.set_section(run.dir, "inputs", {"parameters": {"namespace": run.ns, "image": run.image, "secondary": run.config["secondary"],
                                                         "master": run.attachment.master,
@@ -308,29 +417,23 @@ def describe_environment(run: Run) -> None:
 
 
 def cni_state(run: Run, check_id: str, names: list[str]) -> tuple[list[str], list[str], list[str]]:
-    evidence, problems, seen = [], [], []
+    layout, evidence, problems, seen = run.layout, [], [], []
     for name in names:
         remote = run.remote[name]
-        listing = remote.sh(f"sudo ls -1 {CNI_DIR}")
-        multus = remote.sh(f"sudo cat {CNI_DIR}/{MULTUS_FILE}")
-        try:
-            delegate_path = str(json.loads(multus.stdout).get("clusterNetwork", "")).removeprefix("/host")
-        except json.JSONDecodeError:
-            delegate_path = ""
-        if not delegate_path.startswith(f"{CNI_DIR}/"):
-            delegate_path = f"{CNI_DIR}/<clusterNetwork {delegate_path!r} outside the CNI directory>"
-        delegate = remote.sh(f"sudo cat {shlex.quote(delegate_path)}")
-        evidence += [save(run.raw, f"{check_id}/{name}-ls.txt", listing, f"sudo ls -1 {CNI_DIR}"),
-                     save(run.raw, f"{check_id}/{name}-{MULTUS_FILE}", multus, f"sudo cat {CNI_DIR}/{MULTUS_FILE}"),
-                     save(run.raw, f"{check_id}/{name}-delegate.txt", delegate, f"sudo cat {delegate_path}")]
-        found = cni_problems(listing.stdout, multus.stdout, delegate.stdout)
+        listing = remote.sh(f"sudo ls -1A {layout.conf_dir}")
+        multus = remote.sh(f"sudo cat {layout.conf_dir}/{MULTUS_FILE}")
+        delegate = remote.sh(f"sudo cat {shlex.quote(layout.delegate)}")
+        evidence += [save(run.raw, f"{check_id}/{name}-ls.txt", listing, f"sudo ls -1A {layout.conf_dir}"),
+                     save(run.raw, f"{check_id}/{name}-{MULTUS_FILE}", multus, f"sudo cat {layout.conf_dir}/{MULTUS_FILE}"),
+                     save(run.raw, f"{check_id}/{name}-delegate.txt", delegate, f"sudo cat {layout.delegate}")]
+        found = layout_problems(listing.stdout, multus.stdout, delegate.stdout, layout)
         problems += [f"{name}: {p}" for p in found]
-        seen.append(f"{name} {MULTUS_FILE} first, delegate {delegate_path}")
+        seen.append(f"{name} {layout.conf_dir} holds {MULTUS_FILE} alone, delegate {layout.delegate}")
     return evidence, problems, seen
 
 
 def check_cni(run: Run) -> Outcome:
-    evidence, problems, seen = cni_state(run, "multus-config-first", list(run.nodes))
+    evidence, problems, seen = cni_state(run, "cni-dir-holds-only-multus", list(run.nodes))
     return failed("assertion-failed", evidence, "; ".join(problems)) if problems else passed(evidence, "; ".join(seen))
 
 
@@ -563,82 +666,91 @@ def boot_id(remote: Remote) -> str | None:
     return done.stdout.strip() if done.rc == 0 and done.stdout.strip() else None
 
 
-def reboot(run: Run, name: str) -> tuple[bool, list[str], str, float | None]:
-    """Reboots one node and waits until its kubelet reports the new boot and its Multus pod started after it."""
-    remote = run.remote[name]
-    before = boot_id(remote)
-    remote.sh("sudo systemctl reboot", timeout_s=20)
+def wait_new_boot(run: Run, remote: Remote, before: str | None) -> tuple[str | None, float | None]:
+    """Polls fast, so the check acts within a second or two of the new boot answering SSH."""
     deadline = time.monotonic() + run.config["reboot_timeout_s"]
-    after = None
-    while time.monotonic() < deadline and not after:
-        current = boot_id(remote)
-        after = current if current and current != before else None
-        time.sleep(3)
-    booted = remote.sh("awk '/^btime/ {print $2}' /proc/stat", timeout_s=15).stdout.strip() if after else ""
-    evidence = [run.raw("reboot-keeps-cni-order/boot-ids.json", json.dumps({"node": name, "before": before, "after": after,
-                                                                             "booted_epoch": booted}, indent=2) + "\n")]
-    if not after:
-        return False, evidence, f"no new boot id from {name} within {run.config['reboot_timeout_s']} s", None
-    boot = float(booted)
     while time.monotonic() < deadline:
-        node, _ = run.kubectl.json(f"get node {name}")
-        multus, _ = run.kubectl.json(f"-n kube-system get pods -l name=multus --field-selector spec.nodeName={name}")
-        node_ready = node.get("status", {}).get("nodeInfo", {}).get("bootID") == after and any(
-            c["type"] == "Ready" and c["status"] == "True" for c in node.get("status", {}).get("conditions", []))
-        started = [s.get("state", {}).get("running", {}).get("startedAt") for p in multus.get("items", [])
-                   for s in p.get("status", {}).get("containerStatuses", []) if s.get("ready")]
-        if node_ready and started and all(t and rfc3339(t) >= boot for t in started):
-            evidence.append(run.raw("reboot-keeps-cni-order/multus-pod.json", json.dumps(multus, indent=2) + "\n"))
-            return True, evidence, f"{name} booted {before[:8]} -> {after[:8]}, kubelet reports the new boot, Multus restarted", boot
-        time.sleep(3)
-    return False, evidence, f"{name} rebooted, but its Node or Multus pod did not come back within {run.config['reboot_timeout_s']} s", boot
+        done = remote.sh("cat /proc/sys/kernel/random/boot_id; awk '/^btime/ {print $2}' /proc/stat", timeout_s=3)
+        lines = done.stdout.split()
+        if done.rc == 0 and len(lines) == 2 and lines[0] != before:
+            return lines[0], float(lines[1])
+        time.sleep(0.5)
+    return None, None
 
 
-def check_reboot(run: Run) -> tuple[Outcome, bool]:
-    """Multus removes its file when its daemon stops and writes it when the daemon starts, after the pod turns Ready.
-    So the first look after the reboot is recorded as it is, and the check waits a bounded time for the settled order."""
-    name = run.config["reboot_node"]
-    pods_there = [n for n, (node, _, _) in run.pods().items() if node == name]
-    evidence, held = wait_released(run, "reboot-keeps-cni-order", pods_there)
+def check_boot_window(run: Run) -> tuple[Outcome, bool]:
+    """Reboots one worker and creates a pod there as soon as the new boot answers, before Multus writes its file. While
+    the file is absent containerd must report no network, so the pod waits, and its sandbox must begin only after the
+    file exists, with eth0 and net1. Afterwards the node's CNI layout must hold."""
+    check_id, name = "pod-at-boot-waits-for-multus", run.config["reboot_node"]
+    remote, pods_there = run.remote[name], [n for n, (node, _, _) in run.pods().items() if node == name]
+    evidence, held = wait_released(run, check_id, pods_there)
     if held:
         return failed("assertion-failed", evidence, f"Whereabouts still holds {held} before the reboot"), False
-    ok, more, detail, boot = reboot(run, name)
-    evidence += more
-    if not ok:
-        return failed("timeout", evidence, detail), False
-    first, first_problems, _ = cni_state(run, "reboot-keeps-cni-order/at-multus-ready", [name])
-    evidence += first
-    deadline = time.monotonic() + run.config["cni_settle_timeout_s"]
-    while True:
-        settled, problems, seen = cni_state(run, "reboot-keeps-cni-order/settled", [name])
-        if not problems or time.monotonic() >= deadline:
-            break
-        time.sleep(1)
-    evidence += settled
+    for pod in pods_there:
+        run.pod_ips.pop(pod, None)
+    before = boot_id(remote)
+    remote.sh("sudo systemctl reboot", timeout_s=20)
+    after, boot = wait_new_boot(run, remote, before)
+    evidence.append(run.raw(f"{check_id}/boot-ids.json", json.dumps({"node": name, "before": before, "after": after,
+                                                                    "booted_epoch": boot}, indent=2) + "\n"))
+    if after is None or boot is None:
+        return failed("timeout", evidence, f"no new boot id from {name} within {run.config['reboot_timeout_s']} s"), False
+    objects = [run.pod_object(n, BOOT_TOLERATIONS) for n in pods_there]
+    applied = run.kubectl("apply", objects)
+    evidence += [save(run.raw, f"{check_id}/apply.txt", applied, "kubectl apply -f <pods tolerating NoSchedule>"),
+                 run.raw(f"{check_id}/objects.json", json.dumps(objects, indent=2) + "\n")]
+    if applied.rc != 0:
+        return failed("command-failed", evidence, f"kubectl apply exited {applied.rc}", applied.rc), False
+    t = run.config["multus_conf_timeout_s"]
+    window = remote.sh(window_command(run.layout, t), timeout_s=t + 30)
+    evidence.append(save(run.raw, f"{check_id}/{name}-window.txt", window,
+                         f"sample NetworkReady and the CNI directory while {MULTUS_FILE} is absent"))
+    r = run.config["ready_timeout_s"]
+    waited = run.kubectl(f"-n {run.ns} wait --for=condition=Ready {' '.join(f'pod/{n}' for n in pods_there)} --timeout={r}s",
+                         timeout_s=r + 30)
+    pods, got = run.kubectl.json(f"-n {run.ns} get pods {' '.join(pods_there)}")
+    events = run.kubectl(f"-n {run.ns} get events --sort-by=.lastTimestamp")
+    evidence += [save(run.raw, f"{check_id}/wait.txt", waited, f"kubectl wait --for=condition=Ready --timeout={r}s"),
+                 save(run.raw, f"{check_id}/pods.json", got, "kubectl get pods -o json"),
+                 save(run.raw, f"{check_id}/events.txt", events, "kubectl get events")]
+    problems, seen = [], []
+    samples, born = parse_window(window.stdout)
+    for pod in pods.get("items", []) or [pods]:
+        uid = pod.get("metadata", {}).get("uid", "")
+        pod_name = pod.get("metadata", {}).get("name", "?")
+        journal = remote.sh(f"sudo journalctl -b -u containerd -o short-unix --no-pager | grep -F {shlex.quote(uid or 'no-uid')} "
+                            "| grep -F RunPodSandbox")
+        evidence.append(save(run.raw, f"{check_id}/{name}-{pod_name}-containerd.txt", journal,
+                             f"journalctl -b -u containerd -o short-unix | grep {uid} | grep RunPodSandbox"))
+        w = BootWindow(boot, samples, born, sandbox_start(journal.stdout))
+        evidence.append(run.raw(f"{check_id}/{pod_name}-window.json", json.dumps(asdict(w), indent=2) + "\n"))
+        problems += [f"{pod_name}: {p}" for p in window_problems(w)]
+        if inside_window(w) and born and w.sandbox_started:
+            seen.append(f"{pod_name} created by boot+{inside_window(w)[0].at - boot:.1f} s; containerd had no network in all "
+                        f"{len(inside_window(w))} samples until {MULTUS_FILE} appeared at boot+{born - boot:.1f} s; sandbox began "
+                        f"at boot+{w.sandbox_started - boot:.1f} s")
+    if waited.rc != 0:
+        problems.append(f"pods {pods_there} not Ready within {r} s")
+    else:
+        more, net_problems, net_seen = read_networks(run, check_id, pods_there)
+        evidence += more
+        problems += net_problems
+        seen += net_seen
+    layout_evidence, layout_found, layout_seen = cni_state(run, f"{check_id}/after", [name])
+    evidence += layout_evidence
+    problems += layout_found
     if problems:
-        return failed("assertion-failed", evidence, f"not within {run.config['cni_settle_timeout_s']} s: " + "; ".join(problems)), True
-    stat = run.remote[name].sh(f"sudo stat -c %Y {CNI_DIR}/{MULTUS_FILE}")
-    evidence.append(save(run.raw, "reboot-keeps-cni-order/multus-conf-mtime.txt", stat, f"sudo stat -c %Y {CNI_DIR}/{MULTUS_FILE}"))
-    gap = float(stat.stdout.strip()) - boot if stat.rc == 0 and stat.stdout.strip().isdigit() else None
-    run.metrics.append({"name": "reboot.multus_conf_absent_after_boot_s", "value": gap, "unit": "s",
-                        "absent_reason": None if gap is not None else "stat of the Multus file failed",
-                        "source": evidence[-1], "labels": {"node": name}})
-    window = f"{MULTUS_FILE} written {gap:.0f} s after boot" if gap is not None else "write time unknown"
-    at_ready = "absent" if first_problems else "present"
-    return passed(evidence, f"{detail}; at Multus Ready the file was {at_ready}; {window}; {'; '.join(seen)}"), True
+        return failed("assertion-failed", evidence, "; ".join(problems)), True
+    return passed(evidence, f"{name} booted {before[:8] if before else '?'} -> {after[:8]}; " + "; ".join(seen + layout_seen)), True
 
 
 def check_after_reboot(run: Run) -> Outcome:
-    name = run.config["reboot_node"]
-    pods_there = [n for n, (node, _, _) in run.pods().items() if node == name]
-    bad, evidence = start_pods(run, "new-pod-after-reboot-gets-net1", pods_there)
-    if bad:
-        return bad
-    more, problems, seen = read_networks(run, "new-pod-after-reboot-gets-net1", pods_there)
-    evidence += more
+    """The pod created at boot holds its pool address once and reaches the server over net1."""
+    names = list(run.pods())
     found, path = pools(run, "new-pod-after-reboot-gets-net1/ippools.json")
-    evidence.append(path)
-    problems += bookkeeping_problems({n: run.pod_ips[n]["net1"] for n in run.pods()}, found, run.ns, run.attachment)
+    evidence = [path]
+    problems = bookkeeping_problems({n: run.pod_ips.get(n, {}).get("net1") for n in names}, found, run.ns, run.attachment)
     if not problems:
         reach = fetch(run, "new-pod-after-reboot-gets-net1/net1", run.pod_ips[SERVER]["net1"], "net1")
         evidence += reach.evidence
@@ -646,7 +758,7 @@ def check_after_reboot(run: Run) -> Outcome:
             problems.append(reach.detail or "net1 request failed")
     if problems:
         return failed("assertion-failed", evidence, "; ".join(problems))
-    return passed(evidence, "; ".join(seen) + f"; {CLIENT} reached {SERVER} over net1 again")
+    return passed(evidence, f"{CLIENT} holds net1 {run.pod_ips[CLIENT]['net1']} once and reached {SERVER} over net1")
 
 
 def check_namespace_removed(run: Run) -> Outcome:
@@ -668,7 +780,7 @@ def check_namespace_removed(run: Run) -> Outcome:
 
 STEPS = ("network-attachment-from-inventory", "test-pods-ready", "pods-have-eth0-and-net1", "default-route-on-eth0",
          "eth0-cross-node", "net1-cross-node", "net1-on-lab-nic", "no-duplicate-addresses", "recreate-releases-addresses",
-         "reboot-keeps-cni-order", "new-pod-after-reboot-gets-net1")
+         "pod-at-boot-waits-for-multus", "new-pod-after-reboot-gets-net1")
 
 
 GATES = (("network-attachment-from-inventory", check_attachment), ("test-pods-ready", check_pods),
@@ -676,7 +788,7 @@ GATES = (("network-attachment-from-inventory", check_attachment), ("test-pods-re
 
 
 def suite(run: Run) -> None:
-    run.record("multus-config-first", check_cni(run))
+    run.record("cni-dir-holds-only-multus", check_cni(run))
     for check_id, step in GATES:
         outcome = step(run)
         run.record(check_id, outcome)
@@ -691,9 +803,9 @@ def suite(run: Run) -> None:
     run.record("net1-on-lab-nic", check_lab_nic(run, capture(run, start=False)))
     run.record("no-duplicate-addresses", check_bookkeeping(run, "no-duplicate-addresses"))
     run.record("recreate-releases-addresses", check_recreate(run))
-    outcome, rebooted = check_reboot(run)
-    run.record("reboot-keeps-cni-order", outcome)
-    run.record("new-pod-after-reboot-gets-net1", check_after_reboot(run) if rebooted else precondition("reboot-keeps-cni-order"))
+    outcome, created = check_boot_window(run)
+    run.record("pod-at-boot-waits-for-multus", outcome)
+    run.record("new-pod-after-reboot-gets-net1", check_after_reboot(run) if created else precondition("pod-at-boot-waits-for-multus"))
 
 
 def main(argv: list[str] | None = None) -> int:

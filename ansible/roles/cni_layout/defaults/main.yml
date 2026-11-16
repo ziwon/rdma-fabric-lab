@@ -1,0 +1,7 @@
+# The directory containerd reads and the files of the layout. The directory Cilium writes to comes from the Cilium values
+# of the inventory's Helm environment, cni.confPath.
+cni_layout_conf_dir: /etc/cni/net.d
+cni_layout_cilium_file: 05-cilium.conflist
+cni_layout_multus_file: 00-multus.conf
+cni_layout_cilium_values: "{{ playbook_dir }}/../../helm/cilium/values-{{ rfl_inventory }}.yaml"
+cni_layout_multus_timeout_s: 120

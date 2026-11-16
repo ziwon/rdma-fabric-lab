@@ -130,9 +130,12 @@ An unprivileged container sees no `/dev/infiniband`, and `ibv_devinfo` prints `N
 
 | Failed check | Observed cause |
 |---|---|
-| `multus-config-first`, then `pods-have-eth0-and-net1` | Another CNI file sorts before `00-multus.conf`, so containerd runs it and the pod gets no `net1`. Remove it |
-| `reboot-keeps-cni-order` | The Multus thick daemon deletes `00-multus.conf` when it stops and writes it again only when it starts. After a boot, until then, Cilium's conflist is the first file, and a pod created in that gap gets eth0 and no `net1`, without an error. The check waits up to `cni_settle_timeout_s` for the settled order and records the gap |
-| `multus-config-first` with `the default delegate ... is not JSON`, and every new pod on that node stays in `ContainerCreating` | Multus chose its default delegate when its daemon started and keeps it. A CNI file that sorted before Cilium's at that moment became the delegate, and once that file is gone, `00-multus.conf` names a missing file. The Multus log shows `failed to get clusterNetwork` on every ADD and no regeneration. Delete the stray file, then restart the Multus pod on that node: `kubectl -n kube-system delete pod -l name=multus --field-selector spec.nodeName=<node>` |
+| `cni-dir-holds-only-multus`, then `pods-have-eth0-and-net1` | Another CNI file sorts before `00-multus.conf`, so containerd runs it and the pod gets no `net1`. Remove it |
+| `cni-dir-holds-only-multus` with `05-cilium.conflist` in `/etc/cni/net.d` | The cluster was built while Cilium wrote its conflist there, and Cilium never removes it. Run `make addons ENV=lab KUBECONFIG_FILE=.lab/kubeconfig`, then `make cni-migrate` (section 14) |
+| `cni-dir-holds-only-multus` with `clusterNetwork is '/host/etc/cni/net.d/05-cilium.conflist'` | The Multus daemon on that node still runs with the old daemon config. It reads the config only at start, and a ConfigMap change does not roll the DaemonSet. `make cni-migrate` restarts it |
+| `pod-at-boot-waits-for-multus` with `containerd reported a network ... while 00-multus.conf was absent` | A CNI file other than Multus's sits in `/etc/cni/net.d`. After a boot, before Multus writes its file, containerd runs that file alone, and a pod started then gets eth0 and no `net1`, without an error. Remove the file |
+| `pod-at-boot-waits-for-multus` with `missed the window` | Multus wrote its file before the run could look at the node after creating the pod. The check proves nothing then. Run it again. Multus writes the file about 18 s after the boot, and SSH answers about 6 s after it |
+| `cni-dir-holds-only-multus` with `... is not JSON`, and every new pod on that node stays in `ContainerCreating` | Multus chose its default delegate when its daemon started and keeps it. If that file is gone, `00-multus.conf` names a missing file. The Multus log shows `failed to get clusterNetwork` on every ADD and no regeneration. Restart the Multus pod on that node: `kubectl -n kube-system delete pod -l name=multus --field-selector spec.nodeName=<node>` |
 | `network-attachment-from-inventory` with `command-failed` | The NetworkAttachmentDefinition CRD is missing. `make addons ENV=lab KUBECONFIG_FILE=.lab/kubeconfig RELEASE=multus FORCE=1` creates it again |
 | `no-duplicate-addresses` and `recreate-releases-addresses` | Whereabouts holds an address for a pod that does not exist. The detail names the address and the pod. Remove the allocation from the IPPool in `kube-system`, or let the Whereabouts reconciler remove it |
 | `net1-on-lab-nic` with an empty capture on one worker | tcpdump without `--immediate-mode` hands packets to the file in batches, and a stop right after the traffic loses the last batch. The runner uses immediate mode |
@@ -141,3 +144,14 @@ An unprivileged container sees no `/dev/infiniband`, and `ibv_devinfo` prints `N
 ## 13. The RDMA test image
 
 `make rdma-tools-image` builds in the Track B guest, because no new container runs on this host. `BUILDER_LAB_DIR` moves that guest's files, by default next to `LAB_DIR` when that is set. The build has no cache and clamps every time to the archive snapshot, so a changed digest means changed inputs: the Dockerfile, the snapshot or a locked version. Set `lab.rdma_tools_image` to the printed digest only after you know which input changed.
+
+## 14. `make cni-migrate` stops
+
+`make cni-migrate` runs `ansible/playbooks/cni-migrate.yml` one node at a time. It changes nothing until both checks below pass, and a rerun reports `changed=0`.
+
+| Message | Cause | Fix |
+|---|---|---|
+| `Multus takes its default delegate from /host/etc/cni/net.d, not /etc/cni/multus/net.d` | The cluster runs the Multus daemon config from before the move | Run `make addons ENV=lab KUBECONFIG_FILE=.lab/kubeconfig` first |
+| `<node> has no /etc/cni/multus/net.d/05-cilium.conflist` | The Cilium agent on that node has not written its file to its own directory | Run `make addons` first and let the Cilium rollout finish |
+| `/etc/cni/net.d on <node> holds [...]` | A CNI file other than Cilium's and Multus's sits there. The role removes only Cilium's file | Remove the other file by hand |
+

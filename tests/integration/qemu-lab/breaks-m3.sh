@@ -153,18 +153,8 @@ print(int(ipaddress.ip_address(i["range_end"])) - int(ipaddress.ip_network(i["ra
     kc "-n kube-system patch ippools.whereabouts.cni.cncf.io $pool --type merge -p '{\"spec\":{\"allocations\":{\"$offset\":null}}}'"
   fi
 }
-shadow_unit() {
-  if [[ $1 == on ]]; then
-    lab ssh worker2 'printf "[Unit]\nDescription=rfl deliberate break: a CNI file that sorts before Multus at boot\nAfter=local-fs.target\n\n[Service]\nType=oneshot\nExecStart=/bin/cp /etc/cni/net.d/05-cilium.conflist /etc/cni/net.d/00-0-rfl-break.conflist\n\n[Install]\nWantedBy=multi-user.target\n" | sudo tee /etc/systemd/system/rfl-break-shadow.service && sudo systemctl daemon-reload && sudo systemctl enable rfl-break-shadow.service' < /dev/null
-  else
-    # Multus took the shadow file as its delegate at boot and keeps it, so only a restart of its pod there regenerates it.
-    lab ssh worker2 'sudo systemctl disable rfl-break-shadow.service; sudo rm -f /etc/systemd/system/rfl-break-shadow.service /etc/cni/net.d/00-0-rfl-break.conflist; sudo systemctl daemon-reload; sudo ls /etc/cni/net.d' < /dev/null
-    kc "-n kube-system delete pod -l name=multus --field-selector spec.nodeName=worker2 --wait"
-    kc "-n kube-system rollout status daemonset/kube-multus-ds --timeout=180s"
-    sleep 3
-    lab ssh worker2 'sudo grep -q "05-cilium.conflist" /etc/cni/net.d/00-multus.conf && sudo cat /etc/cni/net.d/00-multus.conf' < /dev/null
-  fi
-}
+# Cilium's own directory, the cni.confPath of the Cilium values, holds the file every break copies.
+cilium_conf=$(python3 -c 'import yaml; print(yaml.safe_load(open("helm/cilium/values-lab.yaml"))["cni"]["confPath"].rstrip("/") + "/05-cilium.conflist")')
 
 read -r image_digest_ref image_tag_ref <<< "$(digest_ref)"
 
@@ -199,8 +189,8 @@ breaks respawning-run-process hostnet "no-process-left" \
   -- undecoy -- --run-id "$decoy_id"
 
 # ---------------------------------------------------------------- k8s-multus-net1
-breaks shadow-cni-file-on-worker1 multus "multus-config-first pods-have-eth0-and-net1" \
-  -- lab ssh worker1 'sudo cp /etc/cni/net.d/05-cilium.conflist /etc/cni/net.d/00-0-rfl-break.conflist' \
+breaks shadow-cni-file-on-worker1 multus "cni-dir-holds-only-multus pods-have-eth0-and-net1" \
+  -- lab ssh worker1 "sudo cp $cilium_conf /etc/cni/net.d/00-0-rfl-break.conflist" \
   -- lab ssh worker1 'sudo rm -f /etc/cni/net.d/00-0-rfl-break.conflist'
 breaks attachment-crd-deleted multus "network-attachment-from-inventory" \
   -- kc "delete crd network-attachment-definitions.k8s.cni.cncf.io" \
@@ -219,9 +209,9 @@ breaks lab-egress-lost-on-worker1 multus "net1-cross-node net1-on-lab-nic" \
 breaks ghost-allocation multus "no-duplicate-addresses recreate-releases-addresses" \
   -- ghost add \
   -- ghost remove
-breaks shadow-cni-file-at-boot-on-worker2 multus "reboot-keeps-cni-order new-pod-after-reboot-gets-net1" \
-  -- shadow_unit on \
-  -- shadow_unit off
+breaks cilium-file-back-in-cni-dir-on-worker2 multus "cni-dir-holds-only-multus pod-at-boot-waits-for-multus new-pod-after-reboot-gets-net1" \
+  -- lab ssh worker2 "sudo cp $cilium_conf /etc/cni/net.d/05-cilium.conflist" \
+  -- lab ssh worker2 'sudo rm -f /etc/cni/net.d/05-cilium.conflist'
 breaks delete-timeout-1s-multus multus "test-namespace-removed" \
   -- -- wait_ns_gone -- --config "$(config_with $multus_config delete.yaml 'c["delete_timeout_s"] = 1')"
 decoy_id=$(date -u +%Y%m%dT%H%M%SZ)

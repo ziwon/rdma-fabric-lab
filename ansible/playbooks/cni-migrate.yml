@@ -1,0 +1,12 @@
+- name: Leave Multus's file alone in the CNI directory containerd reads, on a cluster built while Cilium wrote there
+  hosts: k8s_cluster
+  become: true
+  serial: 1
+  pre_tasks:
+    - name: Refuse an inventory whose Helm environment installs no Multus
+      ansible.builtin.assert:
+        that: rfl_inventory | default('') == 'lab'
+        fail_msg: "{{ inventory_hostname }} belongs to Helm environment {{ rfl_inventory | default('none') }}, which has no Multus."
+        quiet: true
+  roles:
+    - cni_layout

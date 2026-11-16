@@ -1,0 +1,2 @@
+1794807448.486841 worker2 containerd[782]: time="2026-11-16T05:37:28.486804092Z" level=info msg="RunPodSandbox for name:\"net1-client\"  uid:\"5185d5e0-56ed-4863-9d87-e814cb745b04\"  namespace:\"rdma-lab\""
+1794807457.953021 worker2 containerd[782]: time="2026-11-16T05:37:37.952967876Z" level=info msg="RunPodSandbox for name:\"net1-client\"  uid:\"5185d5e0-56ed-4863-9d87-e814cb745b04\"  namespace:\"rdma-lab\" returns sandbox id \"a51e1526fbbc9a6072ea12fda3bd76f90cf59c2a279629cc17524476c8cf285c\""

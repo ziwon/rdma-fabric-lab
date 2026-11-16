@@ -80,7 +80,7 @@ make k8s-hostnet-test               # the M1 RDMA tests between hostNetwork pods
 make k8s-multus-test                # net1 from Whereabouts beside Cilium, recreation, worker reboot
 ```
 
-`tests/integration/qemu-lab/acceptance-m3.sh` runs all of M1, M2 and M3 from wiped guests. The three-control-plane profile runs with `LAB_PROFILE=ha`.
+Cilium writes its CNI file to `/etc/cni/multus/net.d`, so `/etc/cni/net.d` holds only Multus's file and a pod never starts without `net1`. A cluster built before that change needs `make cni-migrate` once after `make addons ENV=lab`. `tests/integration/qemu-lab/acceptance-m3.sh` runs all of M1, M2 and M3 from wiped guests. The three-control-plane profile runs with `LAB_PROFILE=ha`.
 
 Track B boots its own guest and runs everything inside it:
 

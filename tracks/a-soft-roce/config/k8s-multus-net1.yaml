@@ -17,8 +17,9 @@ request_timeout_s: 5
 request_attempts: 3
 delete_timeout_s: 120
 reboot_timeout_s: 300
-# Multus writes its CNI file only once its daemon runs again, a moment after its pod turns Ready.
-cni_settle_timeout_s: 60
+# How long the boot check samples the rebooted worker while Multus's 00-multus.conf is absent. Multus writes it about
+# 18 s after the boot.
+multus_conf_timeout_s: 60
 capture:
   snaplen: 128
   max_seconds: 900

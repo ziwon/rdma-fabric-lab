@@ -6,14 +6,17 @@ export LAB_PROFILE
 LAB_HARNESS := tests/integration/qemu-lab/lab.sh
 # LAB_DIR moves the guests' files of the profile, as for lab.sh.
 LAB_STATE := $(or $(LAB_DIR),.lab$(if $(filter-out lab,$(LAB_PROFILE)),/$(LAB_PROFILE)))
-LAB_PAIR = $(shell $(LAB_HARNESS) inventories)
+# make 4.3 exports no variable to $(shell), so a LAB_DIR or LAB_PROFILE given on the command line reaches the
+# harness only through this prefix.
+LAB_HARNESS_ENV = env LAB_PROFILE=$(LAB_PROFILE)$(if $(LAB_DIR), LAB_DIR=$(LAB_DIR))
+LAB_PAIR = $(shell $(LAB_HARNESS_ENV) $(LAB_HARNESS) inventories)
 LAB_INVENTORY = $(word 1,$(LAB_PAIR))
 LAB_OVERRIDE ?= $(wildcard $(word 2,$(LAB_PAIR)))
 LAB_INVENTORIES = $(LAB_INVENTORY) $(LAB_OVERRIDE)
 LAB_PLAYBOOK = $(BIN)/ansible-playbook $(foreach i,$(LAB_INVENTORIES),-i $(i))
 # The harness forwards the API of the first control plane to 127.0.0.1. A VMware lab reaches
 # the endpoint directly and leaves this empty.
-LAB_API_URL ?= $(if $(wildcard $(LAB_STATE)/.listing.json),$(shell $(LAB_HARNESS) api-url))
+LAB_API_URL ?= $(if $(wildcard $(LAB_STATE)/.listing.json),$(shell $(LAB_HARNESS_ENV) $(LAB_HARNESS) api-url))
 
 .PHONY: lab-up lab-down lab-status lab-wipe lab-lock preflight bootstrap rxe-up
 
@@ -47,6 +50,10 @@ k8s-lock: venv
 
 k8s: k8s-lock ## kubeadm cluster of ansible/playbooks/kubernetes.yml, admin kubeconfig to .lab/kubeconfig. Cilium, Multus and Whereabouts follow with make addons ENV=lab
 	$(LAB_PLAYBOOK) ansible/playbooks/kubernetes.yml $(if $(LAB_API_URL),-e rfl_kubeconfig_server=$(LAB_API_URL))
+
+.PHONY: cni-migrate
+cni-migrate: k8s-lock ## After make addons ENV=lab on a cluster built before Cilium got its own CNI directory: remove its old conflist from /etc/cni/net.d on every node
+	$(LAB_PLAYBOOK) ansible/playbooks/cni-migrate.yml
 
 .PHONY: doctor
 doctor: venv ## Read-only host check: virtualization, tools, resource budget, address plan overlaps. LAB_PLAN=<file> tries another plan

@@ -3,8 +3,9 @@ scenario: k8s-multus-net1
 description: >-
   A Multus secondary IP network beside Cilium. Two ordinary pods on different workers get eth0 from Cilium and net1, a
   macvlan child of the lab NIC with a cluster-wide Whereabouts address from the inventory's Multus pool. The run checks both
-  networks across nodes, the default route, address bookkeeping when the pods are recreated, and the CNI configuration of
-  a worker after a reboot. net1 is an IP network only. It shows no RDMA device, provider or permission inside a pod.
+  networks across nodes, the default route, address bookkeeping when the pods are recreated, the CNI layout of every node,
+  and a pod created on a worker right after its boot, before Multus writes its file, which must wait and then start with
+  net1. net1 is an IP network only. It shows no RDMA device, provider or permission inside a pod.
 required: true
 result_kind: software-cluster-test
 security:
@@ -14,10 +15,10 @@ security:
     network or device. kubectl runs on the first control plane with its admin.conf, which never leaves that guest. tcpdump,
     the reboot and process cleanup use sudo on the workers.
 checks:
-  - id: multus-config-first
+  - id: cni-dir-holds-only-multus
     description: >-
-      On every node the first file containerd loads from /etc/cni/net.d is Multus's 00-multus.conf, and its default delegate
-      is the Cilium conflist.
+      On every node Multus's 00-multus.conf is the only CNI file in /etc/cni/net.d, the directory containerd reads. Its
+      clusterNetwork names 05-cilium.conflist in the cni.confPath of the Cilium values, and that file runs cilium-cni.
   - id: network-attachment-from-inventory
     description: >-
       The NetworkAttachmentDefinition in the inventory's lab namespace names the workers' lab_rdma_nic as master and the
@@ -44,12 +45,13 @@ checks:
     description: >-
       Deleting both pods releases their Whereabouts allocations, and the recreated pods get pool addresses held once each, so
       nothing leaks.
-  - id: reboot-keeps-cni-order
+  - id: pod-at-boot-waits-for-multus
     description: >-
-      After one worker reboots, its kubelet reports the new boot, Multus restarts there, and Multus's file is still first in
-      /etc/cni/net.d with Cilium as its default delegate.
+      One worker reboots, and as soon as the new boot answers, a client pod that tolerates every NoSchedule taint is
+      created there. Until Multus writes 00-multus.conf, every sample shows containerd without a network. The pod's first
+      RunPodSandbox comes after that file's birth, the pod gets eth0 and net1, and the node's CNI layout holds afterwards.
   - id: new-pod-after-reboot-gets-net1
-    description: A new pod on the rebooted worker gets eth0 and net1 from the pool, held once, and reaches the server over net1.
+    description: The pod created at boot holds its pool address once and reaches the server over net1.
   - id: test-namespace-removed
     description: The lab namespace of the run, its pods and every Whereabouts allocation of it are gone at the end.
   - id: no-process-left

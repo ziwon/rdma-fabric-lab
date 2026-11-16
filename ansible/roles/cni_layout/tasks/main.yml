@@ -1,0 +1,100 @@
+- name: Check Cilium writes its conflist outside the directory containerd reads
+  ansible.builtin.assert:
+    that: cni_layout_cilium_dir != cni_layout_conf_dir
+    fail_msg: "{{ cni_layout_cilium_values }} sets cni.confPath to {{ cni_layout_conf_dir }}. There is nothing to migrate to."
+    quiet: true
+
+- name: Read the daemon config Multus runs with
+  ansible.builtin.command: "{{ cni_layout_kubectl }} -n kube-system get configmap multus-daemon-config -o json"
+  delegate_to: "{{ cni_layout_first_cp }}"
+  register: cni_layout_multus_config
+  changed_when: false
+  check_mode: false
+
+- name: Check Multus takes its default delegate from Cilium's directory
+  vars:
+    cni_layout_autoconfig: "{{ ((cni_layout_multus_config.stdout | from_json).data['daemon-config.json'] | from_json).multusAutoconfigDir }}"
+  ansible.builtin.assert:
+    that: cni_layout_autoconfig == cni_layout_cilium_dir
+    fail_msg: >-
+      Multus takes its default delegate from {{ cni_layout_autoconfig }}, not {{ cni_layout_cilium_dir }}. Run make addons
+      ENV={{ rfl_inventory }} first. Nothing was changed.
+    quiet: true
+
+- name: Look for Cilium's conflist in its own directory
+  ansible.builtin.stat:
+    path: "{{ cni_layout_delegate }}"
+  register: cni_layout_delegate_file
+
+- name: Check Cilium wrote it on this node
+  ansible.builtin.assert:
+    that: cni_layout_delegate_file.stat.exists
+    fail_msg: >-
+      {{ inventory_hostname }} has no {{ cni_layout_delegate }}. Run make addons ENV={{ rfl_inventory }} first, so the Cilium
+      agent there writes it. Nothing was changed.
+    quiet: true
+
+# Removed before Multus restarts: while its pod restarts, the old daemon removes 00-multus.conf, and with this file left
+# containerd would run Cilium alone. Without it, a pod in that gap finds no network and waits.
+- name: Remove Cilium's old conflist from the directory containerd reads
+  ansible.builtin.file:
+    path: "{{ cni_layout_conf_dir }}/{{ cni_layout_cilium_file }}"
+    state: absent
+
+- name: Read the default delegate Multus wrote
+  ansible.builtin.command: cat {{ cni_layout_conf_dir }}/{{ cni_layout_multus_file }}
+  register: cni_layout_multus_file_before
+  changed_when: false
+  failed_when: false
+  check_mode: false
+
+# The daemon reads its config only at start, and a ConfigMap change does not roll the DaemonSet.
+- name: Restart the Multus pod of this node when its file names another delegate
+  when: >-
+    cni_layout_multus_file_before.rc != 0
+    or (cni_layout_multus_file_before.stdout | from_json).clusterNetwork | default('') != cni_layout_delegate
+  block:
+    - name: Delete the Multus pod of this node, so its DaemonSet starts it with the current daemon config
+      ansible.builtin.command: >-
+        {{ cni_layout_kubectl }} -n kube-system delete pod -l name=multus --field-selector spec.nodeName={{ cni_layout_node_name }}
+        --wait --timeout={{ cni_layout_multus_timeout_s }}s
+      delegate_to: "{{ cni_layout_first_cp }}"
+      changed_when: true
+
+    - name: Wait until Multus names Cilium's conflist in its own directory
+      ansible.builtin.command: cat {{ cni_layout_conf_dir }}/{{ cni_layout_multus_file }}
+      register: cni_layout_multus_file_after
+      until: >-
+        cni_layout_multus_file_after.rc == 0
+        and (cni_layout_multus_file_after.stdout | from_json).clusterNetwork | default('') == cni_layout_delegate
+      retries: "{{ (cni_layout_multus_timeout_s / 2) | int }}"
+      delay: 2
+      changed_when: false
+      failed_when: false
+
+- name: Find the CNI files of the directory containerd reads
+  ansible.builtin.find:
+    paths: "{{ cni_layout_conf_dir }}"
+    patterns: ["*.conf", "*.conflist", "*.json"]
+    file_type: file
+  register: cni_layout_conf_files
+
+- name: Read the default delegate Multus names now
+  ansible.builtin.command: cat {{ cni_layout_conf_dir }}/{{ cni_layout_multus_file }}
+  register: cni_layout_multus_file_now
+  changed_when: false
+  failed_when: false
+  check_mode: false
+
+- name: Check the layout holds
+  ansible.builtin.assert:
+    that:
+      - cni_layout_conf_files.files | map(attribute='path') | map('basename') | list == [cni_layout_multus_file]
+      - cni_layout_multus_file_now.rc == 0
+      - (cni_layout_multus_file_now.stdout | from_json).clusterNetwork | default('') == cni_layout_delegate
+    fail_msg: >-
+      {{ cni_layout_conf_dir }} on {{ inventory_hostname }} holds {{ cni_layout_conf_files.files | map(attribute='path')
+      | map('basename') | list }}, and {{ cni_layout_multus_file }} reads {{ cni_layout_multus_file_now.stdout | default('')
+      }}. Want {{ cni_layout_multus_file }} alone, naming {{ cni_layout_delegate }}. This role removes only Cilium's
+      file. Remove any other file by hand.
+    quiet: true
