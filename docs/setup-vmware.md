@@ -2,6 +2,8 @@
 
 > Status: **not verified on this host.** The host that ran M1 has no VMware Workstation. M1 verification applied the same Ansible code to unprivileged QEMU/KVM guests (`tests/integration/qemu-lab/`). This document keeps the VMware Workstation path of the lab architecture as a manual procedure.
 
+`docs/setup-vagrant.md` builds the same guests on Workstation with Vagrant and a box made from `lab.guest_image`, and its section 1 lists how the two paths differ.
+
 ## 1. Scope
 
 VM creation is manual. Ansible handles only VMs that already exist. This document produces three Ubuntu Server 24.04 LTS VMs reachable over SSH and one override inventory that points at them.
