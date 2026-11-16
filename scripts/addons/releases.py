@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import re
 from dataclasses import dataclass
 from pathlib import Path
@@ -186,20 +187,40 @@ def load_values(files: list[Path]) -> dict:
     return merge_values([doc for f in files for doc in yaml.safe_load_all(f.read_text())])
 
 
-def unchanged(chart: str, chart_version: str, desired: dict, metadata: dict | None, deployed: dict | None) -> bool:
-    """True when the deployed release already runs this chart at this version with exactly these user values."""
+def unchanged(chart: str, chart_version: str, desired: dict, metadata: dict | None, deployed: dict | None,
+              manifests: tuple[str | None, str] | None = None) -> bool:
+    """True when the deployed release already runs this chart at this version with exactly these user values.
+
+    A repository or OCI chart's version pins its content. A repo-local chart can change without a new version, so for it
+    manifests is the deployed manifest and the one helm template renders now, and both must hold the same objects.
+    """
     return (
         metadata is not None
         and metadata.get("status") == "deployed"
         and metadata.get("chart") == chart
         and metadata.get("version") == chart_version
         and (deployed or {}) == desired
+        and (manifests is None or same_objects(*manifests))
     )
+
+
+def same_objects(deployed: str | None, rendered: str) -> bool:
+    """True when two manifests hold the same objects, whatever their order, comments and layout."""
+    return deployed is not None and _objects(deployed) == _objects(rendered)
+
+
+def _objects(manifest: str) -> list[dict]:
+    return sorted((d for d in yaml.safe_load_all(manifest) if d), key=lambda d: json.dumps(d, sort_keys=True))
 
 
 def get_argv(helm: str, what: str, release: Release, kubeconfig: Path) -> list[str]:
     """helm get <metadata|values> of the release as JSON."""
     return [helm, "get", what, release.name, "--namespace", release.namespace, "--output", "json", "--kubeconfig", str(kubeconfig)]
+
+
+def get_manifest_argv(helm: str, release: Release, kubeconfig: Path) -> list[str]:
+    """helm get manifest of the release, the objects its last upgrade applied."""
+    return [helm, "get", "manifest", release.name, "--namespace", release.namespace, "--kubeconfig", str(kubeconfig)]
 
 
 def _common(release: Release, env: str, lock: dict, helm_dir: Path) -> list[str]:
@@ -220,3 +241,11 @@ def apply_argv(helm: str, release: Release, env: str, lock: dict, helm_dir: Path
 
 def template_argv(helm: str, release: Release, env: str, lock: dict, helm_dir: Path, kube_version: str) -> list[str]:
     return [helm, "template", *_common(release, env, lock, helm_dir), "--kube-version", kube_version, "--include-crds"]
+
+
+def manifest_argv(helm: str, release: Release, env: str, lock: dict, helm_dir: Path, kube_version: str) -> list[str] | None:
+    """helm template of the manifest an upgrade would store, for a repo-local chart only. None for a repository or OCI
+    chart, whose locked version already pins what it renders. The stored manifest holds no hooks and no crds/ files."""
+    if release.source != "local":
+        return None
+    return [helm, "template", *_common(release, env, lock, helm_dir), "--kube-version", kube_version, "--no-hooks"]

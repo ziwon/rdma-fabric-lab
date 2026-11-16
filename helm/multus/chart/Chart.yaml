@@ -2,7 +2,8 @@ apiVersion: v2
 name: multus
 description: >-
   Multus CNI thick plugin for the lab, rendered from the upstream deployments/multus-daemonset-thick.yml of the release
-  that version names, with the moving snapshot image replaced by the image the lock pins by digest.
+  that version names, with the moving snapshot image replaced by the image the lock pins by digest and the daemon's
+  multusAutoconfigDir taken from the values.
 type: application
 # Must equal cni.multus in versions.lock.yaml. make addons refuses the chart otherwise.
 version: v4.3.2

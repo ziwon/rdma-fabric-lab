@@ -26,7 +26,7 @@ releases:
     chart: ./helm/multus/chart
     version: cni.multus
     environments: [lab]
-    values: []
+    values: ["multus/values-{env}.yaml"]
     images:
       - {lock: cni.multus_image, repository: image.repository, tag: image.tag}
   - name: whereabouts

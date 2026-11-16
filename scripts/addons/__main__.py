@@ -1,7 +1,8 @@
 """Install or render the Helm releases of one environment.
 
 apply runs helm upgrade --install for each release in table order, unless the deployed
-release already has the locked chart version and the same user values. template renders
+release already has the locked chart version and the same user values, and for a repo-local
+chart also the objects its chart renders now. template renders
 each release for the locked Kubernetes version and validates the result with kubeconform,
 without a cluster.
 """
@@ -33,6 +34,16 @@ def _helm_json(argv: list[str]) -> dict | None:
     return json.loads(out.stdout or "null") if out.returncode == 0 else None
 
 
+def _manifests(helm: str, release: releases.Release, env: str, lock: dict, kubeconfig: Path) -> tuple[str | None, str] | None:
+    """The deployed and the freshly rendered manifest of a repo-local release, None for any other release."""
+    render = releases.manifest_argv(helm, release, env, lock, HELM_DIR, lock["components"]["k8s.kubernetes"]["value"])
+    if render is None:
+        return None
+    deployed = subprocess.run(releases.get_manifest_argv(helm, release, kubeconfig), capture_output=True, text=True)
+    return (deployed.stdout if deployed.returncode == 0 else None,
+            subprocess.run(render, capture_output=True, text=True, check=True).stdout)
+
+
 def _cmd_apply(args: argparse.Namespace) -> int:
     lock = _lock()
     helm = str(TOOLS / "helm")
@@ -41,8 +52,9 @@ def _cmd_apply(args: argparse.Namespace) -> int:
         desired = releases.desired_values(release, args.env, HELM_DIR, lock)
         metadata = _helm_json(releases.get_argv(helm, "metadata", release, args.kubeconfig))
         deployed = _helm_json(releases.get_argv(helm, "values", release, args.kubeconfig)) if metadata else None
+        manifests = _manifests(helm, release, args.env, lock, args.kubeconfig) if metadata else None
         chart = releases.chart_name(release, REPO_ROOT)
-        if not args.force and releases.unchanged(chart, version, desired, metadata, deployed):
+        if not args.force and releases.unchanged(chart, version, desired, metadata, deployed, manifests):
             print(f"{release.name}: unchanged, chart {version} at revision {metadata['revision']}", flush=True)
             continue
         argv = releases.apply_argv(helm, release, args.env, lock, HELM_DIR, args.kubeconfig)

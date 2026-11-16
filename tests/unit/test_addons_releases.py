@@ -137,6 +137,45 @@ def test_a_release_is_unchanged_only_when_deployed_with_the_locked_chart_and_the
     assert releases.unchanged("cilium", "1.20.4", {"ipam": {"mode": "kubernetes"}}, metadata, deployed) is expected
 
 
+MANIFEST = """---
+# Source: local-cni/templates/a.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata: {name: config, namespace: kube-system}
+data: {daemon-config.json: '{"dir": "/etc/cni/net.d"}'}
+---
+# Source: local-cni/templates/a.yaml
+apiVersion: apps/v1
+kind: DaemonSet
+metadata: {name: ds, namespace: kube-system}
+spec: {template: {spec: {containers: [{name: c, image: "r:t"}]}}}
+"""
+REORDERED = "---\n" + "\n---\n".join(reversed(MANIFEST.split("---\n")[1:])).replace("# Source: local-cni/templates/a.yaml\n", "")
+
+
+@pytest.mark.parametrize(
+    ("manifests", "expected"),
+    [
+        (None, True),
+        ((MANIFEST, MANIFEST), True),
+        ((MANIFEST, REORDERED), True),
+        ((MANIFEST, MANIFEST.replace("/etc/cni/net.d", "/etc/cni/multus/net.d")), False),
+        ((MANIFEST, MANIFEST + "---\napiVersion: v1\nkind: ServiceAccount\nmetadata: {name: sa}\n"), False),
+        ((None, MANIFEST), False),
+    ],
+)
+def test_a_local_chart_is_unchanged_only_when_the_deployed_objects_are_the_ones_it_renders_now(manifests, expected):
+    values = {"image": {"tag": "t"}}
+    assert releases.unchanged("local-cni", "v4.3.2", values, DEPLOYED | {"chart": "local-cni", "version": "v4.3.2"}, values,
+                              manifests) is expected
+
+
+def test_get_manifest_reads_the_applied_objects_of_the_release(tmp_path):
+    cilium = releases.load(table(tmp_path, TABLE))[0]
+    assert releases.get_manifest_argv("helm", cilium, Path("kc")) == [
+        "helm", "get", "manifest", "cilium", "--namespace", "kube-system", "--kubeconfig", "kc"]
+
+
 def test_get_reads_the_release_as_json_from_its_namespace(tmp_path):
     cilium = releases.load(table(tmp_path, TABLE))[0]
     argv = releases.get_argv("helm", "values", cilium, Path("kc"))
@@ -198,6 +237,16 @@ def test_a_local_chart_renders_from_its_directory_under_the_repository(sources):
     argv = releases.template_argv("helm", local, "lab", SOURCE_LOCK, root / "helm", "v1.36.6")
     assert argv[2:4] == ["local", str(root / "helm/local/chart")] and "--repo" not in argv
     assert releases.chart_name(local, root) == "local-cni"
+
+
+def test_only_a_local_chart_is_rendered_to_compare_with_its_deployed_manifest(tmp_path, sources, helm_dir):
+    root, (wa, local) = sources
+    cilium = releases.load(table(tmp_path, TABLE))[0]
+    assert releases.manifest_argv("helm", cilium, "lab", LOCK, helm_dir, "v1.36.6") is None
+    assert releases.manifest_argv("helm", wa, "lab", SOURCE_LOCK, root / "helm", "v1.36.6") is None
+    argv = releases.manifest_argv("helm", local, "lab", SOURCE_LOCK, root / "helm", "v1.36.6")
+    assert argv == releases.template_argv("helm", local, "lab", SOURCE_LOCK, root / "helm", "v1.36.6")[:-1] + ["--no-hooks"]
+    assert "--include-crds" not in argv and "--kubeconfig" not in argv
 
 
 def test_a_local_chart_whose_version_is_not_the_locked_one_is_refused(sources):

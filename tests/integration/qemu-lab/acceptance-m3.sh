@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # M3 acceptance on the QEMU harness lab profile, from wiped guests to validated runs: RXE, Kubernetes,
-# Cilium, Multus and Whereabouts, the RDMA test image built in a wiped builder guest, both M3 scenarios,
+# Cilium, Multus and Whereabouts with Multus's file alone in /etc/cni/net.d, the CNI migration as a no-op,
+# the RDMA test image built in a wiped builder guest, both M3 scenarios,
 # the M1 and M2 scenarios on the same guests in alternation, with net1 pods on the lab NIC during the RXE
 # runs, and every idempotency rerun. Steps land in .lab/acceptance-m3/<UTC time>/NN-<step>.log, with
 # steps.tsv and runs.tsv. LAB_DIR moves the lab guests' files, as for lab.sh. The builder guest lives in
@@ -36,7 +37,7 @@ step() {
   printf '%02d %-34s expect %-7s exit %-3s %s\n' "$n" "$name" "$expect" "$rc" "$verdict"
 }
 
-last_log() { local logs=("$out"/*-"$1".log); printf '%s\n' "${logs[-1]}"; }
+last_log() { local logs=("$out"/[0-9][0-9]-"$1".log); printf '%s\n' "${logs[-1]}"; }
 run_id_of() { grep -oE 'results/[0-9]{8}T[0-9]{6}Z' "$(last_log "$1")" | head -n1 | cut -d/ -f2; }
 
 # Every host of the last PLAY RECAP in the log of step $1 reports changed=0.
@@ -75,6 +76,22 @@ net1_hold() {
   kc "-n $ns wait --for=condition=Ready pod --all --timeout=180s" < /dev/null
 }
 net1_release() { make cleanup RUN="$hold_id"; }
+# A rebooted node's Cilium agent turns Ready at its readiness probe's next tick, up to 30 s after it is healthy. So after
+# a step that reboots workers the run waits for the rollouts, as acceptance-m2.sh does after it deletes an agent.
+settled() {
+  kc "-n kube-system rollout status daemonset/cilium --timeout=300s" < /dev/null \
+    && kc "-n kube-system rollout status daemonset/kube-multus-ds --timeout=300s" < /dev/null \
+    && kc "wait --for=condition=Ready node --all --timeout=300s" < /dev/null
+}
+cni_dirs() {
+  local d
+  for g in cp1 worker1 worker2; do
+    echo "== $g"
+    for d in /etc/cni/net.d "$(python3 -c 'import yaml; print(yaml.safe_load(open("helm/cilium/values-lab.yaml"))["cni"]["confPath"])')"; do
+      lab ssh "$g" "echo '-- $d'; sudo ls -1A $d; sudo cat $d/00-multus.conf 2>/dev/null; echo" < /dev/null
+    done
+  done
+}
 gids() { for w in worker1 worker2; do echo "== $w"; lab ssh "$w" 'cat /sys/class/infiniband/*/ports/1/gid_attrs/ndevs/* 2>/dev/null | sort | uniq -c' < /dev/null; done; }
 # RXE numbers are collected with no other guest competing: every QEMU process must be a lab profile guest.
 only_lab_guests() {
@@ -95,12 +112,16 @@ step rxe-up 0 make rxe-up
 step k8s 0 make k8s
 step addons-template 0 make addons-template ENV=lab
 step addons 0 make addons ENV=lab KUBECONFIG_FILE=.lab/kubeconfig
+step cni-dirs 0 cni_dirs
+step cni-migrate 0 make cni-migrate
+step cni-migrate-unchanged 0 unchanged cni-migrate
 step rdma-tools-image 0 make rdma-tools-image
 step builder-down 0 builder lab-down
 step rdma-tools-load 0 make rdma-tools-load
 step guests-before-k8s-hostnet-rdma 0 only_lab_guests
 step k8s-hostnet-rdma 0 make k8s-hostnet-test
 step k8s-multus-net1 0 make k8s-multus-test
+step settled-after-k8s-multus-net1 0 settled
 step k8s-baseline 0 make k8s-test
 step guests-before-vm-rxe-baseline 0 only_lab_guests
 step vm-rxe-baseline 0 make rxe-test
@@ -112,6 +133,7 @@ step vm-rxe-rerun-net1-held 0 make rxe-test SCENARIO=vm-rxe-rerun
 step net1-release 0 net1_release
 step guests-before-vm-rxe-reboot 0 only_lab_guests
 step vm-rxe-reboot 0 make rxe-test SCENARIO=vm-rxe-reboot
+step settled-after-vm-rxe-reboot 0 settled
 step k8s-baseline-after-reboot 0 make k8s-test
 step guests-before-k8s-hostnet-rdma-after-reboot 0 only_lab_guests
 step k8s-hostnet-rdma-after-reboot 0 make k8s-hostnet-test

@@ -7,6 +7,7 @@ import pytest
 from run import multus
 
 FIX = Path(__file__).resolve().parents[1] / "fixtures" / "a-soft-roce" / "m3"
+NEW = FIX.parent / "m3-cni-dir"
 ADDRESS_PLAN = {"rdma": "192.0.2.0/24", "multus_pool": "192.0.2.100-192.0.2.199"}
 LISTING = {
     "workers": {"hosts": ["w1", "w2"]},
@@ -64,20 +65,91 @@ def test_test_pods_are_ordinary_restricted_pods_that_ask_for_the_attachment():
     assert context["seccompProfile"] == {"type": "RuntimeDefault"} and context["allowPrivilegeEscalation"] is False
 
 
-def cni(listing_text=None, multus_text=None, delegate=None) -> list[str]:
-    return multus.cni_problems(listing_text or (FIX / "cni-ls.stdout").read_text(),
-                               multus_text or (FIX / "00-multus.conf").read_text(),
-                               delegate or (FIX / "05-cilium.conflist").read_text())
+LAYOUT = multus.CniLayout("/etc/cni/net.d", "/etc/cni/multus/net.d")
 
 
-def test_multus_first_with_cilium_as_the_default_delegate_passes():
-    assert cni() == []
+def layout(fix: Path = NEW, listing_name: str = "cni-ls.stdout", lay: multus.CniLayout = LAYOUT, **override) -> list[str]:
+    texts = {"listing": (fix / listing_name).read_text(), "multus": (fix / "00-multus.conf").read_text(),
+             "delegate": (fix / "05-cilium.conflist").read_text()} | override
+    return multus.layout_problems(texts["listing"], texts["multus"], texts["delegate"], lay)
 
 
-def test_a_file_before_multus_or_another_delegate_fails():
-    assert cni(listing_text="00-0-other.conflist\n00-multus.conf\n05-cilium.conflist\n")
-    assert cni(listing_text="05-cilium.conflist\nwhereabouts.d\n")
-    assert cni(delegate='{"name": "x", "plugins": [{"type": "flannel"}]}')
+def test_multus_alone_in_the_cni_dir_naming_cilium_in_its_own_directory_passes():
+    assert layout() == []
+
+
+def test_the_m3_layout_with_cilium_beside_multus_fails_on_the_file_and_the_delegate_path():
+    problems = layout(FIX)
+    assert any("holds the CNI files ['00-multus.conf', '05-cilium.conflist']" in p for p in problems)
+    assert any("clusterNetwork is '/host/etc/cni/net.d/05-cilium.conflist'" in p for p in problems)
+
+
+def test_a_copy_of_ciliums_file_back_in_the_cni_dir_fails():
+    assert layout(listing_name="cni-ls-cilium-copy.stdout") == [
+        "/etc/cni/net.d holds the CNI files ['00-multus.conf', '05-cilium.conflist'], want 00-multus.conf alone"]
+
+
+def test_a_missing_multus_file_or_another_delegate_fails():
+    assert layout(listing=".kubernetes-cni-keep\nwhereabouts.d\n", multus="")
+    assert layout(delegate='{"name": "x", "plugins": [{"type": "flannel"}]}')
+
+
+def test_the_layout_comes_from_the_cilium_values_of_the_environment(tmp_path):
+    (tmp_path / "cilium").mkdir()
+    (tmp_path / "cilium" / "values-lab.yaml").write_text("cni:\n  confPath: /etc/cni/multus/net.d/\n  exclusive: false\n")
+    (tmp_path / "cilium" / "values-cel1.yaml").write_text("ipam: {mode: kubernetes}\n")
+    assert multus.layout_from_values("lab", tmp_path) == LAYOUT
+    assert multus.layout_from_values("lab", tmp_path).delegate == "/etc/cni/multus/net.d/05-cilium.conflist"
+    assert multus.layout_from_values("cel1", tmp_path) == multus.CniLayout("/etc/cni/net.d", "/etc/cni/net.d")
+
+
+def boot_window(name: str, boot: float) -> multus.BootWindow:
+    samples, born = multus.parse_window((NEW / f"window-{name}.stdout").read_text())
+    return multus.BootWindow(boot, samples, born, multus.sandbox_start((NEW / f"containerd-{name}.stdout").read_text()))
+
+
+def test_a_pod_held_until_multus_wrote_its_file_passes():
+    w = boot_window("waited", 1794807261.0)
+    assert len(w.samples) == 25 and {s.network for s in w.samples} == {"false"}
+    assert w.multus_born == 1794807279.474 and w.sandbox_started == 1794807281.09202
+    assert multus.window_problems(w) == []
+
+
+def test_a_pod_started_while_ciliums_copy_gave_containerd_a_network_fails_twice():
+    problems = multus.window_problems(boot_window("cilium-copy", 1794807432.0))
+    assert problems[0].startswith("containerd reported a network in 24 of 24 samples")
+    assert "05-cilium.conflist" in problems[0]
+    assert problems[1].startswith("containerd began the pod's sandbox at boot+16.5 s, before Multus wrote its file at boot+18.")
+
+
+def test_a_sample_whose_listing_already_shows_multus_straddled_its_write_and_does_not_count():
+    w = boot_window("straddled", 1794809558.0)
+    last = w.samples[-1]
+    assert last.network == "true" and multus.MULTUS_FILE in last.files and last.at > w.multus_born
+    assert len(multus.inside_window(w)) == len(w.samples) - 1
+    assert multus.window_problems(w) == []
+
+
+def test_no_look_inside_the_window_or_no_sandbox_is_a_failure_not_a_pass():
+    w = boot_window("waited", 1794807261.0)
+    assert "missed the window" in multus.window_problems(multus.BootWindow(w.boot, (), w.multus_born, w.sandbox_started))[0]
+    assert multus.window_problems(multus.BootWindow(w.boot, w.samples, w.multus_born, None)) == [
+        "containerd's journal of this boot holds no RunPodSandbox for the pod"]
+    assert multus.window_problems(multus.BootWindow(w.boot, w.samples, None, w.sandbox_started)) == [f"{multus.MULTUS_FILE} did not appear"]
+
+
+def test_a_sample_while_containerd_was_down_counts_as_no_network():
+    samples, born = multus.parse_window("sample 10.5 down .kubernetes-cni-keep\nsample 11.0 false \nborn missing\n")
+    assert [(s.at, s.network, s.files) for s in samples] == [(10.5, "down", (".kubernetes-cni-keep",)), (11.0, "false", ())]
+    assert born is None
+
+
+def test_the_boot_pod_tolerates_noschedule_taints_and_the_others_do_not():
+    plain = multus.test_pod("ns", "r", "p", "node", "img", "net", "sleep 1", None)
+    boot = multus.test_pod("ns", "r", "p", "node", "img", "net", "sleep 1", None, multus.BOOT_TOLERATIONS)
+    assert "tolerations" not in plain["spec"]
+    assert boot["spec"]["tolerations"] == [{"operator": "Exists", "effect": "NoSchedule"}]
+    assert {k: v for k, v in boot["spec"].items() if k != "tolerations"} == plain["spec"]
 
 
 def test_network_status_names_eth0_from_cilium_and_net1_from_the_attachment():
