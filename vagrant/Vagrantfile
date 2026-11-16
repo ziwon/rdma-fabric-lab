@@ -1,0 +1,51 @@
+# frozen_string_literal: true
+
+# The lab on VMware Workstation. Every size, address and MAC comes from `python -m vagrant plan`,
+# which reads the harness profile tests/integration/qemu-lab/profiles/lab.tsv and the inventory
+# ansible/inventories/lab. Run it through the targets of mk/vagrant.mk, which set the environment.
+
+require "json"
+require "open3"
+
+repo = File.expand_path("..", __dir__)
+state = ENV.fetch("RFL_VAGRANT_STATE") do
+  abort "RFL_VAGRANT_STATE is unset. Run Vagrant through the make vagrant-* targets of mk/vagrant.mk."
+end
+python = File.join(repo, ".venv", "bin", "python")
+abort "#{python} is missing. Run make venv first." unless File.executable?(python)
+out, err, status = Open3.capture3({ "PYTHONPATH" => File.join(repo, "scripts") },
+                                  python, "-m", "vagrant", "plan", "--state", state, chdir: repo)
+abort "python -m vagrant plan failed:\n#{err}" unless status.success?
+lab = JSON.parse(out)
+
+Vagrant.configure("2") do |config|
+  config.vm.box = lab["box"]
+  config.vm.box_check_update = false
+  config.vm.synced_folder ".", "/vagrant", disabled: true
+  # SSH goes straight to the guest's NAT address, so no port of the host listens for it.
+  config.vm.network :forwarded_port, id: "ssh", guest: 22, host: 2222, disabled: true
+  config.ssh.username = lab["ssh"]["user"]
+  config.ssh.private_key_path = lab["ssh"]["private_key"]
+  config.ssh.insert_key = false
+
+  lab["machines"].each do |machine|
+    config.vm.define machine["name"] do |guest|
+      machine["private_networks"].each do |net|
+        guest.vm.network :private_network, ip: net["ip"], netmask: net["netmask"], mac: net["mac"], auto_config: false
+      end
+      guest.vm.disk :disk, name: "root", size: "#{machine["disk_gib"]}GB", primary: true
+      guest.vm.disk :dvd, name: "seed", file: machine["seed"]
+      guest.vm.provider :vmware_desktop do |vmware|
+        vmware.cpus = machine["cpus"]
+        vmware.memory = machine["memory_mib"]
+        vmware.base_mac = machine["nat_mac"]
+        vmware.gui = false
+        # A linked clone keeps the primary disk at the box size.
+        vmware.linked_clone = false
+        # The DHCP lease of the NAT adapter, so SSH and the uplink NIC agree.
+        vmware.enable_vmrun_ip_lookup = false
+        vmware.ssh_info_public = true
+      end
+    end
+  end
+end

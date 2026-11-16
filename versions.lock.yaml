@@ -301,6 +301,42 @@ components:
       ID. Every Track B scenario ran on it.
     source: docker image inspect --format {{.Id}} rfl-ibsim:m4 inside ibsim1 after guest.sh build
       (docs/milestones/evidence/m4/image-build-final-1.log, image-build-final-2.log)
+  vagrant.vagrant:
+    kind: version
+    value: 2.4.9
+    reason: Newest Vagrant release on 2026-11-16. make vagrant-up refuses any other version, because the Vagrantfile relies on the disk and
+      network behavior of this release and of vagrant.vmware_desktop_plugin.
+    source: https://developer.hashicorp.com/vagrant/install
+  vagrant.vagrant_package:
+    kind: version
+    value: 2.4.9-1
+    reason: Debian version of vagrant.vagrant in the HashiCorp apt repository for noble. docs/setup-vagrant.md installs exactly this one.
+    source: https://apt.releases.hashicorp.com/dists/noble/main/binary-amd64/Packages
+  vagrant.vmware_utility:
+    kind: version
+    value: 1.0.24
+    reason: Newest Vagrant VMware Utility on 2026-11-16, released 2025-04-18. The plugin drives VMware through this root service.
+    source: https://releases.hashicorp.com/vagrant-vmware-utility/1.0.24/
+  vagrant.vmware_utility_package:
+    kind: checksum
+    value: sha256:08988b47123693f2d293a67dbd31bc221df5ce6549c125d9561dd88861da2cfe
+    ref: vagrant-vmware-utility_1.0.24-1_amd64.deb
+    reason: The .deb line of vagrant-vmware-utility_1.0.24_SHA256SUMS. gpg verifies that file's signature against the HashiCorp security
+      key C874 011F 0AB4 0511 0D02 1055 3436 5D94 72D7 468F, and sha256sum of the downloaded .deb equals the line.
+    source: https://releases.hashicorp.com/vagrant-vmware-utility/1.0.24/vagrant-vmware-utility_1.0.24-1_amd64.deb
+  vagrant.vmware_desktop_plugin:
+    kind: version
+    value: 3.0.5
+    reason: Newest vagrant-vmware-desktop gem on 2026-11-16, released 2025-04-18. Its disk capability grows the primary disk of a full
+      clone and attaches the cloud-init seed ISO. make vagrant-up refuses any other version.
+    source: https://rubygems.org/gems/vagrant-vmware-desktop/versions/3.0.5
+  vagrant.vmware_workstation:
+    kind: version
+    value: 26H1u1 build 25688693
+    reason: Newest VMware Workstation Pro on 2026-11-16, released 2026-09-03 and free for all use without a license key. The Broadcom
+      Support Portal serves the bundle only after a free sign-in, so no download here checked its bytes. docs/setup-vagrant.md compares
+      the bundle with the SHA256 the portal lists.
+    source: Broadcom Support Portal, VMware Workstation Pro, VMware-Workstation-Full x86_64 bundle
   ns3.simai:
     kind: git-sha
     value: null
@@ -390,3 +426,12 @@ scopes:
     - ns3.simai
     - ns3.ns3_alibabacloud
     - ns3.image
+  vagrant:
+    - vagrant.vagrant
+    - vagrant.vagrant_package
+    - vagrant.vmware_utility
+    - vagrant.vmware_utility_package
+    - vagrant.vmware_desktop_plugin
+    - vagrant.vmware_workstation
+    - lab.guest_image
+    - lab.guest_kernel
