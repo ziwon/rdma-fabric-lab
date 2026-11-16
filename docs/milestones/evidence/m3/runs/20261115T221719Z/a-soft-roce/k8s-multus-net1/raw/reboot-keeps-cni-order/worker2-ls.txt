@@ -1,6 +1,0 @@
-$ sudo ls -1 /etc/cni/net.d
-exit 0
---- stdout
-05-cilium.conflist
-whereabouts.d
---- stderr

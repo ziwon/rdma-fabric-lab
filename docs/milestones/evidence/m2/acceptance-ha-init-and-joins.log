@@ -1,9 +1,0 @@
-$ joins
-TASK [kubeadm : Initialize the first control plane] ****************************
-changed: [ha-cp1]
-TASK [kubeadm : Join the cluster through 192.168.140.20:6443] ******************
-changed: [ha-cp2]
-TASK [kubeadm : Join the cluster through 192.168.140.20:6443] ******************
-changed: [ha-cp3]
-TASK [kubeadm : Join the cluster through 192.168.140.20:6443] ******************
-changed: [ha-w1]

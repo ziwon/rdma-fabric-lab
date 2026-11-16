@@ -1,6 +1,0 @@
-PLAY RECAP *********************************************************************
-ha-cp1                     : ok=53   changed=0    unreachable=0    failed=0    skipped=11   rescued=0    ignored=0   
-ha-cp2                     : ok=44   changed=0    unreachable=0    failed=0    skipped=13   rescued=0    ignored=0   
-ha-cp3                     : ok=44   changed=0    unreachable=0    failed=0    skipped=13   rescued=0    ignored=0   
-ha-w1                      : ok=43   changed=2    unreachable=0    failed=0    skipped=13   rescued=0    ignored=0   
-

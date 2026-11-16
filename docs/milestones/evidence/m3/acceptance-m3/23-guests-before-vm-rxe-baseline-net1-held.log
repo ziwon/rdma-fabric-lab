@@ -1,4 +1,0 @@
-$ only_lab_guests
-4118939 qemu-system-x86_64 -name cp1,process=rfl-lab-cp1 -machine q35,accel=kvm -cpu host -smp 2 -m 4096
-4118977 qemu-system-x86_64 -name worker1,process=rfl-lab-worker1 -machine q35,accel=kvm -cpu host -smp 4 -m 6144
-4119017 qemu-system-x86_64 -name worker2,process=rfl-lab-worker2 -machine q35,accel=kvm -cpu host -smp 4 -m 6144

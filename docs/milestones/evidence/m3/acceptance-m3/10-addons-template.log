@@ -1,9 +1,0 @@
-+ <repo>/.tools/bin/helm template cilium cilium --repo https://helm.cilium.io --version 1.20.4 --namespace kube-system --values <repo>/helm/cilium/values-lab.yaml --kube-version v1.36.6 --include-crds
-+ <repo>/.tools/bin/kubeconform -strict -summary -ignore-missing-schemas -kubernetes-version 1.36.6 .tools/rendered/lab-cilium.yaml
-Summary: 25 resources found in 1 file - Valid: 25, Invalid: 0, Errors: 0, Skipped: 0
-+ <repo>/.tools/bin/helm template multus <repo>/helm/multus/chart --namespace kube-system --set-string image.repository=ghcr.io/k8snetworkplumbingwg/multus-cni --set-string image.tag=v4.3.2-thick@sha256:109b885d8752fe7a7bc3b2371750bfad6789b8b8e2d0b0820b337386ba9b93c9 --kube-version v1.36.6 --include-crds
-+ <repo>/.tools/bin/kubeconform -strict -summary -ignore-missing-schemas -kubernetes-version 1.36.6 .tools/rendered/lab-multus.yaml
-Summary: 6 resources found in 1 file - Valid: 5, Invalid: 0, Errors: 0, Skipped: 1
-+ <repo>/.tools/bin/helm template whereabouts oci://ghcr.io/k8snetworkplumbingwg/whereabouts-chart --version 0.9.4 --namespace kube-system --values <repo>/helm/whereabouts/values-lab.yaml --set-string image.repository=ghcr.io/k8snetworkplumbingwg/whereabouts --set-string image.tag=v0.9.4@sha256:f279fd7dc1124d7819330fb2e07357990b2b4c5d8733aef1b028573c29f05e14 --kube-version v1.36.6 --include-crds
-+ <repo>/.tools/bin/kubeconform -strict -summary -ignore-missing-schemas -kubernetes-version 1.36.6 .tools/rendered/lab-whereabouts.yaml
-Summary: 9 resources found in 1 file - Valid: 6, Invalid: 0, Errors: 0, Skipped: 3

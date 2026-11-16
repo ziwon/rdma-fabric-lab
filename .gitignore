@@ -3,8 +3,10 @@ __pycache__/
 .pytest_cache/
 *.retry
 
-# Raw run data stays local. Curated summaries go under docs/milestones/.
+# Run data stays local: raw results, and the evidence copies the milestone records cite by
+# path. The records and their run ids are what git keeps.
 /results/
+/docs/milestones/evidence/
 
 # Guest disks, cloud-init seeds, SSH keys and logs of the local VM lab.
 /.lab/

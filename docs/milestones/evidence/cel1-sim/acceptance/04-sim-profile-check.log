@@ -1,3 +1,0 @@
-$ make fleet-sim-profile-check
-PYTHONPATH=scripts .venv/bin/python -m fleet sim-profile sites/cel1.yaml --inventory ansible/inventories/cel1 --out tests/integration/qemu-lab/profiles/cel1.tsv --check
-tests/integration/qemu-lab/profiles/cel1.tsv: equals what sites/cel1.yaml renders, 14 guests, 27 vCPUs, 35584 MiB, 270 GiB of virtual disk

@@ -1,5 +1,0 @@
-make lint: exit 0
-make test: exit 0
-make validate: exit 0
-make fleet-check: exit 0
-make track-b-render-check: exit 0

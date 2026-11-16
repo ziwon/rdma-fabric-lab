@@ -1,4 +1,0 @@
-$ make versions SCOPE=m3
-PYTHONPATH=scripts .venv/bin/python -m rfl versions --environment --scope m3
-54 components, 3 undecided
-scope m3: every component is pinned

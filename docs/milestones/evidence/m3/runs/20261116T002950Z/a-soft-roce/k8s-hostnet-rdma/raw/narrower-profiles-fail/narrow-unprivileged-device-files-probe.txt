@@ -1,6 +1,0 @@
-$ kubectl exec narrow-unprivileged-device-files -- exec 3<> /dev/infiniband/rdma_cm
-exit 2
---- stdout
---- stderr
-sh: 1: cannot create /dev/infiniband/rdma_cm: Operation not permitted
-command terminated with exit code 2

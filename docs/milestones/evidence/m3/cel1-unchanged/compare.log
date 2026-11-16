@@ -1,6 +1,0 @@
-addons-template rc=0
-fleet-check rc=0
-addons-template.out byte-identical (4d5c0e7d19871772)
-fleet-check.out byte-identical (7df4994d97356f58)
-cel1-cilium.yaml.masked byte-identical (2685180827d69081)
-cel1-gpu-operator.yaml.masked byte-identical (462280b513d6a2ff)

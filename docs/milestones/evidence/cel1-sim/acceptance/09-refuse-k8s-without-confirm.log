@@ -1,4 +1,0 @@
-$ refused fleet-k8s
-make fleet-k8s changes every cel1 host. Nothing was changed. Rerun with CONFIRM=cel1.
-make: *** [mk/fleet.mk:70: fleet-k8s] Error 2
-exit 2, 0 calls to an IPv4 or IPv6 address in .lab/acceptance-cel1/20261115T163759Z/strace-9.txt

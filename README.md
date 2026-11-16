@@ -106,7 +106,7 @@ Every name and address in `cel1` is invented. The targets that would change cel1
 
 ## Results
 
-Every scenario declares its checks in `tracks/<track>/scenarios/*.yaml`. A run writes `results/<run-id>/<track>/<scenario>/` with a manifest, logs, raw captures and metrics. The run status comes only from the recorded checks, and a passed check must point at evidence in the run directory. `make validate` enforces the contract in `schemas/`. Raw results stay out of git. Selected evidence lives under `docs/milestones/evidence/`.
+Every scenario declares its checks in `tracks/<track>/scenarios/*.yaml`. A run writes `results/<run-id>/<track>/<scenario>/` with a manifest, logs, raw captures and metrics. The run status comes only from the recorded checks, and a passed check must point at evidence in the run directory. `make validate` enforces the contract in `schemas/`. Results and logs stay out of git: `results/`, `.lab/` and the evidence copies under `docs/milestones/evidence/` exist only on the machine that ran them. The milestone records in `docs/milestones/` keep the run ids, exit codes and findings, and cite those local paths.
 
 ## Safety
 
