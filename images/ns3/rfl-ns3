@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+# Entry point of the Track C image. It runs the steps of one run in order, each under GNU time:
+#
+#   rfl-ns3 steps     read /run/rfl/in/steps.tsv, one step per line: <name> TAB <program> TAB <arg>...
+#
+# <program> is a name from the table below, never a path. Every step runs in /run/rfl/out/work and
+# writes <name>.stdout, <name>.stderr, <name>.time and <name>.rc to /run/rfl/out. The first step that
+# exits non-zero ends the run with its exit code.
+set -euo pipefail
+
+marker=/run/rfl-guest/track-c-guest
+in=/run/rfl/in
+out=/run/rfl/out
+
+die() { printf 'rfl-ns3: %s\n' "$*" >&2; exit 2; }
+
+[[ -r $marker ]] || die "This image runs only inside the Track C guest, started by tracks/c-ns3/scripts/guest.sh run."
+[[ ${1:-} == steps && $# -eq 1 ]] || die "usage: rfl-ns3 steps"
+[[ -r $in/steps.tsv ]] || die "$in/steps.tsv is missing"
+
+program() {
+  case $1 in
+    gen-topo) printf '%s\n' python3 /opt/simai/astra-sim-alibabacloud/inputs/topo/gen_Topo_Template.py ;;
+    simai) printf '%s\n' /opt/simai/bin/SimAI_simulator ;;
+    rfl-star) printf '%s\n' /opt/simai/bin/rfl-star ;;
+    *) return 1 ;;
+  esac
+}
+
+# /etc/astra-sim in the image links here, because SimAI writes its log and results below it.
+mkdir -p "$out/work" "$out/astra-sim/simulation"
+{ printf 'uid=%s\ngid=%s\n' "$(id -u)" "$(id -g)"; cat /opt/simai/rfl-sources.tsv; } > "$out/identity.txt"
+
+while IFS=$'\t' read -r -a fields; do
+  [[ ${#fields[@]} -ge 2 ]] || die "a step needs <name> TAB <program>"
+  name=${fields[0]}
+  [[ $name =~ ^[a-z0-9][a-z0-9-]*$ ]] || die "step name $name is not a slug"
+  mapfile -t command < <(program "${fields[1]}")
+  [[ ${#command[@]} -gt 0 ]] || die "unknown program ${fields[1]}"
+  rc=0
+  (cd "$out/work" && /usr/bin/time -v -o "$out/$name.time" "${command[@]}" "${fields[@]:2}") \
+    > "$out/$name.stdout" 2> "$out/$name.stderr" || rc=$?
+  printf '%s\n' "$rc" > "$out/$name.rc"
+  [[ $rc -eq 0 ]] || exit "$rc"
+done < "$in/steps.tsv"

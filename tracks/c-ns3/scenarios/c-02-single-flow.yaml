@@ -1,0 +1,43 @@
+track: c-ns3
+scenario: c-02-single-flow
+description: One RDMA flow of 1000000 payload bytes from a sender through one switch to a receiver on two 100 Gbps links of 1 us,
+  with PFC, ECN and DCQCN on and no competing traffic. The repository's rfl-star driver runs it on the ns-3-alibabacloud model,
+  twice with the same seed. A packet-model simulation, not hardware.
+required: true
+result_kind: packet-model-simulation
+security:
+  privileged: false
+  device_exposure: None. Each run is one unprivileged container with no network inside the Track C guest, as 10001:10001 with a
+    read-only root. Its only writable mount is the run's output directory.
+checks:
+  - id: image-pinned
+    description: rfl-ns3:m5 in the Track C guest is the image the lock pins as ns3.image, and every container of the run starts that digest.
+  - id: container-locked-down
+    description: The guest is a VM with the Track C marker on the locked kernel. The container runs as 10001:10001, not privileged, with
+      no network, no device, every capability dropped, no-new-privileges, a read-only root, AppArmor docker-default and one writable
+      mount, the output directory. The entry point reports uid and gid 10001.
+  - id: config-applied
+    description: Read back from the model objects, both ends of each link hold the declared rate, each channel the declared delay, every
+      RdmaHw the declared MTU and CC mode, every port the PFC setting, the switch the ECN setting and thresholds in bytes, and the
+      simulator the seed. The sender's data packets carry payload plus 40 bytes of headers on the wire.
+  - id: flow-completes
+    description: The QpComplete trace fires for the flow, the receiver holds every payload byte in order, and the simulator stops after
+      that completion rather than at its time limit.
+  - id: fct-lower-bound
+    description: The flow completion time is not below 8 x payload bytes / bottleneck bit/s plus the one-way propagation delay. The
+      detail states the excess and splits it into header bytes, store-and-forward at the switch and the ACK return.
+  - id: zero-drops
+    description: No data packet is lost on a link or in the switch, no device reports PhyRxDrop or QbbDrop, the MMU prints no drop,
+      no NACK is sent and no segment is sent twice.
+  - id: no-pfc-pause
+    description: With PFC on, no device sends a PFC frame and no device receives a PAUSE or RESUME.
+  - id: no-ecn-mark
+    description: With ECN on, the switch sends no CE-marked data packet, no receiver gets one, no ACK carries the CNP flag and RdmaHw
+      counts no CNP for the flow.
+  - id: rerun-identical
+    description: The two runs give identical modeled figures in every output file. Only the simulator's own wall time and memory may
+      differ, and they are left out.
+  - id: no-container-left
+    description: After the run, guest.sh stop removed both containers and guest.sh ls lists no container of this run.
+  - id: host-untouched
+    description: At the start and the end of the run the host runs no simulator process and lists no Track C container.

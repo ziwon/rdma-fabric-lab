@@ -1,0 +1,13 @@
+node	if	direction	kind	packets	bytes
+0	1	tx	data	1977	2079804
+0	1	rx	ack	986	59160
+0	1	rx	nack	20	1200
+1	1	tx	ack	1000	60000
+1	1	tx	nack	20	1200
+1	1	rx	data	1941	2041932
+2	1	tx	ack	992	59520
+2	1	tx	nack	20	1200
+2	1	rx	data	1960	2061920
+2	2	tx	data	1960	2061920
+2	2	rx	ack	992	59520
+2	2	rx	nack	20	1200

@@ -1,0 +1,3 @@
+node	if	event	count
+0	1	pause_rx	25
+0	1	resume_rx	25

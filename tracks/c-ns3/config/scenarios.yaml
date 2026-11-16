@@ -1,0 +1,62 @@
+# Parameters of each Track C scenario. tracks/c-ns3/scenarios/<scenario>.yaml declares its checks.
+# steps go to the image's entry point as they are: <step name>, <program>, <argument>... Each scenario
+# runs twice with the same inputs. rerun_break names what --break rerun-input-differs changes in run2.
+scenarios:
+  c-01-example:
+    kind: simai-example
+    # The quick smoke test of SimAI's docs/getting_started/installation.md, unchanged.
+    steps:
+      - [topology, gen-topo, --ro, -g, "8", -gt, H20, -bw, 200Gbps, -nvbw, 2400Gbps]
+      - [simulate, simai, -t, "8", -w, /opt/simai/example/microAllReduce.txt, -n, ./Rail_Opti_SingleToR_8g_8gps_200Gbps_H20,
+         -c, /opt/simai/astra-sim-alibabacloud/inputs/config/SimAI.conf]
+    # Paths under the output directory. Each must exist and be non-empty in both runs.
+    result_files:
+      - work/Rail_Opti_SingleToR_8g_8gps_200Gbps_H20
+      - work/ncclFlowModel_EndToEnd.csv
+      - work/ncclFlowModel_detailed_flows.csv
+      - work/ncclFlowModel_test1_dimension_utilization_0.csv
+      - astra-sim/simulation/llama_hpn7_fct.txt
+      - astra-sim/simulation/llama_hpn7_mix.tr
+    # Written but empty in this example. They must exist in both runs and match.
+    empty_result_files:
+      - work/ncclFlowModel_detailed_9.csv
+      - work/send.txt
+      - astra-sim/simulation/llama_hpn7_pfc.txt
+    # Not compared between runs: the log carries the wall-clock time and a thread id on its first line.
+    log_files:
+      - astra-sim/SimAI.log
+    completion: {file: simulate.stdout, line: "All data received by node 7 is"}
+    # Layer.cc writes total time as Sys::boostedTick() / FREQ: ns-3 nanoseconds / 1000.
+    simulated_time: {file: work/ncclFlowModel_EndToEnd.csv, after: "total time,", seconds_per_unit: 1.0e-6}
+    rerun_break: {step: topology, flag: -nvbw, value: 1200Gbps}
+
+  c-02-single-flow:
+    kind: star
+    steps:
+      - [simulate, rfl-star, /run/rfl/in/network.txt, /run/rfl/out/work]
+    # Human units. python -m ns3 maps each value to the integer rfl-star applies, see scripts/ns3/network.py.
+    network:
+      seed: 1
+      run: 1
+      stop_after: 10ms
+      hosts: [sender, receiver]
+      links:
+        - {host: sender, rate: 100Gbps, delay: 1us}
+        - {host: receiver, rate: 100Gbps, delay: 1us}
+      flows:
+        - {src: sender, dst: receiver, payload_bytes: 1000000, start: 0ns, priority: 3}
+      mtu_bytes: 1000
+      cc: dcqcn
+      pfc: true
+      pfc_pause_time: 5us
+      pfc_headroom_bdp_factor: 3
+      pfc_alpha_shift: 3
+      buffer_bytes: 33554432
+      ecn: true
+      ecn_kmin_bytes: 400000
+      ecn_kmax_bytes: 1600000
+      ecn_pmax: 0.2
+      l2_chunk_bytes: 4000
+      l2_ack_interval: 1
+      window_bytes: 0
+    rerun_break: {flow_start_shift: 1us}

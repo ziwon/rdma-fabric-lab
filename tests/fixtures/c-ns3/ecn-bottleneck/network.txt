@@ -1,0 +1,26 @@
+# Rendered by python -m ns3 from tracks/c-ns3/config/scenarios.yaml scenario c-02-single-flow, run1.
+# Deliberate break ecn-bottleneck: the receiver link runs at a quarter of the declared rate.
+seed 1
+run 1
+stop_ns 10000000
+mtu_bytes 1000
+cc_mode 1
+pfc 1
+ecn 1
+pause_time_us 5
+buffer_bytes 33554432
+kmin_kb 400
+kmax_kb 1600
+pmax 0.2
+headroom_factor 3
+pfc_alpha_shift 3
+l2_chunk_bytes 4000
+l2_ack_interval 1
+window_bytes 0
+error_rate 0.0
+host 0  # sender
+host 1  # receiver
+switch 2
+link 0 2 100000000000 1000
+link 1 2 25000000000 1000
+flow 0 1 1000000 0 3

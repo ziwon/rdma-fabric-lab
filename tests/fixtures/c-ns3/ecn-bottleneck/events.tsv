@@ -1,0 +1,5 @@
+node	if	event	count
+0	1	cnp_flag_ack_rx	13
+1	1	ce_data_rx	13
+2	2	ce_data_tx	13
+2	2	cnp_flag_ack_rx	13
