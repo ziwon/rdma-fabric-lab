@@ -288,7 +288,7 @@ make vagrant-wipe     # destroy the guests, their disks, seeds, known_hosts and 
 
 ## 8. Open on this path
 
-The first VMware run decides each of these.
+The first VMware run decides each of these. It waits until the remaining milestones are done. Until then nothing on this path has booted a guest, and the QEMU harness stays the verified way to run the lab.
 
 - Whether a VMware guest powers on beside `kvm.enable_virt_at_load=Y` (section 2.5).
 - Whether `vmware-modconfig` builds vmmon and vmnet on kernel 7.0 (section 2.3).
