@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-2.0-only
 // Track C driver: RDMA hosts around one switch on the ns-3-alibabacloud model.
 //
 //   rfl-star <network-file> <output-dir>
@@ -5,7 +6,9 @@
 // It reads one network file that python -m ns3 renders from a scenario, applies every value to the
 // model objects, runs the flows, and writes what the model objects hold after setup and what the
 // model's own trace sources and counters saw. It never writes a value it did not read back.
-// The image build places this file in the scratch directory of the SimAI ns-3 tree.
+// With sample_ns > 0 it also samples the switch queues and every QP's rate at that interval and
+// writes a row whenever a value changed. The image build places this file in the scratch directory
+// of the SimAI ns-3 tree.
 
 #include "ns3/applications-module.h"
 #include "ns3/core-module.h"
@@ -26,6 +29,8 @@
 #include <chrono>
 #include <cstdio>
 #include <cstdlib>
+#include <deque>
+#include <filesystem>
 #include <fstream>
 #include <map>
 #include <set>
@@ -63,7 +68,10 @@ const std::set<std::string> kSettings = {
     "seed",          "run",           "stop_ns",        "mtu_bytes",       "cc_mode",
     "pfc",           "ecn",           "pause_time_us",  "buffer_bytes",    "kmin_kb",
     "kmax_kb",       "pmax",          "headroom_factor", "pfc_alpha_shift", "l2_chunk_bytes",
-    "l2_ack_interval", "window_bytes", "error_rate"};
+    "l2_ack_interval", "window_bytes", "error_rate", "rate_ai_bps", "rate_hai_bps",
+    "min_rate_bps",  "ewma_gain",     "rp_timer_us",    "rate_decrease_interval_us",
+    "alpha_resume_interval_us", "fast_recovery_times", "clamp_target_rate", "rate_on_first_cnp",
+    "sample_ns"};
 
 [[noreturn]] void
 Fail (const std::string &why)
@@ -180,11 +188,48 @@ struct Count
 
 struct DeviceCounters
 {
+  uint32_t node = 0, ifIndex = 0;
+  bool isSwitch = false;
   std::map<std::string, Count> tx, rx;
   std::map<std::string, uint64_t> events;
 };
 
 std::map<std::pair<uint32_t, uint32_t>, DeviceCounters> g_devices;
+
+// One switch port as the enqueue and dequeue hooks see it.
+struct Port
+{
+  DeviceCounters *c;
+  Ptr<SwitchNode> sw;
+  Ptr<QbbNetDevice> dev;
+};
+
+std::deque<Port> g_ports;
+
+struct FlowPackets
+{
+  uint64_t dataPackets = 0, dataBytes = 0, nacksReceived = 0;
+};
+
+// (host node, source port of the flow) -> what that host's NIC sent and received for it.
+std::map<std::pair<uint32_t, uint32_t>, FlowPackets> g_flowPackets;
+
+struct Band
+{
+  uint64_t dequeued = 0, marked = 0;
+};
+
+// (switch node, port, priority, band) -> data packets dequeued and CE-marked there. The band is
+// where the MMU's egress bytes stood when SwitchMmu::ShouldSendCN decided.
+std::map<std::tuple<uint32_t, uint32_t, uint32_t, std::string>, Band> g_bands;
+std::map<std::tuple<uint32_t, uint32_t, uint32_t>, std::pair<uint64_t, int64_t>> g_peaks;
+std::vector<std::string> g_marks, g_cnps, g_pfcs;
+
+int64_t
+NowNs ()
+{
+  return Simulator::Now ().GetNanoSeconds ();
+}
 
 struct FlowResult
 {
@@ -205,6 +250,14 @@ KindOf (uint8_t protocol)
 }
 
 void
+LogPfc (DeviceCounters *c, const char *direction, const CustomHeader &ch)
+{
+  std::ostringstream row;
+  row << NowNs () << "\t" << c->node << "\t" << c->ifIndex << "\t" << direction << "\t" << unsigned (ch.pfc.qIndex) << "\t" << ch.pfc.time;
+  g_pfcs.push_back (row.str ());
+}
+
+void
 OnTx (DeviceCounters *c, Ptr<const Packet> p)
 {
   CustomHeader ch (CustomHeader::L2_Header | CustomHeader::L3_Header | CustomHeader::L4_Header);
@@ -214,6 +267,14 @@ OnTx (DeviceCounters *c, Ptr<const Packet> p)
   n.bytes += p->GetSize ();
   if (ch.l3Prot == 0x11 && ch.GetIpv4EcnBits () == 0x03)
     c->events["ce_data_tx"]++;
+  if (ch.l3Prot == 0x11 && !c->isSwitch)
+    {
+      FlowPackets &f = g_flowPackets[{c->node, ch.udp.sport}];
+      f.dataPackets++;
+      f.dataBytes += p->GetSize ();
+    }
+  if (ch.l3Prot == 0xFE)
+    LogPfc (c, "tx", ch);
 }
 
 void
@@ -227,7 +288,60 @@ OnRx (DeviceCounters *c, Ptr<const Packet> p)
   if (ch.l3Prot == 0x11 && ch.GetIpv4EcnBits () == 0x03)
     c->events["ce_data_rx"]++;
   if ((ch.l3Prot == 0xFC || ch.l3Prot == 0xFD) && ((ch.ack.flags >> qbbHeader::FLAG_CNP) & 1))
-    c->events["cnp_flag_ack_rx"]++;
+    {
+      c->events["cnp_flag_ack_rx"]++;
+      if (!c->isSwitch)
+        {
+          std::ostringstream row;
+          row << NowNs () << "\t" << c->node << "\t" << ch.ack.dport;
+          g_cnps.push_back (row.str ());
+        }
+    }
+  if (ch.l3Prot == 0xFD && !c->isSwitch)
+    g_flowPackets[{c->node, ch.ack.dport}].nacksReceived++;
+  if (ch.l3Prot == 0xFE)
+    LogPfc (c, "rx", ch);
+}
+
+void
+OnEnqueue (Port *port, Ptr<const Packet> p, uint32_t qIndex)
+{
+  CustomHeader ch (CustomHeader::L2_Header | CustomHeader::L3_Header | CustomHeader::L4_Header);
+  p->PeekHeader (ch);
+  if (ch.l3Prot != 0x11)
+    return;
+  port->c->events["data_enqueued"]++;
+  // QbbNetDevice::SwitchSend fires QbbEnqueue just before it enqueues the packet.
+  uint64_t bytes = port->dev->GetQueue ()->GetNBytes (qIndex) + p->GetSize ();
+  auto &peak = g_peaks[{port->c->node, port->c->ifIndex, qIndex}];
+  if (bytes > peak.first)
+    peak = {bytes, NowNs ()};
+}
+
+void
+OnDequeue (Port *port, Ptr<const Packet> p, uint32_t qIndex)
+{
+  CustomHeader ch (CustomHeader::L2_Header | CustomHeader::L3_Header | CustomHeader::L4_Header);
+  p->PeekHeader (ch);
+  if (ch.l3Prot != 0x11)
+    return;
+  uint32_t ifIndex = port->c->ifIndex;
+  // SwitchNode::SwitchNotifyDequeue has removed the packet from the egress account and decided on
+  // the mark before QbbDequeue fires, so this is the value ShouldSendCN compared.
+  uint64_t egress = port->sw->m_mmu->egress_bytes[ifIndex][qIndex];
+  const char *band = egress > port->sw->m_mmu->kmax[ifIndex] ? "above_kmax"
+                     : egress > port->sw->m_mmu->kmin[ifIndex] ? "kmin_to_kmax"
+                                                                 : "at_most_kmin";
+  bool marked = ch.GetIpv4EcnBits () == 0x03;
+  Band &b = g_bands[{port->c->node, ifIndex, qIndex, band}];
+  b.dequeued++;
+  if (marked)
+    {
+      b.marked++;
+      std::ostringstream row;
+      row << NowNs () << "\t" << port->c->node << "\t" << ifIndex << "\t" << qIndex << "\t" << egress;
+      g_marks.push_back (row.str ());
+    }
 }
 
 void
@@ -269,6 +383,46 @@ OnQpComplete (Ptr<RdmaQueuePair> q)
         Simulator::Stop ();
       return;
     }
+}
+
+struct Sampler
+{
+  uint64_t intervalNs;
+  std::FILE *queues, *rates;
+  std::map<std::tuple<uint32_t, uint32_t, uint32_t>, uint64_t> lastQueue;
+  std::map<size_t, uint64_t> lastRate;
+};
+
+void
+Sample (Sampler *s)
+{
+  for (const Port &port : g_ports)
+    for (uint32_t q = 0; q < SwitchMmu::qCnt; q++)
+      {
+        uint64_t bytes = port.dev->GetQueue ()->GetNBytes (q);
+        auto key = std::make_tuple (port.c->node, port.c->ifIndex, q);
+        auto last = s->lastQueue.find (key);
+        if ((last == s->lastQueue.end () && bytes == 0) || (last != s->lastQueue.end () && last->second == bytes))
+          continue;
+        s->lastQueue[key] = bytes;
+        std::fprintf (s->queues, "%lld\t%u\t%u\t%u\t%llu\n", (long long) NowNs (), port.c->node, port.c->ifIndex, q,
+                      (unsigned long long) bytes);
+      }
+  for (size_t i = 0; i < g_flows.size (); i++)
+    {
+      const FlowResult &r = g_flows[i];
+      Ptr<RdmaHw> hw = NodeList::GetNode (r.in.src)->GetObject<RdmaDriver> ()->m_rdma;
+      auto qp = hw->m_qpMap.find (RdmaHw::GetQpKey (HostIp (r.in.dst).Get (), r.sport, r.in.pg));
+      if (qp == hw->m_qpMap.end ())
+        continue;
+      uint64_t bps = qp->second->m_rate.GetBitRate ();
+      auto last = s->lastRate.find (i);
+      if (last != s->lastRate.end () && last->second == bps)
+        continue;
+      s->lastRate[i] = bps;
+      std::fprintf (s->rates, "%lld\t%zu\t%llu\n", (long long) NowNs (), i, (unsigned long long) bps);
+    }
+  Simulator::Schedule (NanoSeconds (s->intervalNs), &Sample, s);
 }
 
 // Pointers and object containers print memory addresses, which differ from run to run.
@@ -314,6 +468,7 @@ main (int argc, char *argv[])
     Fail ("usage: rfl-star <network-file> <output-dir>");
   const Network net = Read (argv[1]);
   const std::string outDir = argv[2];
+  std::filesystem::create_directories (outDir);
 
   const uint32_t nodes = net.hosts.size () + net.switches.size ();
   enum Role { kUnset, kHost, kSwitch };
@@ -404,6 +559,15 @@ main (int argc, char *argv[])
         {
           Ptr<QbbNetDevice> dev = DynamicCast<QbbNetDevice> (d.Get (end));
           DeviceCounters *c = &g_devices[{dev->GetNode ()->GetId (), dev->GetIfIndex ()}];
+          c->node = dev->GetNode ()->GetId ();
+          c->ifIndex = dev->GetIfIndex ();
+          c->isSwitch = end == 1;
+          if (c->isSwitch)
+            {
+              g_ports.push_back ({c, DynamicCast<SwitchNode> (dev->GetNode ()), dev});
+              dev->TraceConnectWithoutContext ("QbbEnqueue", MakeBoundCallback (&OnEnqueue, &g_ports.back ()));
+              dev->TraceConnectWithoutContext ("QbbDequeue", MakeBoundCallback (&OnDequeue, &g_ports.back ()));
+            }
           dev->TraceConnectWithoutContext ("PhyTxBegin", MakeBoundCallback (&OnTx, c));
           dev->TraceConnectWithoutContext ("MacRx", MakeBoundCallback (&OnRx, c));
           dev->TraceConnectWithoutContext ("PhyRxDrop", MakeBoundCallback (&OnPhyRxDrop, c));
@@ -441,6 +605,16 @@ main (int argc, char *argv[])
       hw->SetAttribute ("Mtu", UintegerValue (mtu));
       hw->SetAttribute ("L2ChunkSize", UintegerValue (U64 (net, "l2_chunk_bytes")));
       hw->SetAttribute ("L2AckInterval", UintegerValue (U64 (net, "l2_ack_interval")));
+      hw->SetAttribute ("RateAI", DataRateValue (DataRate (U64 (net, "rate_ai_bps"))));
+      hw->SetAttribute ("RateHAI", DataRateValue (DataRate (U64 (net, "rate_hai_bps"))));
+      hw->SetAttribute ("MinRate", DataRateValue (DataRate (U64 (net, "min_rate_bps"))));
+      hw->SetAttribute ("EwmaGain", DoubleValue (Real (net, "ewma_gain")));
+      hw->SetAttribute ("RPTimer", DoubleValue (Real (net, "rp_timer_us")));
+      hw->SetAttribute ("RateDecreaseInterval", DoubleValue (Real (net, "rate_decrease_interval_us")));
+      hw->SetAttribute ("AlphaResumInterval", DoubleValue (Real (net, "alpha_resume_interval_us")));
+      hw->SetAttribute ("FastRecoveryTimes", UintegerValue (U64 (net, "fast_recovery_times")));
+      hw->SetAttribute ("ClampTargetRate", BooleanValue (U64 (net, "clamp_target_rate") != 0));
+      hw->SetAttribute ("RateOnFirstCnp", DoubleValue (Real (net, "rate_on_first_cnp")));
       Ptr<RdmaDriver> driver = CreateObject<RdmaDriver> ();
       driver->SetNode (n.Get (id));
       driver->SetRdmaHw (hw);
@@ -523,11 +697,35 @@ main (int argc, char *argv[])
     }
   std::fclose (links);
 
+  Sampler sampler{U64 (net, "sample_ns"), Open (outDir, "queues.tsv", "time_ns\tnode\tif\tprio\tbytes\n"),
+                  Open (outDir, "rates.tsv", "time_ns\tflow\trate_bps\n"), {}, {}};
+  if (sampler.intervalNs > 0)
+    Simulator::Schedule (NanoSeconds (0), &Sample, &sampler);
   Simulator::Stop (NanoSeconds (U64 (net, "stop_ns")));
   auto wallStart = std::chrono::steady_clock::now ();
   Simulator::Run ();
   auto wallNs = std::chrono::duration_cast<std::chrono::nanoseconds> (std::chrono::steady_clock::now () - wallStart).count ();
   const int64_t simulatedNs = Simulator::Now ().GetNanoSeconds ();
+  // A flow that never completed still has its QP and its receiver's RxQP, so read where each one stopped.
+  std::vector<uint64_t> ackedBytes (g_flows.size (), 0);
+  for (size_t i = 0; i < g_flows.size (); i++)
+    {
+      FlowResult &r = g_flows[i];
+      if (r.done)
+        {
+          ackedBytes[i] = r.in.bytes;
+          continue;
+        }
+      Ptr<RdmaHw> sender = NodeList::GetNode (r.in.src)->GetObject<RdmaDriver> ()->m_rdma;
+      auto qp = sender->m_qpMap.find (RdmaHw::GetQpKey (HostIp (r.in.dst).Get (), r.sport, r.in.pg));
+      if (qp != sender->m_qpMap.end ())
+        ackedBytes[i] = qp->second->snd_una;
+      Ptr<RdmaHw> receiver = NodeList::GetNode (r.in.dst)->GetObject<RdmaDriver> ()->m_rdma;
+      uint64_t rxKey = ((uint64_t) HostIp (r.in.src).Get () << 32) | ((uint64_t) r.in.pg << 16) | r.sport;
+      auto rx = receiver->m_rxQpMap.find (rxKey);
+      if (rx != receiver->m_rxQpMap.end ())
+        r.rxInOrderBytes = rx->second->ReceiverNextExpectedSeq;
+    }
 
   std::FILE *flows = Open (outDir, "flows.tsv",
                            "flow\tsrc\tdst\tsport\tdport\tpg\tbytes\tstart_ns\tcompleted\tfinish_ns\tcnp_acks\trx_in_order_bytes\n");
@@ -556,6 +754,36 @@ main (int argc, char *argv[])
     }
   std::fclose (counters);
   std::fclose (events);
+  std::fclose (sampler.queues);
+  std::fclose (sampler.rates);
+
+  std::FILE *packets = Open (outDir, "flow-packets.tsv", "flow\tdata_packets_sent\tdata_bytes_sent\tnacks_received\tacked_bytes\n");
+  for (size_t i = 0; i < g_flows.size (); i++)
+    {
+      const FlowPackets &f = g_flowPackets[{g_flows[i].in.src, g_flows[i].sport}];
+      std::fprintf (packets, "%zu\t%llu\t%llu\t%llu\t%llu\n", i, (unsigned long long) f.dataPackets, (unsigned long long) f.dataBytes,
+                    (unsigned long long) f.nacksReceived, (unsigned long long) ackedBytes[i]);
+    }
+  std::fclose (packets);
+  std::FILE *bands = Open (outDir, "ecn-bands.tsv", "node\tif\tprio\tband\tdequeued\tmarked\n");
+  for (const auto &[key, b] : g_bands)
+    std::fprintf (bands, "%u\t%u\t%u\t%s\t%llu\t%llu\n", std::get<0> (key), std::get<1> (key), std::get<2> (key),
+                  std::get<3> (key).c_str (), (unsigned long long) b.dequeued, (unsigned long long) b.marked);
+  std::fclose (bands);
+  std::FILE *peaks = Open (outDir, "queue-peaks.tsv", "node\tif\tprio\tpeak_bytes\tpeak_time_ns\n");
+  for (const auto &[key, peak] : g_peaks)
+    std::fprintf (peaks, "%u\t%u\t%u\t%llu\t%lld\n", std::get<0> (key), std::get<1> (key), std::get<2> (key),
+                  (unsigned long long) peak.first, (long long) peak.second);
+  std::fclose (peaks);
+  for (const auto &[name, header, rows] : {std::make_tuple ("marks.tsv", "time_ns\tnode\tif\tprio\tegress_bytes\n", &g_marks),
+                                           std::make_tuple ("cnp.tsv", "time_ns\tnode\tsport\n", &g_cnps),
+                                           std::make_tuple ("pfc.tsv", "time_ns\tnode\tif\tdirection\tprio\tpause_time\n", &g_pfcs)})
+    {
+      std::FILE *f = Open (outDir, name, header);
+      for (const std::string &row : *rows)
+        std::fprintf (f, "%s\n", row.c_str ());
+      std::fclose (f);
+    }
 
   struct rusage usage;
   getrusage (RUSAGE_SELF, &usage);

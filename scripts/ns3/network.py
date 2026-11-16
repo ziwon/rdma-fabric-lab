@@ -26,8 +26,9 @@ DATA_HEADER_BYTES = 10 + 8 + 20 + L2_HEADER_BYTES
 ACK_BYTES = 10 + 16 + 20 + L2_HEADER_BYTES
 # SwitchMmu::ConfigEcn in switch-mmu.cc multiplies kmin and kmax by 1000.
 ECN_THRESHOLD_UNIT_BYTES = 1000
-# The model's CcMode values that M5 uses. 1 is the Mellanox DCQCN of RdmaHw::cnp_received_mlx.
-CC_MODES = {"dcqcn": 1}
+# The model's CcMode values in use. 1 is the Mellanox DCQCN of RdmaHw::cnp_received_mlx. RdmaHw and
+# SwitchNode compare CcMode only with 1, 3, 7, 8 and 10, so 0 runs no congestion control at all.
+CC_MODES = {"dcqcn": 1, "none": 0}
 
 
 class NetworkError(ValueError):
@@ -67,6 +68,41 @@ class Flow:
 
 
 @dataclass(frozen=True)
+class Dcqcn:
+    """The RdmaHw attributes of the Mellanox DCQCN, in the units the model takes."""
+
+    rate_ai_bps: int
+    rate_hai_bps: int
+    min_rate_bps: int
+    ewma_gain: float
+    rp_timer_us: int
+    rate_decrease_interval_us: int
+    alpha_resume_interval_us: int
+    fast_recovery_times: int
+    clamp_target_rate: bool
+    rate_on_first_cnp: float
+
+
+def whole_us(text: str, what: str) -> int:
+    ns = time_ns(text)
+    if ns % 1000:
+        raise NetworkError(f"{what} must be whole microseconds, the unit RdmaHw schedules it in")
+    return ns // 1000
+
+
+def dcqcn(params: dict) -> Dcqcn:
+    return Dcqcn(
+        rate_ai_bps=rate_bps(params["rate_ai"]), rate_hai_bps=rate_bps(params["rate_hai"]),
+        min_rate_bps=rate_bps(params["min_rate"]), ewma_gain=float(params["ewma_gain"]),
+        rp_timer_us=whole_us(params["rp_timer"], "rp_timer"),
+        rate_decrease_interval_us=whole_us(params["rate_decrease_interval"], "rate_decrease_interval"),
+        alpha_resume_interval_us=whole_us(params["alpha_resume_interval"], "alpha_resume_interval"),
+        fast_recovery_times=int(params["fast_recovery_times"]), clamp_target_rate=bool(params["clamp_target_rate"]),
+        rate_on_first_cnp=float(params["rate_on_first_cnp"]),
+    )
+
+
+@dataclass(frozen=True)
 class Star:
     """Hosts around one switch, in the simulator's units. Host i is node i, the switch is the last node."""
 
@@ -90,6 +126,8 @@ class Star:
     l2_chunk_bytes: int
     l2_ack_interval: int
     window_bytes: int
+    dcqcn: Dcqcn
+    sample_ns: int
     error_rate: float = 0.0
 
     def node(self, host: str) -> int:
@@ -136,7 +174,7 @@ def star(params: dict) -> Star:
         pmax=float(params["ecn_pmax"]), buffer_bytes=int(params["buffer_bytes"]),
         headroom_factor=int(params["pfc_headroom_bdp_factor"]), pfc_alpha_shift=int(params["pfc_alpha_shift"]),
         l2_chunk_bytes=int(params["l2_chunk_bytes"]), l2_ack_interval=int(params["l2_ack_interval"]),
-        window_bytes=int(params["window_bytes"]),
+        window_bytes=int(params["window_bytes"]), dcqcn=dcqcn(params["dcqcn"]), sample_ns=time_ns(params["sample_interval"]),
     )
 
 
@@ -149,6 +187,12 @@ def render(net: Star, header: str) -> str:
         "kmin_kb": net.kmin_kb, "kmax_kb": net.kmax_kb, "pmax": repr(net.pmax), "headroom_factor": net.headroom_factor,
         "pfc_alpha_shift": net.pfc_alpha_shift, "l2_chunk_bytes": net.l2_chunk_bytes,
         "l2_ack_interval": net.l2_ack_interval, "window_bytes": net.window_bytes, "error_rate": repr(net.error_rate),
+        "rate_ai_bps": net.dcqcn.rate_ai_bps, "rate_hai_bps": net.dcqcn.rate_hai_bps, "min_rate_bps": net.dcqcn.min_rate_bps,
+        "ewma_gain": repr(net.dcqcn.ewma_gain), "rp_timer_us": net.dcqcn.rp_timer_us,
+        "rate_decrease_interval_us": net.dcqcn.rate_decrease_interval_us,
+        "alpha_resume_interval_us": net.dcqcn.alpha_resume_interval_us, "fast_recovery_times": net.dcqcn.fast_recovery_times,
+        "clamp_target_rate": int(net.dcqcn.clamp_target_rate), "rate_on_first_cnp": repr(net.dcqcn.rate_on_first_cnp),
+        "sample_ns": net.sample_ns,
     }
     lines += [f"{key} {value}" for key, value in settings.items()]
     lines += [f"host {i}  # {name}" for i, name in enumerate(net.hosts)]

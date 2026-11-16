@@ -119,8 +119,11 @@ def modeled_figures(work: Path) -> dict[str, str]:
     """The files that hold modeled figures, with run.tsv cut to the simulator's own time.
 
     Wall time and RSS of the simulator process vary between equal runs and say nothing about the model.
+    The M6 event logs and time series are compared too wherever the run wrote them.
     """
-    figures = {name: (work / name).read_text() for name in ("flows.tsv", "links.tsv", "resolved.tsv", "counters.tsv", "events.tsv")}
+    names = ("flows.tsv", "links.tsv", "resolved.tsv", "counters.tsv", "events.tsv",
+             *(name for name in SERIES_FILES if (work / name).is_file()))
+    figures = {name: (work / name).read_text() for name in names}
     run = (work / "run.tsv").read_text().splitlines()
     figures["run.tsv"] = "\n".join(line for line in run if line.split("\t")[0] not in SIMULATOR_COST_KEYS) + "\n"
     return figures
@@ -166,3 +169,46 @@ def last_number_after(text: str, prefix: str) -> float | None:
         return None
     match = re.match(r"\s*([0-9]+(?:\.[0-9]+)?)", text[at + len(prefix):])
     return float(match.group(1)) if match else None
+
+
+@dataclass
+class Series:
+    """The event logs and time series rfl-star writes besides the M5 files."""
+
+    queues: list[tuple[int, int, int, int, int]]
+    rates: list[tuple[int, int, int]]
+    marks: list[tuple[int, int, int, int, int]]
+    cnps: list[tuple[int, int, int]]
+    pfcs: list[tuple[int, int, int, str, int, int]]
+    bands: dict[tuple[int, int, int, str], tuple[int, int]]
+    peaks: dict[tuple[int, int, int], tuple[int, int]]
+    packets: dict[int, tuple[int, int, int, int]]
+    stdout: dict[str, int]
+
+
+SERIES_FILES = ("queues.tsv", "rates.tsv", "marks.tsv", "cnp.tsv", "pfc.tsv", "ecn-bands.tsv", "queue-peaks.tsv", "flow-packets.tsv")
+
+
+def ints(row: dict[str, str], *names: str) -> tuple[int, ...]:
+    return tuple(int(row[name]) for name in names)
+
+
+def parse_series(work: Path, stdout_summary: Path) -> Series:
+    read = lambda name, cols: rows((work / name).read_text(), cols)  # noqa: E731
+    queues = [ints(r, "time_ns", "node", "if", "prio", "bytes") for r in read("queues.tsv", ("time_ns", "node", "if", "prio", "bytes"))]
+    rates = [ints(r, "time_ns", "flow", "rate_bps") for r in read("rates.tsv", ("time_ns", "flow", "rate_bps"))]
+    marks = [ints(r, "time_ns", "node", "if", "prio", "egress_bytes")
+             for r in read("marks.tsv", ("time_ns", "node", "if", "prio", "egress_bytes"))]
+    cnps = [ints(r, "time_ns", "node", "sport") for r in read("cnp.tsv", ("time_ns", "node", "sport"))]
+    pfcs = [(int(r["time_ns"]), int(r["node"]), int(r["if"]), r["direction"], int(r["prio"]), int(r["pause_time"]))
+            for r in read("pfc.tsv", ("time_ns", "node", "if", "direction", "prio", "pause_time"))]
+    bands = {(int(r["node"]), int(r["if"]), int(r["prio"]), r["band"]): ints(r, "dequeued", "marked")
+             for r in read("ecn-bands.tsv", ("node", "if", "prio", "band", "dequeued", "marked"))}
+    peaks = {ints(r, "node", "if", "prio"): ints(r, "peak_bytes", "peak_time_ns")
+             for r in read("queue-peaks.tsv", ("node", "if", "prio", "peak_bytes", "peak_time_ns"))}
+    packets = {int(r["flow"]): ints(r, "data_packets_sent", "data_bytes_sent", "nacks_received", "acked_bytes")
+               for r in read("flow-packets.tsv", ("flow", "data_packets_sent", "data_bytes_sent", "nacks_received", "acked_bytes"))}
+    summary = {key: int(value) for key, _, value in (line.partition("\t") for line in stdout_summary.read_text().splitlines())}
+    if set(summary) != {"lines", "mmu_drop_lines"}:
+        raise ResultError(f"{stdout_summary.name} holds {sorted(summary)}, want lines and mmu_drop_lines")
+    return Series(queues, rates, marks, cnps, pfcs, bands, peaks, packets, summary)

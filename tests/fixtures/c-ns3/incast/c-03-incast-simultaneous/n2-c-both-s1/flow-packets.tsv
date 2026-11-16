@@ -1,0 +1,3 @@
+flow	data_packets_sent	data_bytes_sent	nacks_received	acked_bytes
+0	1000	1052000	0	1000000
+1	1000	1052000	0	1000000

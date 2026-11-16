@@ -1,0 +1,17 @@
+node	if	direction	kind	packets	bytes
+0	1	tx	data	1000	1052000
+0	1	rx	ack	1000	60000
+0	1	rx	pfc	10	430
+1	1	tx	data	1000	1052000
+1	1	rx	ack	1000	60000
+1	1	rx	pfc	10	430
+2	1	tx	ack	2000	120000
+2	1	rx	data	2000	2104000
+3	1	tx	ack	1000	60000
+3	1	tx	pfc	10	430
+3	1	rx	data	1000	1052000
+3	2	tx	ack	1000	60000
+3	2	tx	pfc	10	430
+3	2	rx	data	1000	1052000
+3	3	tx	data	2000	2104000
+3	3	rx	ack	2000	120000

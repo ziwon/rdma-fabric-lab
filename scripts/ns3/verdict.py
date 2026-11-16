@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from .compare import CaseOut, bottleneck_port, figures
+from .incast import Case, traffic_differences
 from .network import ACK_BYTES, DATA_HEADER_BYTES, ECN_THRESHOLD_UNIT_BYTES, Star, fct_bound, packet_payloads
 from .results import StarOut
 
@@ -26,8 +28,23 @@ def _expect(problems: list[str], what: str, found: object, want: object) -> None
         problems.append(f"{what} is {found!r}, want {want!r}")
 
 
-def config_applied(net: Star, out: StarOut) -> Verdict:
-    """The model objects hold every declared value, and the sender's wire bytes follow from MTU and headers."""
+# RdmaHw attribute -> (Dcqcn field, parser of the serialized value). DataRate serializes as "<n>bps".
+DCQCN_ATTRIBUTES = {
+    "RateAI": ("rate_ai_bps", lambda v: int(v.removesuffix("bps"))),
+    "RateHAI": ("rate_hai_bps", lambda v: int(v.removesuffix("bps"))),
+    "MinRate": ("min_rate_bps", lambda v: int(v.removesuffix("bps"))),
+    "EwmaGain": ("ewma_gain", float),
+    "RPTimer": ("rp_timer_us", float),
+    "RateDecreaseInterval": ("rate_decrease_interval_us", float),
+    "AlphaResumInterval": ("alpha_resume_interval_us", float),
+    "FastRecoveryTimes": ("fast_recovery_times", int),
+    "ClampTargetRate": ("clamp_target_rate", lambda v: v == "true"),
+    "RateOnFirstCnp": ("rate_on_first_cnp", float),
+}
+
+
+def applied_settings(net: Star, out: StarOut) -> list[str]:
+    """Every declared value that the model objects do not hold, read back from links.tsv and resolved.tsv."""
     problems: list[str] = []
     by_host = {link.a: link for link in out.links}
     for declared in net.links:
@@ -55,9 +72,21 @@ def config_applied(net: Star, out: StarOut) -> Verdict:
         mmu = f"{switch}/mmu/{port}"
         _expect(problems, f"{mmu} kmin_bytes", out.resolved.get((mmu, "kmin_bytes")), str(net.kmin_kb * ECN_THRESHOLD_UNIT_BYTES))
         _expect(problems, f"{mmu} kmax_bytes", out.resolved.get((mmu, "kmax_bytes")), str(net.kmax_kb * ECN_THRESHOLD_UNIT_BYTES))
+        pmax = out.resolved.get((mmu, "pmax"))
+        _expect(problems, f"{mmu} pmax", float(pmax) if pmax is not None else None, net.pmax)
     _expect(problems, "switch buffer_bytes", out.resolved.get((f"{switch}/mmu", "buffer_bytes")), str(net.buffer_bytes))
     _expect(problems, "RngSeed", out.resolved.get(("global", "RngSeed")), str(net.seed))
     _expect(problems, "RngRun", out.resolved.get(("global", "RngRun")), str(net.run))
+    for node, name in enumerate(net.hosts):
+        for attribute, (field, parse) in DCQCN_ATTRIBUTES.items():
+            value = out.resolved.get((f"node/{node}/rdma-hw", attribute))
+            _expect(problems, f"{name} RdmaHw {attribute}", parse(value) if value is not None else None, getattr(net.dcqcn, field))
+    return problems
+
+
+def config_applied(net: Star, out: StarOut) -> Verdict:
+    """The model objects hold every declared value, and the sender's wire bytes follow from MTU and headers."""
+    problems = applied_settings(net, out)
     for name in net.hosts:
         node = net.node(name)
         payloads = [p for f in net.flows if f.src == name for p in packet_payloads(f.payload_bytes, net.mtu_bytes)]
@@ -67,8 +96,9 @@ def config_applied(net: Star, out: StarOut) -> Verdict:
         _expect(problems, f"{name} ACK bytes received", out.bytes(node, "rx", "ack"), ACK_BYTES * acks)
     return verdict(problems, (
         f"links.tsv and resolved.tsv hold every declared rate, delay, MTU {net.mtu_bytes} B, CcMode {net.cc_mode}, "
-        f"QbbEnabled {str(net.pfc).lower()}, EcnEnabled {str(net.ecn).lower()}, ECN thresholds in bytes, buffer and seed "
-        f"{net.seed}; each sender put payload + {DATA_HEADER_BYTES} B per data packet on the wire and got {ACK_BYTES} B ACKs"))
+        f"QbbEnabled {str(net.pfc).lower()}, EcnEnabled {str(net.ecn).lower()}, ECN thresholds in bytes, buffer, seed "
+        f"{net.seed} and the ten DCQCN attributes; each sender put payload + {DATA_HEADER_BYTES} B per data packet on the wire "
+        f"and got {ACK_BYTES} B ACKs"))
 
 
 def flow_completes(net: Star, out: StarOut) -> Verdict:
@@ -231,3 +261,224 @@ def host_simulator_processes(ps_text: str) -> list[str]:
         if len(parts) >= 2 and parts[1] in names:
             found.append(line.strip())
     return found
+
+
+# ---------------------------------------------------------------- incast
+
+
+def by_case(problems: list[tuple[str, str]], limit: int = 12) -> str:
+    """The first problems, each prefixed by its case step, and how many more there were."""
+    text = "; ".join(f"{step}: {problem}" for step, problem in problems[:limit])
+    return text + (f"; and {len(problems) - limit} more" if len(problems) > limit else "")
+
+
+def incast_config_applied(cases: list[CaseOut]) -> Verdict:
+    problems = [(c.case.step, p) for c in cases for p in applied_settings(c.case.net, c.out)]
+    profiles = sorted({c.case.profile for c in cases})
+    return verdict([by_case(problems)] if problems else [], (
+        f"all {len(cases)} cases hold their declared rates, delays, MTU, buffer, ECN thresholds and pmax, seed, the profile's "
+        f"QbbEnabled, EcnEnabled and CcMode, and the ten DCQCN attributes, read back from the model objects; profiles "
+        f"{', '.join(profiles)}"))
+
+
+def same_traffic(cases: list[Case], files: dict[str, str]) -> Verdict:
+    """Within a fan-in, the network files the simulator got differ only in the profile keys and the seed."""
+    problems = []
+    groups: dict[str, list[Case]] = {}
+    for case in cases:
+        groups.setdefault(case.group, []).append(case)
+    for group, members in groups.items():
+        first = members[0]
+        for case in members[1:]:
+            diff = traffic_differences(files[first.step], files[case.step])
+            if diff:
+                problems.append((case.step, f"differs from {first.step} in {', '.join(diff)}"))
+        for case in members:
+            lines = {line.split()[0]: line.split()[1] for line in files[case.step].splitlines()
+                     if line and not line.startswith("#") and len(line.split()) >= 2}
+            want = {"pfc": str(int(case.net.pfc)), "ecn": str(int(case.net.ecn)), "cc_mode": str(case.net.cc_mode)}
+            wrong = [f"{k} {lines.get(k)} want {v}" for k, v in want.items() if lines.get(k) != v]
+            if wrong:
+                problems.append((case.step, ", ".join(wrong)))
+    return verdict([by_case(problems)] if problems else [], (
+        f"in each of {len(groups)} fan-in groups every case's network file has the same topology, links, flows, buffer, "
+        f"thresholds and DCQCN lines as the first; only pfc, ecn, cc_mode and seed differ, as each profile defines"))
+
+
+def flows_accounted(cases: list[CaseOut]) -> Verdict:
+    """Every declared flow is in flows.tsv, finished or not, and every refused packet is counted two ways."""
+    problems, unfinished, total = [], [], 0
+    for c in cases:
+        net, out = c.case.net, c.out
+        total += len(out.flows)
+        if len(out.flows) != len(net.flows):
+            problems.append((c.case.step, f"flows.tsv lists {len(out.flows)} flows, the case has {len(net.flows)}"))
+        for declared, found in zip(net.flows, out.flows):
+            if found.completed and found.rx_in_order_bytes != declared.payload_bytes:
+                problems.append((c.case.step, f"flow {found.flow} completed with {found.rx_in_order_bytes} B in order, want "
+                                              f"{declared.payload_bytes}"))
+            if not found.completed:
+                unfinished.append(f"{c.case.step}:flow{found.flow}")
+        f = figures(c)
+        if f["mmu_drops_trace"] != f["mmu_drops_stdout"]:
+            problems.append((c.case.step, f"the switch refused {f['mmu_drops_trace']} data packets by its traces but the MMU "
+                                          f"printed {f['mmu_drops_stdout']} drop lines"))
+    return verdict([by_case(problems)] if problems else [], (
+        f"{total} flows in {len(cases)} cases are all in flows.tsv; {total - len(unfinished)} completed with every byte "
+        f"in order and {len(unfinished)} did not finish ({', '.join(unfinished[:8]) or 'none'}"
+        f"{', ...' if len(unfinished) > 8 else ''}); in every case the switch's refusals counted from MacRx minus "
+        f"QbbEnqueue equal the MMU's drop lines"))
+
+
+def fct_bounds(cases: list[CaseOut]) -> Verdict:
+    """No completed flow beats its own serialization bound, and no case moves its payload faster than the receiver link."""
+    problems, flows, tightest = [], 0, None
+    for c in cases:
+        net = c.case.net
+        for declared, found in zip(net.flows, c.out.flows):
+            if not found.completed:
+                continue
+            flows += 1
+            bound = fct_bound(net, declared).bound_ns
+            ratio = found.fct_ns / bound
+            tightest = ratio if tightest is None else min(tightest, ratio)
+            if found.fct_ns < bound:
+                problems.append((c.case.step, f"flow {found.flow} FCT {found.fct_ns} ns below its bound {bound:.0f} ns"))
+        done = [f for f in c.out.flows if f.completed]
+        if done:
+            receiver = net.link(net.flows[0].dst)
+            need = 8e9 * sum(f.payload_bytes for f in done) / receiver.bps
+            span = max(f.finish_ns for f in done) - min(f.start_ns for f in done)
+            if span < need:
+                problems.append((c.case.step, f"the completed flows took {span} ns, below the {need:.0f} ns the receiver link "
+                                              f"needs for their payload"))
+    return verdict([by_case(problems)] if problems else [], (
+        f"all {flows} completed flows took at least 8 x payload / bottleneck + propagation (the closest at "
+        f"{tightest:.3f} x its bound), and every case took at least as long as the receiver link needs for the completed "
+        f"payload" if tightest is not None else "no flow completed"))
+
+
+def host_pauses(c: CaseOut) -> tuple[int, int, int, int]:
+    """PAUSE and RESUME frames hosts received, and how often the host's pause handler ran for each."""
+    hosts = range(len(c.case.net.hosts))
+    frames = [(t, pt) for t, node, _, d, _, pt in c.series.pfcs if d == "rx" and node in hosts]
+    return (sum(1 for _, pt in frames if pt > 0), sum(1 for _, pt in frames if pt == 0),
+            c.out.event("pause_rx"), c.out.event("resume_rx"))
+
+
+def pfc_as_configured(cases: list[CaseOut]) -> Verdict:
+    """PFC on: hosts act on every PAUSE and RESUME and the switch drops nothing. PFC off: hosts never act."""
+    problems = []
+    on_paused = off_received = 0
+    for c in cases:
+        pauses, resumes, handled_p, handled_r = host_pauses(c)
+        drops = figures(c)["mmu_drops_trace"]
+        if c.case.net.pfc:
+            if (handled_p, handled_r) != (pauses, resumes):
+                problems.append((c.case.step, f"hosts got {pauses} PAUSE and {resumes} RESUME but the handler ran "
+                                              f"{handled_p} and {handled_r} times"))
+            if drops:
+                problems.append((c.case.step, f"PFC is on and the switch refused {drops} data packets"))
+            on_paused += handled_p > 0
+        else:
+            if handled_p or handled_r:
+                problems.append((c.case.step, f"PFC is off and the host pause handler ran {handled_p}+{handled_r} times"))
+            off_received += pauses > 0
+    if not on_paused:
+        problems.append(("scenario", "no PFC-on case paused, so the check saw PFC do nothing"))
+    if not off_received:
+        problems.append(("scenario", "no PFC-off case received a PAUSE, so the check never saw the hosts ignore one"))
+    on = sum(c.case.net.pfc for c in cases)
+    return verdict([by_case(problems)] if problems else [], (
+        f"in the {on} PFC-on cases the host pause handler ran once for every PAUSE and RESUME received and the switch refused "
+        f"no packet; {on_paused} of them paused. In the {len(cases) - on} PFC-off cases the handler never ran, although the "
+        f"switch still sent PAUSE and hosts received it in {off_received} cases"))
+
+
+def ecn_as_configured(cases: list[CaseOut]) -> Verdict:
+    """ECN off: no mark, no CNP, no rate change. ECN on: marks only above kmin, always above kmax, then CNP and a rate cut."""
+    problems = []
+    reacted = 0
+    for c in cases:
+        f = figures(c)
+        above = [(d, m) for (node, _, _, band), (d, m) in c.series.bands.items()
+                 if node == c.case.net.switch and band == "above_kmax"]
+        low = [m for (node, _, _, band), (_, m) in c.series.bands.items() if node == c.case.net.switch and band == "at_most_kmin"]
+        if not c.case.net.ecn:
+            seen = {"marks": f["marks"], "CNP-flagged ACKs": f["cnps"], "rate reductions": f["rate_reductions"]}
+            bad = [f"{k} {v}" for k, v in seen.items() if v]
+            if bad:
+                problems.append((c.case.step, "ECN is off but " + ", ".join(bad)))
+            continue
+        if sum(low):
+            problems.append((c.case.step, f"{sum(low)} marks at or below kmin"))
+        unmarked = sum(d - m for d, m in above)
+        if unmarked:
+            problems.append((c.case.step, f"{unmarked} dequeues above kmax went unmarked"))
+        if f["marks"] and not f["cnps"]:
+            problems.append((c.case.step, f"{f['marks']} marks but no CNP-flagged ACK reached a sender"))
+        reacted += f["marks"] > 0 and f["cnps"] > 0 and f["rate_reductions"] > 0
+    if not reacted:
+        problems.append(("scenario", "no ECN-on case marked, fed back a CNP and cut a rate"))
+    on = sum(c.case.net.ecn for c in cases)
+    return verdict([by_case(problems)] if problems else [], (
+        f"in the {len(cases) - on} ECN-off cases the switch marked nothing, no CNP flag came back and no rate changed; in "
+        f"the {on} ECN-on cases every mark fell above kmin, every dequeue above kmax was marked, and {reacted} cases showed "
+        f"marks, CNP-flagged ACKs and DCQCN rate cuts"))
+
+
+PFC_PAIRS = (("c-none", "c-pfc"), ("c-ecn", "c-both"))
+ECN_PAIRS = (("c-none", "c-ecn"), ("c-pfc", "c-both"))
+
+
+def outputs(c: CaseOut) -> tuple:
+    return (tuple((f.completed, f.finish_ns) for f in c.out.flows), tuple(sorted(c.out.counters.items())))
+
+
+def profiles_differ(cases: list[CaseOut]) -> Verdict:
+    """For the same traffic and seed, profiles that differ in a triggered feature give different results.
+
+    PFC is triggered when the switch sent a PAUSE in either case of the pair. ECN is triggered when the
+    bottleneck's egress queue rose above kmin in either case.
+    """
+    index = {(c.case.group, c.case.seed, c.case.profile): c for c in cases}
+    problems, triggered, quiet = [], {"pfc": 0, "ecn": 0}, []
+    for (group, seed, profile), c in sorted(index.items()):
+        for feature, pairs in (("pfc", PFC_PAIRS), ("ecn", ECN_PAIRS)):
+            for off, on in pairs:
+                if profile != off or (group, seed, on) not in index:
+                    continue
+                a, b = c, index[(group, seed, on)]
+                if feature == "pfc":
+                    fired = a.out.total("tx", "pfc") > 0 or b.out.total("tx", "pfc") > 0
+                else:
+                    fired = any(d for x in (a, b) for (node, interface, _, band), (d, _) in x.series.bands.items()
+                                if node == x.case.net.switch and interface == bottleneck_port(x) and band != "at_most_kmin")
+                if not fired:
+                    quiet.append(f"{group}-s{seed} {off}/{on}")
+                    continue
+                triggered[feature] += 1
+                if outputs(a) == outputs(b):
+                    problems.append((f"{group}-s{seed}", f"{off} and {on} differ in {feature}, which was triggered, but gave the "
+                                                          f"same flows and counters"))
+    for feature, count in triggered.items():
+        if not count:
+            problems.append(("scenario", f"no pair differing in {feature} saw its trigger"))
+    return verdict([by_case(problems)] if problems else [], (
+        f"{triggered['pfc']} pairs differing in PFC and {triggered['ecn']} pairs differing in ECN and DCQCN saw their trigger "
+        f"and each gave different flow results and counters; {len(quiet)} pairs saw no trigger and may match "
+        f"({', '.join(quiet[:6]) or 'none'}{', ...' if len(quiet) > 6 else ''})"))
+
+
+def incast_rerun_identical(first: dict[str, dict[str, str]], second: dict[str, dict[str, str]]) -> Verdict:
+    problems = []
+    for step in sorted(set(first) | set(second)):
+        if step not in first or step not in second:
+            problems.append((step, "ran in only one of the two runs"))
+            continue
+        same = same_contents(first[step], second[step], "files")
+        if not same.ok:
+            problems.append((step, same.detail))
+    files = sum(len(v) for v in first.values())
+    return verdict([by_case(problems, 4)] if problems else [], (
+        f"run2 repeated all {len(first)} cases with every seed and gave the same {files} modeled figure files"))

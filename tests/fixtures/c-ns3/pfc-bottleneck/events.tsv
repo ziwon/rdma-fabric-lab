@@ -1,3 +1,4 @@
 node	if	event	count
 0	1	pause_rx	25
 0	1	resume_rx	25
+2	2	data_enqueued	1000

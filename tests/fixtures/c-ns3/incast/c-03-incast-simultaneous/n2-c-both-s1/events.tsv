@@ -1,0 +1,7 @@
+node	if	event	count
+0	1	cnp_flag_ack_rx	6
+1	1	cnp_flag_ack_rx	5
+2	1	ce_data_rx	11
+3	3	ce_data_tx	11
+3	3	cnp_flag_ack_rx	11
+3	3	data_enqueued	2000

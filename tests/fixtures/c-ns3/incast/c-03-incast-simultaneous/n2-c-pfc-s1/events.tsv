@@ -1,0 +1,6 @@
+node	if	event	count
+0	1	pause_rx	5
+0	1	resume_rx	5
+1	1	pause_rx	5
+1	1	resume_rx	5
+3	3	data_enqueued	2000

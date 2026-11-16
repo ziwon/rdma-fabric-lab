@@ -1,0 +1,4 @@
+node	if	prio	band	dequeued	marked
+9	9	3	above_kmax	3917	0
+9	9	3	at_most_kmin	655	0
+9	9	3	kmin_to_kmax	4851	0

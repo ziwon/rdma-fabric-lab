@@ -1,0 +1,9 @@
+time_ns	node	if	direction	prio	pause_time
+66520	3	2	tx	3	5
+66604	3	1	tx	3	5
+67523	1	1	rx	3	5
+67607	0	1	rx	3	5
+91048	3	2	tx	3	0
+91132	3	1	tx	3	0
+92051	1	1	rx	3	0
+92135	0	1	rx	3	0

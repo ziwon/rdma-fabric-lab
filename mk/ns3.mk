@@ -8,14 +8,14 @@ TRACK_C_INVENTORIES = $(foreach i,$(shell LAB_PROFILE=ns3 $(LAB_HARNESS) invento
 .PHONY: track-c-lock track-c-guest track-c-image track-c track-c-breaks
 
 track-c-lock: venv
-	$(RFL) versions --scope m5
+	$(RFL) versions --scope m6
 
 track-c-guest: track-c-lock ## Boot or reuse the Track C guest and prepare it with ansible/playbooks/track-c-guest.yml
 	LAB_PROFILE=ns3 $(LAB_HARNESS) up
 	$(BIN)/ansible-playbook $(TRACK_C_INVENTORIES) ansible/playbooks/track-c-guest.yml
 
 # CLEAN=1 deletes the tag, the base image and all build cache first. ARCHIVE=<file> saves the image there.
-track-c-image: track-c-lock ## Build rfl-ns3:m5 inside the Track C guest. Fails when its ID is not ns3.image. CLEAN=1 builds from nothing
+track-c-image: track-c-lock ## Build rfl-ns3:m6 inside the Track C guest. Fails when its ID is not ns3.image. CLEAN=1 builds from nothing
 	$(TRACK_C_PY) image $(TRACK_C_INVENTORIES) $(if $(CLEAN),--clean) $(if $(BUILD_LOG),--log $(BUILD_LOG)) \
 		$(if $(ARCHIVE),--archive $(ARCHIVE))
 

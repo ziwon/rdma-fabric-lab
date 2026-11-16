@@ -1,6 +1,51 @@
 # Parameters of each Track C scenario. tracks/c-ns3/scenarios/<scenario>.yaml declares its checks.
 # steps go to the image's entry point as they are: <step name>, <program>, <argument>... Each scenario
 # runs twice with the same inputs. rerun_break names what --break rerun-input-differs changes in run2.
+
+# The DCQCN attributes of RdmaHw take SimAI's astra-sim-alibabacloud/inputs/config/SimAI.conf at a57d765:
+# RATE_AI, RATE_HAI, MIN_RATE, EWMA_GAIN, RP_TIMER, RATE_DECREASE_INTERVAL, ALPHA_RESUME_INTERVAL,
+# FAST_RECOVERY_TIMES and CLAMP_TARGET_RATE. SimAI.conf sets no RateOnFirstCnp, so it keeps the model's 1.0.
+dcqcn: &dcqcn
+  rate_ai: 50Mbps
+  rate_hai: 100Mbps
+  min_rate: 100Mbps
+  ewma_gain: 0.00390625
+  rp_timer: 900us
+  rate_decrease_interval: 4us
+  alpha_resume_interval: 1us
+  fast_recovery_times: 1
+  clamp_target_rate: false
+  rate_on_first_cnp: 1.0
+
+# Every incast scenario runs each fan-in with each profile and seed. A profile sets only pfc, ecn and cc.
+# The receiver is the last host. Every link is the same, so the receiver's link is the bottleneck.
+# The buffer is SimAI.conf's BUFFER_SIZE 32 divided by 8, so that the PFC threshold of the MMU,
+# (buffer - headroom - reserve - shared) >> 3, falls inside the queue range these workloads reach.
+incast:
+  fan_in: [2, 4, 8]
+  seeds: [1, 2, 3, 4, 5]
+  link: {rate: 100Gbps, delay: 1us}
+  profiles:
+    c-none: {pfc: false, ecn: false, cc: none}
+    c-pfc: {pfc: true, ecn: false, cc: none}
+    c-ecn: {pfc: false, ecn: true, cc: dcqcn}
+    c-both: {pfc: true, ecn: true, cc: dcqcn}
+  network:
+    stop_after: 20ms
+    sample_interval: 1us
+    mtu_bytes: 1000
+    pfc_pause_time: 5us
+    pfc_headroom_bdp_factor: 3
+    pfc_alpha_shift: 3
+    buffer_bytes: 4194304
+    ecn_kmin_bytes: 400000
+    ecn_kmax_bytes: 1600000
+    ecn_pmax: 0.2
+    l2_chunk_bytes: 4000
+    l2_ack_interval: 1
+    window_bytes: 0
+    dcqcn: *dcqcn
+
 scenarios:
   c-01-example:
     kind: simai-example
@@ -59,4 +104,39 @@ scenarios:
       l2_chunk_bytes: 4000
       l2_ack_interval: 1
       window_bytes: 0
+      dcqcn: *dcqcn
+      sample_interval: 0ns
     rerun_break: {flow_start_shift: 1us}
+
+  c-03-incast-simultaneous:
+    kind: incast
+    # Every sender starts one flow at the same time.
+    workload: {kind: simultaneous, payload_bytes: 1000000, priority: 3}
+    rerun_break: {flow_start_shift: 1us}
+
+  c-04-incast-staggered:
+    kind: incast
+    # Sender k, counted from 0, starts one flow at k x gap. One flow alone takes about 84 us.
+    workload: {kind: staggered, payload_bytes: 1000000, priority: 3, gap: 20us}
+    rerun_break: {flow_start_shift: 1us}
+    # Same kind and check code as c-03-incast-simultaneous, whose breaks cover every incast check.
+    run_breaks: false
+
+  c-05-incast-mixed:
+    kind: incast
+    # The first ceil(fan-in / 2) senders each start one large flow at 0. Every other sender starts one
+    # small flow at each of small_starts. All flows share priority 3 and the receiver.
+    workload: {kind: mixed, large_bytes: 1000000, small_bytes: 16000, small_starts: [10us, 30us, 50us, 70us], priority: 3}
+    rerun_break: {flow_start_shift: 1us}
+    run_breaks: false
+
+  c-06-sensitivity-kmin:
+    kind: incast
+    # Optional. c-03-incast-simultaneous at fan-in 8 with kmin lowered from 400000 to 100000 B and
+    # nothing else changed, to see how the ECN profiles move with the marking threshold alone.
+    workload: {kind: simultaneous, payload_bytes: 1000000, priority: 3}
+    overrides:
+      fan_in: [8]
+      network: {ecn_kmin_bytes: 100000}
+    rerun_break: {flow_start_shift: 1us}
+    run_breaks: false
