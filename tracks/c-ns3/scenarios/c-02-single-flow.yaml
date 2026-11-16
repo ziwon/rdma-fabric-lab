@@ -11,7 +11,7 @@ security:
     read-only root. Its only writable mount is the run's output directory.
 checks:
   - id: image-pinned
-    description: rfl-ns3:m5 in the Track C guest is the image the lock pins as ns3.image, and every container of the run starts that digest.
+    description: rfl-ns3:m6 in the Track C guest is the image the lock pins as ns3.image, and every container of the run starts that digest.
   - id: container-locked-down
     description: The guest is a VM with the Track C marker on the locked kernel. The container runs as 10001:10001, not privileged, with
       no network, no device, every capability dropped, no-new-privileges, a read-only root, AppArmor docker-default and one writable

@@ -1,0 +1,7 @@
+key	value
+simulated_ns	2408593
+flows	8
+flows_completed	8
+stopped_by	last-flow-completed
+simulator_wall_ns	307742712
+simulator_max_rss_kib	64768

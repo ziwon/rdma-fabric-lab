@@ -55,7 +55,7 @@ def test_rendering_is_deterministic_and_states_every_setting_once():
     assert text == network.render(network.star(SINGLE), "header")
     keys = [line.split()[0] for line in text.splitlines() if line and not line.startswith("#")]
     settings = [k for k in keys if k not in ("host", "switch", "link", "flow")]
-    assert len(settings) == len(set(settings)) == 18
+    assert len(settings) == len(set(settings)) == 29
     assert "link 0 2 100000000000 1000" in text and "link 1 2 100000000000 1000" in text
     assert "flow 0 1 1000000 0 3" in text and "kmin_kb 400" in text and "error_rate 0.0" in text
 

@@ -3,5 +3,5 @@ simulated_ns	10000
 flows	1
 flows_completed	0
 stopped_by	stop_ns
-simulator_wall_ns	2638982
-simulator_max_rss_kib	62208
+simulator_wall_ns	3374993
+simulator_max_rss_kib	62464

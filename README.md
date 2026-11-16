@@ -33,7 +33,8 @@ The tracks share the repository, the result format and the version lock, not a d
 | cel1 region, simulated as 13 guests | done. `make fleet-k8s`, `fleet-addons` and `fleet-rsyslog` built the cluster on 13 guests from wiped disks. All 13 nodes Ready with their class labels, kube-proxy replacement with native routing, the nvidia runtime default on the DGX guests, and the API back on the VIP after its holder lost power | `docs/milestones/cel1-sim.md` |
 | M3 hostNetwork RDMA pods and Multus | done. Pods on the two workers repeat the M1 baseline over the node's RXE device, and Multus adds `net1` from Whereabouts beside Cilium through pod recreation and a worker reboot. The pods need `privileged` | `docs/milestones/M3.md` |
 | M5 ns-3 baseline | done. SimAI's ns-3 RDMA model builds in a pinned image inside the Track C guest, and a rebuild from clean gives the same digest. Its smoke test repeats byte for byte, and one flow through one switch completes 7.43% above the payload bound, with the gap accounted for to the nanosecond | `docs/milestones/M5.md` |
-| M6 congestion profiles, M7 wrap-up | not started | |
+| M6 congestion profiles | done. Incast of 2, 4 and 8 senders under four profiles (no control, PFC, ECN with DCQCN, both), three workloads and five seeds, with each feature's activation read from the model's own counters. A one-line patch fixes a model crash on PFC RESUME. In this model PFC off means hosts ignore PAUSE while the switch still sends it | `docs/milestones/M6.md` |
+| M7 wrap-up | not started | |
 
 Nothing in this repository has run against GPU hardware.
 
@@ -94,7 +95,7 @@ make lab-down LAB_PROFILE=ibsim
 Track C builds and runs the ns-3 model in its own guest, never on the host:
 
 ```bash
-make track-c                         # c-01-example and c-02-single-flow in the Track C guest
+make track-c                         # c-01 and c-02, the incast scenarios c-03 to c-05, and the optional c-06
 make track-c-breaks                  # every scenario must fail on its deliberate breaks
 make lab-down LAB_PROFILE=ns3
 ```

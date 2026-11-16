@@ -24,13 +24,13 @@ def test_each_spec_declares_exactly_the_checks_the_runner_records(scenario):
 def test_every_break_targets_checks_of_the_kinds_it_applies_to():
     for name, entry in run.BREAKS.items():
         assert entry.kinds, name
-        for kind in entry.kinds:
-            assert set(entry.must_fail) <= set(run.check_ids(kind)), name
+        for kind, checks in entry.fails.items():
+            assert checks and set(checks) <= set(run.check_ids(kind)), name
 
 
 @pytest.mark.parametrize("kind", sorted(run.SCENARIO_CHECKS))
 def test_every_check_of_every_kind_has_a_break_that_must_fail_it(kind):
-    broken = {c for entry in run.BREAKS.values() if kind in entry.kinds for c in entry.must_fail}
+    broken = {c for entry in run.BREAKS.values() for c in entry.fails.get(kind, ())}
     assert broken == set(run.check_ids(kind))
 
 
@@ -94,6 +94,6 @@ def test_star_breaks_change_only_the_simulated_network():
     assert [link.bps for link in ecn.links] == [100 * 10**9, 25 * 10**9] and ecn.ecn
     pfc = run.simulated_star(declared, "pfc-bottleneck", "run1", rerun)
     assert (pfc.buffer_bytes, pfc.ecn, pfc.links[1].bps) == (1_000_000, False, 25 * 10**9)
-    assert [(f.payload_bytes, f.priority) for f in pfc.flows] == [(250_000, 3)] * 4
+    assert [(f.payload_bytes, f.priority) for f in pfc.flows] == [(1_000_000, 3)]
     assert run.simulated_star(declared, "rerun-input-differs", "run1", rerun) == declared
     assert run.simulated_star(declared, "rerun-input-differs", "run2", rerun).flows[0].start_ns == 1000

@@ -1,0 +1,3 @@
+flow	src	dst	sport	dport	pg	bytes	start_ns	completed	finish_ns	cnp_acks	rx_in_order_bytes
+0	0	2	10000	100	3	1000000	0	1	184608	0	1000000
+1	1	2	10001	100	3	1000000	0	1	184692	0	1000000

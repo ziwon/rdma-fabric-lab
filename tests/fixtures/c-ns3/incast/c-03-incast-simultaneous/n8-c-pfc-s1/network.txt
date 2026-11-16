@@ -1,0 +1,57 @@
+# Rendered by python -m ns3 from tracks/c-ns3/config/scenarios.yaml scenario c-03-incast-simultaneous case n8-c-pfc-s1, run1.
+seed 1
+run 1
+stop_ns 20000000
+mtu_bytes 1000
+cc_mode 0
+pfc 1
+ecn 0
+pause_time_us 5
+buffer_bytes 4194304
+kmin_kb 400
+kmax_kb 1600
+pmax 0.2
+headroom_factor 3
+pfc_alpha_shift 3
+l2_chunk_bytes 4000
+l2_ack_interval 1
+window_bytes 0
+error_rate 0.0
+rate_ai_bps 50000000
+rate_hai_bps 100000000
+min_rate_bps 100000000
+ewma_gain 0.00390625
+rp_timer_us 900
+rate_decrease_interval_us 4
+alpha_resume_interval_us 1
+fast_recovery_times 1
+clamp_target_rate 0
+rate_on_first_cnp 1.0
+sample_ns 1000
+host 0  # s1
+host 1  # s2
+host 2  # s3
+host 3  # s4
+host 4  # s5
+host 5  # s6
+host 6  # s7
+host 7  # s8
+host 8  # r
+switch 9
+link 0 9 100000000000 1000
+link 1 9 100000000000 1000
+link 2 9 100000000000 1000
+link 3 9 100000000000 1000
+link 4 9 100000000000 1000
+link 5 9 100000000000 1000
+link 6 9 100000000000 1000
+link 7 9 100000000000 1000
+link 8 9 100000000000 1000
+flow 0 8 1000000 0 3
+flow 1 8 1000000 0 3
+flow 2 8 1000000 0 3
+flow 3 8 1000000 0 3
+flow 4 8 1000000 0 3
+flow 5 8 1000000 0 3
+flow 6 8 1000000 0 3
+flow 7 8 1000000 0 3

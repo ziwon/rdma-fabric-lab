@@ -18,6 +18,17 @@ l2_chunk_bytes 4000
 l2_ack_interval 1
 window_bytes 0
 error_rate 0.0
+rate_ai_bps 50000000
+rate_hai_bps 100000000
+min_rate_bps 100000000
+ewma_gain 0.00390625
+rp_timer_us 900
+rate_decrease_interval_us 4
+alpha_resume_interval_us 1
+fast_recovery_times 1
+clamp_target_rate 0
+rate_on_first_cnp 1.0
+sample_ns 0
 host 0  # sender
 host 1  # receiver
 switch 2

@@ -1,0 +1,31 @@
+SPDX-License-Identifier: GPL-2.0-only
+
+Upstream file: simulation/src/point-to-point/model/qbb-net-device.cc of github.com/aliyun/ns-3-alibabacloud
+at commit 3e0c7c1bfbbe9f77890ddcf5e5b9c79fc6dd7437, the ns-3-alibabacloud gitlink of SimAI a57d765.
+
+Cause: QbbNetDevice::Resume(qIndex) reads m_rdmaEQ->GetQp(qIndex) on every PFC RESUME. GetQp returns
+RdmaQueuePairGroup::Get(qIndex), which is m_qps[qIndex], the QP at the position of the resumed priority
+in the device's QP list. A host with fewer than qIndex + 1 QPs reads past the end of that vector and
+dereferences an invalid pointer. rfl-star exits with SIGSEGV, 139, on the first RESUME to a host with
+one QP on priority 3.
+
+Reason: the lookup only serves the NVLS test, which can be true for node type 2 alone. Testing the node
+type first skips the lookup everywhere else. Every case that did not crash before takes the same branch:
+for node type 2 the same lookup and test run as before, and for every other node type the old condition
+was always false, so the device went on to DequeueAndTransmit, as it now does directly.
+
+images/ns3/Dockerfile applies this file with git apply right after fetch-sources and fails the build when
+it does not apply cleanly.
+
+--- a/simulation/src/point-to-point/model/qbb-net-device.cc
++++ b/simulation/src/point-to-point/model/qbb-net-device.cc
+@@ -460,8 +460,7 @@
+ 		m_paused[qIndex] = false;
+ 		NS_LOG_INFO("Node " << m_node->GetId() << " dev " << m_ifIndex << " queue " << qIndex <<
+ 			" resumed at " << Simulator::Now().GetSeconds());
+-		Ptr<RdmaQueuePair> lastQp = m_rdmaEQ->GetQp(qIndex);
+-		if(lastQp->nvls_enable == 1 && m_node->GetNodeType() == 2) SwitchAsHostSend(); 
++		if (m_node->GetNodeType() == 2 && m_rdmaEQ->GetQp(qIndex)->nvls_enable == 1) SwitchAsHostSend();
+ 		else DequeueAndTransmit();
+ 	}
+ 

@@ -1,7 +1,7 @@
 [
     {
-        "Id": "d2aa8a37afafa38abc44d677bb3c783e90f042ea07fc724bb6e95b08e57bfbc7",
-        "Created": "2026-11-16T13:54:14.439193119Z",
+        "Id": "2a1cdfbec360d114c5da2d04432b9384e752c0917df08982b1f767ceff8404a9",
+        "Created": "2026-11-16T15:12:29.330790615Z",
         "Path": "/usr/local/bin/rfl-ns3",
         "Args": [
             "steps"
@@ -16,15 +16,15 @@
             "Pid": 0,
             "ExitCode": 0,
             "Error": "",
-            "StartedAt": "2026-11-16T13:54:16.126243464Z",
-            "FinishedAt": "2026-11-16T13:54:16.284195692Z"
+            "StartedAt": "2026-11-16T15:12:29.465665181Z",
+            "FinishedAt": "2026-11-16T15:12:29.647050667Z"
         },
-        "Image": "sha256:81d839a74436b429f9439bc9039072818cb12a32cc4f23dbe001102695470713",
-        "ResolvConfPath": "/var/lib/docker/containers/d2aa8a37afafa38abc44d677bb3c783e90f042ea07fc724bb6e95b08e57bfbc7/resolv.conf",
-        "HostnamePath": "/var/lib/docker/containers/d2aa8a37afafa38abc44d677bb3c783e90f042ea07fc724bb6e95b08e57bfbc7/hostname",
-        "HostsPath": "/var/lib/docker/containers/d2aa8a37afafa38abc44d677bb3c783e90f042ea07fc724bb6e95b08e57bfbc7/hosts",
-        "LogPath": "/var/lib/docker/containers/d2aa8a37afafa38abc44d677bb3c783e90f042ea07fc724bb6e95b08e57bfbc7/d2aa8a37afafa38abc44d677bb3c783e90f042ea07fc724bb6e95b08e57bfbc7-json.log",
-        "Name": "/rfl-ns3-20261116T135412Z-c-02-single-flow-run1",
+        "Image": "sha256:da7a3245b1b91dd472d1ddb9497b3bd1abb3efdbaee38c45fe790dff565a61c6",
+        "ResolvConfPath": "/var/lib/docker/containers/2a1cdfbec360d114c5da2d04432b9384e752c0917df08982b1f767ceff8404a9/resolv.conf",
+        "HostnamePath": "/var/lib/docker/containers/2a1cdfbec360d114c5da2d04432b9384e752c0917df08982b1f767ceff8404a9/hostname",
+        "HostsPath": "/var/lib/docker/containers/2a1cdfbec360d114c5da2d04432b9384e752c0917df08982b1f767ceff8404a9/hosts",
+        "LogPath": "/var/lib/docker/containers/2a1cdfbec360d114c5da2d04432b9384e752c0917df08982b1f767ceff8404a9/2a1cdfbec360d114c5da2d04432b9384e752c0917df08982b1f767ceff8404a9-json.log",
+        "Name": "/rfl-ns3-20261116T151213Z-c-02-single-flow-run1",
         "RestartCount": 0,
         "Driver": "overlayfs",
         "Platform": "linux",
@@ -34,8 +34,8 @@
         "ExecIDs": null,
         "HostConfig": {
             "Binds": [
-                "/var/tmp/rfl-track-c/runs/20261116T135412Z-c-02-single-flow/run1/in:/run/rfl/in:ro",
-                "/var/tmp/rfl-track-c/runs/20261116T135412Z-c-02-single-flow/run1/out:/run/rfl/out:rw",
+                "/var/tmp/rfl-track-c/runs/20261116T151213Z-c-02-single-flow/run1/in:/run/rfl/in:ro",
+                "/var/tmp/rfl-track-c/runs/20261116T151213Z-c-02-single-flow/run1/out:/run/rfl/out:rw",
                 "/etc/rfl/track-c-guest:/run/rfl-guest/track-c-guest:ro"
             ],
             "ContainerIDFile": "",
@@ -146,7 +146,15 @@
         "Mounts": [
             {
                 "Type": "bind",
-                "Source": "/var/tmp/rfl-track-c/runs/20261116T135412Z-c-02-single-flow/run1/in",
+                "Source": "/etc/rfl/track-c-guest",
+                "Destination": "/run/rfl-guest/track-c-guest",
+                "Mode": "ro",
+                "RW": false,
+                "Propagation": "rprivate"
+            },
+            {
+                "Type": "bind",
+                "Source": "/var/tmp/rfl-track-c/runs/20261116T151213Z-c-02-single-flow/run1/in",
                 "Destination": "/run/rfl/in",
                 "Mode": "ro",
                 "RW": false,
@@ -154,23 +162,15 @@
             },
             {
                 "Type": "bind",
-                "Source": "/var/tmp/rfl-track-c/runs/20261116T135412Z-c-02-single-flow/run1/out",
+                "Source": "/var/tmp/rfl-track-c/runs/20261116T151213Z-c-02-single-flow/run1/out",
                 "Destination": "/run/rfl/out",
                 "Mode": "rw",
                 "RW": true,
                 "Propagation": "rprivate"
-            },
-            {
-                "Type": "bind",
-                "Source": "/etc/rfl/track-c-guest",
-                "Destination": "/run/rfl-guest/track-c-guest",
-                "Mode": "ro",
-                "RW": false,
-                "Propagation": "rprivate"
             }
         ],
         "Config": {
-            "Hostname": "d2aa8a37afaf",
+            "Hostname": "2a1cdfbec360",
             "Domainname": "",
             "User": "10001:10001",
             "AttachStdin": false,
@@ -187,7 +187,7 @@
             "Cmd": [
                 "steps"
             ],
-            "Image": "sha256:81d839a74436b429f9439bc9039072818cb12a32cc4f23dbe001102695470713",
+            "Image": "sha256:da7a3245b1b91dd472d1ddb9497b3bd1abb3efdbaee38c45fe790dff565a61c6",
             "Volumes": null,
             "WorkingDir": "/run/rfl/out",
             "Entrypoint": [
@@ -195,7 +195,7 @@
             ],
             "Labels": {
                 "org.opencontainers.image.version": "24.04",
-                "rfl.run": "20261116T135412Z-c-02-single-flow",
+                "rfl.run": "20261116T151213Z-c-02-single-flow",
                 "rfl.track": "c-ns3"
             }
         },
@@ -210,7 +210,7 @@
                     "Aliases": null,
                     "DriverOpts": null,
                     "GwPriority": 0,
-                    "NetworkID": "af4d7118d5f4910f182257aca66b9dd04f709058745351f08dd580001095e7fd",
+                    "NetworkID": "42f0e1731d34c94a18b5c483661bd004e7d278d5afa926a6d269b61b3a90c6b2",
                     "EndpointID": "",
                     "Gateway": "",
                     "IPAddress": "",
@@ -225,10 +225,10 @@
         },
         "ImageManifestDescriptor": {
             "mediaType": "application/vnd.docker.distribution.manifest.v2+json",
-            "digest": "sha256:81d839a74436b429f9439bc9039072818cb12a32cc4f23dbe001102695470713",
+            "digest": "sha256:da7a3245b1b91dd472d1ddb9497b3bd1abb3efdbaee38c45fe790dff565a61c6",
             "size": 2069,
             "annotations": {
-                "config.digest": "sha256:deba0e45e11bd2b43872c3df535fb6701c8334e094b4c51a6e56dc6367f80b19"
+                "config.digest": "sha256:bb71ec59edcfecac0ffaa74b01e14228ff0f27d1eb805a29bcdacefe16964055"
             },
             "platform": {
                 "architecture": "amd64",

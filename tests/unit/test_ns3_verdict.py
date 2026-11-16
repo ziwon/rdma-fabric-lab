@@ -71,8 +71,8 @@ def test_mmu_drops_are_counted_from_the_simulator_stdout():
 def test_a_bottleneck_shows_ecn_marks_and_cnp_feedback():
     result = verdict.no_ecn_mark(DECLARED, out("ecn-bottleneck"))
     assert not result.ok
-    for part in ("CE-marked data packets the switch sent: 13", "CE-marked data packets hosts received: 13",
-                 "ACKs with the CNP flag hosts received: 13", "CNPs RdmaHw counted per QP: 13"):
+    for part in ("CE-marked data packets the switch sent: 16", "CE-marked data packets hosts received: 16",
+                 "ACKs with the CNP flag hosts received: 16", "CNPs RdmaHw counted per QP: 16"):
         assert part in result.detail
     assert verdict.no_pfc_pause(DECLARED, out("ecn-bottleneck")).ok
 

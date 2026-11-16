@@ -27,12 +27,12 @@ import yaml
 from run import rfl
 from run.base import Outcome, RunBase, failed, passed, write_summary
 
-from . import guest, network, results, verdict
+from . import compare, guest, incast, network, results, verdict
 
 TRACK = guest.REPO_ROOT / "tracks" / "c-ns3"
 CONFIG = TRACK / "config" / "scenarios.yaml"
 LOCK = guest.REPO_ROOT / "versions.lock.yaml"
-IMAGE_TAG = "rfl-ns3:m5"
+IMAGE_TAG = "rfl-ns3:m6"
 IMAGE_INPUTS = [guest.REPO_ROOT / "images" / "ns3" / f for f in ("Dockerfile", "rfl-ns3", "apt-snapshot-install", "fetch-sources")]
 DRIVER = TRACK / "driver" / "rfl-star.cc"
 SLOTS = ("run1", "run2")
@@ -43,6 +43,8 @@ SCENARIO_CHECKS = {
     "simai-example": ("example-completes", "result-files-written", "rerun-identical"),
     "star": ("config-applied", "flow-completes", "fct-lower-bound", "zero-drops", "no-pfc-pause", "no-ecn-mark",
              "rerun-identical"),
+    "incast": ("config-applied", "same-traffic", "flows-accounted", "fct-bounds", "pfc-as-configured", "ecn-as-configured",
+               "profiles-differ", "rerun-identical"),
 }
 CLOSING_CHECKS = ("no-container-left", "host-untouched")
 
@@ -54,28 +56,38 @@ def check_ids(kind: str) -> tuple[str, ...]:
 
 @dataclass(frozen=True)
 class Break:
-    kinds: tuple[str, ...]
-    must_fail: tuple[str, ...]
+    fails: dict[str, tuple[str, ...]]
     what: str
 
+    @property
+    def kinds(self) -> tuple[str, ...]:
+        return tuple(self.fails)
 
-BOTH = tuple(SCENARIO_CHECKS)
+
+def every_kind(*checks: str) -> dict[str, tuple[str, ...]]:
+    return {kind: checks for kind in SCENARIO_CHECKS}
+
+
 BREAKS = {
-    "image-unpinned": Break(BOTH, ("image-pinned",), "the runner expects ns3.base_image instead of ns3.image"),
-    "container-unlocked": Break(BOTH, ("container-locked-down",), "guest.sh run leaves out --read-only"),
-    "container-left": Break(BOTH, ("no-container-left",), "the runner checks for containers without calling guest.sh stop first"),
-    "host-process": Break(BOTH, ("host-untouched",), "a copy of sleep named SimAI_simulator runs on the host during the run"),
-    "rerun-input-differs": Break(BOTH, ("rerun-identical",), "run2 gets other inputs than run1, given per scenario as rerun_break"),
-    "workload-missing": Break(("simai-example",), ("example-completes", "result-files-written"),
+    "image-unpinned": Break(every_kind("image-pinned"), "the runner expects ns3.base_image instead of ns3.image"),
+    "container-unlocked": Break(every_kind("container-locked-down"), "guest.sh run leaves out --read-only"),
+    "container-left": Break(every_kind("no-container-left"), "the runner checks for containers without calling guest.sh stop first"),
+    "host-process": Break(every_kind("host-untouched"), "a copy of sleep named SimAI_simulator runs on the host during the run"),
+    "rerun-input-differs": Break(every_kind("rerun-identical"), "run2 gets other inputs than run1, given per scenario as rerun_break"),
+    "workload-missing": Break({"simai-example": ("example-completes", "result-files-written")},
                               "the simulate step names a workload file that does not exist"),
-    "rate-not-applied": Break(("star",), ("config-applied", "fct-lower-bound"),
+    "rate-not-applied": Break({"star": ("config-applied", "fct-lower-bound"), "incast": ("config-applied", "fct-bounds")},
                               "the simulator gets twice the declared rate on every link"),
-    "flow-cut-short": Break(("star",), ("flow-completes",), "the simulator stops at 10 us, before the flow can finish"),
-    "lossy-links": Break(("star",), ("zero-drops",), "every link device drops 1% of the packets it receives (RateErrorModel)"),
-    "ecn-bottleneck": Break(("star",), ("no-ecn-mark",), "the receiver link runs at a quarter of the declared rate"),
-    "pfc-bottleneck": Break(("star",), ("no-pfc-pause",),
-                            "the receiver link runs at a quarter of the declared rate, the switch buffer is 1 MB with ECN off, and "
-                            "each flow is split over priority + 1 QPs"),
+    "flow-cut-short": Break({"star": ("flow-completes",)}, "the simulator stops at 10 us, before the flow can finish"),
+    "lossy-links": Break({"star": ("zero-drops",)}, "every link device drops 1% of the packets it receives (RateErrorModel)"),
+    "ecn-bottleneck": Break({"star": ("no-ecn-mark",)}, "the receiver link runs at a quarter of the declared rate"),
+    "pfc-bottleneck": Break({"star": ("no-pfc-pause",)},
+                            "the receiver link runs at a quarter of the declared rate and the switch buffer is 1 MB with ECN off"),
+    "profile-changes-traffic": Break({"incast": ("same-traffic",)}, "every c-ecn case sends 1000 B more per flow"),
+    "flow-dropped": Break({"incast": ("flows-accounted",)}, "every case gets its last flow left out"),
+    "pfc-not-honored": Break({"incast": ("pfc-as-configured",)}, "the PFC-on profiles run with PFC off"),
+    "ecn-left-on": Break({"incast": ("ecn-as-configured",)}, "the ECN-off profiles run with ECN on"),
+    "profiles-identical": Break({"incast": ("profiles-differ",)}, "every profile runs with the settings of c-none"),
 }
 
 
@@ -92,14 +104,29 @@ def simulated_star(net: network.Star, name: str | None, slot: str, rerun_break: 
         receiver = net.flows[0].dst
         net = network.with_link_rate(net, receiver, 0.25)
         if name == "pfc-bottleneck":
-            # QbbNetDevice::Resume reads the QP at the index of the resumed priority, so a host with fewer
-            # QPs than that crashes on the first RESUME. Priority + 1 QPs per flow keep the index valid.
-            split = tuple(replace(f, payload_bytes=f.payload_bytes // (f.priority + 1)) for f in net.flows
-                          for _ in range(f.priority + 1))
-            net = replace(net, buffer_bytes=1_000_000, ecn=False, flows=split)
+            net = replace(net, buffer_bytes=1_000_000, ecn=False)
     elif name == "rerun-input-differs" and slot == "run2":
         shift = network.time_ns(rerun_break["flow_start_shift"])
         net = replace(net, flows=tuple(replace(f, start_ns=f.start_ns + shift) for f in net.flows))
+    return net
+
+
+def simulated_case(case: incast.Case, name: str | None, slot: str, rerun_break: dict, profiles: dict) -> network.Star:
+    """The network one incast case's simulator gets. Only a deliberate break makes it differ."""
+    net = case.net
+    if name in ("rate-not-applied", "rerun-input-differs"):
+        return simulated_star(net, name, slot, rerun_break)
+    if name == "profile-changes-traffic" and case.profile == "c-ecn":
+        return replace(net, flows=tuple(replace(f, payload_bytes=f.payload_bytes + 1000) for f in net.flows))
+    if name == "flow-dropped":
+        return replace(net, flows=net.flows[:-1])
+    if name == "pfc-not-honored" and net.pfc:
+        return replace(net, pfc=False)
+    if name == "ecn-left-on" and not net.ecn:
+        return replace(net, ecn=True)
+    if name == "profiles-identical":
+        none = profiles["c-none"]
+        return replace(net, pfc=none["pfc"], ecn=none["ecn"], cc_mode=network.CC_MODES[none["cc"]])
     return net
 
 
@@ -128,11 +155,15 @@ class Run(RunBase):
     def __init__(self, scenario: str, inventories: list[Path], run_id: str | None, broken: str | None):
         super().__init__(TRACK / "scenarios" / f"{scenario}.yaml", run_id)
         self.scenario = scenario
-        self.params = yaml.safe_load(CONFIG.read_text())["scenarios"][scenario]
+        config = yaml.safe_load(CONFIG.read_text())
+        self.params = config["scenarios"][scenario]
         self.kind = self.params["kind"]
         if broken is not None and self.kind not in BREAKS[broken].kinds:
             raise ValueError(f"break {broken} does not apply to {scenario}")
         self.broken = broken
+        self.must_fail = BREAKS[broken].fails[self.kind] if broken else ()
+        self.shared = incast.merged(config["incast"], self.params.get("overrides", {})) if self.kind == "incast" else {}
+        self.cases = incast.cases(self.shared, self.params["workload"]) if self.kind == "incast" else []
         self.key = f"{self.run_id}-{scenario}"
         self.lock = yaml.safe_load(LOCK.read_text())
         components = self.lock["components"]
@@ -238,7 +269,17 @@ class SlotRun:
     files: dict[str, bytes]
 
 
+def header(run: Run, slot: str, case: str = "") -> str:
+    return (f"Rendered by python -m ns3 from {CONFIG.relative_to(guest.REPO_ROOT)} scenario {run.scenario}{case}, {slot}."
+            + (f"\nDeliberate break {run.broken}: {BREAKS[run.broken].what}." if run.broken else ""))
+
+
 def slot_inputs(run: Run, slot: str) -> dict[str, bytes]:
+    if run.kind == "incast":
+        files = {f"{c.step}.txt": network.render(simulated_case(c, run.broken, slot, run.rerun_break, run.shared["profiles"]),
+                                                 header(run, slot, f" case {c.step}")).encode() for c in run.cases}
+        steps = [[c.step, "rfl-star", f"/run/rfl/in/{c.step}.txt", f"/run/rfl/out/work/{c.step}"] for c in run.cases]
+        return {"steps.tsv": steps_tsv(steps), **files}
     steps = run.params["steps"]
     if run.kind == "simai-example":
         steps = simulated_steps(steps, run.broken, slot, run.rerun_break)
@@ -246,9 +287,7 @@ def slot_inputs(run: Run, slot: str) -> dict[str, bytes]:
     if run.kind == "star":
         declared = network.star(run.params["network"])
         simulated = simulated_star(declared, run.broken, slot, run.rerun_break)
-        header = (f"Rendered by python -m ns3 from {CONFIG.relative_to(guest.REPO_ROOT)} scenario {run.scenario}, {slot}."
-                  + (f"\nDeliberate break {run.broken}: {BREAKS[run.broken].what}." if run.broken else ""))
-        files["network.txt"] = network.render(simulated, header).encode()
+        files["network.txt"] = network.render(simulated, header(run, slot)).encode()
     return files
 
 
@@ -423,13 +462,111 @@ def star_scenario(run: Run, slots: list[SlotRun]) -> float | None:
     return first.simulated_ns / 1e9
 
 
-KINDS = {"simai-example": simai_example, "star": star_scenario}
+def parse_cases(run: Run, slot: SlotRun) -> tuple[dict[str, compare.CaseOut], list[str]]:
+    parsed, errors = {}, []
+    for case in run.cases:
+        work = slot.out / "work" / case.step
+        try:
+            parsed[case.step] = compare.CaseOut(case, results.parse_star(work),
+                                                results.parse_series(work, slot.out / f"{case.step}.stdout-summary"))
+        except (OSError, results.ResultError) as exc:
+            errors.append(f"{case.step}: {exc}")
+    return parsed, errors
+
+
+FIGURE_COLUMNS = ("completed", "flows", "completion_ratio", "goodput_bps", "makespan_ns", "peak_queue_bytes", "pause_frames_sent",
+                  "pauses_received", "pauses_handled", "resumes_handled", "pause_ns", "marks", "mid_band_mark_fraction", "cnps",
+                  "rate_reductions",
+                  "min_rate_bps", "mmu_drops_trace", "mmu_drops_stdout", "retransmitted_packets", "nacks", "simulated_ns")
+
+
+def figures_tsv(cases: list[compare.CaseOut]) -> str:
+    rows = ["step\t" + "\t".join(FIGURE_COLUMNS)]
+    for c in cases:
+        f = compare.figures(c)
+        rows.append(c.case.step + "\t" + "\t".join("" if f[k] is None else f"{f[k]:g}" if isinstance(f[k], float) else str(f[k])
+                                                   for k in FIGURE_COLUMNS))
+    return "\n".join(rows) + "\n"
+
+
+def incast_metrics(run: Run, cases: list[compare.CaseOut], source: str) -> None:
+    groups: dict[tuple[str, str], list[compare.CaseOut]] = {}
+    for c in cases:
+        groups.setdefault((c.case.group, c.case.profile), []).append(c)
+    for (group, profile), members in groups.items():
+        f = [compare.figures(c) for c in members]
+        labels = {"group": group, "profile": profile, "slot": "run1"}
+        series = {
+            "large_fct_ns": [v for x in f for v in x["large_fct"]], "small_fct_ns": [v for x in f for v in x["small_fct"]],
+            "goodput_bps": [x["goodput_bps"] for x in f if x["goodput_bps"] is not None],
+            "completion_ratio": [x["completion_ratio"] for x in f], "peak_queue_bytes": [x["peak_queue_bytes"] for x in f],
+            "pauses_received": [x["pauses_received"] for x in f], "pauses_handled": [x["pauses_handled"] for x in f],
+            "pause_ns": [x["pause_ns"] for x in f],
+            "marks": [x["marks"] for x in f], "cnps": [x["cnps"] for x in f], "rate_reductions": [x["rate_reductions"] for x in f],
+            "mmu_drops": [x["mmu_drops_trace"] for x in f], "retransmitted_packets": [x["retransmitted_packets"] for x in f],
+        }
+        units = {"large_fct_ns": "ns", "small_fct_ns": "ns", "goodput_bps": "bit/s", "completion_ratio": "ratio",
+                 "peak_queue_bytes": "bytes", "pause_ns": "ns"}
+        for name, values in series.items():
+            for stat, pick in (("min", min), ("median", compare.statistics.median), ("max", max)):
+                value = float(pick(values)) if values else None
+                entry = {"name": f"model.{name}.{stat}", "value": value, "unit": units.get(name, "count"),
+                         "absent_reason": None if values else "no sample: no flow of this class completed",
+                         "source": source, "labels": {"domain": "modeled-network", **labels}}
+                if values:
+                    entry["sample_count"] = len(values)
+                run.metrics.append(entry)
+
+
+def incast_scenario(run: Run, slots: list[SlotRun]) -> float | None:
+    parsed = {}
+    for slot in slots:
+        parsed[slot.slot], errors = parse_cases(run, slot)
+        if errors:
+            run.raw(f"{slot.slot}/parse-errors.txt", "\n".join(errors) + "\n")
+    first = parsed["run1"]
+    if len(first) != len(run.cases):
+        for check_id in SCENARIO_CHECKS["incast"]:
+            run.record(check_id, failed("command-failed", ["raw/run1/parse-errors.txt", slots[0].evidence],
+                                        f"{len(run.cases) - len(first)} of {len(run.cases)} cases wrote no readable output in run1"))
+        return None
+    cases = [first[c.step] for c in run.cases]
+    table = run.raw("incast/figures.tsv", figures_tsv(cases))
+    summary = run.raw("comparison.tsv", compare.summary_tsv(compare.summary(cases)))
+    run.raw("incast/pause-intervals.tsv", compare.pause_intervals_tsv(cases))
+    steps = "raw/run1/in/steps.tsv"
+    run.record("config-applied", outcome(verdict.incast_config_applied(cases), [steps, f"raw/run1/out/work/{run.cases[0].step}/resolved.tsv"]))
+    files = {c.step: (slots[0].out.parent / "in" / f"{c.step}.txt").read_text() for c in run.cases}
+    run.record("same-traffic", outcome(verdict.same_traffic(run.cases, files), [f"raw/run1/in/{run.cases[0].step}.txt", steps]))
+    run.record("flows-accounted", outcome(verdict.flows_accounted(cases), [table]))
+    run.record("fct-bounds", outcome(verdict.fct_bounds(cases), [table]))
+    run.record("pfc-as-configured", outcome(verdict.pfc_as_configured(cases), [table]))
+    run.record("ecn-as-configured", outcome(verdict.ecn_as_configured(cases), [table]))
+    run.record("profiles-differ", outcome(verdict.profiles_differ(cases), [table, summary]))
+    second = parsed.get("run2", {})
+    modeled = {s.slot: {step: results.modeled_figures(s.out / "work" / step) for step in parsed[s.slot]} for s in slots}
+    run.record("rerun-identical", outcome(verdict.incast_rerun_identical(modeled["run1"], modeled.get("run2", {}))
+                                          if second else verdict.Verdict(False, "run2 wrote no readable output"), [summary]))
+    incast_metrics(run, cases, summary)
+    for slot in slots:
+        outs = parsed[slot.slot].values()
+        source = f"raw/{slot.slot}/out/work/{run.cases[0].step}/run.tsv"
+        run.metric("simulator.run_wall_s.total", sum(int(c.out.run["simulator_wall_ns"]) for c in outs) / 1e9, "s", source,
+                   "simulator-cost", slot=slot.slot)
+        run.metric("simulator.max_rss_kib.max", max(float(c.out.run["simulator_max_rss_kib"]) for c in outs), "KiB", source,
+                   "simulator-cost", slot=slot.slot)
+    return sum(c.out.simulated_ns for c in cases) / 1e9
+
+
+KINDS = {"simai-example": simai_example, "star": star_scenario, "incast": incast_scenario}
 
 
 def record_inputs(run: Run) -> None:
     rfl.add_inputs(run.dir, [CONFIG, *IMAGE_INPUTS, DRIVER, TRACK / "scripts" / "guest.sh"])
-    parameters = {"kind": run.kind, "deliberate_break": run.broken, "steps": run.params["steps"]}
+    parameters = {"kind": run.kind, "deliberate_break": run.broken, "steps": run.params.get("steps")}
     seed = None
+    if run.kind == "incast":
+        parameters.update(workload=run.params["workload"], incast=run.shared, cases=[c.step for c in run.cases])
     if run.kind == "star":
         declared = network.star(run.params["network"])
         seed = declared.seed
@@ -437,7 +574,7 @@ def record_inputs(run: Run) -> None:
     rfl.set_section(run.dir, "inputs", {"seed": seed, "parameters": parameters})
     resolved = {"scenario": run.scenario, "parameters": run.params,
                 "deliberate_break": {"name": run.broken, "what": BREAKS[run.broken].what,
-                                     "must_fail": list(BREAKS[run.broken].must_fail)} if run.broken else None,
+                                     "must_fail": list(run.must_fail)} if run.broken else None,
                 "image": {"tag": IMAGE_TAG, "digest": run.image, "expected": run.expected_image},
                 "lock": {k: v["value"] for k, v in run.lock["components"].items() if k.startswith("ns3.")},
                 "slots": list(SLOTS)}
@@ -456,8 +593,7 @@ def scenario(run: Run) -> float | None:
     slots = []
     for slot in SLOTS:
         slots.append(run_slot(run, slot))
-        for name, data in slots[-1].files.items():
-            rfl.add_inputs(run.dir, [run.dir / "raw" / slot / "in" / name])
+        rfl.add_inputs(run.dir, [run.dir / "raw" / slot / "in" / name for name in slots[-1].files])
     run.record("container-locked-down", locked_down(run, env, slots))
     for slot in slots:
         if slot.rc != 0:
@@ -517,8 +653,11 @@ def run_breaks(inventories: list[Path], scenarios: list[str]) -> int:
     config = yaml.safe_load(CONFIG.read_text())["scenarios"]
     rows, bad, last = [], [], ""
     for scenario_name in scenarios:
+        kind = config[scenario_name]["kind"]
+        if not config[scenario_name].get("run_breaks", True):
+            continue
         for name, entry in BREAKS.items():
-            if config[scenario_name]["kind"] not in entry.kinds:
+            if kind not in entry.kinds:
                 continue
             while (run_id := time.strftime("%Y%m%dT%H%M%SZ", time.gmtime())) == last:
                 time.sleep(0.2)
@@ -526,9 +665,10 @@ def run_breaks(inventories: list[Path], scenarios: list[str]) -> int:
             code = main(scenario_name, inventories, run_id, name)
             manifest = json.loads((guest.REPO_ROOT / "results" / run_id / "c-ns3" / scenario_name / "manifest.json").read_text())
             status = {c["id"]: c["status"] for c in manifest["checks"]}
-            unbroken = [c for c in entry.must_fail if status.get(c) != "failed"]
-            also = sorted(c for c, s in status.items() if s == "failed" and c not in entry.must_fail)
-            rows.append(f"{run_id}\t{scenario_name}\t{name}\texit {code}\tmust fail: {','.join(entry.must_fail)}\t"
+            must = entry.fails[kind]
+            unbroken = [c for c in must if status.get(c) != "failed"]
+            also = sorted(c for c, s in status.items() if s == "failed" and c not in must)
+            rows.append(f"{run_id}\t{scenario_name}\t{name}\texit {code}\tmust fail: {','.join(must)}\t"
                         f"did not fail: {','.join(unbroken) or 'none'}\talso failed: {','.join(also) or 'none'}")
             if code != 1 or unbroken:
                 bad.append(f"{scenario_name}/{name}")

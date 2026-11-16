@@ -5,7 +5,9 @@
 #
 # <program> is a name from the table below, never a path. Every step runs in /run/rfl/out/work and
 # writes <name>.stdout, <name>.stderr, <name>.time and <name>.rc to /run/rfl/out. The first step that
-# exits non-zero ends the run with its exit code.
+# exits non-zero ends the run with its exit code. <name>.stdout keeps the first 1000 lines, because the
+# switch MMU of the model prints a line for every packet it drops. <name>.stdout-summary counts every
+# line and every MMU drop line.
 set -euo pipefail
 
 marker=/run/rfl-guest/track-c-guest
@@ -37,9 +39,14 @@ while IFS=$'\t' read -r -a fields; do
   [[ $name =~ ^[a-z0-9][a-z0-9-]*$ ]] || die "step name $name is not a slug"
   mapfile -t command < <(program "${fields[1]}")
   [[ ${#command[@]} -gt 0 ]] || die "unknown program ${fields[1]}"
-  rc=0
-  (cd "$out/work" && /usr/bin/time -v -o "$out/$name.time" "${command[@]}" "${fields[@]:2}") \
-    > "$out/$name.stdout" 2> "$out/$name.stderr" || rc=$?
-  printf '%s\n' "$rc" > "$out/$name.rc"
+  (
+    cd "$out/work"
+    rc=0
+    /usr/bin/time -v -o "$out/$name.time" "${command[@]}" "${fields[@]:2}" 2> "$out/$name.stderr" || rc=$?
+    printf '%s\n' "$rc" > "$out/$name.rc"
+  ) | awk -v head="$out/$name.stdout" -v summary="$out/$name.stdout-summary" \
+    'NR <= 1000 { print > head } / Drop: queue:/ { drops++ } END { printf "lines\t%d\nmmu_drop_lines\t%d\n", NR, drops > summary }'
+  [[ -e $out/$name.stdout ]] || : > "$out/$name.stdout"
+  rc=$(cat "$out/$name.rc")
   [[ $rc -eq 0 ]] || exit "$rc"
 done < "$in/steps.tsv"

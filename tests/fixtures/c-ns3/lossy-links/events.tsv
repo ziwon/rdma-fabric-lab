@@ -2,4 +2,5 @@ node	if	event	count
 0	1	phy_rx_drop	6
 1	1	phy_rx_drop	19
 2	1	phy_rx_drop	17
+2	2	data_enqueued	1960
 2	2	phy_rx_drop	8

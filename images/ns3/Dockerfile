@@ -1,8 +1,9 @@
 # Track C image: the SimAI ns-3 network backend and the repository's rfl-star driver, built from pinned
 # commits and one Ubuntu archive snapshot. tracks/c-ns3/scripts/guest.sh build runs it inside the Track C
 # guest with every argument from versions.lock.yaml and the named context "driver" (tracks/c-ns3/driver).
-# The build stage runs SimAI's own ./scripts/build.sh -c ns3 unchanged, then builds rfl-star in the same
-# ns-3 tree. Only the build outputs reach the final stage, so compiler scratch files never do.
+# The build stage applies the one ns-3 patch of this directory, runs SimAI's own ./scripts/build.sh -c ns3
+# unchanged, then builds rfl-star in the same ns-3 tree. Only the build outputs reach the final stage, so
+# compiler scratch files never do.
 ARG BASE_IMAGE
 FROM ${BASE_IMAGE} AS build
 
@@ -18,6 +19,11 @@ RUN --mount=type=bind,from=guest-ca,source=ca-certificates.crt,target=/run/guest
  && apt-snapshot-install "$APT_SNAPSHOT" build-essential cmake python3 git ca-certificates \
  && ! command -v ninja
 RUN fetch-sources /opt/simai "$SIMAI_COMMIT" "$NS3_COMMIT" "$SIMCCL_COMMIT" > /opt/simai-sources.tsv
+COPY qbb-resume-qp-lookup.patch /opt/rfl-patches/
+RUN git -C /opt/simai/ns-3-alibabacloud apply --check /opt/rfl-patches/qbb-resume-qp-lookup.patch \
+ && git -C /opt/simai/ns-3-alibabacloud apply /opt/rfl-patches/qbb-resume-qp-lookup.patch \
+ && printf 'qbb-resume-qp-lookup.patch\tsha256:%s\tapplied to ns-3-alibabacloud\n' \
+      "$(sha256sum < /opt/rfl-patches/qbb-resume-qp-lookup.patch | cut -d' ' -f1)" >> /opt/simai-sources.tsv
 WORKDIR /opt/simai
 RUN ./scripts/build.sh -c ns3
 COPY --from=driver rfl-star.cc ${NS3_TREE}/scratch/rfl-star.cc

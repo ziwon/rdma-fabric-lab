@@ -1,0 +1,49 @@
+track: c-ns3
+scenario: c-05-incast-mixed
+description: Incast of 2, 4 and 8 senders into one receiver behind one switch on 100 Gbps links of 1 us. Half the senders, rounded up, start
+  one flow of 1000000 bytes at 0. Each other sender starts four flows of 16000 bytes at 10, 30, 50 and 70 us. Each fan-in runs the
+  profiles c-none, c-pfc, c-ecn and c-both with seeds 1 to 5 on the same traffic, and the whole set runs twice. A packet-model
+  simulation, not hardware.
+required: true
+result_kind: packet-model-simulation
+security:
+  privileged: false
+  device_exposure: None. Each run is one unprivileged container with no network inside the Track C guest, as 10001:10001 with a read-only root.
+    Its only writable mount is the run's output directory.
+checks:
+  - id: image-pinned
+    description: rfl-ns3:m6 in the Track C guest is the image the lock pins as ns3.image, and every container of the run starts that digest.
+  - id: container-locked-down
+    description: The guest is a VM with the Track C marker on the locked kernel. Both containers run as 10001:10001, not privileged, with no
+      network, no device, every capability dropped, no-new-privileges, a read-only root, AppArmor docker-default and one writable
+      mount, the output directory.
+  - id: config-applied
+    description: In every case the model objects hold the declared link rates and delays, MTU, buffer, ECN kmin, kmax and pmax, seed, the
+      profile's QbbEnabled, EcnEnabled and CcMode, and the ten DCQCN attributes, read back after setup.
+  - id: same-traffic
+    description: Within each fan-in, the network files the simulator got are identical except for the lines pfc, ecn, cc_mode and seed, and
+      those lines match each case's profile and seed.
+  - id: flows-accounted
+    description: Every declared flow is in flows.tsv, finished or not. A finished flow holds every payload byte in order. In every case the
+      packets the switch refused, counted from its MacRx and QbbEnqueue traces, equal the drop lines its MMU printed.
+  - id: fct-bounds
+    description: No finished flow completes faster than 8 x payload / bottleneck plus propagation, and no case moves its finished payload
+      faster than the receiver link allows.
+  - id: pfc-as-configured
+    description: With PFC on, the host pause handler runs for every PAUSE and RESUME a host receives and the switch refuses no packet, and at
+      least one case pauses. With PFC off, the handler never runs, although at least one case receives PAUSE frames from the
+      switch.
+  - id: ecn-as-configured
+    description: With ECN off, the switch marks nothing, no CNP flag returns and no rate changes. With ECN on, every mark falls above kmin
+      and every dequeue above kmax is marked, and at least one case shows marks, CNP-flagged ACKs and DCQCN rate cuts.
+  - id: profiles-differ
+    description: For the same fan-in and seed, two profiles that differ in PFC give different flow results and counters whenever the switch
+      sent a PAUSE in either, and two that differ in ECN and DCQCN do whenever the bottleneck queue rose above kmin in either.
+      Each feature is triggered at least once.
+  - id: rerun-identical
+    description: run2 repeats every case with every seed and gives the same modeled figure files, time series and event logs included. Only
+      the simulator's own wall time and memory may differ.
+  - id: no-container-left
+    description: After the run, guest.sh stop removed both containers and guest.sh ls lists no container of this run.
+  - id: host-untouched
+    description: At the start and the end of the run the host runs no simulator process and lists no Track C container.

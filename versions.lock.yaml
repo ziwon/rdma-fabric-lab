@@ -362,14 +362,22 @@ components:
     value: 3.12.3-0ubuntu2.1
     reason: python3 from ns3.apt_snapshot. It runs the ./ns3 build wrapper and SimAI's topology generator. SimAI asks for 3.8 or newer.
     source: dpkg-query in the probe container (docs/milestones/evidence/m5/probe/02-simai-noble-inner.log)
+  ns3.resume_patch:
+    kind: checksum
+    value: sha256:ce82e9f1e3a3c5f79ed4b72f11194cdd19f5d9df994de00bd652739059d13cb3
+    ref: images/ns3/qbb-resume-qp-lookup.patch
+    reason: The one patch the image applies to ns3.ns3_alibabacloud. QbbNetDevice::Resume looked a QP up by priority index on
+      every PFC RESUME and crashed a host with fewer QPs than that index. The patch moves the lookup under the node-type-2 test
+      it serves. The user chose a patch over more QPs per host on 2026-11-16.
+    source: sha256sum images/ns3/qbb-resume-qp-lookup.patch (docs/milestones/evidence/m6/patch-proof/patch-proof.txt)
   ns3.image:
     kind: image-digest
-    value: sha256:81d839a74436b429f9439bc9039072818cb12a32cc4f23dbe001102695470713
-    ref: rfl-ns3:m5
-    reason: Built from images/ns3/Dockerfile inside ns3sim1 by make track-c-image. The first build and a build after guest.sh clean,
-      which deleted the tag, the base image and every BuildKit cache entry, gave this same manifest digest with no cached step.
-      BuildKit rewrote every layer to ns3.source_date_epoch. Every Track C scenario ran on it.
-    source: docker image inspect --format {{.Id}} rfl-ns3:m5 inside ns3sim1 after guest.sh build (docs/milestones/evidence/m5/image-build-1.log,
+    value: sha256:da7a3245b1b91dd472d1ddb9497b3bd1abb3efdbaee38c45fe790dff565a61c6
+    ref: rfl-ns3:m6
+    reason: Built from images/ns3/Dockerfile inside ns3sim1 with ns3.resume_patch applied and the M6 rfl-star driver. A build
+      after guest.sh clean, which deleted the tag, the base image and every BuildKit cache entry, gave this same manifest digest
+      with no cached step. Every Track C scenario of M5 and M6 ran on it.
+    source: docker image inspect --format {{.Id}} rfl-ns3:m6 inside ns3sim1 after guest.sh build (docs/milestones/evidence/m6/image-build-dev-2.log,
       image-build-clean-1.log)
 scopes:
   tooling:
@@ -450,6 +458,23 @@ scopes:
     - ns3.simai
     - ns3.ns3_alibabacloud
     - ns3.simccl
+    - ns3.base_image
+    - ns3.apt_snapshot
+    - ns3.source_date_epoch
+    - ns3.gcc
+    - ns3.cmake
+    - ns3.python
+    - ns3.image
+  m6:
+    - ns3.guest_kernel
+    - ibsim.guest_docker
+    - ibsim.guest_buildx
+    - ibsim.guest_containerd
+    - ibsim.guest_runc
+    - ns3.simai
+    - ns3.ns3_alibabacloud
+    - ns3.simccl
+    - ns3.resume_patch
     - ns3.base_image
     - ns3.apt_snapshot
     - ns3.source_date_epoch
