@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="330" viewBox="0 0 1200 330" role="img" aria-labelledby="title desc">
+  <title id="title">How a result is proved</title>
+  <desc id="desc">A scenario spec declares every check. A run inside a guest records each check with evidence in its run directory. make validate checks every run directory against the schemas, and make report counts the latest real run of each scenario. A deliberate break makes every check fail once before the repaired run passes.</desc>
+  <style>
+    .sans { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .ink { fill: #050505; }
+    .muted { fill: #6f6a63; }
+    .teal { fill: #007f94; }
+    .red { fill: #d9392e; }
+    .box { fill: #fbf9f5; stroke: #050505; stroke-width: 1.5; }
+    .arrow { stroke: #050505; stroke-width: 2; fill: none; }
+  </style>
+  <defs>
+    <marker id="head" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#050505"/>
+    </marker>
+    <marker id="head-red" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#d9392e"/>
+    </marker>
+  </defs>
+
+  <rect width="1200" height="330" rx="22" fill="#f5f1ea"/>
+
+  <g class="sans">
+    <g transform="translate(56 48)">
+      <rect width="240" height="132" rx="10" class="box"/>
+      <text x="20" y="42" class="ink" font-size="23" font-weight="700">Scenario spec</text>
+      <text x="20" y="76" class="ink" font-size="20">declares every check</text>
+      <text x="20" y="110" class="mono muted" font-size="18">tracks/*/scenarios</text>
+    </g>
+    <line x1="300" y1="114" x2="334" y2="114" class="arrow" marker-end="url(#head)"/>
+
+    <g transform="translate(338 48)">
+      <rect width="240" height="132" rx="10" class="box"/>
+      <text x="20" y="42" class="ink" font-size="23" font-weight="700">Run in a guest</text>
+      <text x="20" y="76" class="ink" font-size="20">checks cite evidence</text>
+      <text x="20" y="110" class="mono muted" font-size="18">results/&lt;run-id&gt;/</text>
+    </g>
+    <line x1="582" y1="114" x2="616" y2="114" class="arrow" marker-end="url(#head)"/>
+
+    <g transform="translate(620 48)">
+      <rect width="240" height="132" rx="10" class="box"/>
+      <text x="20" y="42" class="mono ink" font-size="22" font-weight="700">make validate</text>
+      <text x="20" y="76" class="ink" font-size="20">every run meets</text>
+      <text x="20" y="104" class="ink" font-size="20">the contract</text>
+    </g>
+    <line x1="864" y1="114" x2="898" y2="114" class="arrow" marker-end="url(#head)"/>
+
+    <g transform="translate(902 48)">
+      <rect width="242" height="132" rx="10" fill="#050505"/>
+      <text x="20" y="42" class="mono" fill="#f5f1ea" font-size="22" font-weight="700">make report</text>
+      <text x="20" y="76" fill="#f5f1ea" font-size="20">latest real run</text>
+      <text x="20" y="104" fill="#f5f1ea" font-size="20">of each scenario</text>
+    </g>
+
+    <path d="M458 184 C 458 238, 176 238, 176 190" stroke="#d9392e" stroke-width="2.5" fill="none" marker-end="url(#head-red)"/>
+    <text x="317" y="264" text-anchor="middle" class="red" font-size="20" font-weight="700">deliberate break</text>
+    <text x="56" y="302" class="ink" font-size="20">Every check fails once on purpose, then passes after the repair.</text>
+    <text x="902" y="226" class="mono muted" font-size="18">STRICT=1 is the MVP gate</text>
+  </g>
+</svg>

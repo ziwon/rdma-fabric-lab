@@ -1,153 +1,118 @@
-# rdma-fabric-lab
+<p align="center">
+  <img src="./assets/readme/hero.svg" width="100%" alt="RDMA Fabric Lab: RDMA, InfiniBand subnet management and RoCE congestion control on one Ubuntu host with no HCA, InfiniBand switch or GPU. QEMU guests run each track: two workers joined by a RoCEv2 link, an OpenSM guest, an ns-3 guest and the 13 guests of the cel1 region.">
+</p>
 
-A software-only lab for RDMA, InfiniBand management and RoCE congestion control on one Ubuntu host, with no HCA, InfiniBand switch or GPU. The same Ansible and kubeadm code that builds the lab cluster also describes `cel1`, an invented GPU region with DGX B200 nodes, so every lab run exercises that code.
+<p align="center">
+  <a href="docs/runbook.md">Runbook</a> ·
+  <a href="docs/verification.md">Verification</a> ·
+  <a href=".site/README.md">Learning site</a> ·
+  <a href="docs/adr/">Decisions</a> ·
+  <a href="LICENSE">MIT</a>
+</p>
 
-This file says what exists today and how to start. `docs/runbook.md` takes an operator from a fresh host through every track, with measured durations, cleanup and recovery. Design decisions live in `docs/adr/`.
+RDMA Fabric Lab runs RDMA, InfiniBand management and RoCE congestion-control experiments on one Ubuntu host with KVM. Soft-RoCE carries real RDMA between QEMU guests, ibsim stands in for an InfiniBand fabric under OpenSM, and an ns-3 model plays out PFC, ECN and DCQCN. Every experiment declares its checks up front, proves each one with evidence from a recorded run, and has a deliberate break that must make it fail.
 
-## Tracks
+## Proof
 
-| Track | Question | Stack | Runs in |
-|---|---|---|---|
-| A. Kubernetes and Soft-RoCE | How do RDMA programs run over plain Ethernet, and how do Kubernetes workloads reach them? | QEMU guests, Ansible, kubeadm, containerd, Cilium by Helm, RXE | QEMU guests |
-| B. InfiniBand management | How does a subnet manager discover a fabric, assign LIDs and react to link faults? | ibsim, OpenSM, infiniband-diags | A container inside a dedicated QEMU guest |
-| C. RoCE congestion control | How do PFC, ECN and DCQCN settings change queues, rates and flow completion? | ns-3 RDMA model | A container inside a dedicated QEMU guest |
+The last full rerun started from wiped guests and ran every required experiment, one guest profile at a time, in 100.5 minutes (`acceptance-all.sh` run `20261116T190004Z`, 2026-11-16). Its closing report:
 
-The tracks share the repository, the result format and the version lock, not a data path. A result of one track never stands in for another.
+```text
+$ make report STRICT=1
+...
+required (MVP): 15 of 15 scenarios passed
+optional: 4 of 4 scenarios passed
+not counted: 44 deliberate break runs, 19 unfinished runs, 281 older runs
+invalid: 0
+```
 
-## What this lab does not claim
+What the latest runs showed:
 
-- IPoIB. RXE runs over Ethernet and ibsim simulates management datagrams. Neither creates the IPoIB data path, so nothing here validates IPoIB or an IPoIB CNI.
-- HCA performance. RXE numbers are software results of one host, kernel and guest combination. They say nothing about offload, InfiniBand or RoCE hardware latency, or 200, 400 or 800 Gb/s throughput.
-- Lossless switching. PFC, ECN and DCQCN results in Track C are the behaviour of the simulation model, not of a real switch or of the hypervisor's virtual switch.
-- GPU and NCCL performance. GPUDirect RDMA, NVLink and NCCL are out of scope. A collective pattern, if added, is a synthetic workload or a model result.
+- **A. Soft-RoCE.** rping and RDMA Read, Write and Send over RDMA CM between two worker VMs, with RoCEv2 frames on the lab NIC only. Read ran at 1.91 Gb/s, a software figure of this host. Run `20261116T192132Z`.
+- **A. Kubernetes.** The same RDMA tests between hostNetwork pods, and `net1` from Multus and Whereabouts beside Cilium through pod recreation and a worker reboot. Runs `20261116T192258Z` and `20261116T192350Z`.
+- **B. InfiniBand management.** OpenSM discovers each fabric, assigns unique LIDs, drops and restores an endpoint, and routes around a failed leaf-to-spine link on the cel1 rail fabric. Run `20261116T194712Z`.
+- **C. RoCE congestion control.** One 1 MB flow completes in 88092 ns, 7.43% above its payload bound, with the gap explained to the nanosecond. Under an 8-to-1 incast, PFC alone kept every packet and reached 94.7 Gb/s of goodput. Run `20261116T200409Z`.
+- **cel1.** The fleet code builds an invented GPU region as 13 guests: 3 control planes, 8 DGX B200 and 2 PCIe GPU servers. Run `20261116T203232Z`.
 
-## Status
+## How a result is proved
 
-The MVP is complete. `tests/integration/qemu-lab/acceptance-all.sh` run `20261116T190004Z` passed every required experiment again from wiped guests on 2026-11-16: 15 of 15 required and 4 of 4 optional scenarios. `docs/verification.md` says how the lab proves itself, lists the runs of record and gives the evidence for each item of the MVP checklist.
+<p align="center">
+  <img src="./assets/readme/proof-flow.svg" width="100%" alt="A scenario spec declares every check, a run inside a guest records each check with evidence, make validate checks every run directory against the schemas, and make report counts the latest real run of each scenario. A deliberate break makes every check fail once before the repaired run passes.">
+</p>
 
-Nothing in this repository has run against GPU hardware.
+A run's status comes only from its recorded checks, and a passed check must cite evidence inside its run directory. `make report` groups scenarios by result kind, so an RXE measurement, a cluster test, the InfiniBand management simulation and the packet model never stand in for each other. `docs/verification.md` lists the runs of record and the evidence for each item of the MVP checklist.
 
-## Requirements
+## Three tracks and one region
 
-- Ubuntu 24.04 host with KVM, and `/dev/kvm` usable by your user. No sudo is needed for the lab.
-- `qemu-system-x86_64`, `qemu-img`, `cloud-localds`, `ssh-keygen`, `uv`, `make`, `git`, `curl`.
-- Free memory and cores for the guests of the profile you boot. The default `lab` profile:
+- **A. Kubernetes and Soft-RoCE.** How do RDMA programs run over plain Ethernet, and how do Kubernetes pods reach them? Three QEMU guests, `cp1`, `worker1` and `worker2`, with RXE on a direct lab link, built by Ansible and kubeadm, with Cilium, Multus and Whereabouts.
+- **B. InfiniBand management.** How does a subnet manager discover a fabric, assign LIDs and react to link faults? A pinned ibsim, OpenSM and infiniband-diags image in its own guest.
+- **C. RoCE congestion control.** How do PFC, ECN and DCQCN change queues, rates and flow completion? A pinned ns-3-alibabacloud image in its own guest.
+- **cel1.** Does the same Ansible and kubeadm code build a GPU region? 13 guests built from `sites/cel1.yaml`, every name and address invented.
 
-  | Guest | vCPU | Memory | Disk |
-  |---|---:|---:|---:|
-  | cp1 | 2 | 4 GiB | 30 GiB |
-  | worker1 | 4 | 6 GiB | 40 GiB |
-  | worker2 | 4 | 6 GiB | 40 GiB |
+## What it does not claim
+
+- **HCA or switch performance.** RXE figures are software results of one host and guest pair. They say nothing about offload or 200, 400 or 800 Gb/s hardware.
+- **IPoIB.** RXE runs over Ethernet and ibsim simulates management datagrams, so nothing here exercises an IPoIB data path.
+- **Lossless switching.** Track C results are what one packet model computes. In that model, PFC off means hosts ignore PAUSE while the switch still sends it.
+- **GPU or NCCL behavior.** Nothing in this repository has run against GPU hardware.
 
 ## Quick start
 
+You need an Ubuntu 24.04 host with KVM, `/dev/kvm` usable by your user, and `qemu-system-x86_64`, `qemu-img`, `cloud-localds`, `uv`, `make`, `git` and `curl`. The lab needs no sudo. The first experiment needs 3 guests, 10 vCPUs and 16 GiB of memory.
+
 ```bash
-make venv              # pinned Python tooling in .venv
-make lint test         # static checks and unit tests
-make doctor            # read-only host check, including address plan overlaps
-make tools             # pinned helm and kubeconform in .tools/bin
+make venv lint test doctor     # pinned tooling, static checks, unit tests, read-only host check
+make lab-up                    # boot cp1, worker1 and worker2 from the pinned cloud image
+make bootstrap rxe-up          # locked packages, the lab NIC address, rxe0
+make rxe-test                  # RDMA between the workers, recorded under results/
+make validate report           # check the run, then show the latest run of each scenario
 ```
 
-Track A from nothing, the same sequence `tests/integration/qemu-lab/acceptance-k8s.sh` runs:
+Then the rest of the lab:
 
 ```bash
-make lab-wipe lab-up                 # boot cp1, worker1 and worker2
-make bootstrap rxe-up                # packages, lab NIC address, rxe0
-make rxe-test                        # RDMA between the workers, recorded under results/
-make k8s                             # kubeadm cluster, kubeconfig in .lab/kubeconfig
+make k8s                                              # kubeadm cluster on the same guests
 make addons ENV=lab KUBECONFIG_FILE=.lab/kubeconfig   # Cilium, Multus and Whereabouts by Helm
-make k8s-test                        # nodes, pod traffic, DNS, Service, NetworkPolicy
-make validate report                 # check every run directory, then the latest run of each scenario
-make lab-down
+make rdma-tools-image                                 # build the RDMA test image inside the Track B guest
+make lab-down LAB_PROFILE=ibsim                       # stop that builder before anything is measured
+make rdma-tools-load track-a                          # load the image on the workers, run every Track A scenario
+make lab-down                                         # one guest profile at a time
+make track-b lab-down LAB_PROFILE=ibsim               # B-01 to B-04 in the Track B guest
+make track-c lab-down LAB_PROFILE=ns3                 # c-01 to c-06 in the Track C guest
 ```
 
-The pod scenarios run on the same cluster. The RDMA test image is built inside the Track B guest, never on the host, and loaded into the workers' containerd without a registry:
+`tests/integration/qemu-lab/acceptance-all.sh` runs all of it, and the cel1 region, from wiped guests. `docs/runbook.md` gives every step, the guest sizes and the measured durations, and `make cleanup RUN=<run-id>` removes what an interrupted run left.
 
-```bash
-make rdma-tools-image               # build in the Track B guest, fails unless the digest is lab.rdma_tools_image
-make lab-down LAB_PROFILE=ibsim     # free the builder before measuring
-make rdma-tools-load                # import the image on both workers
-make k8s-hostnet-test               # the RXE tests between hostNetwork pods
-make k8s-multus-test                # net1 from Whereabouts beside Cilium, recreation, worker reboot
-make track-a                        # every required Track A scenario in order, on the lab that is up
-```
+## Learn
 
-Cilium writes its CNI file to `/etc/cni/multus/net.d`, so `/etc/cni/net.d` holds only Multus's file and a pod never starts without `net1`. A cluster built before that change needs `make cni-migrate` once after `make addons ENV=lab`. `tests/integration/qemu-lab/acceptance-track-a.sh` runs all of Track A from wiped guests. The three-control-plane profile runs with `LAB_PROFILE=ha`.
+The learning site in `.site/` teaches the concepts behind each experiment, from verbs and RoCEv2 frames to subnet managers and DCQCN, and gives one page per lab with the commands to run it, what every check proves, real output with its run id, and the deliberate breaks to try. Run it locally with `make site-dev`. `.site/README.md` says how to publish it on GitHub Pages.
 
-Track B boots its own guest and runs everything inside it:
+| Document | What it holds |
+|---|---|
+| `docs/runbook.md` | From a fresh host to every track, cleanup, recovery and the safety rules |
+| `docs/verification.md` | How the lab proves itself, the latest full rerun and the MVP checklist |
+| `docs/troubleshooting.md` | Failures seen in every track and the cel1 simulation, with their causes and fixes |
+| `docs/adr/` | Why the lab is built this way: the Kubernetes stack, where each track runs, results and breaks, RDMA in pods, the Track B simulation and the Track C model |
+| `docs/fleet.md` | The cel1 region and how to apply the code to another site |
+| `docs/setup-vmware.md` | The same lab as VMware Workstation guests, not verified on the current host |
 
-```bash
-make track-b                         # B-01 to B-04 in the Track B guest
-make track-b-breaks                  # every scenario must fail on its deliberate break
-make lab-down LAB_PROFILE=ibsim
-```
-
-Track C builds and runs the ns-3 model in its own guest, never on the host:
-
-```bash
-make track-c                         # track-c-smoke (c-01, c-02) and track-c-matrix (incast c-03 to c-05, optional c-06)
-make track-c-breaks                  # every scenario must fail on its deliberate breaks
-make lab-down LAB_PROFILE=ns3
-```
-
-The cel1 simulation boots 13 guests and needs about 40 GB of disk. Put the disks where there is room:
-
-```bash
-LAB_DIR=/path/with/room bash tests/integration/qemu-lab/acceptance-cel1.sh
-```
-
-Every required experiment, one profile after another from wiped guests, ending with `make validate` and `make report STRICT=1`:
-
-```bash
-LAB_ROOT=/path/with/room tests/integration/qemu-lab/acceptance-all.sh
-```
-
-`make cleanup RUN=<run-id>` removes what an interrupted run left, and `make help` lists every target.
-
-## The cel1 region
-
-`sites/cel1.yaml` is the single source of the region: 3 control planes, 8 DGX B200 nodes and 2 PCIe GPU servers, the address plan and a rail-optimized InfiniBand fabric. `make fleet-render` writes `ansible/inventories/cel1/` from it. `make fleet-check` validates the model, the generated inventory, the inventory contract and the Helm values offline.
-
-Every name and address in `cel1` is invented. The targets that would change cel1 hosts refuse to run without `CONFIRM=cel1` and a connection inventory. To apply the code to another site, keep that site's inventory outside this repository and follow `docs/fleet.md`.
-
-## Results
-
-Every scenario declares its checks in `tracks/<track>/scenarios/*.yaml`. A run writes `results/<run-id>/<track>/<scenario>/` with a manifest, logs, raw captures and metrics. The run status comes only from the recorded checks, and a passed check must point at evidence in the run directory. `make validate` enforces the contract in `schemas/`. Results and logs stay out of git: `results/`, `.lab/` and the evidence copies under `.lab/evidence/` exist only on the machine that ran them. The documents in `docs/` and the site keep the run ids, exit codes and findings, and cite those local paths.
-
-## Safety
-
-- Simulators that use AF_UNIX datagram sockets do not run on the host. Ubuntu kernels 7.0.0-42 and 7.0.0-43 oops in AppArmor when a confined task writes to such a socket, and ibsim in a host container froze the host. `docs/adr/0002-execution-environments.md` explains where each track runs.
-- Guests run as unprivileged QEMU processes. Lab network frames never leave the host.
-- `make reset-lab` needs `CONFIRM=lab`. Fleet targets need `CONFIRM=cel1`.
-
-## Layout
+## Repository
 
 | Path | Contents |
 |---|---|
-| `ansible/` | Inventories for `lab` and `cel1`, playbooks, and the roles of the shared stack (`containerd`, `kubeadm`) and the lab (`preflight`, `common`, `network`, `rxe`, `rdma_tools`) |
-| `helm/` | `releases.yaml`, the Helm releases in install order, values per environment, and the repo-local Multus chart |
-| `images/` | The pinned Track B image and the RDMA test image, both built inside a harness guest |
-| `sites/` | Site models |
-| `scripts/` | Result contract (`rfl`), scenario runners, doctor, addons runner, fleet and inventory checks |
-| `tracks/` | Scenario specs and their configuration |
-| `tests/` | Unit tests, fixtures captured from real runs, and the QEMU harness under `tests/integration/qemu-lab/` |
-| `schemas/` | JSON schemas of scenario specs, run manifests, metrics and the version lock |
-| `versions.lock.yaml` | Every pinned version and checksum, grouped in scopes per part of the lab |
-| `docs/` | The runbook, the verification record, ADRs, the cel1 runbook, VMware setup and troubleshooting |
-| `.github/workflows/` | The checks that need no lab, on every pull request |
+| `ansible/` | Inventories for `lab` and `cel1`, playbooks, and the roles shared by the lab and the region |
+| `helm/` | The Helm releases in install order and their values per environment |
+| `tracks/` | Scenario specs, their configuration, the Track B topologies and the Track C driver |
+| `scripts/` | The result contract (`rfl`), scenario runners, cleanup, collect, doctor and the fleet checks |
+| `images/` | The pinned Track B, Track C and RDMA test images, each built inside a guest |
+| `tests/` | Unit tests over output captured from real runs, and the QEMU harness in `tests/integration/qemu-lab/` |
+| `sites/`, `schemas/`, `versions.lock.yaml` | The cel1 site model, the JSON schemas, and every pinned version and checksum |
 
-## Documents
+## Safety
 
-- `.site/`: the learning site. It explains each concept, gives one page per lab with the commands to run it and real output from recorded runs, and covers the repository's structure. `make site` builds it and `make site-dev` serves it locally. It is not published yet; `.site/README.md` says how to turn on GitHub Pages.
-- `docs/adr/0001-kubernetes-stack.md`: one Ansible and kubeadm stack for the lab and cel1, and the inventory contract.
-- `docs/adr/0002-execution-environments.md`: where each track runs and why.
-- `docs/adr/0003-results-and-breaks.md` to `docs/adr/0006-track-c-packet-model.md`: the result contract and deliberate breaks, RDMA in pods and `net1`, the Track B simulation and the Track C model.
-- `docs/fleet.md`: the cel1 runbook.
-- `docs/setup-vmware.md`: the same lab as VMware Workstation guests with two VMnets, not verified on the current host.
-- `docs/runbook.md`: from a fresh host to every track, cleanup, recovery and the safety rules.
-- `docs/verification.md`: how the lab proves itself, the latest full reproduction and the MVP checklist.
-- `docs/troubleshooting.md`: failures seen in every track and the cel1 simulation, with their evidence.
+- Simulators run only inside guests. Ubuntu kernels 7.0.0-42 and 7.0.0-43 oops in AppArmor when a confined task writes to a connected AF_UNIX datagram socket, which ibsim uses, so a host container froze the host. `docs/adr/0002-execution-environments.md` explains where each track runs.
+- Every guest is an unprivileged QEMU process, and its network frames never leave the host.
+- `make reset-lab` needs `CONFIRM=lab`, and the targets that change cel1 hosts need `CONFIRM=cel1`.
 
 ## License
 
-The repository is under the MIT license (`LICENSE`). Two files are the exception: `tracks/c-ns3/driver/rfl-star.cc` links to ns-3 and `images/ns3/qbb-resume-qp-lookup.patch` patches it, so both are GPL-2.0-only, as their SPDX line says. The `rfl-ns3` image built from them holds GPL-2.0 ns-3. Building it locally creates no obligation; distributing the built image carries the GPL-2.0 terms.
+MIT (`LICENSE`), except `tracks/c-ns3/driver/rfl-star.cc` and `images/ns3/qbb-resume-qp-lookup.patch`, which link to or patch ns-3 and are GPL-2.0-only, as their SPDX lines say. The `rfl-ns3` image built from them holds GPL-2.0 ns-3. Building it locally creates no obligation; distributing the built image carries the GPL-2.0 terms.
