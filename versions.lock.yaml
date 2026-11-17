@@ -295,10 +295,10 @@ components:
     source: images/ibsim/Dockerfile installs it from ibsim.apt_snapshot (docs/milestones/evidence/m4/image-build-1.log)
   ibsim.image:
     kind: image-digest
-    value: sha256:cb3e3550f4f60de5414abe55dbe81e45fd68106ef5ecc4cfa4d701b6083ee279
+    value: sha256:e4374db2a49fae94b28717bc905d9e06ef5d02dd0a8ccfd3a3e087163053d2de
     ref: rfl-ibsim:m4
-    reason: Built from images/ibsim/Dockerfile inside ibsim1 by make track-b-image. A second build reuses every layer and gives the same
-      ID. Every Track B scenario ran on it.
+    reason: Built from images/ibsim/Dockerfile inside ibsim1 by make track-b-image. Two builds from wiped guests gave this ID (M7). Every
+      Track B scenario ran on it.
     source: docker image inspect --format {{.Id}} rfl-ibsim:m4 inside ibsim1 after guest.sh build
       (docs/milestones/evidence/m4/image-build-final-1.log, image-build-final-2.log)
   ns3.guest_kernel:

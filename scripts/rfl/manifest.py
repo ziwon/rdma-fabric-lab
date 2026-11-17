@@ -26,6 +26,8 @@ EXIT_CODE = {"passed": 0, "failed": 1, "blocked": 2, "not_run": 3}
 EXIT_INVALID = 4
 
 FILES_REQUIRED_WHEN_PASSED = ("commands.log", "resolved-config.yaml")
+SCHEMA_VERSION = 2
+RESULT_KINDS = ("software-rdma-measurement", "software-cluster-test", "ib-management-simulation", "packet-model-simulation")
 
 
 class ManifestError(Exception):
@@ -119,20 +121,20 @@ def write(run_dir: Path, manifest: dict) -> None:
     os.replace(tmp, path)
 
 
-def init(spec_path: Path, results_root: Path, run_id: str | None = None) -> Path:
+def init(spec_path: Path, results_root: Path, run_id: str | None = None, deliberate_break: dict | None = None) -> Path:
     spec = load_spec(spec_path)
     run_id = run_id or new_run_id()
     run_dir = results_root / run_id / spec["track"] / spec["scenario"]
     if manifest_path(run_dir).exists():
         raise ManifestError(f"{run_dir}: this run already has a manifest")
-    (run_dir / "raw").mkdir(parents=True)
     manifest = {
-        "schema_version": 1,
+        "schema_version": SCHEMA_VERSION,
         "run_id": run_id,
         "track": spec["track"],
         "scenario": spec["scenario"],
         "description": spec["description"],
         "required": spec["required"],
+        "deliberate_break": deliberate_break,
         "result_kind": spec["result_kind"],
         "status": "not_run",
         "created_at": _utc_now(),
@@ -156,6 +158,10 @@ def init(spec_path: Path, results_root: Path, run_id: str | None = None) -> Path
         "timing": {"wall_clock_seconds": None, "simulated_seconds": None},
         "security": spec["security"],
     }
+    errors = schema_errors(manifest, "run-manifest.schema.json")
+    if errors:
+        raise ManifestError(f"{run_dir}: " + "; ".join(errors))
+    (run_dir / "raw").mkdir(parents=True)
     write(run_dir, manifest)
     add_input_files(run_dir, [spec_path])
     return run_dir
@@ -324,19 +330,59 @@ def find_run_dirs(results_root: Path, run_id: str | None = None) -> list[Path]:
     return sorted(p.parent for p in base.glob("**/manifest.json"))
 
 
-def tally(results_root: Path, run_id: str | None = None) -> list[dict]:
-    rows = []
+# Version 1 manifests predate deliberate_break. Track B and Track C named their breaks in one input parameter.
+VERSION1_BREAK_PARAMETER = {"b-ibsim": "break_link", "c-ns3": "deliberate_break"}
+
+
+def deliberate_break_of(manifest: dict) -> dict | None:
+    """The deliberate break a run carried, or None for an ordinary run."""
+    if manifest["schema_version"] >= 2:
+        return manifest["deliberate_break"]
+    key = VERSION1_BREAK_PARAMETER.get(manifest["track"])
+    value = manifest["inputs"]["parameters"].get(key) if key else None
+    if not value:
+        return None
+    return {"name": key.replace("_", "-"), "description": f"version 1 manifest, inputs.parameters.{key} is {value}"}
+
+
+def scenario_spec_paths() -> list[Path]:
+    return sorted(REPO_ROOT.glob("tracks/*/scenarios/*.yaml"))
+
+
+def latest_runs(results_root: Path, run_id: str | None = None, specs: list[Path] | None = None) -> tuple[list[dict], list[dict]]:
+    """One row per scenario with its latest finished run that is not a deliberate break, and every invalid run directory.
+
+    Without run_id every scenario spec gets a row, so a scenario that never ran shows as such.
+    """
+    scenarios: dict[tuple[str, str], dict] = {}
+    if run_id is None:
+        for path in scenario_spec_paths() if specs is None else specs:
+            spec = load_spec(path)
+            scenarios[(spec["track"], spec["scenario"])] = {"required": spec["required"], "result_kind": spec["result_kind"], "runs": []}
+    invalid = []
     for run_dir in find_run_dirs(results_root, run_id):
         broken = problems(run_dir)
-        manifest = {} if broken else read(run_dir)
-        rows.append(
-            {
-                "dir": str(run_dir),
-                "valid": not broken,
-                "problems": broken,
-                "required": manifest.get("required"),
-                "result_kind": manifest.get("result_kind"),
-                "status": manifest.get("status"),
-            }
-        )
-    return rows
+        if broken:
+            invalid.append({"dir": str(run_dir), "problems": broken})
+            continue
+        manifest = read(run_dir)
+        entry = scenarios.setdefault((manifest["track"], manifest["scenario"]),
+                                     {"required": manifest["required"], "result_kind": manifest["result_kind"], "runs": []})
+        entry["runs"].append({"run_id": manifest["run_id"], "status": manifest["status"], "dir": str(run_dir),
+                              "finished": manifest["finished_at"] is not None,
+                              "deliberate_break": deliberate_break_of(manifest)})
+    rows = []
+    for (track, scenario), entry in sorted(scenarios.items()):
+        runs = entry["runs"]
+        counted = [r for r in runs if r["finished"] and r["deliberate_break"] is None]
+        rows.append({
+            "track": track,
+            "scenario": scenario,
+            "required": entry["required"],
+            "result_kind": entry["result_kind"],
+            "latest": max(counted, key=lambda r: r["run_id"], default=None),
+            "breaks": sum(r["deliberate_break"] is not None for r in runs),
+            "unfinished": sum(not r["finished"] and r["deliberate_break"] is None for r in runs),
+            "older": max(len(counted) - 1, 0),
+        })
+    return rows, invalid

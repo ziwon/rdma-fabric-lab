@@ -10,6 +10,7 @@
 #   guest.sh fetch <key> <slot>                                tar of the slot's output directory on stdout
 #   guest.sh inspect <key> <slot>                              docker inspect of the slot's container
 #   guest.sh stop <key>                                        remove the run's containers and files, if any
+#   guest.sh stop-run <run-id>                                 stop every scenario of one run id, then fail if any is left
 #   guest.sh ls                                                every Track C container, running or not
 #
 # <key> is <run-id>-<scenario>, for example 20261116T140000Z-c-02-single-flow. <slot> names one container
@@ -111,9 +112,34 @@ run() {
   exit "$rc"
 }
 
+stop_key() {
+  key_of "$1" > /dev/null
+  docker ps --all --quiet --filter "label=rfl.run=$1" --filter label=rfl.track=c-ns3 | xargs -r docker rm --force > /dev/null
+  rm -rf -- "$(run_dir "$1")"
+}
+
+# Every key of the run that a container label or a run directory still names.
+keys_of_run() {
+  { docker ps --all --filter label=rfl.track=c-ns3 --format '{{.Label "rfl.run"}}'; ls -1 "$root/runs" 2> /dev/null || true; } \
+    | grep -E "^$1-" | sort -u || true
+}
+
+stop_run() {
+  [[ $# -eq 1 && $1 =~ ^[0-9]{8}T[0-9]{6}Z$ ]] || die "usage: guest.sh stop-run <run-id>"
+  local key keys left
+  keys=$(keys_of_run "$1")
+  for key in $keys; do
+    stop_key "$key"
+    printf 'removed %s\n' "$key"
+  done
+  left=$(keys_of_run "$1")
+  [[ -z $left ]] || die "still present after stop-run: $left"
+  printf 'run %s: %s keys removed, none left\n' "$1" "$(wc -w <<< "$keys")"
+}
+
 case ${1:-} in
-  build | clean | save | run | fetch | inspect | stop | ls) require_guest ;;
-  *) die "usage: guest.sh build|clean|save|run|fetch|inspect|stop|ls ..." ;;
+  build | clean | save | run | fetch | inspect | stop | stop-run | ls) require_guest ;;
+  *) die "usage: guest.sh build|clean|save|run|fetch|inspect|stop|stop-run|ls ..." ;;
 esac
 
 case $1 in
@@ -131,11 +157,7 @@ case $1 in
     tar -C "$(run_dir "$2")/$(slot_of "$3")" -cf - out docker-run.txt container.log rc
     ;;
   inspect) [[ $# -eq 3 ]] || die "usage: guest.sh inspect <key> <slot>"; docker container inspect "$(name_of "$2" "$3")" ;;
-  stop)
-    [[ $# -eq 2 ]] || die "usage: guest.sh stop <key>"
-    key_of "$2" > /dev/null
-    docker ps --all --quiet --filter "label=rfl.run=$2" --filter label=rfl.track=c-ns3 | xargs -r docker rm --force > /dev/null
-    rm -rf -- "$(run_dir "$2")"
-    ;;
+  stop) [[ $# -eq 2 ]] || die "usage: guest.sh stop <key>"; stop_key "$2" ;;
+  stop-run) shift; stop_run "$@" ;;
   ls) docker ps --all --filter label=rfl.track=c-ns3 --format '{{.Names}} {{.Status}} {{.Image}}' ;;
 esac

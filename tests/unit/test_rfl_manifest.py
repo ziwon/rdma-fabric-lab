@@ -175,23 +175,132 @@ def test_packet_model_run_cannot_pass_without_simulated_time(tmp_path, capsys):
     assert main(["validate", str(run_dir)]) == 0
 
 
-def test_report_tallies_optional_runs_apart_from_required(tmp_path, capsys):
-    optional_spec = tmp_path / "optional.yaml"
-    optional_spec.write_text(SPEC.read_text().replace("required: true", "required: false")
-                             .replace("unit-fixture", "optional-fixture"))
-    for spec in (SPEC, optional_spec):
-        assert main(["run-init", "--spec", str(spec), "--results-root", str(tmp_path), "--run-id", RUN_ID]) == 0
-    required_dir, optional_dir = (Path(line) for line in capsys.readouterr().out.split())
+def init_run(results: Path, spec: Path, run_id: str, capsys, *extra: str) -> Path:
+    capsys.readouterr()
+    assert main(["run-init", "--spec", str(spec), "--results-root", str(results), "--run-id", run_id, *extra]) == 0
+    return Path(capsys.readouterr().out.strip())
+
+
+def report(results: Path, specs: list[Path], capsys, *extra: str) -> tuple[int, str]:
+    capsys.readouterr()
+    code = main(["report", "--results-root", str(results), "--specs", *map(str, specs), *extra])
+    return code, capsys.readouterr().out
+
+
+def scenario_line(text: str, scenario: str) -> str:
+    return next(line for line in text.splitlines() if f"/{scenario} " in line)
+
+
+def test_report_counts_the_latest_finished_run_that_is_not_a_break(tmp_path, capsys):
+    results = tmp_path / "results"
+    older = init_run(results, SPEC, "20260101T000000Z", capsys)
+    assert fail_check(older, "first", "failed", "assertion-failed") == 0
+    assert main(["run-finalize", str(older)]) == 1
+    latest = init_run(results, SPEC, "20260102T000000Z", capsys)
+    complete_passed_run(latest)
+    assert main(["run-finalize", str(latest)]) == 0
+    broken = init_run(results, SPEC, "20260103T000000Z", capsys, "--break", "no-link", "--break-what", "the link is cut")
+    assert fail_check(broken, "first", "failed", "assertion-failed") == 0
+    assert main(["run-finalize", str(broken)]) == 1
+    init_run(results, SPEC, "20260104T000000Z", capsys)
+
+    code, text = report(results, [SPEC], capsys, "--strict")
+    assert code == 0
+    line = scenario_line(text, "unit-fixture")
+    assert line.split()[:3] == ["passed", "a-soft-roce/unit-fixture", "20260102T000000Z"]
+    assert "older 1, breaks 1, unfinished 1" in line
+    assert "required (MVP): 1 of 1 scenarios passed" in text
+
+
+def test_report_groups_by_result_kind_with_optional_apart(tmp_path, capsys):
+    results = tmp_path / "results"
+    optional = tmp_path / "optional.yaml"
+    optional.write_text(SPEC.read_text().replace("required: true", "required: false")
+                        .replace("unit-fixture", "optional-fixture").replace("software-rdma-measurement", "packet-model-simulation"))
+    never = tmp_path / "never.yaml"
+    never.write_text(SPEC.read_text().replace("unit-fixture", "never-fixture").replace("software-rdma-measurement", "ib-management-simulation"))
+    required_dir = init_run(results, SPEC, RUN_ID, capsys)
     complete_passed_run(required_dir)
     assert main(["run-finalize", str(required_dir)]) == 0
+    optional_dir = init_run(results, optional, RUN_ID, capsys)
     assert fail_check(optional_dir, "first", "blocked", "unsupported-on-tested-stack") == 0
-    capsys.readouterr()
-    assert main(["report", "--results-root", str(tmp_path)]) == 0
-    report = capsys.readouterr().out
-    required_line = next(line for line in report.splitlines() if line.startswith("required"))
-    optional_line = next(line for line in report.splitlines() if line.startswith("optional"))
-    assert "passed=1" in required_line and "blocked=0" in required_line
-    assert "blocked=1" in optional_line and "passed=0" in optional_line
+    assert main(["run-finalize", str(optional_dir)]) == 2
+
+    code, text = report(results, [SPEC, optional, never], capsys)
+    assert code == 0
+    sections = text.split("\n\n")
+    rdma = next(s for s in sections if s.startswith("software-rdma-measurement"))
+    model = next(s for s in sections if s.startswith("packet-model-simulation"))
+    ib = next(s for s in sections if s.startswith("ib-management-simulation"))
+    assert "required: passed 1, failed 0" in rdma
+    assert "optional: passed 0, failed 0, blocked 1" in model and "optional-fixture" in model
+    assert "required: passed 0, failed 0, blocked 0, not_run 0, never ran 1" in ib
+    assert "required (MVP): 1 of 2 scenarios passed" in text
+    assert "optional: 0 of 1 scenarios passed" in text
+    assert report(results, [SPEC, optional, never], capsys, "--strict")[0] == 1
+
+
+def test_report_exits_4_on_an_invalid_run_directory(tmp_path, capsys):
+    results = tmp_path / "results"
+    run_dir = init_run(results, SPEC, RUN_ID, capsys)
+    manifest = json.loads((run_dir / "manifest.json").read_text())
+    manifest["status"] = "passed"
+    (run_dir / "manifest.json").write_text(json.dumps(manifest))
+    code, text = report(results, [SPEC], capsys)
+    assert code == 4
+    assert "invalid: 1" in text
+
+
+def test_the_break_comes_from_the_environment_of_a_wrapper(tmp_path, capsys, monkeypatch):
+    monkeypatch.setenv("RFL_BREAK", "rsyslog-stopped")
+    monkeypatch.setenv("RFL_BREAK_WHAT", "rsyslog stopped on one node")
+    run_dir = init_run(tmp_path, SPEC, RUN_ID, capsys)
+    assert json.loads((run_dir / "manifest.json").read_text())["deliberate_break"] == {
+        "name": "rsyslog-stopped", "description": "rsyslog stopped on one node"}
+    assert main(["validate", str(run_dir)]) == 0
+
+
+@pytest.mark.parametrize("extra", [["--break", "no-link"], ["--break-what", "cut"], ["--break", "No Link", "--break-what", "cut"]])
+def test_a_break_needs_a_slug_name_and_a_description(tmp_path, capsys, extra):
+    assert main(["run-init", "--spec", str(SPEC), "--results-root", str(tmp_path), "--run-id", RUN_ID, *extra]) == 4
+    assert not (tmp_path / RUN_ID).exists()
+
+
+def test_an_ordinary_run_records_a_null_break(run_dir):
+    manifest = json.loads((run_dir / "manifest.json").read_text())
+    assert manifest["schema_version"] == 2
+    assert manifest["deliberate_break"] is None
+
+
+def test_version_1_manifests_stay_valid_without_the_break_field(run_dir):
+    manifest = json.loads((run_dir / "manifest.json").read_text())
+    del manifest["deliberate_break"]
+    manifest["schema_version"] = 1
+    (run_dir / "manifest.json").write_text(json.dumps(manifest))
+    assert main(["validate", str(run_dir)]) == 0
+    manifest["deliberate_break"] = None
+    (run_dir / "manifest.json").write_text(json.dumps(manifest))
+    assert main(["validate", str(run_dir)]) == 4
+
+
+def test_version_2_manifest_without_the_break_field_is_invalid(run_dir):
+    manifest = json.loads((run_dir / "manifest.json").read_text())
+    del manifest["deliberate_break"]
+    (run_dir / "manifest.json").write_text(json.dumps(manifest))
+    assert main(["validate", str(run_dir)]) == 4
+
+
+@pytest.mark.parametrize(("track", "parameters", "expected"), [
+    ("b-ibsim", {"break_link": "S1/P3-H1/P1"}, "break-link"),
+    ("b-ibsim", {"topology": "b-01.net"}, None),
+    ("c-ns3", {"deliberate_break": "pfc-off"}, "deliberate-break"),
+    ("c-ns3", {"deliberate_break": None}, None),
+    ("a-soft-roce", {"deliberate_break": "anything"}, None),
+])
+def test_version_1_breaks_come_from_the_input_parameter_of_their_track(track, parameters, expected):
+    from rfl import manifest
+    found = manifest.deliberate_break_of({"schema_version": 1, "track": track, "inputs": {"parameters": parameters}})
+    assert (found or {}).get("name") == expected
 
 
 def test_runner_metrics_take_the_result_kind_of_the_scenario(tmp_path, capsys):

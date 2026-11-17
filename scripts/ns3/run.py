@@ -14,6 +14,7 @@ from __future__ import annotations
 import hashlib
 import io
 import json
+import os
 import shutil
 import subprocess
 import tarfile
@@ -153,7 +154,8 @@ def steps_tsv(steps: list[list[str]]) -> bytes:
 
 class Run(RunBase):
     def __init__(self, scenario: str, inventories: list[Path], run_id: str | None, broken: str | None):
-        super().__init__(TRACK / "scenarios" / f"{scenario}.yaml", run_id)
+        super().__init__(TRACK / "scenarios" / f"{scenario}.yaml", run_id,
+                         {"name": broken, "description": BREAKS[broken].what} if broken else None)
         self.scenario = scenario
         config = yaml.safe_load(CONFIG.read_text())
         self.params = config["scenarios"][scenario]
@@ -242,14 +244,16 @@ def host_scan(run: Run, when: str) -> tuple[list[str], str]:
 
 
 class Decoy:
-    """For the host-process break: a copy of sleep named like the simulator, on the host, killed afterwards."""
+    """For the host-process break: a copy of sleep named like the simulator, on the host, killed afterwards.
 
-    def __init__(self):
-        self.dir = Path(tempfile.mkdtemp(prefix="rfl-ns3-decoy-"))
+    It carries RFL_RUN=<run-id>, and its directory the run id, so make cleanup finds both when the runner died first."""
+
+    def __init__(self, run_id: str):
+        self.dir = Path(tempfile.mkdtemp(prefix=f"rfl-ns3-decoy-{run_id}-"))
         binary = self.dir / "SimAI_simulator"
         shutil.copy2("/bin/sleep", binary)
         self.process = subprocess.Popen([str(binary), "600"], stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
-                                        stderr=subprocess.DEVNULL)
+                                        stderr=subprocess.DEVNULL, env={**os.environ, "RFL_RUN": run_id})
 
     def close(self) -> None:
         self.process.kill()
@@ -619,7 +623,7 @@ def main(scenario_name: str, inventories: list[Path], run_id: str | None, broken
     run = Run(scenario_name, inventories, run_id, broken)
     run.say(f"run {run.run_id} scenario {scenario_name} in {run.dir}, guest {run.guest.name}"
             + (f", deliberate break {broken}: {BREAKS[broken].what}" if broken else ""))
-    decoy = Decoy() if broken == "host-process" else None
+    decoy = Decoy(run.run_id) if broken == "host-process" else None
     simulated = None
     try:
         before, scan_start = host_scan(run, "start")

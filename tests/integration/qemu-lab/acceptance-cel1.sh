@@ -69,7 +69,7 @@ harness() {
   ! ss -xlp | grep -F "$LAB_DIR/net/" | grep -qv '^u_dgr'
 }
 
-host() { uptime; free -m; df -B1 --output=target,avail /cache / /data; du -sb "$LAB_DIR"; }
+host() { uptime; free -m; df -B1 --output=target,avail /cache / /data; if [[ -d $LAB_DIR ]]; then du -sb "$LAB_DIR"; else echo "$LAB_DIR does not exist yet"; fi; }
 
 opt_out_labels() {
   kubectl_cp get nodes -L nvidia.com/gpu.deploy.driver,nvidia.com/gpu.deploy.container-toolkit,nvidia.com/gpu.present
@@ -140,7 +140,8 @@ step helm-one-revision 0 one_revision
 step fleet-rsyslog-again 0 make fleet-rsyslog "${fleet[@]}"
 step fleet-rsyslog-again-unchanged 0 unchanged fleet-rsyslog-again
 step break-stop-rsyslog-on-dgx-06 0 stop_rsyslog_on_dgx06
-step cel1-sim-baseline-rsyslog-stopped nonzero make fleet-sim-test "FLEET_CONNECT=$connect"
+step cel1-sim-baseline-rsyslog-stopped nonzero env RFL_BREAK=rsyslog-stopped \
+  RFL_BREAK_WHAT='rsyslog stopped on cel1-dgx-06 just before the run' make fleet-sim-test "FLEET_CONNECT=$connect"
 step repair-fleet-rsyslog 0 make fleet-rsyslog "${fleet[@]}"
 step cel1-sim-baseline-repaired 0 make fleet-sim-test "FLEET_CONNECT=$connect"
 step inventory-check-cel1 0 make inventory-check INVENTORY=cel1

@@ -194,3 +194,11 @@ def test_a_pod_without_net1_is_a_problem_and_not_a_crash():
     att = multus.Attachment("ns", "rd0", "192.0.2.0/24", "192.0.2.100", "192.0.2.199")
     held = [{"ip": "192.0.2.100", "podref": "ns/a"}]
     assert multus.bookkeeping_problems({"a": "192.0.2.100", "b": None}, held, "ns", att) == ["b has no net1 address"]
+
+
+def test_a_file_that_survived_the_reboot_names_the_shutdown_not_the_first_look():
+    w = boot_window("survived", 1794848339.0)
+    assert w.samples == () and w.multus_born == 1794847758.848
+    problems = multus.window_problems(w)
+    assert len(problems) == 1 and problems[0].startswith(f"{multus.MULTUS_FILE} survived the reboot, born at boot-580.2 s")
+    assert "Conflicts=shutdown.target" in problems[0]

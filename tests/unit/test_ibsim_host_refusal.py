@@ -46,6 +46,7 @@ def run(argv: list[str], env: dict, stdin: str = "") -> subprocess.CompletedProc
         ["inspect", KEY],
         ["top", KEY],
         ["stop", KEY],
+        ["stop-run", KEY.split("-")[0]],
         ["ls"],
     ],
 )

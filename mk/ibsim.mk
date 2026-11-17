@@ -4,7 +4,7 @@
 TRACK_B_PY := PYTHONPATH=scripts $(BIN)/python -m ibsim
 TRACK_B_NET := tracks/b-ibsim/topologies/cel1-compute.net
 TRACK_B_SCENARIOS := $(basename $(notdir $(wildcard tracks/b-ibsim/scenarios/*.yaml)))
-TRACK_B_INVENTORIES = $(foreach i,$(shell LAB_PROFILE=ibsim $(LAB_HARNESS) inventories),-i $(i))
+TRACK_B_INVENTORIES = $(foreach i,$(shell env LAB_PROFILE=ibsim $(if $(LAB_DIR),LAB_DIR=$(LAB_DIR)) $(LAB_HARNESS) inventories),-i $(i))
 
 .PHONY: track-b-render track-b-render-check track-b-lock track-b-guest track-b-image track-b track-b-breaks
 

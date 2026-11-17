@@ -245,6 +245,10 @@ def window_problems(w: BootWindow) -> list[str]:
     """Why the pod did not wait for Multus: no look inside the window, a network without Multus, or a sandbox before it."""
     after = lambda t: f"boot+{t - w.boot:.1f} s"  # noqa: E731
     inside = inside_window(w)
+    if not inside and w.multus_born is not None and w.multus_born < w.boot:
+        return [f"{MULTUS_FILE} survived the reboot, born at boot{w.multus_born - w.boot:.1f} s, so Multus did not remove it at "
+                "shutdown and the boot had no window. A systemctl daemon-reload since the kubelet started drops its slices' "
+                "Conflicts=shutdown.target, and the node's console then shows systemd-shutdown waiting for multus-daemon"]
     if not inside:
         return [f"{MULTUS_FILE} already existed at the first look after the pod was created, so the run missed the window"]
     problems = []

@@ -128,17 +128,20 @@ def host_simulator_processes(ps_text: str) -> list[str]:
 
 class Run(RunBase):
     def __init__(self, scenario: str, inventories: list[Path], run_id: str | None, broken: bool):
-        super().__init__(TRACK / "scenarios" / f"{scenario}.yaml", run_id)
         config = yaml.safe_load(CONFIG.read_text())
+        params = {**config["defaults"], **config["scenarios"][scenario]}
+        cut = Port(params["break"]["node"], params["break"]["port"]) if broken else None
+        super().__init__(TRACK / "scenarios" / f"{scenario}.yaml", run_id, None if cut is None else {
+            "name": "missing-link", "description": f"the simulator gets {params['topology']} without the link at {cut}"})
         self.scenario = scenario
-        self.params = {**config["defaults"], **config["scenarios"][scenario]}
+        self.params = params
         self.metrics_note = "Observations of this simulator run in the Track B guest. No pass threshold applies."
         self.key = f"{self.run_id}-{scenario}"
         self.lock = yaml.safe_load(LOCK.read_text())
         self.image = self.lock["components"]["ibsim.image"]["value"]
         self.topology_file = guest.REPO_ROOT / self.params["topology"]
         self.full = parse_netfile(self.topology_file.read_text())
-        self.cut = Port(self.params["break"]["node"], self.params["break"]["port"]) if broken else None
+        self.cut = cut
         self.simulated = broken_netfile(self.params, self.full) if broken else self.topology_file.read_text()
         self.sm_port = Port(self.params["sm_host"], 1)
         self.guest = guest.load(inventories, self.log)
