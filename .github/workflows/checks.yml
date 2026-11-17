@@ -1,0 +1,42 @@
+# The checks that need no lab: static checks, unit tests over captured fixtures, the offline cel1 model and the
+# Track B topology rendering. The QEMU tracks stay manual, because they need /dev/kvm, guests and hours of a
+# trusted host, which a hosted runner does not give. docs/runbook.md says how to run them.
+name: checks
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: checks-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  offline:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+      # make venv builds .venv with uv. The version is the one the checks last passed with on the lab host.
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2  # v10.3.3
+        with:
+          version: "0.6.17"
+          enable-cache: false
+      - name: Tool versions
+        run: |
+          uv --version
+          shellcheck --version
+          make --version | head -n1
+      - run: make venv
+      # The Multus chart tests skip without the pinned helm, so it is installed before the unit tests.
+      - run: make tools
+      - run: make lint
+      - run: make test
+      - run: make fleet-check
+      - run: make track-b-render-check
