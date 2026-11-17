@@ -5,7 +5,7 @@
 <p align="center">
   <a href="docs/runbook.md">Runbook</a> ·
   <a href="docs/verification.md">Verification</a> ·
-  <a href=".site/README.md">Learning site</a> ·
+  <a href="https://ziwon.github.io/rdma-fabric-lab/">Learning site</a> ·
   <a href="docs/adr/">Decisions</a> ·
   <a href="LICENSE">MIT</a>
 </p>
@@ -84,7 +84,7 @@ make track-c lab-down LAB_PROFILE=ns3                 # c-01 to c-06 in the Trac
 
 ## Learn
 
-The learning site in `.site/` teaches the concepts behind each experiment, from verbs and RoCEv2 frames to subnet managers and DCQCN, and gives one page per lab with the commands to run it, what every check proves, real output with its run id, and the deliberate breaks to try. Run it locally with `make site-dev`. `.site/README.md` says how to publish it on GitHub Pages.
+The [learning site](https://ziwon.github.io/rdma-fabric-lab/) teaches the concepts behind each experiment, from verbs and RoCEv2 frames to subnet managers and DCQCN, and gives one page per lab with the commands to run it, what every check proves, real output with its run id, and the deliberate breaks to try. Its source is `.site/`, and `make site-dev` serves it locally.
 
 | Document | What it holds |
 |---|---|

@@ -50,12 +50,6 @@ A source under `tests/fixtures/` is tracked, and `npm test` checks those excerpt
 
 The workflow `.github/workflows/pages.yml` builds the site on every pull request and every push to `main`, and deploys it from `main` only. It uses no secret. Every action is pinned by commit.
 
-Nothing is published until the repository owner turns Pages on. The repository is private today, and Pages is not enabled on it. To publish:
+The site is published at https://ziwon.github.io/rdma-fabric-lab/. Pages takes its build and deployment from GitHub Actions, and the repository variable `PAGES_ENABLED` is `true`, so every push to `main` runs `.github/workflows/pages.yml`: the `build` job proves the site builds, and the `deploy` job publishes `.site/dist`. Pull requests run only the `build` job.
 
-1. Check that the account's plan offers GitHub Pages for private repositories. GitHub documents Pages for private repositories on its paid plans. On every plan except Enterprise Cloud with private Pages visibility, a Pages site is public on the internet even when the repository is private, so this site and every run detail on it would be readable by anyone.
-2. In the repository settings, open Pages and set the build and deployment source to GitHub Actions.
-3. If the `github-pages` environment has deployment branch rules, allow `main`.
-4. Under Settings, Secrets and variables, Actions, Variables, add the repository variable `PAGES_ENABLED` with the value `true`.
-5. Push to `main` or merge a pull request. The `deploy` job publishes `.site/dist` to `https://<owner>.github.io/rdma-fabric-lab/`.
-
-Until `PAGES_ENABLED` is `true`, a push to `main` runs only the `build` job, which proves the site builds, and skips the upload and the deploy. Deleting the variable stops publishing again.
+To stop publishing, delete the variable `PAGES_ENABLED` under Settings, Secrets and variables, Actions, Variables. A push to `main` then runs only the `build` job. A fork that wants its own copy enables Pages with GitHub Actions as the source, allows `main` in the `github-pages` environment if it has branch rules, and sets the same variable.
