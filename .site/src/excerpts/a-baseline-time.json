@@ -1,7 +1,7 @@
 {
   "id": "a-baseline-time",
   "run": "20261115T022240Z",
-  "source": "docs/milestones/evidence/m1/20261115T022240Z/a-soft-roce/vm-rxe-baseline/manifest.json",
+  "source": ".lab/evidence/m1/20261115T022240Z/a-soft-roce/vm-rxe-baseline/manifest.json",
   "lines": "10-11",
   "format": "text",
   "text": "  \"created_at\": \"2026-11-15T02:22:40Z\",\n  \"finished_at\": \"2026-11-15T02:22:58Z\","

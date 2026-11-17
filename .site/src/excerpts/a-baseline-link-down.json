@@ -1,7 +1,7 @@
 {
   "id": "a-baseline-link-down",
   "run": "20261115T022449Z",
-  "source": "docs/milestones/evidence/m1/20261115T022449Z/a-soft-roce/vm-rxe-baseline/summary.md",
+  "source": ".lab/evidence/m1/20261115T022449Z/a-soft-roce/vm-rxe-baseline/summary.md",
   "lines": "5-15",
   "format": "md-table",
   "text": "| check | status | failure class | detail |\n|---|---|---|---|\n| rxe-bound-to-lab-nic | failed | assertion-failed | worker1: rxe0 on enp0s4 is DOWN, not ACTIVE |\n| route-via-lab-nic | failed | assertion-failed | worker1 routes 10.77.0.13 via enp0s3, not enp0s4 |\n| rping-verified | failed | command-failed | the server exited 255 before it listened, client not started |\n| rdma-read | failed | command-failed | the server exited 1 before it listened, client not started |\n| rdma-write | failed | command-failed | the server exited 1 before it listened, client not started |\n| rdma-send | failed | command-failed | the server exited 1 before it listened, client not started |\n| roce-on-lab-nic | failed | assertion-failed | worker1: not a classic pcap file; worker2: flows {}, want both directions of ['10.77.0.12', '10.77.0.13'] only |\n| no-roce-on-mgmt-nic | passed |  | worker1 enp0s3 0 RoCEv2, 42 SSH SYN, worker2 enp0s3 0 RoCEv2, 3 SSH SYN |\n| no-process-left | passed |  | worker1: 0 stopped by the runner, 0 remaining; worker2: 0 stopped by the runner, 0 remaining |"

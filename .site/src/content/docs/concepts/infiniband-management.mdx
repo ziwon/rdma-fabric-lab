@@ -63,7 +63,7 @@ A port has a physical state, such as Polling or LinkUp, and a logical state that
 
 ## Routing engines
 
-The SM's routing engine decides which output port each switch uses for each LID. OpenSM 3.3.23 routes with minhop by default and also supports updn, dnup, file, ftree, lash, dor, torus-2QoS, nue, dfsssp and sssp ([M4](/docs/milestones/m4/) section 6).
+The SM's routing engine decides which output port each switch uses for each LID. OpenSM 3.3.23 routes with minhop by default and also supports updn, dnup, file, ftree, lash, dor, torus-2QoS, nue, dfsssp and sssp (`.lab/evidence/m4/probe/09-opensm-options.txt`). [ADR 0005](/docs/adr/0005-track-b-fabric-simulation/) says which engine each scenario uses and why.
 
 **minhop** chooses, for each switch and destination, an output port on a shortest path, and spreads destinations over equal ports. It does not guard against credit loops.
 

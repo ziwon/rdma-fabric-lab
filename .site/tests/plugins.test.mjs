@@ -7,9 +7,9 @@ const text = (node) => node.children.filter((c) => c.type === 'text').map((c) =>
 const run = (tree) => (rehypeCodeBreaks()(tree), tree);
 
 test('inline code gets break points after separators and keeps its text', () => {
-  const node = code('docs/milestones/M1.md');
+  const node = code('docs/adr/0002.md');
   run({ type: 'root', children: [node] });
-  assert.equal(text(node), 'docs/milestones/M1.md');
+  assert.equal(text(node), 'docs/adr/0002.md');
   assert.equal(node.children.filter((c) => c.tagName === 'wbr').length, 3);
   assert.equal(node.properties.className, undefined);
 });

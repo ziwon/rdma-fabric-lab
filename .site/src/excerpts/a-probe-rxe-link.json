@@ -1,7 +1,7 @@
 {
   "id": "a-probe-rxe-link",
   "run": "probe 20261115T012426Z",
-  "source": "docs/milestones/evidence/m1/probe.log",
+  "source": ".lab/evidence/m1/probe.log",
   "lines": "192-212",
   "format": "text",
   "text": "### worker1 $ sudo modprobe rdma_rxe && sudo rdma link add rxe0 type rxe netdev enp0s4 && rdma link show && ibv_devinfo -d rxe0\nlink rxe0/1 state ACTIVE physical_state LINK_UP netdev enp0s4 \nhca_id:\trxe0\n\ttransport:\t\t\tInfiniBand (0)\n\tfw_ver:\t\t\t\t0.0.0\n\tnode_guid:\t\t\t5054:00ff:fe4d:0012\n\tsys_image_guid:\t\t\t5054:00ff:fe4d:0012\n\tvendor_id:\t\t\t0xffffff\n\tvendor_part_id:\t\t\t0\n\thw_ver:\t\t\t\t0x0\n\tphys_port_cnt:\t\t\t1\n\t\tport:\t1\n\t\t\tstate:\t\t\tPORT_ACTIVE (4)\n\t\t\tmax_mtu:\t\t4096 (5)\n\t\t\tactive_mtu:\t\t1024 (3)\n\t\t\tsm_lid:\t\t\t0\n\t\t\tport_lid:\t\t0\n\t\t\tport_lmc:\t\t0x00\n\t\t\tlink_layer:\t\tEthernet\n\n### exit 0"

@@ -44,7 +44,7 @@ The `rxe` role reads `rdma -j link show` first. It refuses a device of the same 
 
 ## Real output
 
-The run of record of M1.
+The run of record.
 
 <Excerpt id="a-rerun-checks" />
 
@@ -54,7 +54,7 @@ The recap of the `bootstrap` rerun from an earlier run, the source of the parser
 
 ## Break it yourself
 
-M1 recorded no deliberate break for this scenario. Its checks are counts that a broken role would raise, and the first `make bootstrap` on fresh guests is the contrast. It reported `changed=8` on each worker, and the first `make rxe-up` reported `changed=7` ([M1](/docs/milestones/m1/) section 3). To see `single-rxe-device` fail yourself, add a second netplan file for the lab NIC on one worker and run the scenario. That exercise was not run in the records, so its output is not shown here.
+No deliberate break was recorded for this scenario. Its checks are counts that a broken role would raise, and the first `make bootstrap` on fresh guests is the contrast. It reported `changed=8` on each worker, and the first `make rxe-up` reported `changed=7` (steps 08 and 10 of `.lab/acceptance/20261115T022117Z`). To see `single-rxe-device` fail yourself, add a second netplan file for the lab NIC on one worker and run the scenario. That exercise was not run, so its output is not shown here.
 
 ## Questions to think about
 
@@ -64,7 +64,7 @@ M1 recorded no deliberate break for this scenario. Its checks are counts that a 
 
 ## What the result means and does not mean
 
-The run shows that a second pass of the roles converges on configured workers. It does not show convergence from every partial state, such as a device deleted at runtime, which M3 found `make rxe-up` did not repair until its role was fixed.
+The run shows that a second pass of the roles converges on configured workers. It does not show convergence from every partial state, such as a device deleted at runtime, which `make rxe-up` did not repair until its role was fixed on 2026-11-16.
 
 > [!NOTE]
 > This scenario measures no bandwidth. Its spec declares the result kind `software-rdma-measurement` like the other RXE scenarios, and its evidence is Ansible output.

@@ -1,7 +1,7 @@
 {
   "id": "b03-time",
   "run": "20261115T151655Z",
-  "source": "docs/milestones/evidence/m4/20261115T151655Z/b-ibsim/b-03/manifest.json",
+  "source": ".lab/evidence/m4/20261115T151655Z/b-ibsim/b-03/manifest.json",
   "lines": "10-11",
   "format": "text",
   "text": "  \"created_at\": \"2026-11-15T15:17:13Z\",\n  \"finished_at\": \"2026-11-15T15:17:32Z\","

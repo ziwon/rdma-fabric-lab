@@ -8,7 +8,7 @@ TRACK_C_INVENTORIES = $(foreach i,$(shell env LAB_PROFILE=ns3 $(if $(LAB_DIR),LA
 .PHONY: track-c-lock track-c-guest track-c-image track-c-smoke track-c-matrix track-c track-c-breaks
 
 track-c-lock: venv
-	$(RFL) versions --scope m6
+	$(RFL) versions --scope ns3
 
 track-c-guest: track-c-lock ## Boot or reuse the Track C guest and prepare it with ansible/playbooks/track-c-guest.yml
 	LAB_PROFILE=ns3 $(LAB_HARNESS) up

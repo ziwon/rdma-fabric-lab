@@ -144,7 +144,7 @@ def lock_findings(lock: dict, observed: dict[str, str]) -> list[Finding]:
         if pinned == value:
             found.append(Finding("versions", "ok", f"{name} {value} matches versions.lock.yaml"))
         else:
-            found.append(Finding("versions", "info", f"{name} is {value} here, the lock records {pinned} from the M1 verification host"))
+            found.append(Finding("versions", "info", f"{name} is {value} here, the lock records {pinned} from the host that ran the verification guests"))
     return found
 
 

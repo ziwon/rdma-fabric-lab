@@ -17,8 +17,8 @@ The repository holds the code of every track, the result contract they share, an
 | `tracks/` | Scenario specs, their configuration, the Track B topologies, the Track C driver and the guest scripts |
 | `tests/` | Unit tests, fixtures captured from real runs, and the QEMU harness under `tests/integration/qemu-lab/` |
 | `schemas/` | JSON schemas of scenario specs, run manifests, metrics and the version lock |
-| `versions.lock.yaml` | Every pinned version and checksum, grouped in scopes per milestone |
-| `docs/` | ADRs, milestone records, the cel1 runbook, VMware setup and troubleshooting |
+| `versions.lock.yaml` | Every pinned version and checksum, grouped in scopes per part of the lab |
+| `docs/` | The runbook, the verification record, ADRs, the cel1 runbook, VMware setup and troubleshooting |
 | `mk/` | The make targets of each area, included by `Makefile` |
 | `.site/` | This site |
 
@@ -33,7 +33,7 @@ flowchart TB
     R --> G[guests of the QEMU harness]
     G --> D[results/run-id/track/scenario/]
     D --> V[make validate<br/>schemas/]
-    V --> Rec[milestone record<br/>run ids, exit codes, findings]
+    V --> Rec[make report and the documents<br/>run ids, exit codes, findings]
 
     classDef primary fill:#232323,stroke:#d0d0d0,color:#f5f5f5,stroke-width:2px;
     classDef secondary fill:#3b2f20,stroke:#d0d0d0,color:#f5f5f5,stroke-width:2px;
@@ -49,13 +49,12 @@ flowchart TB
 
 | Path | Why it is not in git |
 |---|---|
-| `results/` | Run directories with raw captures and logs. The records cite their run ids |
-| `docs/milestones/evidence/` | Copies of the evidence a record cites by path |
-| `.lab/` | Guest disks, cloud-init seeds, SSH keys, the kubeconfig and the harness logs |
+| `results/` | Run directories with raw captures and logs. The documents cite their run ids |
+| `.lab/` | Guest disks, cloud-init seeds, SSH keys, the kubeconfig and the harness logs, and in `.lab/evidence/` copies of the evidence the documents cite by path |
 | `.tools/` | The pinned helm and kubeconform from `make tools`, and the charts they render |
 | `.venv/` | The pinned Python tooling from `make venv` |
 
-So a path under `docs/milestones/evidence/` or `.lab/` on this site is shown as code. It names a file that exists only on the machine that ran the lab.
+So a path under `.lab/` or `results/` on this site is shown as code. It names a file that exists only on the machine that ran the lab.
 
 ## The pages of this section
 

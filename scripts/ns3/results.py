@@ -119,7 +119,7 @@ def modeled_figures(work: Path) -> dict[str, str]:
     """The files that hold modeled figures, with run.tsv cut to the simulator's own time.
 
     Wall time and RSS of the simulator process vary between equal runs and say nothing about the model.
-    The M6 event logs and time series are compared too wherever the run wrote them.
+    The event logs and time series are compared too wherever the run wrote them.
     """
     names = ("flows.tsv", "links.tsv", "resolved.tsv", "counters.tsv", "events.tsv",
              *(name for name in SERIES_FILES if (work / name).is_file()))
@@ -173,7 +173,7 @@ def last_number_after(text: str, prefix: str) -> float | None:
 
 @dataclass
 class Series:
-    """The event logs and time series rfl-star writes besides the M5 files."""
+    """The event logs and time series rfl-star writes besides its flow, link, configuration and counter tables."""
 
     queues: list[tuple[int, int, int, int, int]]
     rates: list[tuple[int, int, int]]

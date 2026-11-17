@@ -1,6 +1,6 @@
 ---
 title: Reference
-description: The make targets, and the milestone records, ADRs and runbooks of the repository, copied into the site at build time.
+description: The make targets, and the runbook, verification record, ADRs and other documents of the repository, copied into the site at build time.
 sidebar:
   order: 0
 ---
@@ -8,27 +8,25 @@ sidebar:
 The reference pages come from the repository itself at build time, so they cannot fall behind it.
 
 - [Make targets](/reference/make-targets/) reads the `##` comments of `Makefile` and `mk/*.mk`, the same lines `make help` prints.
-- The repository documents below are copied from `docs/` by `scripts/sync-docs.mjs` at every build. Their own links become site links, a code span that names another copied document becomes a link to it, and paths under `docs/milestones/evidence/`, `.lab/` and `results/` stay code, because those files exist only on the machine that ran the lab.
+- The repository documents below are copied from `docs/` by `scripts/sync-docs.mjs` at every build. Their own links become site links, a code span that names another copied document becomes a link to it, and paths under `.lab/`, its evidence copies in `.lab/evidence/` among them, and `results/` stay code, because those files exist only on the machine that ran the lab.
 
-## Milestone records
-
-| Record | What it covers |
-|---|---|
-| [M0](/docs/milestones/m0/) | Design lock: the address plan, the RXE prerequisite probe, the version lock |
-| [M1](/docs/milestones/m1/) | RXE between two worker guests, reboot, rerun, link faults, cleanup |
-| [M2](/docs/milestones/m2/) | Kubernetes with Cilium, three control planes behind a VIP |
-| [M3](/docs/milestones/m3/) | hostNetwork RDMA pods, Multus `net1`, and Cilium's CNI file in its own directory |
-| [M4](/docs/milestones/m4/) | ibsim and OpenSM, B-01 to B-04 |
-| [cel1-sim](/docs/milestones/cel1-sim/) | The cel1 cluster on 13 guests |
-| [M5](/docs/milestones/m5/) | The ns-3 model in a pinned image and its single-flow baseline |
-| [M6](/docs/milestones/m6/) | The four congestion profiles under incast |
-
-## Decisions and runbooks
+## Running and proving the lab
 
 | Document | What it covers |
 |---|---|
-| [ADR 0001](/docs/adr/0001-kubernetes-stack/) | One Ansible and kubeadm stack for the lab and cel1, and the inventory contract |
-| [ADR 0002](/docs/adr/0002-execution-environments/) | Where each track runs and why |
-| [fleet](/docs/fleet/) | The cel1 runbook |
+| [runbook](/docs/runbook/) | From a fresh host to every track, with measured durations and sizes, cleanup, recovery and the safety rules |
+| [verification](/docs/verification/) | How the lab proves itself, the latest full reproduction and the MVP checklist with its evidence |
+| [troubleshooting](/docs/troubleshooting/) | Failures seen in every track and the cel1 simulation, with their causes and evidence |
+| [fleet](/docs/fleet/) | The cel1 region, its fleet targets and its simulation |
 | [setup-vmware](/docs/setup-vmware/) | The same lab as VMware Workstation guests, not verified on the current host |
-| [troubleshooting](/docs/troubleshooting/) | Failures seen so far and how to read them |
+
+## Decisions
+
+| Document | What it decides |
+|---|---|
+| [ADR 0001](/docs/adr/0001-kubernetes-stack/) | One Ansible and kubeadm stack for the lab and cel1, the inventory contract, and how the stack converges |
+| [ADR 0002](/docs/adr/0002-execution-environments/) | Where each track runs and why, and the rules that make every image rebuild to its pinned digest |
+| [ADR 0003](/docs/adr/0003-results-and-breaks/) | The result contract, the four result kinds, deliberate breaks and the report |
+| [ADR 0004](/docs/adr/0004-track-a-pods-and-net1/) | hostNetwork RDMA pods with `privileged`, Multus and Whereabouts, and Cilium's CNI file in its own directory |
+| [ADR 0005](/docs/adr/0005-track-b-fabric-simulation/) | The ibsim packages, the topologies and the routing engine per scenario |
+| [ADR 0006](/docs/adr/0006-track-c-packet-model/) | The ns-3 backend, the RESUME patch, the four profiles and the comparison parameters |

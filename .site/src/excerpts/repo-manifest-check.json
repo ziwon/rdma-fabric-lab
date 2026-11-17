@@ -1,7 +1,7 @@
 {
   "id": "repo-manifest-check",
   "run": "20261115T022240Z",
-  "source": "docs/milestones/evidence/m1/20261115T022240Z/a-soft-roce/vm-rxe-baseline/manifest.json",
+  "source": ".lab/evidence/m1/20261115T022240Z/a-soft-roce/vm-rxe-baseline/manifest.json",
   "lines": "102-112",
   "format": "text",
   "text": "    {\n      \"id\": \"rxe-bound-to-lab-nic\",\n      \"description\": \"On each worker exactly one RDMA link uses the lab NIC, it is the inventory device, and its port is ACTIVE.\",\n      \"status\": \"passed\",\n      \"exit_code\": 0,\n      \"failure_class\": null,\n      \"evidence\": [\n        \"raw/rxe-bound-to-lab-nic/worker1-rdma-link.json\",\n        \"raw/rxe-bound-to-lab-nic/worker2-rdma-link.json\"\n      ],\n      \"detail\": \"worker1 rxe0 on enp0s4 ACTIVE, worker2 rxe0 on enp0s4 ACTIVE\""

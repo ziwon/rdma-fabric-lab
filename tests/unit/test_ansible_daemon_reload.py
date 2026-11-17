@@ -1,7 +1,7 @@
 """systemd reloads only from handlers, so only when a unit file changed.
 
 A systemctl daemon-reload on a node with pods makes systemd 255 drop the Conflicts=shutdown.target that the kubelet set
-on its slices. The next shutdown then never stops the pods, and Multus keeps its file across the reboot (M7).
+on its slices. The next shutdown then never stops the pods, and Multus keeps its file across the reboot (docs/troubleshooting.md section 12).
 """
 
 from pathlib import Path

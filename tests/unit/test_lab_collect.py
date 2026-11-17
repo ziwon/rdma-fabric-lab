@@ -24,7 +24,7 @@ def test_guest_report_maps_to_lock_components():
 
 def test_lock_agrees_with_the_captured_guest():
     rows = collect.lock_rows(LOCK, collect.observed_versions(REPORT, PACKAGES))
-    assert {r["component"] for r in rows} == {c for c in LOCK["scopes"]["m1"] if c.startswith("lab.")}
+    assert {r["component"] for r in rows} == {c for c in LOCK["scopes"]["lab"] if c.startswith("lab.")}
     assert "lab.k8s_test_image" not in {r["component"] for r in rows}
     assert all(r["agrees"] for r in rows), rows
 

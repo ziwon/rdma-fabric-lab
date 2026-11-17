@@ -6,8 +6,8 @@ import pytest
 
 from run import multus
 
-FIX = Path(__file__).resolve().parents[1] / "fixtures" / "a-soft-roce" / "m3"
-NEW = FIX.parent / "m3-cni-dir"
+FIX = Path(__file__).resolve().parents[1] / "fixtures" / "a-soft-roce" / "k8s-rdma"
+NEW = FIX.parent / "cni-dir"
 ADDRESS_PLAN = {"rdma": "192.0.2.0/24", "multus_pool": "192.0.2.100-192.0.2.199"}
 LISTING = {
     "workers": {"hosts": ["w1", "w2"]},
@@ -78,7 +78,7 @@ def test_multus_alone_in_the_cni_dir_naming_cilium_in_its_own_directory_passes()
     assert layout() == []
 
 
-def test_the_m3_layout_with_cilium_beside_multus_fails_on_the_file_and_the_delegate_path():
+def test_the_old_layout_with_cilium_beside_multus_fails_on_the_file_and_the_delegate_path():
     problems = layout(FIX)
     assert any("holds the CNI files ['00-multus.conf', '05-cilium.conflist']" in p for p in problems)
     assert any("clusterNetwork is '/host/etc/cni/net.d/05-cilium.conflist'" in p for p in problems)

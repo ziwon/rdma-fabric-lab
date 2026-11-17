@@ -1,7 +1,7 @@
 {
   "id": "a-baseline-netem",
   "run": "20261115T022539Z",
-  "source": "docs/milestones/evidence/m1/20261115T022539Z/a-soft-roce/vm-rxe-baseline/summary.md",
+  "source": ".lab/evidence/m1/20261115T022539Z/a-soft-roce/vm-rxe-baseline/summary.md",
   "lines": "5-15",
   "format": "md-table",
   "text": "| check | status | failure class | detail |\n|---|---|---|---|\n| rxe-bound-to-lab-nic | passed |  | worker1 rxe0 on enp0s4 ACTIVE, worker2 rxe0 on enp0s4 ACTIVE |\n| route-via-lab-nic | passed |  | worker1 to 10.77.0.13 via enp0s4, worker2 to 10.77.0.12 via enp0s4 |\n| rping-verified | failed | timeout | server exit None, client exit 124 |\n| rdma-read | failed | command-failed | server exit None, client exit 1 |\n| rdma-write | failed | command-failed | server exit None, client exit 1 |\n| rdma-send | failed | command-failed | server exit None, client exit 1 |\n| roce-on-lab-nic | failed | assertion-failed | worker1: flows {'10.77.0.13>10.77.0.12': 5}, want both directions of ['10.77.0.12', '10.77.0.13'] only; worker2: flows {'10.77.0.13>10.77.0.12': 5}, want both directions of ['10.77.0.12', '10.77.0.13'] only |\n| no-roce-on-mgmt-nic | passed |  | worker1 enp0s3 0 RoCEv2, 120 SSH SYN, worker2 enp0s3 0 RoCEv2, 157 SSH SYN |\n| no-process-left | passed |  | worker1: 0 stopped by the runner, 0 remaining; worker2: 0 stopped by the runner, 0 remaining |"

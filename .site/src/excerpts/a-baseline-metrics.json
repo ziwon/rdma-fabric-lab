@@ -1,7 +1,7 @@
 {
   "id": "a-baseline-metrics",
   "run": "20261115T022240Z",
-  "source": "docs/milestones/evidence/m1/20261115T022240Z/a-soft-roce/vm-rxe-baseline/summary.md",
+  "source": ".lab/evidence/m1/20261115T022240Z/a-soft-roce/vm-rxe-baseline/summary.md",
   "lines": "19-29",
   "format": "md-table",
   "text": "| metric | value | unit | absent reason |\n|---|---|---|---|\n| rdma_read.bw_average | 1.96 | Gb/sec |  |\n| rdma_read.bw_peak | 2.01 | Gb/sec |  |\n| rdma_read.msg_rate | 0.059855 | Mpps |  |\n| rdma_write.bw_average | 1.94 | Gb/sec |  |\n| rdma_write.bw_peak | 1.97 | Gb/sec |  |\n| rdma_write.msg_rate | 0.059249 | Mpps |  |\n| rdma_send.bw_average | 2.8 | Gb/sec |  |\n| rdma_send.bw_peak | 2.81 | Gb/sec |  |\n| rdma_send.msg_rate | 0.085355 | Mpps |  |"

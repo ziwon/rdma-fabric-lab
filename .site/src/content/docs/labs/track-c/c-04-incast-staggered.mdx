@@ -28,7 +28,7 @@ Compare the four profiles on staggered incast, with the same checks as [c-03](/l
 | Image | `rfl-ns3:m6`, `sha256:da7a3245…` |
 | Cases | 60, twice, as in c-03 |
 
-**Time taken.** <Duration id="c04-time" />. M6 gives about 35 s for one 60-case run including both containers.
+**Time taken.** <Duration id="c04-time" />. One 60-case run takes about 35 s including both containers.
 
 ## Run it
 
@@ -42,7 +42,7 @@ make track-c
 
 ## Real output
 
-The run of record of M6.
+The run of record.
 
 <Excerpt id="c04-checks" />
 
@@ -56,7 +56,7 @@ At fan-in 8, c-none completed only 35 of 40 large flows, and c-ecn 36. In every 
 
 <Excerpt id="c04-stalled-flow" />
 
-Flow 4 delivered 305000 bytes in order and stopped. The switch refused its tail whole, so no later packet arrived to reveal the gap, the receiver sent no NACK, and the sender, which has go-back-N on NACK and no retransmission timer, never resent ([M6](/docs/milestones/m6/) section 7). `flows-accounted` lists the flow as unfinished, and the completion ratio of the row shows it.
+Flow 4 delivered 305000 bytes in order and stopped. The switch refused its tail whole, so no later packet arrived to reveal the gap, the receiver sent no NACK, and the sender, which has go-back-N on NACK and no retransmission timer, never resent (`tests/fixtures/c-ns3/incast/c-04-incast-staggered/n8-c-none-s1/`). `flows-accounted` lists the flow as unfinished, and the completion ratio of the row shows it.
 
 ## Break it yourself
 

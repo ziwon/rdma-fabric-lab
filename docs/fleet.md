@@ -1,7 +1,7 @@
 # cel1: operations guide for the virtual GPU region
 
 > Written: 2026-11-15, updated 2026-11-16  
-> Status: the site model, inventory generation, contract check and Helm rendering ran offline and were confirmed. The three fleet targets ran against the cel1 simulation, 13 QEMU guests on this host, and `docs/milestones/cel1-sim.md` records the results. No real host exists.  
+> Status: the site model, inventory generation, contract check and Helm rendering ran offline and were confirmed. The three fleet targets ran against the cel1 simulation, 13 QEMU guests on this host, from wiped guests: run `20261115T164615Z` passed, and the latest, `20261116T203232Z`, passed in the full reproduction of `docs/verification.md`. Section 13 describes the simulation. No real host exists.  
 > Basis: `docs/adr/0001-kubernetes-stack.md`. Its section 4 is the inventory contract.
 
 ## 1. Region
@@ -14,7 +14,7 @@ cel1 is a region that does not exist. All host names, addresses, interface names
 | `dgx_b200` | `cel1-dgx-01`–`08` | 8 | DGX OS 7 | Installed in DGX OS | `mgmt0`, `stor0`, `stor1`, `rail0`–`rail7` |
 | `pcie_gpu` | `cel1-pcie-01`–`02` | 2 | Ubuntu 24.04 | GPU Operator installs them | `mgmt0` |
 
-There are 8 DGX nodes, not 64. The user decided that this host cannot simulate more. The cel1 simulation boots one QEMU guest per host and runs the real playbooks against them (section 9).
+There are 8 DGX nodes, not 64. The user decided that this host cannot simulate more. The cel1 simulation boots one QEMU guest per host and runs the real playbooks against them (section 13).
 
 ## 2. Site model
 
@@ -55,7 +55,7 @@ The validator rejects a name longer than 15 characters or with characters other 
 
 Each leaf has 8 downlinks and 8 uplinks, an equal number, so the leaves have no oversubscription. Every link is an entry in an explicit cable list. No rule generates them, so the validator checks the real cabling plan.
 
-M4 builds the ibsim topology from this section. ibsim (`ibsim/sim_net.c`) reads node kinds and port counts, unique node names, links with the port number on each end, and optional link width and speed. The model has all of them. Each rail has one single-port HCA, `mlx5_<r>`. No ibsim file is written yet.
+`make track-b-render` writes the ibsim topology `tracks/b-ibsim/topologies/cel1-compute.net` from this section, and the Track B scenario B-04 runs on it (`docs/adr/0005-track-b-fabric-simulation.md`). ibsim (`ibsim/sim_net.c`) reads node kinds and port counts, unique node names, links with the port number on each end, and optional link width and speed. The model has all of them. Each rail has one single-port HCA, `mlx5_<r>`. `make track-b-render-check` fails when the file differs from what the model renders.
 
 ### 2.4 Validator
 
@@ -218,14 +218,14 @@ Each check was broken once to confirm that it fails.
 
 ## 10. Not run
 
-The cel1 simulation ran the three fleet targets on 13 guests (`docs/milestones/cel1-sim.md`). That run settled the earlier items about the targets, a second `rsyslog_client` run, Cilium native routing, kube-proxy replacement and the nvidia default runtime, and M4 built the ibsim topology. These remain.
+The cel1 simulation ran the three fleet targets on 13 guests (section 13). That run settled the earlier items about the targets, a second `rsyslog_client` run, Cilium native routing, kube-proxy replacement and the nvidia default runtime, and Track B builds the ibsim topology. These remain.
 
 | Item | Status | Reason |
 |---|---|---|
 | Placement driven by the GPU Operator labels | `not_run` | There is no GPU. The guests have none either, so NFD reports no NVIDIA device and the Operator creates no operand |
 | The real NVIDIA container toolkit on DGX nodes | `not_run` | The simulation uses a stand-in runtime that execs runc |
 | The toolkit drop-in on PCIe GPU servers | `not_run` | Section 6. Only a server with a GPU can confirm it |
-| InfiniBand on the rails | `not_run` | The simulation rails carry Ethernet. M4 simulates the fabric's management plane |
+| InfiniBand on the rails | `not_run` | The simulation rails carry Ethernet. Track B simulates the fabric's management plane in B-04 |
 | Schema validation of the 9 GPU Operator CRDs and ClusterPolicy | `not_run` | No kubeconform schema exists |
 
 ## 11. Applying this to another site
@@ -260,3 +260,23 @@ Another site gives the same code only its own files. All those files live outsid
 | DGX default runtime | `container_runtime: nvidia` on `dgx_b200` in the model. The `containerd` role makes it the default |
 | GPU Operator labels on a DGX node without GPUs | The Operator removes the opt-outs at its start, and `make fleet-k8s` puts them back (section 6). The role keeps converging them |
 | Helm values for another site | Needs the override mechanism of section 11 |
+
+## 13. The simulation
+
+`tests/integration/qemu-lab/acceptance-cel1.sh` builds the region from wiped guests with the fleet targets of section 8 and runs `cel1-sim-baseline`, whose 20 checks `tracks/cel1/scenarios/cel1-sim-baseline.yaml` declares. `make fleet-sim-profile` writes the harness profile `tests/integration/qemu-lab/profiles/cel1.tsv` from the model, one guest per host and one NIC per class interface under its name, and `make fleet-sim-profile-check` fails when the profile differs from the model. `docs/runbook.md` section 4 gives the guest sizes.
+
+| Site model | Simulation |
+|---|---|
+| Bare-metal hosts. DGX OS 7 on the DGX nodes | KVM guests. Ubuntu 24.04.5 on every class |
+| 8 B200 GPUs per DGX node, GPUs in the PCIe servers | No GPU, no NVIDIA driver, no NVIDIA PCI device |
+| The NVIDIA container toolkit of DGX OS | `/usr/bin/nvidia-container-runtime` is a stand-in that logs each call to `/var/log/rfl-nvidia-container-runtime.log` and execs `/usr/local/sbin/runc`. `make fleet-sim-stand-ins` installs it on the hosts whose `k8s_container_runtime_default` is `nvidia`. The inventory and the roles are unchanged |
+| `rail0`–`rail7` are InfiniBand ports on ConnectX HCAs `mlx5_0`–`mlx5_7` | virtio NICs on one unprivileged Ethernet switch per rail. No RDMA device. The rails carry Ethernet frames |
+| One L2 segment per network | `switch.py`, one per network, 11 in total, AF_UNIX datagrams only. Every QEMU and switch process runs AppArmor `unconfined` with `CapEff: 0000000000000000` |
+| Interfaces renamed by `.link` files from provisioning | cloud-init netplan matches each MAC, renames the NIC and sets its model address at first boot |
+| Each host has only its model interfaces | Each guest also has a QEMU user NIC `enp0s3` (`10.0.2.15`) with the default route, for SSH and package downloads. The node IP sits on `mgmt0`. This is the condition of the Cilium API defect of `docs/adr/0001-kubernetes-stack.md` section 9 |
+| The central syslog server is outside the model, known only by `10.140.0.5:514` | The guest `cel1-sim-syslog` holds `10.140.0.5` on the management network and receives TCP syslog with rsyslog `imtcp`, one file per sending host. It is in the override group `simulation_syslog`, not in the site inventory |
+| The control node reaches the API on the VIP | Port 6443 of `cel1-cp-01` is forwarded to `127.0.0.1:22340`. The kubeconfig names that forward with `tls-server-name: kubernetes` |
+| Power failure | `lab.sh kill` sends SIGKILL to QEMU |
+| A panic leaves a crash dump or a reboot | `-no-reboot` ends the QEMU process and keeps the console in `serial.log` |
+
+Run `20261115T164615Z` passed all 20 checks from wiped guests in `.lab/acceptance-cel1/20261115T163759Z`, 46 steps with no unexpected exit code. The second `make fleet-k8s` before the GPU Operator and a converged run after it reported `changed=0` on every host, and the second `make fleet-addons` left both releases at revision 1. The first `make fleet-k8s` after the Operator started changed only the opt-out labels of section 6 on the 8 DGX hosts. Every refusal of the gate exited 2, and strace saw no IPv4 or IPv6 call in any of them (`.lab/evidence/cel1-sim/acceptance/strace-summary.txt`, `.lab/evidence/cel1-sim/refusals-final.log`). The site's cel1 lab page holds the measured figures.

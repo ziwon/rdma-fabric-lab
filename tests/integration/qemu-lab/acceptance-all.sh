@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Every required experiment again from wiped guests, one harness profile at a time: acceptance-m3.sh (M1 to M3),
+# Every required experiment again from wiped guests, one harness profile at a time: acceptance-track-a.sh,
 # make collect and make track-a on the same lab, acceptance-ha.sh, make track-b and track-b-breaks, make track-c
 # CLEAN=1 and track-c-breaks, and acceptance-cel1.sh last because it boots 13 guests. Each profile is stopped
 # before the next boots, and every boot waits for a step that fails while any QEMU process runs. It ends with
@@ -11,7 +11,7 @@ set -euo pipefail
 
 here=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 repo=$(cd "$here/../../.." && pwd)
-: "${LAB_ROOT:?set LAB_ROOT to a directory with room for 13 guest disks, such as /data/rfl-lab/m7}"
+: "${LAB_ROOT:?set LAB_ROOT to a directory with room for 13 guest disks, such as /data/rfl-lab/all}"
 root=$(realpath -m "$LAB_ROOT")
 out=$repo/.lab/acceptance-all/$(date -u +%Y%m%dT%H%M%SZ)
 mkdir -p "$out" "$root"
@@ -60,7 +60,7 @@ host() { uptime; free -m; df -B1 --output=target,avail /cache / /data; du -sb "$
 
 step host-before 0 host
 step no-guests-before-lab 0 no_guests
-step acceptance-m3 0 in_profile lab "$here/acceptance-m3.sh"
+step acceptance-track-a 0 in_profile lab "$here/acceptance-track-a.sh"
 step lab-only-before-collect 0 only_lab_guests
 step collect 0 in_profile lab make collect
 step lab-only-before-track-a 0 only_lab_guests

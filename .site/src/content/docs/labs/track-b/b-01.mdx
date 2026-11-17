@@ -30,7 +30,7 @@ Show that OpenSM reaches SUBNET UP on the B-01 fabric, that `ibnetdiscover` find
 | Image | `rfl-ibsim:m4`, `sha256:cb3e3550f4f60de5414abe55dbe81e45fd68106ef5ecc4cfa4d701b6083ee279` |
 | Software in the image | ibsim 0.10-2build1, OpenSM 3.3.23-2, infiniband-diags 50.0-2ubuntu0.2, from the Ubuntu snapshot 20261115T000000Z |
 | Guest | Ubuntu 24.04.5, kernel 6.8.0-147-generic, Docker 29.1.3, `kernel.panic_on_oops=1`, QEMU `-no-reboot` |
-| Version lock | `make versions SCOPE=m4` must return 0 |
+| Version lock | `make versions SCOPE=ibsim` must return 0 |
 
 > [!CAUTION]
 > Never run ibsim, libumad2sim, OpenSM or the diagnostic tools on the host, in a container or not. See [Safety rules](/start/safety/).
@@ -59,7 +59,7 @@ The fabric, hand-written in the ibsim net file format.
 
 ## Real output
 
-The run of record of M4.
+The run of record.
 
 <Excerpt id="b01-checks" />
 
@@ -81,7 +81,7 @@ make track-b-breaks
 
 <Excerpt id="b01-break" />
 
-`routes-shortest` still passed, which is correct. With `hca2` gone, the switch still forwards the one remaining endpoint LID out of the right port. All four break runs of `20261115T151828Z` failed with class `assertion-failed`, and `rfl validate` accepted them ([M4](/docs/milestones/m4/) section 7).
+`routes-shortest` still passed, which is correct. With `hca2` gone, the switch still forwards the one remaining endpoint LID out of the right port. All four break runs of `20261115T151828Z` failed with class `assertion-failed`, and `rfl validate` accepted them ([ADR 0005](/docs/adr/0005-track-b-fabric-simulation/) section 3).
 
 ## Questions to think about
 

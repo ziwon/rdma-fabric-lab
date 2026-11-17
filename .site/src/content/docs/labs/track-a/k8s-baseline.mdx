@@ -26,7 +26,7 @@ Show that the three nodes are Ready, that a pod on `worker2` reaches a pod on `w
 |---|---|
 | Profile | `lab`: `cp1` 2 vCPU, 4 GiB, 30 GiB, and `worker1`, `worker2` 4 vCPU, 6 GiB, 40 GiB each |
 | Versions | Kubernetes v1.36.6, containerd 2.4.2, runc 1.5.3, CNI plugins v1.10.0, Cilium chart 1.20.4 |
-| Version lock | `make versions SCOPE=m2` must return 0 |
+| Version lock | `make versions SCOPE=k8s` must return 0 |
 
 **Time taken.** <Duration id="a-k8s-time" />.
 
@@ -40,7 +40,7 @@ make addons ENV=lab KUBECONFIG_FILE=.lab/kubeconfig   # Cilium, then Multus and 
 make k8s-test                                         # this scenario
 ```
 
-A second `make k8s` must report `3 hosts, 0 with changes`, and a second `make addons` must print `cilium: unchanged` and leave the release at revision 1. `make addons` compares the deployed chart version and values with the lock and the values file before it upgrades, because `helm upgrade --install` writes a new revision even when nothing changed ([M2](/docs/milestones/m2/) section 4).
+A second `make k8s` must report `3 hosts, 0 with changes`, and a second `make addons` must print `cilium: unchanged` and leave the release at revision 1. `make addons` compares the deployed chart version and values with the lock and the values file before it upgrades, because `helm upgrade --install` writes a new revision even when nothing changed ([ADR 0001](/docs/adr/0001-kubernetes-stack/) section 8).
 
 ## What every check proves
 
@@ -50,7 +50,7 @@ The two NetworkPolicy checks run only when the Service check passed, because a b
 
 ## Real output
 
-The run of record of M2, on guests built from wiped disks.
+The run of record, on guests built from wiped disks.
 
 <Excerpt id="a-k8s-checks" />
 
@@ -73,7 +73,7 @@ The VXLAN block. Every agent was still ready, while the traffic timed out and th
 
 - With UDP 8472 dropped on worker1, all three Cilium agents still reported ready. What does agent readiness measure, and what does it not?
 - Why does the capture see VXLAN from worker2 to worker1 but nothing back, when the rule drops only incoming packets on worker1?
-- A restarted agent could not reach the API through the ClusterIP in the first M2 acceptance run. Which property of the harness's default route caused it, and why did first installation work?
+- A restarted agent could not reach the API through the ClusterIP in the first Kubernetes acceptance run. Which property of the harness's default route caused it, and why did first installation work?
 - Why is DNS resolution a separate check from the Service request, when the request uses the name?
 
 ## What the result means and does not mean

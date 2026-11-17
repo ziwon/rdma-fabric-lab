@@ -16,23 +16,23 @@ Node.js 22 or newer is needed. The Pages workflow uses Node 24. Every dependency
 
 | Step | Script | Fails when |
 |---|---|---|
-| Copy the repository documents | `scripts/sync-docs.mjs` copies `docs/*.md`, `docs/adr/*.md` and `docs/milestones/*.md` into `src/content/docs/docs/` and rewrites their links | A document has no level-one heading |
+| Copy the repository documents | `scripts/sync-docs.mjs` copies `docs/*.md` and `docs/adr/*.md` into `src/content/docs/docs/` and rewrites their links. The runbook, the verification record and the troubleshooting guide lead the sidebar | A document has no level-one heading |
 | Generate page data | The same script writes `src/generated/` from `tracks/*/scenarios/*.yaml`, the `##` comments of `Makefile` and `mk/*.mk`, and `versions.lock.yaml` | A spec or the lock does not parse |
 | Render | `astro build`, with `starlight-links-validator` | An internal link or anchor leads nowhere |
 | Verify | `scripts/verify-dist.mjs` reads the specs and Makefiles again and checks the built HTML | A page lacks a declared check, a make target or a copied document, or a component link leads nowhere |
 
-`src/content/docs/docs/` and `src/generated/` are written at every build and are not tracked. Paths under `docs/milestones/evidence/`, `.lab/` and `results/` stay code in the copied documents, because those files exist only on the machine that ran the lab.
+`src/content/docs/docs/` and `src/generated/` are written at every build and are not tracked. Paths under `.lab/`, its evidence copies in `.lab/evidence/` among them, and `results/` stay code in the copied documents, because those files exist only on the machine that ran the lab.
 
 ## Output excerpts
 
 Every command output on the site is an excerpt of a real run, stored in `src/excerpts/<id>.json` and listed in `excerpts.yaml` with its run id, source file and lines. Pages show them with `<Excerpt id="..." />`. Nobody types an excerpt by hand.
 
 ```bash
-RFL_EVIDENCE_DIR=<checkout>/docs/milestones/evidence npm run excerpts pull    # copy the listed lines
-RFL_EVIDENCE_DIR=<checkout>/docs/milestones/evidence npm run excerpts check   # prove the copies still match
+RFL_EVIDENCE_DIR=<checkout>/.lab/evidence npm run excerpts pull    # copy the listed lines
+RFL_EVIDENCE_DIR=<checkout>/.lab/evidence npm run excerpts check   # prove the copies still match
 ```
 
-A source under `tests/fixtures/` is tracked, and `npm test` checks those excerpts everywhere. A source under `docs/milestones/evidence/` exists only on the machine that ran the lab, so `check` skips it elsewhere and says how many it skipped. `pull` replaces local paths, the host name and the user name of the machine with `<repo>`, `~`, `<host>` and `<user>`, and refuses an excerpt that names the local design draft.
+A source under `tests/fixtures/` is tracked, and `npm test` checks those excerpts everywhere. A source under `.lab/evidence/` exists only on the machine that ran the lab, so `check` skips it elsewhere and says how many it skipped. `pull` replaces local paths, the host name and the user name of the machine with `<repo>`, `~`, `<host>` and `<user>`, and refuses an excerpt that names the local design draft.
 
 ## Layout
 

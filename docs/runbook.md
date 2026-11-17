@@ -1,6 +1,6 @@
 # Runbook
 
-This runbook takes an operator from a fresh Ubuntu 24.04 host to every track of the lab, and back to a clean host. It names each target in the order it runs, what it needs, how long it took on this host in M7, and how to read, clean and recover what it leaves. Every duration and size below was measured in M7 and comes from the step tables that `docs/milestones/M7.md` cites.
+This runbook takes an operator from a fresh Ubuntu 24.04 host to every track of the lab, and back to a clean host. It names each target in the order it runs, what it needs, how long it took on this host, and how to read, clean and recover what it leaves. Every duration and size below was measured in `acceptance-all.sh` run `20261116T190004Z`, from its step table `.lab/acceptance-all/20261116T190004Z/steps.tsv`, unless a line names another run. `docs/verification.md` says what that run proved.
 
 ## 1. What runs where
 
@@ -21,7 +21,7 @@ Every guest is an unprivileged QEMU process. Its network frames never leave the 
 |---|---|---|
 | Ubuntu 24.04 host with KVM, and `/dev/kvm` readable and writable by your user | Every guest is a KVM guest. The lab needs no sudo | `make doctor` |
 | `qemu-system-x86_64`, `qemu-img`, `cloud-localds`, `ssh`, `ssh-keygen`, `curl` | The QEMU harness and its seeds, keys and image download | `make doctor` reports each one missing |
-| `make`, `git`, `uv`, `shellcheck` | `make venv` builds `.venv` with uv, and `make lint` runs shellcheck over `git ls-files` | `uv --version`, `shellcheck --version`. M7 used uv 0.6.17 and ShellCheck 0.9.0 |
+| `make`, `git`, `uv`, `shellcheck` | `make venv` builds `.venv` with uv, and `make lint` runs shellcheck over `git ls-files` | `uv --version`, `shellcheck --version`. The verification host used uv 0.6.17 and ShellCheck 0.9.0 |
 | `strace` | `acceptance-cel1.sh` proves the fleet targets refuse without network calls | `strace -V` |
 | Internet access from the host and the guests | The guest cloud image, Ubuntu packages, pkgs.k8s.io, Helm charts, container base images and the Track C sources, each pinned in `versions.lock.yaml` | The first `make lab-up` downloads the image and checks its sha256 |
 | Free cores, memory and disk for the profile you boot | Section 4 | `make doctor` warns, it does not fail |
@@ -44,9 +44,9 @@ Put the guest disks on a file system with room. Each profile takes `LAB_DIR=<dir
 
 ## 4. Guests per profile
 
-The vCPU, memory and disk columns are what the profile files under `tests/integration/qemu-lab/profiles/` give QEMU. Disks are thin qcow2 overlays, so the used column is what they held after the M7 runs.
+The vCPU, memory and disk columns are what the profile files under `tests/integration/qemu-lab/profiles/` give QEMU. Disks are thin qcow2 overlays, so the used column is what they held after the full run.
 
-| Profile | Guests | vCPU | Memory | Disk, virtual | Disk, used after M7 |
+| Profile | Guests | vCPU | Memory | Disk, virtual | Disk, used after the full run |
 |---|---:|---:|---:|---:|---:|
 | `lab` | 3 | 10 | 16 GiB | 110 GiB | 13 GiB |
 | `lab` builder, the `ibsim` profile in `LAB_DIR/builder` | 1 | 4 | 6 GiB | 20 GiB | 1.1 GiB |
@@ -57,18 +57,25 @@ The vCPU, memory and disk columns are what the profile files under `tests/integr
 
 The builder boots only while `make rdma-tools-image` runs, beside the lab guests. Every other profile runs alone.
 
+The sizes come from measurements.
+
+- `lab`: cp1 2 vCPU and 4 GiB, each worker 4 vCPU and 6 GiB, the allocation the VMware design starts from (`docs/setup-vmware.md`).
+- `ha`: 2 vCPU per node, 2.5 GiB per control plane and 2 GiB for the worker. Host memory stayed free with the lab guests running beside it.
+- `ns3`: one ns-3 build with 12 parallel jobs peaked at 4.78 GB of container memory, page cache included, and two probe builds overlapping with the image build peaked at 9.84 GB. 16 GiB holds 3.6 times a single build and 1.7 times that peak, and 12 vCPUs keep the build near one minute and give the SimAI example's 8 threads 8 CPUs (`.lab/evidence/m5/guest-memory-peaks.txt`). One incast run of 60 cases takes about 35 s, and `rfl-star` used at most 65408 KiB of RSS in any case.
+- `cel1`: kubeadm needs 2 CPUs on a control plane, and the control planes hold 13 kubelets, so they get 3 GiB. 27 vCPUs on 24 threads overcommit the host 1.1 times, which idle guests tolerate. Before the boot the host had 91.1 GiB available, and 79.5 GiB with the 14 guests booted, and each guest disk held about 2.9 GB at the end (`.lab/evidence/cel1-sim/host-before-boot.txt`, `host-after-boot.txt`). `SIZES` in `scripts/fleet/sim.py` holds these sizes, and `make fleet-sim-profile` writes them into the profile.
+
 ## 5. Order of targets
 
 `tests/integration/qemu-lab/acceptance-all.sh` runs everything below from wiped guests, one profile at a time, and ends with `make validate` and `make report STRICT=1`. Run it with `LAB_ROOT=<dir with room>`. Each profile's guests live in `LAB_ROOT/<profile>`.
 
 ### Track A
 
-`tests/integration/qemu-lab/acceptance-m3.sh` runs this sequence from wiped guests, with every rerun that must change nothing.
+`tests/integration/qemu-lab/acceptance-track-a.sh` runs this sequence from wiped guests, with every rerun that must change nothing.
 
 ```bash
 export LAB_DIR=/data/rfl-lab/lab                   # optional, the guests' files
 make lab-wipe lab-up                               # boot cp1, worker1, worker2 from the pinned image
-make versions SCOPE=m3                             # every component of M1 to M3 pinned
+make versions SCOPE=k8s-rdma                       # Multus, Whereabouts and the RDMA test image pinned
 make bootstrap rxe-up                              # locked packages, lab NIC address, rxe0 by rfl-rxe.service
 make k8s                                           # kubeadm cluster, admin kubeconfig in .lab/kubeconfig
 make addons-template ENV=lab                       # offline render of the Helm releases
@@ -84,6 +91,17 @@ make lab-down
 `make track-a` runs `vm-rxe-baseline`, `vm-rxe-rerun`, `k8s-baseline`, `k8s-hostnet-rdma`, `k8s-multus-net1` and `vm-rxe-reboot`, in that order, on a lab that is up. `vm-rxe-reboot` runs last because `k8s-baseline` reads the Cilium agents once, and a rebooted node's agent turns Ready up to 30 s after its boot. Each scenario has its own target too: `make rxe-test SCENARIO=<name>`, `make k8s-test`, `make k8s-hostnet-test` and `make k8s-multus-test`.
 
 The three-control-plane profile is optional. `tests/integration/qemu-lab/acceptance-ha.sh` boots it from wiped guests, builds the cluster twice, installs the addons and runs `make k8s-ha-test LAB_PROFILE=ha`, which cuts the power of the VIP holder.
+
+Smaller scripts cover one part each. Every acceptance script starts from wiped guests, writes `NN-<step>.log` and a `steps.tsv` with the exit code each step should have under `.lab/<script name>/<UTC time>/`, and fails when any step differs.
+
+| Script | What it runs |
+|---|---|
+| `tests/integration/qemu-lab/acceptance.sh` | 41 steps on the two workers: `make doctor` with the host plan and an overlapping plan, `make versions SCOPE=lab`, preflight before and after bootstrap, `make rxe-up`, the three RXE scenarios, a disabled `rfl-rxe.service`, a link down and `netem loss 100%` with their repairs, cleanup of a run killed with SIGKILL beside a decoy run, `make reset-lab` refused without `CONFIRM=lab`, `make collect`, `make validate` and `make report` |
+| `tests/integration/qemu-lab/acceptance-k8s.sh` | 29 steps: RXE and the kubeadm cluster, the installed bytes against the lock, the Helm releases, `k8s-baseline`, the reruns that must change nothing, `vm-rxe-baseline` on the cluster, a deleted Cilium agent and dropped VXLAN with their repairs |
+| `tests/integration/qemu-lab/breaks-k8s-rdma.sh [break...]` | On a running lab with the addons and the RDMA test image: each break of `k8s-hostnet-rdma` and `k8s-multus-net1`, the run that must fail its named checks, the repair, and the run that must pass. It writes `pairs.tsv` with both run ids. A full series takes more than 30 minutes, because several breaks reboot a worker |
+| `tests/integration/qemu-lab/probe-extra-mac.sh macvlan\|ipvlan` | Whether frames from extra MAC addresses cross the lab link: one child of the type per worker in a throwaway namespace, 5 pings each way, the source MACs on the wire and the GIDs of `rxe0` before, during and after |
+| `tests/integration/qemu-lab/probe.sh` | Whether the guest kernel has `rdma_rxe`, whether the lab NIC carries frames between the guests, and whether `rping` completes over a hand-made `rxe0` |
+| `tests/integration/qemu-lab/cleanup-check.sh a\|b\|c\|reset` | The proof of `make cleanup` per track and of `make reset-lab`, section 8 |
 
 ### Track B
 
@@ -135,7 +153,7 @@ Measured in `acceptance-all.sh` run `20261116T190004Z` on this host (24 cores, 1
 
 | Step | Seconds | Minutes | What it covers |
 |---|---:|---:|---|
-| `acceptance-m3.sh` | 1280 | 21.3 | lab and builder from wiped disks, bootstrap, rxe-up, Kubernetes, the three Helm releases, the RDMA test image, both M3 scenarios, the M1 and M2 scenarios, every rerun that must change nothing |
+| `acceptance-track-a.sh` | 1280 | 21.3 | lab and builder from wiped disks, bootstrap, rxe-up, Kubernetes, the three Helm releases, the RDMA test image, `k8s-hostnet-rdma` and `k8s-multus-net1`, the RXE and `k8s-baseline` scenarios, every rerun that must change nothing |
 | `make collect` | 7 | 0.1 | host and worker facts on the running lab |
 | `make track-a` | 418 | 7.0 | the six required Track A scenarios on the running lab |
 | `make lab-down` | 274 | 4.6 | the three lab guests shut down. The Whereabouts daemon ignores SIGTERM, so each worker waits for its stop timeout |
@@ -194,9 +212,9 @@ It runs no `kubeadm reset`, changes no network definition, and removes no contai
 | A run was interrupted | `make cleanup RUN=<run-id>` with the profile of the run, then run the scenario again |
 | rxe0 or the lab NIC address is gone on a worker | `make rxe-up`, which restarts `rfl-rxe.service`. `docs/troubleshooting.md` sections 4 and 5 |
 | A Cilium agent or Multus daemon is not Ready after a reboot | Wait for `kubectl -n kube-system rollout status daemonset/cilium` and `daemonset/kube-multus-ds`. Sections 9 and 12 of the troubleshooting guide |
-| A cluster was built before Cilium moved its CNI file | `make cni-migrate` once after `make addons ENV=lab` |
+| A cluster was built before Cilium moved its CNI file | `make addons ENV=lab KUBECONFIG_FILE=.lab/kubeconfig`, then `make cni-migrate` once. It refuses and changes nothing before the addons, then removes the old file and restarts the Multus pod one node at a time, and a rerun reports `changed=0`. `docs/adr/0004-track-a-pods-and-net1.md` section 2.4 says why in that order |
 | A guest hangs | `tests/integration/qemu-lab/lab.sh kill <guest>` cuts its power, `lab.sh start <guest>` boots it again. The console is in `LAB_DIR/guests/<guest>/serial.log` |
-| A profile is in a state you cannot explain | `make lab-down lab-wipe LAB_PROFILE=<profile>`, then its acceptance script from the start. This is the clean-environment path M7 measured |
+| A profile is in a state you cannot explain | `make lab-down lab-wipe LAB_PROFILE=<profile>`, then its acceptance script from the start. This is the path `acceptance-all.sh` measured from wiped guests |
 | The RXE setup of the workers must go | `make reset-lab CONFIRM=lab`, section 10 |
 
 ## 10. reset-lab
@@ -212,7 +230,7 @@ Deleting the guests themselves is `make lab-down lab-wipe LAB_PROFILE=<profile>`
 - **No sudo on the host.** RXE devices, modules and network changes exist only inside guests.
 - **One profile at a time while RXE figures are collected.** The acceptance scripts fail the step before each RXE run when another guest runs.
 - **cel1 is invented.** Its addresses are never contacted from the host. Every target that changes cel1 hosts needs `CONFIRM=cel1` and a connection inventory whose hosts are simulation guests on 127.0.0.1, and it exits 2 before any SSH or Helm call otherwise.
-- **Credentials stay out of results.** `make collect` keeps no kubeconfig, key, token or password, and replaces any snapshot that carries credential text with a note. Results, logs and evidence copies are never committed.
+- **Credentials stay out of results.** `make collect` keeps each worker's resolved inventory variables with the prefixes `lab_`, `k8s_` and `rfl_` and the connection variables `ansible_host`, `ansible_port` and `ansible_user`, but never one whose name matches `pass`, `secret`, `token`, `private_key`, `key_file`, `kubeconfig`, `credential` or `cert`. Every file it writes passes a scan for a PEM private key, a kubeconfig client credential, a `token:` value and a password assignment. A file that matches is replaced by a note that names the shape of the match and none of its value, and the check `no-credential-collected` fails. Results, logs and evidence copies are never committed.
 
 ## 12. Continuous integration
 
@@ -220,24 +238,23 @@ Deleting the guests themselves is `make lab-down lab-wipe LAB_PROFILE=<profile>`
 
 The tracks stay manual. They need `/dev/kvm`, a host with tens of GiB of memory and disk, hours of runtime, and network access from guests. A hosted runner does not promise any of that. A self-hosted lab runner would run pull request code with access to the lab host, so it may run only trusted changes, started by hand or from an approved branch, never code from an outside pull request. Until such a runner exists, run `tests/integration/qemu-lab/acceptance-all.sh` on the lab host before a merge that touches a track.
 
-## 13. Where the records live
+## 13. Where the documents live
 
-| Record | Path |
+| Document | Path |
 |---|---|
-| M0, design lock: inventory, address plan, version lock, doctor | `docs/milestones/M0.md` |
-| M1, RXE between two worker guests | `docs/milestones/M1.md` |
-| M2, Kubernetes with Cilium, and the ha profile | `docs/milestones/M2.md` |
-| M3, hostNetwork RDMA pods and Multus | `docs/milestones/M3.md` |
-| M4, ibsim and OpenSM | `docs/milestones/M4.md` |
-| M5, the ns-3 model and its single-flow baseline | `docs/milestones/M5.md` |
-| M6, the four congestion profiles under incast | `docs/milestones/M6.md` |
-| cel1, the region simulated on 13 guests | `docs/milestones/cel1-sim.md`, `docs/fleet.md` |
-| M7, this runbook, cleanup and the clean reproduction | `docs/milestones/M7.md` |
-| Decisions | `docs/adr/` |
+| How the lab proves itself, the latest full run and the MVP checklist | `docs/verification.md` |
+| The shared Kubernetes stack and the inventory contract | `docs/adr/0001-kubernetes-stack.md` |
+| Where each track runs, and the image rules | `docs/adr/0002-execution-environments.md` |
+| Results, result kinds and deliberate breaks | `docs/adr/0003-results-and-breaks.md` |
+| RDMA in pods and the secondary network | `docs/adr/0004-track-a-pods-and-net1.md` |
+| The InfiniBand management simulation | `docs/adr/0005-track-b-fabric-simulation.md` |
+| The packet model | `docs/adr/0006-track-c-packet-model.md` |
 | Failures and their causes | `docs/troubleshooting.md` |
+| The cel1 region and its fleet targets | `docs/fleet.md` |
 | VMware Workstation variant, not verified on this host | `docs/setup-vmware.md` |
+| Measured results per scenario, with run ids, and the concepts behind them | The learning site under `.site/`, built by `make site` |
 
-Each record cites run ids under `results/` and copies under `docs/milestones/evidence/`. Both stay on the machine that ran them and are not in git.
+Documents cite run ids under `results/` and logs under `.lab/`, with copies of the evidence they quote in `.lab/evidence/`. All of them stay on the machine that ran them and are not in git.
 
 ## 14. Open experiments
 

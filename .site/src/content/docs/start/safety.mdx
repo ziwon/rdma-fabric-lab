@@ -39,17 +39,17 @@ So ADR 0002 decides where each track runs ([ADR 0002](/docs/adr/0002-execution-e
 | Track B and Track C | A pinned image in the container runtime of a dedicated QEMU guest | One reproducible container per track, isolated from the host kernel |
 | Offline checks, such as lint, rendering and kubeconform | Host processes | No simulator that uses these sockets runs |
 
-The Track B and Track C guests set `kernel.panic_on_oops=1` and boot QEMU with `-no-reboot`. A panic inside them ends the QEMU process and leaves the console in `serial.log`. After every run of M4, M5 and M6, a search of that log for `oops`, `BUG:` or `panic` found nothing.
+The Track B and Track C guests set `kernel.panic_on_oops=1` and boot QEMU with `-no-reboot`. A panic inside them ends the QEMU process and leaves the console in `serial.log`. After every Track B and Track C run of record, a search of that log for `oops`, `BUG:` or `panic` found nothing.
 
 ## How the host refuses
 
-The scripts that start a simulator check where they run. `tracks/b-ibsim/scripts/guest.sh` and `tracks/c-ns3/scripts/guest.sh` refuse unless the guest marker `/etc/rfl/track-b-guest` or `/etc/rfl/track-c-guest` exists, and the image entry points refuse without a read-only marker mount that only `guest.sh` adds. The milestone records ran every subcommand on the host with stubs first on `PATH`.
+The scripts that start a simulator check where they run. `tracks/b-ibsim/scripts/guest.sh` and `tracks/c-ns3/scripts/guest.sh` refuse unless the guest marker `/etc/rfl/track-b-guest` or `/etc/rfl/track-c-guest` exists, and the image entry points refuse without a read-only marker mount that only `guest.sh` adds. Every subcommand was run on the host with stubs first on `PATH`.
 
 ```text
 refusing to run: /etc/rfl/track-b-guest is missing, so this machine is not the Track B guest. ... On the host, run make track-b.
 ```
 
-That line is quoted from [M4](/docs/milestones/m4/) section 8. Every refused command exited 2, and no call reached a stub. `tests/unit/test_ibsim_host_refusal.py` and `tests/unit/test_ns3_host_refusal.py` repeat the refusal on every `make test`. The checks `host-untouched` of Track B and Track C scan the host process list and `docker ps` at the start and the end of every run.
+That line is shortened from `.lab/evidence/m4/host-refusal.log`. Every refused command exited 2, and no call reached a stub. `tests/unit/test_ibsim_host_refusal.py` and `tests/unit/test_ns3_host_refusal.py` repeat the refusal on every `make test`. The checks `host-untouched` of Track B and Track C scan the host process list and `docker ps` at the start and the end of every run.
 
 ## Rules every run keeps
 
@@ -65,6 +65,6 @@ That line is quoted from [M4](/docs/milestones/m4/) section 8. Every refused com
 | `make reset-lab` | `CONFIRM=lab` | It deletes `rxe0`, the unit and the lab address on the workers |
 | `make fleet-k8s`, `fleet-addons`, `fleet-rsyslog`, `fleet-sim-stand-ins` | `CONFIRM=cel1` and `FLEET_CONNECT=<simulation inventory>` | They change cel1 hosts. cel1 addresses are invented, so the host never connects to them directly |
 
-The fleet targets also refuse any host, kubeconfig server or `rfl_kubeconfig_server` that is not on 127.0.0.1. The cel1 simulation reaches its guests only through 127.0.0.1 port forwards. Under strace, ten refusals made no IPv4 or IPv6 call ([cel1-sim](/docs/milestones/cel1-sim/) section 7).
+The fleet targets also refuse any host, kubeconfig server or `rfl_kubeconfig_server` that is not on 127.0.0.1. The cel1 simulation reaches its guests only through 127.0.0.1 port forwards. Under strace, ten refusals made no IPv4 or IPv6 call (`.lab/evidence/cel1-sim/refusals-final.log`).
 
-`make cleanup RUN=<run-id>` stops only the processes of that run and deletes only its guest files. It never deletes the device or a guest. The M1 record shows a decoy process of another run surviving it ([M1](/docs/milestones/m1/) section 7).
+`make cleanup RUN=<run-id>` stops only the processes of that run and deletes only its guest files. It never deletes the device or a guest. In `tests/integration/qemu-lab/acceptance.sh` a decoy process of another run survived it (steps 28 to 35 of `.lab/acceptance/20261115T022117Z`).

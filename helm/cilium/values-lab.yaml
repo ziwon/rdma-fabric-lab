@@ -6,7 +6,7 @@ cni:
   # stops, so after a boot containerd finds no network until Multus runs again, and new pods wait instead of starting
   # without net1.
   confPath: /etc/cni/multus/net.d
-  # Other CNI configuration files stay in place, so Multus can be added at M3.
+  # With true, Cilium would rename every other file in its directory, which is also where Multus looks up networks by file.
   exclusive: false
 kubeProxyReplacement: false
 routingMode: tunnel

@@ -15,7 +15,7 @@ track-b-render-check: venv ## Offline: fail when cel1-compute.net differs from w
 	$(TRACK_B_PY) render --site $(CEL1_SITE) --fabric compute --out $(TRACK_B_NET) --check
 
 track-b-lock: venv
-	$(RFL) versions --scope m4
+	$(RFL) versions --scope ibsim
 
 track-b-guest: track-b-lock ## Boot or reuse the Track B guest and prepare it with ansible/playbooks/track-b-guest.yml
 	LAB_PROFILE=ibsim $(LAB_HARNESS) up

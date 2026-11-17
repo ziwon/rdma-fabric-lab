@@ -1,7 +1,7 @@
 {
   "id": "a-multus-time",
   "run": "20261116T072640Z",
-  "source": "docs/milestones/evidence/m3-cni-dir/runs/20261116T072640Z/a-soft-roce/k8s-multus-net1/manifest.json",
+  "source": ".lab/evidence/m3-cni-dir/runs/20261116T072640Z/a-soft-roce/k8s-multus-net1/manifest.json",
   "lines": "10-11",
   "format": "text",
   "text": "  \"created_at\": \"2026-11-16T07:26:40Z\",\n  \"finished_at\": \"2026-11-16T07:29:19Z\","

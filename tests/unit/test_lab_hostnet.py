@@ -4,7 +4,7 @@ import yaml
 
 from run import hostnet
 
-FIX = Path(__file__).resolve().parents[1] / "fixtures" / "a-soft-roce" / "m3"
+FIX = Path(__file__).resolve().parents[1] / "fixtures" / "a-soft-roce" / "k8s-rdma"
 CONFIG = yaml.safe_load(hostnet.CONFIG.read_text())
 DIGEST = "sha256:" + "cd" * 32
 RUN_ID = "20261116T000000Z"

@@ -43,7 +43,7 @@ make addons ENV=lab KUBECONFIG_FILE=.lab/ha/kubeconfig
 make k8s-ha-test LAB_PROFILE=ha
 ```
 
-The control planes join one at a time with a fresh 15-minute token and the certificate key from `upload-certs`. `lab.sh kill` sends SIGKILL to the holder's QEMU, so the guest gets no shutdown sequence, as in a power failure ([M2](/docs/milestones/m2/) section 7).
+The control planes join one at a time with a fresh 15-minute token and the certificate key from `upload-certs`. `lab.sh kill` sends SIGKILL to the holder's QEMU, so the guest gets no shutdown sequence, as in a power failure ([ADR 0001](/docs/adr/0001-kubernetes-stack/) section 10).
 
 ## What every check proves
 
@@ -53,7 +53,7 @@ The control planes join one at a time with a fresh 15-minute token and the certi
 
 ## Real output
 
-The run of record of M2.
+The run of record.
 
 <Excerpt id="a-ha-checks" />
 
@@ -77,11 +77,11 @@ The six failed probes span from 1794720149.58 to 1794720157.12, and the gap to t
 
 - The lease lasts 5 seconds, yet the API was silent for 6 to 9 seconds. What else has to happen between the lease expiry and the first good probe?
 - `cluster-works-after-loss` writes a ConfigMap. Why is a read alone not enough to show the cluster works with one etcd member gone?
-- In M2, `kubeadm init phase upload-certs` without `--config` looked up the version online and failed after 60 seconds. Why does an offline-capable lab care?
+- On the first ha build, `kubeadm init phase upload-certs` without `--config` looked up the version online and failed after 60 seconds. Why does an offline-capable lab care?
 
 ## What the result means and does not mean
 
 The run shows the fleet's control plane shape working on harness guests: three control planes joined by the shared playbook, an API address that moves to a survivor after a power cut, quorum kept, and the holder rejoining.
 
 > [!NOTE]
-> The gap is a measurement of these guests on a busy host, with no pass threshold. It is not a prediction for cel1 hardware or for another network. The ha profile proves only the VIP. Its VXLAN and NetworkPolicy behavior were not tested ([M2](/docs/milestones/m2/) section 10).
+> The gap is a measurement of these guests on a busy host, with no pass threshold. It is not a prediction for cel1 hardware or for another network. The ha profile proves only the VIP. Its VXLAN and NetworkPolicy behavior were not tested.

@@ -26,10 +26,10 @@ Show that a connection made through RDMA CM carries verified data and all three 
 
 | Item | Value |
 |---|---|
-| Profile | `lab`, only `worker1` and `worker2` take part. `cp1` exists from M2 on |
+| Profile | `lab`, only `worker1` and `worker2` take part. `cp1` joins them for Kubernetes |
 | Guest sizes | `worker1` and `worker2` 4 vCPU, 6 GiB, 40 GiB each |
 | Guest software | Ubuntu 24.04.5, kernel 6.8.0-147-generic, rdma-core 50.0-2ubuntu0.2, perftest 24.01.0+0.38-1build2 |
-| Version lock | `make versions SCOPE=m1` must return 0. `make bootstrap`, `rxe-up`, `rxe-test`, `preflight` and `collect` depend on it |
+| Version lock | `make versions SCOPE=lab` must return 0. `make bootstrap`, `rxe-up`, `rxe-test`, `preflight` and `collect` depend on it |
 
 **Time taken.** <Duration id="a-baseline-time" />. Each perftest test is one burst of 1000 messages of 4096 B, about 16 ms.
 
@@ -44,7 +44,7 @@ make rxe-test               # this scenario, recorded under results/<run-id>/
 make validate
 ```
 
-The runner starts every guest process under `timeout -k 5 <seconds>` with `RFL_RUN=<run-id>` in its environment. perftest runs with `-d rxe0 -R -p 18515 -s 4096 -n 1000 -F --report_gbits`, and rping with `-a <server address> -p 7174 -C 10 -S 64 -V -v` ([M1](/docs/milestones/m1/) section 2). The server counts as ready when `rdma -j resource show cm_id` shows its LISTEN entry, and only then does the client start.
+The runner starts every guest process under `timeout -k 5 <seconds>` with `RFL_RUN=<run-id>` in its environment. perftest runs with `-d rxe0 -R -p 18515 -s 4096 -n 1000 -F --report_gbits`, and rping with `-a <server address> -p 7174 -C 10 -S 64 -V -v`. Both option sets were checked against `ib_write_bw --help` and the `rping` usage in the guest first (`.lab/evidence/m1/probe.log`). The server counts as ready when `rdma -j resource show cm_id` shows its LISTEN entry, and only then does the client start.
 
 ## What every check proves
 
@@ -54,7 +54,7 @@ The runner starts every guest process under `timeout -k 5 <seconds>` with `RFL_R
 
 ## Real output
 
-This is the run of record of M1, on guests built from wiped disks.
+This is the run of record, on guests built from wiped disks.
 
 <Excerpt id="a-baseline-checks" />
 
@@ -70,7 +70,7 @@ rping with `-V` prints each ping it validated.
 
 ## Break it yourself
 
-Each break below ran in M1 and failed the named checks. Repair the break and run `make rxe-test` again, and the next run passes. The M1 record lists the runs after each repair.
+Each break below ran in `tests/integration/qemu-lab/acceptance.sh` and failed the named checks. Repair the break and run `make rxe-test` again, and the next run passes, as runs `20261115T022521Z` and `20261115T022833Z` did.
 
 | Break | How | Checks that failed | Broken run |
 |---|---|---|---|
@@ -85,7 +85,19 @@ The netem run, all checks.
 
 <Excerpt id="a-baseline-netem" />
 
-The two faults fail differently. With the link down, systemd-networkd removes the static address, so the servers fail at once with `rdma_bind_addr: Cannot assign requested address` and `Port number 1 state is Down`, and the route to the peer falls back to the management NIC. With the link up and every frame dropped, the rping client waits for a reply until the 30-second runner limit and ends with exit code 124 ([M1](/docs/milestones/m1/) section 6).
+The two faults fail differently. With the link down, systemd-networkd removes the static address, so the servers fail at once with `rdma_bind_addr: Cannot assign requested address` and `Port number 1 state is Down`, and the route to the peer falls back to the management NIC. With the link up and every frame dropped, the rping client waits for a reply until the 30-second runner limit and ends with exit code 124 ([troubleshooting](/docs/troubleshooting/) section 5).
+
+## Bandwidth record
+
+The 10 RXE runs that had passed on the two workers when this was measured gave these averages in Gb/sec (`.lab/limiter/20261115T023119Z/metric-spread.txt`).
+
+| Metric | Runs | Min | Median | Max |
+|---|---:|---:|---:|---:|
+| `rdma_read.bw_average` | 10 | 0.43 | 2.07 | 2.62 |
+| `rdma_write.bw_average` | 10 | 0.49 | 2.14 | 2.75 |
+| `rdma_send.bw_average` | 10 | 0.41 | 2.22 | 2.88 |
+
+Read them with the measurements beside them in the same directory. `-n 1000 -s 4096` is a burst that sends 4 MB in about 16 ms. Sent continuously for 10 s with `ib_write_bw -D 10`, the average was 0.89 and 0.88 Gb/sec. TCP over the same lab NIC moved 2000 MiB in 8.77 s, about 1.9 Gb/sec, so the virtual cable carries more than twice the sustained RXE rate. The host was busy with other work, with a load average of 30 on 24 cores, 1.8% CPU idle and 16% guest steal. The QEMU vCPU threads sat near 90% because perftest busy-polls its completion queue.
 
 ## Questions to think about
 
@@ -99,4 +111,4 @@ The two faults fail differently. With the link down, systemd-networkd removes th
 The run shows that two Ubuntu guests can connect RXE devices through RDMA CM and complete verified rping, RDMA Read, Write and Send over the lab NIC, with no RoCEv2 frame on the management NIC.
 
 > [!WARNING]
-> Bandwidth has no pass threshold. The figures are software measurements of this host, kernel and guest combination, measured while the host was busy, with a load average of 30 on 24 cores. They say nothing about HCA offload, InfiniBand or RoCE hardware latency, or hardware throughput. The limiting factor was not isolated ([M1](/docs/milestones/m1/) section 5).
+> Bandwidth has no pass threshold. The figures are software measurements of this host, kernel and guest combination, measured while the host was busy, with a load average of 30 on 24 cores. They say nothing about HCA offload, InfiniBand or RoCE hardware latency, or hardware throughput. Host contention is the most likely limit, but no measurement isolated it. A performance comparison needs a sustained `-D` test on an idle host.

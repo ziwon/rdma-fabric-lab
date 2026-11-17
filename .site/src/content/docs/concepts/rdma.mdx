@@ -36,7 +36,7 @@ flowchart LR
 
 - **Memory region (MR).** `ibv_reg_mr` pins a buffer and gives it two keys. The local key lets this host's work requests use the buffer. The remote key, `rkey`, lets a peer name the buffer in one-sided operations. Pinning counts against the `RLIMIT_MEMLOCK` of the process, which is why [k8s-hostnet-rdma](/labs/track-a/k8s-hostnet-rdma/) records the memlock limits inside its pods.
 - **Queue pair (QP).** A send queue and a receive queue that belong together. A reliable connected QP talks to exactly one remote QP. It moves through the states RESET, INIT, RTR (ready to receive) and RTS (ready to send) before it carries traffic.
-- **Completion queue (CQ).** The device writes one completion per finished work request. perftest polls it in a busy loop, which the M1 record saw as vCPU threads near 90% during the bandwidth tests.
+- **Completion queue (CQ).** The device writes one completion per finished work request. perftest polls it in a busy loop, which showed as vCPU threads near 90% during the bandwidth tests (`.lab/limiter/20261115T023119Z/`).
 
 ## Send, RDMA Write and RDMA Read
 
@@ -65,7 +65,7 @@ sequenceDiagram
     C->>S: disconnect
 ```
 
-The lab runners use RDMA CM on both tools, `rping` and perftest with `-R`, and set no GID index by hand. A server counts as ready when `rdma resource show cm_id` lists its LISTEN entry. This line from the M1 probe shows one.
+The lab runners use RDMA CM on both tools, `rping` and perftest with `-R`, and set no GID index by hand. A server counts as ready when `rdma resource show cm_id` lists its LISTEN entry. This line from the RXE prerequisite probe shows one.
 
 <Excerpt id="a-probe-rping" />
 
@@ -85,7 +85,7 @@ On RoCE, a port's global identifiers (GIDs) come from the IP addresses of its ne
 
 <Excerpt id="a-write-bw-client" />
 
-`255:255:10:77:00:13` is the IPv4-mapped form of `10.77.0.13`, worker2's lab address, and `GID index : 1` is the index rdma_cm chose. Because the GID table follows addresses, an address change on the netdev changes the table. M3 saw `rxe0` gain two GIDs for each macvlan child on its lab NIC while the child existed, even though the child sat in another network namespace ([M3](/docs/milestones/m3/) section 4).
+`255:255:10:77:00:13` is the IPv4-mapped form of `10.77.0.13`, worker2's lab address, and `GID index : 1` is the index rdma_cm chose. Because the GID table follows addresses, an address change on the netdev changes the table. The extra-MAC probe saw `rxe0` gain two GIDs for each macvlan child on its lab NIC while the child existed, even though the child sat in another network namespace (`.lab/evidence/m3/probe-macvlan.log`).
 
 ## Soft-RoCE and RXE
 
@@ -95,11 +95,11 @@ RXE is the kernel module `rdma_rxe`. It implements RoCEv2 in software on top of 
 rdma link add rxe0 type rxe netdev <lab NIC>
 ```
 
-This is the first RXE device of the lab, created by hand in the M0 probe before any role existed.
+This is the first RXE device of the lab, created by hand in the prerequisite probe `20261115T012426Z` before any role existed.
 
 <Excerpt id="a-probe-rxe-link" />
 
-The device reports InfiniBand transport and an Ethernet link layer. Its firmware version and vendor id are placeholders, because no hardware exists. The guest kernel 6.8.0-147-generic of the cloud image had no `rdma_rxe`. `linux-modules-extra` of the same kernel provides it, and the `common` role installs that package only when `modinfo rdma_rxe` fails ([M0](/docs/milestones/m0/) section 4).
+The device reports InfiniBand transport and an Ethernet link layer. Its firmware version and vendor id are placeholders, because no hardware exists. The guest kernel 6.8.0-147-generic of the cloud image had no `rdma_rxe`. `linux-modules-extra` of the same kernel provides it, and the `common` role installs that package only when `modinfo rdma_rxe` fails ([troubleshooting](/docs/troubleshooting/) section 2).
 
 > [!IMPORTANT]
 > RXE runs in the CPU of the guest. Its bandwidth is a property of this host, kernel and guest combination, not of any RDMA hardware. Track A records it with no pass threshold.

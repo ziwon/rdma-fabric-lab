@@ -3,14 +3,14 @@
 # Answers the question the Multus secondary network builds on, by observation inside the lab workers:
 # do frames from extra MAC addresses on the lab NIC cross the harness link between worker1 and worker2?
 #
-#   probe-m3.sh macvlan|ipvlan
+#   probe-extra-mac.sh macvlan|ipvlan
 #
 # On each worker it puts one child of the given type on lab_rdma_nic into a throwaway network namespace,
 # with one of the last two addresses of lab_address_plan.multus_pool, and pings the peer's child a
 # finite number of times while tcpdump on each lab NIC records the link-layer source of every frame.
 # It also records the GIDs of the RXE device before, during and after, since RXE lists addresses of
 # devices stacked on its NIC. The children and namespaces are removed on exit. The log lands in
-# .lab/probe-m3/<UTC time>-<type>/probe.log.
+# .lab/probe-extra-mac/<UTC time>-<type>/probe.log.
 set -euo pipefail
 
 here=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
@@ -19,13 +19,13 @@ kind=${1:-}
 case $kind in
   macvlan) mode='mode bridge' ;;
   ipvlan) mode='mode l2' ;;
-  *) echo "usage: probe-m3.sh macvlan|ipvlan" >&2; exit 2 ;;
+  *) echo "usage: probe-extra-mac.sh macvlan|ipvlan" >&2; exit 2 ;;
 esac
-out=$repo/.lab/probe-m3/$(date -u +%Y%m%dT%H%M%SZ)-$kind
+out=$repo/.lab/probe-extra-mac/$(date -u +%Y%m%dT%H%M%SZ)-$kind
 mkdir -p "$out"
 log=$out/probe.log
 lab() { "$here/lab.sh" "$@"; }
-ns=rfl-probe-m3
+ns=rfl-xmac
 
 step() {
   local guest=$1 rc=0

@@ -1,7 +1,7 @@
 {
   "id": "b01-break",
   "run": "20261115T151828Z",
-  "source": "docs/milestones/evidence/m4/20261115T151828Z/b-ibsim/b-01/summary.md",
+  "source": ".lab/evidence/m4/20261115T151828Z/b-ibsim/b-01/summary.md",
   "lines": "5-6,10-13",
   "format": "md-table",
   "text": "| check | status | failure class | detail |\n|---|---|---|---|\n| topology-discovered | failed | assertion-failed | 2 problems: missing link \"hca2\"[1]-\"sw1\"[2], missing node Hca hca2 (1 ports) |\n| lids-unique | failed | assertion-failed | 1 problems: \"hca2\"[1] has no LID |\n| port-states | failed | assertion-failed | 2 problems: \"hca2\"[1] is not listed, \"sw1\"[2] is Down/Polling to None, want Active/LinkUp to \"hca2\"[1] |\n| routes-shortest | passed |  | 1 switch routes to endpoint LIDs, each one hop closer to its endpoint |"

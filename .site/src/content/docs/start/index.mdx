@@ -53,21 +53,20 @@ These lines come from the repository README and hold for every page of this site
 
 ## How each experiment is recorded
 
-Every scenario declares its checks in a spec file. A run writes a result directory with a manifest, logs, raw captures and metrics, and its status comes only from the recorded checks. A passed check must point at evidence in the run directory. The milestone records keep the run ids, the exit codes and the findings. The [results contract](/repository/results-contract/) page explains the format.
+Every scenario declares its checks in a spec file. A run writes a result directory with a manifest, logs, raw captures and metrics, and its status comes only from the recorded checks. A passed check must point at evidence in the run directory. The lab pages and the repository documents keep the run ids, the exit codes and the findings. The [results contract](/repository/results-contract/) page explains the format.
 
 Every lab check was also broken once on purpose. A check that has never failed proves nothing, so each lab page lists the [deliberate breaks](/repository/deliberate-breaks/) that made its checks fail and the runs that recorded them.
 
 ## Status
 
-The milestones M0 to M6 are done. Their records are under [Reference](/reference/). Each lab page names the milestone record its figures come from.
+The MVP is complete. One run of `tests/integration/qemu-lab/acceptance-all.sh`, `20261116T190004Z` on 2026-11-16, passed every required experiment again from wiped guests: 15 of 15 required and 4 of 4 optional scenarios. The [verification](/docs/verification/) document lists those runs and the evidence for each item of the MVP checklist. Each lab page names the runs its figures come from.
 
-| Milestone | What it proved | Record |
+| Part | What it proved | Lab pages |
 |---|---|---|
-| M0 design lock | The address plan overlaps nothing on the host. The guest kernel can load `rdma_rxe` | [M0](/docs/milestones/m0/) |
-| M1 RXE between VMs | rping and RDMA Read, Write and Send between two workers over RDMA CM, RoCEv2 frames on the lab NIC only, the device back after a reboot | [M1](/docs/milestones/m1/) |
-| M2 Kubernetes | Kubernetes v1.36.6 with Cilium 1.20.4 by Helm. Three control planes behind a kube-vip address answered again 6.0 s after the address holder lost power | [M2](/docs/milestones/m2/) |
-| M3 hostNetwork RDMA and Multus | The M1 tests between hostNetwork pods, and `net1` from Whereabouts beside Cilium through pod recreation and a worker reboot | [M3](/docs/milestones/m3/) |
-| M4 ibsim and OpenSM | B-01 to B-04 inside the Track B guest, each failing on its deliberate break | [M4](/docs/milestones/m4/) |
-| cel1 simulation | The cel1 cluster on 13 guests from wiped disks with the fleet targets | [cel1-sim](/docs/milestones/cel1-sim/) |
-| M5 ns-3 baseline | The model builds in a pinned image, its smoke test repeats byte for byte, and one flow completes 7.43% above its payload bound with the gap explained | [M5](/docs/milestones/m5/) |
-| M6 congestion profiles | Incast under four profiles, three workloads and five seeds, with each feature's activation read from the model's counters | [M6](/docs/milestones/m6/) |
+| RXE between VMs | rping and RDMA Read, Write and Send between two workers over RDMA CM, RoCEv2 frames on the lab NIC only, the device back after a reboot | [vm-rxe-baseline](/labs/track-a/vm-rxe-baseline/), [vm-rxe-reboot](/labs/track-a/vm-rxe-reboot/), [vm-rxe-rerun](/labs/track-a/vm-rxe-rerun/) |
+| Kubernetes | Kubernetes v1.36.6 with Cilium 1.20.4 by Helm. Three control planes behind a kube-vip address answered again 6.0 s after the address holder lost power | [k8s-baseline](/labs/track-a/k8s-baseline/), [k8s-ha-vip](/labs/track-a/k8s-ha-vip/) |
+| hostNetwork RDMA and Multus | The RXE tests between hostNetwork pods, and `net1` from Whereabouts beside Cilium through pod recreation and a worker reboot | [k8s-hostnet-rdma](/labs/track-a/k8s-hostnet-rdma/), [k8s-multus-net1](/labs/track-a/k8s-multus-net1/) |
+| ibsim and OpenSM | B-01 to B-04 inside the Track B guest, each failing on its deliberate break | [B-01](/labs/track-b/b-01/) to [B-04](/labs/track-b/b-04/) |
+| cel1 simulation | The cel1 cluster on 13 guests from wiped disks with the fleet targets | [cel1-sim-baseline](/labs/cel1/cel1-sim-baseline/) |
+| ns-3 baseline | The model builds in a pinned image, its smoke test repeats byte for byte, and one flow completes 7.43% above its payload bound with the gap explained | [c-01-example](/labs/track-c/c-01-example/), [c-02-single-flow](/labs/track-c/c-02-single-flow/) |
+| Congestion profiles | Incast under four profiles, three workloads and five seeds, with each feature's activation read from the model's counters | [c-03](/labs/track-c/c-03-incast-simultaneous/) to [c-06](/labs/track-c/c-06-sensitivity-kmin/) |

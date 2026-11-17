@@ -28,17 +28,17 @@ The `reason` says why this value was chosen, and the `source` says where it was 
 
 ## Scopes
 
-A scope lists the components one milestone needs. `make versions SCOPE=<name>` fails when any of them is still `null`, and the targets of that milestone depend on it. `make versions` alone also fails when the Python tooling in `.venv` drifts from `tooling.*`. This list is read from the lock at build time.
+A scope lists the components one part of the lab needs: `lab` the RXE guests and the host, `k8s` the cluster, `k8s-rdma` the hostNetwork RDMA and Multus scenarios, `ibsim` Track B, `ns3` Track C, `fleet` the cel1 cluster and `tooling` the control node. `make versions SCOPE=<name>` fails when any of them is still `null`, and the targets of that part depend on it. `make versions` alone also fails when the Python tooling in `.venv` drifts from `tooling.*`. This list is read from the lock at build time.
 
 <LockScopes />
 
-<Excerpt id="repo-versions-m3" />
+<Excerpt id="repo-versions-k8s-rdma" />
 
 ## What pinning costs
 
-The `common` role installs the exact locked package versions. When the Ubuntu archive moves rdma-core up, the old version drops out of its index and `make bootstrap` fails, naming the cause. The fix is to probe again and pin the lock ([M1](/docs/milestones/m1/) section 6). Track B, Track C and the RDMA test image avoid this by installing from a dated Ubuntu snapshot, `20261115T000000Z`, which never changes.
+The `common` role installs the exact locked package versions. When the Ubuntu archive moves rdma-core up, the old version drops out of its index and `make bootstrap` fails, naming the cause. The fix is to probe again and pin the lock ([troubleshooting](/docs/troubleshooting/) section 2). Track B, Track C and the RDMA test image avoid this by installing from a dated Ubuntu snapshot, `20261115T000000Z`, which never changes.
 
-The image digests go further. A rebuild of the Track C image from nothing, with the cache emptied, had to give the pinned digest, and did. `guest.sh build` exports with `SOURCE_DATE_EPOCH` and `rewrite-timestamp`, and the build removes the apt lists, logs and caches that carry build-time state ([M5](/docs/milestones/m5/) section 5).
+The image digests go further. A rebuild of the Track C image from nothing, with the cache emptied, had to give the pinned digest, and did. `guest.sh build` exports with `SOURCE_DATE_EPOCH` and `rewrite-timestamp`, and the build removes the apt lists, logs and caches that carry build-time state. The Track B image follows the same rules and rebuilt to its pinned ID from two wiped guests ([ADR 0002](/docs/adr/0002-execution-environments/) section 5).
 
 ## make collect, the guests against the lock
 
@@ -50,4 +50,4 @@ The image digests go further. A rebuild of the Track C image from nothing, with 
 
 <Excerpt id="a-collect-checks" />
 
-Since M2, the comparison covers only the guest-observed items of scope `m1`. `lab.k8s_test_image` is not a value the guests report ([M2](/docs/milestones/m2/) section 2).
+The comparison covers only the `lab.*` items of scope `lab` that the guests report. `lab.k8s_test_image` is not such a value, so it is not compared.

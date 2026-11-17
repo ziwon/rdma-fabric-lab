@@ -1,7 +1,7 @@
 {
   "id": "a-rerun-checks",
   "run": "20261115T022311Z",
-  "source": "docs/milestones/evidence/m1/20261115T022311Z/a-soft-roce/vm-rxe-rerun/summary.md",
+  "source": ".lab/evidence/m1/20261115T022311Z/a-soft-roce/vm-rxe-rerun/summary.md",
   "lines": "5-9",
   "format": "md-table",
   "text": "| check | status | failure class | detail |\n|---|---|---|---|\n| bootstrap-rerun-unchanged | passed |  | worker1 changed=0 failed=0 unreachable=0, worker2 changed=0 failed=0 unreachable=0 |\n| rxe-up-rerun-unchanged | passed |  | worker1 changed=0 failed=0 unreachable=0, worker2 changed=0 failed=0 unreachable=0 |\n| single-rxe-device | passed |  | one device, one address, one netplan file and one unit on each worker |"

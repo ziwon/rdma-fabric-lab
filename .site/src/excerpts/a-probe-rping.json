@@ -1,7 +1,7 @@
 {
   "id": "a-probe-rping",
   "run": "probe 20261115T012426Z",
-  "source": "docs/milestones/evidence/m1/probe.log",
+  "source": ".lab/evidence/m1/probe.log",
   "lines": "253-264",
   "format": "text",
   "text": "### worker1 $ nohup timeout 60 rping -s -a 10.77.0.12 -C 5 -S 64 -V -v > /tmp/rping-server.log 2>&1 & sleep 2; rdma resource show cm_id\nlink rxe0/1 cm-idn 0 state LISTEN ps TCP pid 7489 comm rping src-addr 10.77.0.12:7174 dst-addr 0.0.0.0:0 \n### exit 0\n\n### worker2 $ timeout 30 rping -c -a 10.77.0.12 -C 5 -S 64 -V -v\nclient DISCONNECT EVENT...\nping data: rdma-ping-0: ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqr\nping data: rdma-ping-1: BCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrs\nping data: rdma-ping-2: CDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrst\nping data: rdma-ping-3: DEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstu\nping data: rdma-ping-4: EFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuv\n### exit 0"

@@ -24,12 +24,12 @@ def test_scope_with_an_undecided_component_is_refused(tmp_path, capsys):
     lock = write_lock(
         tmp_path,
         {"lab.perftest": component(None), "tooling.ansible": component("9.13.0")},
-        {"m1": ["lab.perftest"], "tooling": ["tooling.ansible"]},
+        {"lab": ["lab.perftest"], "tooling": ["tooling.ansible"]},
     )
     assert main(["versions", "--lock", lock]) == 0
     assert main(["versions", "--lock", lock, "--scope", "tooling"]) == 0
     capsys.readouterr()
-    assert main(["versions", "--lock", lock, "--scope", "m1"]) == 1
+    assert main(["versions", "--lock", lock, "--scope", "lab"]) == 1
     assert "lab.perftest" in capsys.readouterr().err
 
 

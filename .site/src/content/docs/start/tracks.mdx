@@ -47,7 +47,7 @@ See [the cel1 site model](/repository/cel1-site-model/) for how the model, the i
 |---|---|
 | Repository | One tree. Track code under `tracks/`, runners under `scripts/` |
 | Result format | Every scenario writes a run directory that `make validate` checks against `schemas/` |
-| Version lock | Every pinned version lives in `versions.lock.yaml`, in scopes per milestone |
+| Version lock | Every pinned version lives in `versions.lock.yaml`, in scopes per part of the lab |
 | Harness | Every guest is an unprivileged QEMU process started by `tests/integration/qemu-lab/lab.sh` |
 
 They share no data path. Track B's HCAs are not visible to Track A's guests, and Track C's link rates are model inputs, not comparable with Track A's RXE bandwidth.

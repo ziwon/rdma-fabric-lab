@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-# M2 acceptance on the QEMU harness lab profile, from wiped guests to validated runs.
-# Every step's output lands in .lab/acceptance-m2/<UTC time>/NN-<step>.log and its exit code
+# Kubernetes acceptance on the QEMU harness lab profile, from wiped guests to validated runs: RXE, the kubeadm
+# cluster, the Helm releases, k8s-baseline, two Cilium breaks and their repairs, and the reruns that must change nothing.
+# Every step's output lands in .lab/acceptance-k8s/<UTC time>/NN-<step>.log and its exit code
 # in steps.tsv next to the exit code the step should have.
 # It deletes the lab profile guests first, so it never runs against anything else.
 # LAB_DIR moves the guests' files, as for lab.sh.
@@ -9,7 +10,7 @@ set -euo pipefail
 here=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 repo=$(cd "$here/../../.." && pwd)
 lab_dir=${LAB_DIR:-$repo/.lab}
-out=$repo/.lab/acceptance-m2/$(date -u +%Y%m%dT%H%M%SZ)
+out=$repo/.lab/acceptance-k8s/$(date -u +%Y%m%dT%H%M%SZ)
 mkdir -p "$out"
 cd "$repo"
 export LAB_PROFILE=lab
@@ -68,7 +69,7 @@ step lab-down 0 make lab-down
 step lab-wipe 0 make lab-wipe
 step lab-up 0 make lab-up
 step harness-sockets 0 harness_sockets
-step versions-m2 0 make versions SCOPE=m2
+step versions-k8s 0 make versions SCOPE=k8s
 step bootstrap 0 make bootstrap
 step rxe-up 0 make rxe-up
 step k8s 0 make k8s

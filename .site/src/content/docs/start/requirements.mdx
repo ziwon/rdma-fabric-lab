@@ -1,6 +1,6 @@
 ---
 title: Hardware and host requirements
-description: The host the lab needs, the tools it calls, and the guest sizes of every harness profile with the resources the milestone records measured.
+description: The host the lab needs, the tools it calls, and the guest sizes of every harness profile with the resources the runs measured.
 sidebar:
   order: 2
 ---
@@ -16,7 +16,7 @@ The lab needs one Linux host with KVM and enough memory and cores for the guests
 
 `make doctor` checks the host without changing it. It reads the interface addresses, every routing table, the docker networks and the libvirt networks, and fails when the lab address plan overlaps any of them. It warns, and does not fail, when disk, memory or CPU fall below the lab budget.
 
-The records ran on one host with Ubuntu 24.04.5, kernel 7.0.0-42-generic and later 7.0.0-43-generic, `qemu-system-x86 1:8.2.2+ds-0ubuntu1.18` with KVM, 24 threads and 125 GiB of memory ([M0](/docs/milestones/m0/), [cel1-sim](/docs/milestones/cel1-sim/)). The host had other work running during several measurements, which the records name where it matters.
+Every run ran on one host with Ubuntu 24.04.5, kernel 7.0.0-42-generic and later 7.0.0-43-generic, `qemu-system-x86 1:8.2.2+ds-0ubuntu1.18` with KVM, 24 threads and 125 GiB of memory (`host.*` in `versions.lock.yaml`, `.lab/evidence/cel1-sim/host-before-boot.txt`). The host had other work running during several measurements, which the lab pages name where it matters.
 
 > [!CAUTION]
 > Ubuntu kernels 7.0.0-42 and 7.0.0-43 have an AppArmor bug that froze this host three times. Read [Safety rules](/start/safety/) before you run Track B or Track C.
@@ -39,11 +39,11 @@ Disks are qcow2 overlays on one base cloud image, so they grow only as far as th
 
 | What | Measured | Record |
 |---|---|---|
-| Lab, builder and ha guests of M3 at cleanup | 31,248,421,015 bytes under one `LAB_DIR` | [M3](/docs/milestones/m3/) section 15 |
-| The 14 cel1 guests at the end of the acceptance run | 41.0 GB, about 2.9 GB per guest | [cel1-sim](/docs/milestones/cel1-sim/) section 2 |
-| Host memory with the 14 cel1 guests booted | 79.5 GiB available of 91.1 GiB before the boot | [cel1-sim](/docs/milestones/cel1-sim/) section 2 |
-| One ns-3 build with 12 parallel jobs | 4.78 GB container memory peak, largest process 0.97 GB | [M5](/docs/milestones/m5/) section 4 |
-| The SimAI example, and `rfl-star` with one flow | 2.5 GB RSS, and 61 MB RSS | [M5](/docs/milestones/m5/) section 4 |
+| Lab, builder and ha guests of the Track A acceptance at cleanup | 31,248,421,015 bytes under one `LAB_DIR` | `.lab/evidence/m3/cleanup.log` |
+| The 14 cel1 guests at the end of the acceptance run | 41.0 GB, about 2.9 GB per guest | Step 45 of `.lab/acceptance-cel1/20261115T163759Z` |
+| Host memory with the 14 cel1 guests booted | 79.5 GiB available of 91.1 GiB before the boot | `.lab/evidence/cel1-sim/host-before-boot.txt`, `host-after-boot.txt` |
+| One ns-3 build with 12 parallel jobs | 4.78 GB container memory peak, largest process 0.97 GB | `.lab/evidence/m5/probe/02-simai-noble-inner.log` |
+| The SimAI example, and `rfl-star` with one flow | 2.5 GB RSS, and 61 MB RSS | `.lab/evidence/m5/probe/02-simai-noble-inner.log`, `raw/run1/out/simulate.time` of run `20261116T141351Z` |
 
 `LAB_DIR` moves the guest disks of a profile to another file system. Put the cel1 disks where there are about 40 GB free.
 
@@ -53,7 +53,7 @@ LAB_DIR=/path/with/room bash tests/integration/qemu-lab/acceptance-cel1.sh
 
 ## Running profiles side by side
 
-Profiles can run at the same time, and the records did so. RXE bandwidth is a software measurement, so the runs of record that collect it were preceded by a step that failed unless only `cp1`, `worker1` and `worker2` ran ([M3](/docs/milestones/m3/) section 7). If you compare bandwidth figures, stop the other guests first.
+Profiles can run at the same time, and some runs did so. RXE bandwidth is a software measurement, so the runs of record that collect it were preceded by a step that failed unless only `cp1`, `worker1` and `worker2` ran (`only_lab_guests` in `tests/integration/qemu-lab/acceptance-track-a.sh`). If you compare bandwidth figures, stop the other guests first.
 
 ## Hypervisors other than QEMU
 

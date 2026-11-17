@@ -47,7 +47,7 @@ make track-b
 
 ## Real output
 
-The run of record of M4. 64 endpoint LIDs and 768 switch routes. 13 routes left through the two ports of the failed link, and all 13 moved to other ports. All 76 LIDs still answered, and recovery restored the baseline.
+The run of record. 64 endpoint LIDs and 768 switch routes. 13 routes left through the two ports of the failed link, and all 13 moved to other ports. All 76 LIDs still answered, and recovery restored the baseline.
 
 <Excerpt id="b04-checks" />
 
@@ -57,7 +57,7 @@ OpenSM's log in an earlier passing run of B-04, the source of the fixtures. All 
 
 ## Why updn here
 
-ftree also reached SUBNET UP on the healthy cel1 fabric, but rejected the degraded one with `ERR AB0B` and fell back to minhop. updn routed through the fault and the recovery ([M4](/docs/milestones/m4/) section 6). In a two-tier fabric where every leaf reaches every spine, up/down paths are shortest, and `routes-shortest` confirmed that for all 768 routes.
+ftree also reached SUBNET UP on the healthy cel1 fabric, but rejected the degraded one with `ERR AB0B` and fell back to minhop. updn routed through the fault and the recovery (`.lab/evidence/m4/probe/12-engines-under-fault.txt`, [ADR 0005](/docs/adr/0005-track-b-fabric-simulation/) section 2). In a two-tier fabric where every leaf reaches every spine, up/down paths are shortest, and `routes-shortest` confirmed that for all 768 routes.
 
 ## Break it yourself
 

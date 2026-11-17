@@ -1,6 +1,6 @@
 """The guest copy of the image context carries the modes Git keeps, whatever umask the checkout had.
 
-A checkout made with umask 002 gave rfl-ns3 mode 0775 instead of 0755, and the Track C image digest changed (M7).
+A checkout made with umask 002 gave rfl-ns3 mode 0775 instead of 0755, and the Track C image digest changed (docs/adr/0002-execution-environments.md section 5).
 """
 
 import io

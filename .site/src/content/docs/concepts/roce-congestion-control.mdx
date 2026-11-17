@@ -44,12 +44,12 @@ $$
 \text{headroom} = 3 \times \frac{C \times d}{8} = 3 \times \frac{10^{11}\ \text{bit/s} \times 10^{-6}\ \text{s}}{8} = 37500\ \text{B}
 $$
 
-The pause threshold of the model is dynamic. It is the free part of the buffer shifted right by `pfc_alpha_shift`, $(\text{buffer} - \text{headroom} - \text{reserve} - \text{shared}) \gg 3$, so it falls as the shared buffer fills ([M5](/docs/milestones/m5/) section 7).
+The pause threshold of the model is dynamic. It is the free part of the buffer shifted right by `pfc_alpha_shift`, $(\text{buffer} - \text{headroom} - \text{reserve} - \text{shared}) \gg 3$, so it falls as the shared buffer fills (`switch-mmu.cc:93` at ns-3-alibabacloud `3e0c7c1`).
 
 PFC trades loss for blocking. A paused priority stops every flow on that link, including flows that do not cross the congested port, and pauses can spread upstream hop by hop. The SIGCOMM 2016 paper below describes the deadlocks and storms this caused at scale.
 
 > [!NOTE]
-> In the ns-3 model at this commit, the switch sends PAUSE in every profile. "PFC off" means the hosts ignore the PAUSE they receive, not that the switch stops sending it ([M6](/docs/milestones/m6/) section 4).
+> In the ns-3 model at this commit, the switch sends PAUSE in every profile. "PFC off" means the hosts ignore the PAUSE they receive, not that the switch stops sending it ([ADR 0006](/docs/adr/0006-track-c-packet-model/) section 2).
 
 ## ECN marking with kmin, kmax and pmax
 
@@ -66,7 +66,7 @@ $$
 
 ![ECN marking probability: zero up to kmin 400000 bytes, linear to pmax 0.2 at kmax 1600000 bytes, then 1.](../../../assets/diagrams/ecn-marking.svg)
 
-The lab values are SimAI's for 100 Gbps: kmin 400000 B, kmax 1600000 B and pmax 0.2. In the model, q is the egress bytes of the port, and the switch decides at dequeue. `ecn-as-configured` checks the curve from the model's own marks. In M6, no mark fell at or below kmin, every dequeue above kmax was marked, and between them 2.1% to 12.3% of dequeues were marked, below pmax as the linear curve requires.
+The lab values are SimAI's for 100 Gbps: kmin 400000 B, kmax 1600000 B and pmax 0.2. In the model, q is the egress bytes of the port, and the switch decides at dequeue. `ecn-as-configured` checks the curve from the model's own marks. Across the 200 incast cases of run `20261116T151213Z`, no mark fell at or below kmin, every dequeue above kmax was marked, and between them 2.1% to 12.3% of dequeues were marked, below pmax as the linear curve requires.
 
 ## CNPs and DCQCN
 

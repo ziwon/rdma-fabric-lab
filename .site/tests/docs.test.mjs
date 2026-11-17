@@ -1,40 +1,46 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { routeOf, transformDoc } from '../scripts/lib/docs.mjs';
+import { routeOf, sidebarOrder, transformDoc } from '../scripts/lib/docs.mjs';
 
 const routes = new Map([
-  ['docs/milestones/M1.md', '/docs/milestones/m1/'],
+  ['docs/runbook.md', '/docs/runbook/'],
   ['docs/adr/0002-execution-environments.md', '/docs/adr/0002-execution-environments/'],
 ]);
 const repoUrl = 'https://github.com/example/repo';
-const body = (text) => transformDoc('docs/milestones/M3.md', `# M3: title\n\n${text}\n`, routes, repoUrl).split('\n---\n')[1];
+const body = (text) => transformDoc('docs/verification.md', `# Verification\n\n${text}\n`, routes, repoUrl).split('\n---\n')[1];
 
 test('a route mirrors the repository path in lower case', () => {
-  assert.equal(routeOf('docs/milestones/M1.md'), '/docs/milestones/m1/');
+  assert.equal(routeOf('docs/adr/0002-Execution-Environments.md'), '/docs/adr/0002-execution-environments/');
 });
 
 test('the level-one heading becomes the title and leaves the body', () => {
-  const out = transformDoc('docs/milestones/M3.md', '# M3: hostNetwork pods\n\ntext\n', routes, repoUrl);
-  assert.match(out, /^---\ntitle: "M3: hostNetwork pods"\n/);
-  assert.doesNotMatch(out.split('\n---\n')[1], /# M3/);
+  const out = transformDoc('docs/verification.md', '# Verification: how the lab proves itself\n\ntext\n', routes, repoUrl);
+  assert.match(out, /^---\ntitle: "Verification: how the lab proves itself"\n/);
+  assert.doesNotMatch(out.split('\n---\n')[1], /# Verification/);
 });
 
 test('a document without a title is refused', () => {
   assert.throws(() => transformDoc('docs/x.md', 'no heading\n', routes, repoUrl), /level-one heading/);
 });
 
+test('the operator documents lead the sidebar and the rest keep name order', () => {
+  assert.deepEqual(['docs/runbook.md', 'docs/verification.md', 'docs/troubleshooting.md'].map(sidebarOrder), [1, 2, 3]);
+  assert.equal(sidebarOrder('docs/adr/0001-kubernetes-stack.md'), 100);
+  assert.match(transformDoc('docs/runbook.md', '# Runbook\n', routes, repoUrl), /\n {2}order: 1\n/);
+});
+
 test('a relative link to another copied document becomes its route', () => {
-  assert.match(body('see [M1](M1.md#5-bandwidth-record)'), /\[M1\]\(\/docs\/milestones\/m1\/#5-bandwidth-record\)/);
+  assert.match(body('see [cleanup](runbook.md#8-cleanup)'), /\[cleanup\]\(\/docs\/runbook\/#8-cleanup\)/);
 });
 
 test('a link into the evidence directory becomes code, never a link', () => {
-  const out = body('the [log](evidence/m3/probe.log) of the probe');
-  assert.match(out, /the log \(`docs\/milestones\/evidence\/m3\/probe.log`\) of the probe/);
+  const out = body('the [log](../.lab/evidence/m1/probe.log) of the probe');
+  assert.match(out, /the log \(`\.lab\/evidence\/m1\/probe.log`\) of the probe/);
   assert.doesNotMatch(out, /\]\(.*evidence/);
 });
 
 test('a link to another repository file points at the repository', () => {
-  assert.match(body('[lab.sh](../../tests/integration/qemu-lab/lab.sh)'), /\(https:\/\/github.com\/example\/repo\/blob\/main\/tests\/integration\/qemu-lab\/lab.sh\)/);
+  assert.match(body('[lab.sh](../tests/integration/qemu-lab/lab.sh)'), /\(https:\/\/github.com\/example\/repo\/blob\/main\/tests\/integration\/qemu-lab\/lab.sh\)/);
 });
 
 test('a code span naming a copied document links to it, other code stays code', () => {
@@ -48,7 +54,7 @@ test('a bare tag-like word outside code cannot vanish as HTML', () => {
 });
 
 test('fenced code passes through unchanged', () => {
-  assert.match(body('```text\n[a](M1.md) <tag> `docs/milestones/M1.md`\n```'), /\n\[a\]\(M1\.md\) <tag> `docs\/milestones\/M1\.md`\n/);
+  assert.match(body('```text\n[a](runbook.md) <tag> `docs/runbook.md`\n```'), /\n\[a\]\(runbook\.md\) <tag> `docs\/runbook\.md`\n/);
 });
 
 test('the repository owner comes from GITHUB_REPOSITORY when CI sets it', async () => {
