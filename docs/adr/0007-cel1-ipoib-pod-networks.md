@@ -1,12 +1,12 @@
 # ADR 0007: Pod networks on the cel1 InfiniBand rails
 
-> Status: proposed, 2026-11-18. Nothing here is implemented. Section 5 lists what each phase would prove and what only hardware can prove.
+> Status: accepted, 2026-11-18, with the decisions of section 6. Not implemented yet. Section 5 lists what each phase proves and what only hardware can prove.
 
-cel1 runs Cilium on the management port and gives pods no path to the eight InfiniBand rails of the DGX B200 nodes (`docs/fleet.md` section 5). This ADR proposes how a pod on a DGX node gets those rails: Cilium stays the primary network, Multus adds one IPoIB interface per rail, and the NVIDIA Network Operator supplies the RDMA device plugin, the IPoIB CNI and the address pools. It sits on the shared stack of `docs/adr/0001-kubernetes-stack.md`, which left the Network Operator and IPoIB out of scope (section 6), and reuses the CNI layout that `docs/adr/0004-track-a-pods-and-net1.md` proved in the lab.
+cel1 runs Cilium on the management port and gives pods no path to the eight InfiniBand rails of the DGX B200 nodes (`docs/fleet.md` section 5). This ADR decides how a pod on a DGX node gets those rails: Cilium stays the primary network, Multus adds one IPoIB interface per rail, and the NVIDIA Network Operator supplies the RDMA device plugin, the IPoIB CNI and the address pools. It sits on the shared stack of `docs/adr/0001-kubernetes-stack.md`, which left the Network Operator and IPoIB out of scope (section 6), and reuses the CNI layout that `docs/adr/0004-track-a-pods-and-net1.md` proved in the lab.
 
 The cel1 simulation cannot run any of the data path. Its rails are virtio Ethernet, and IPoIB attaches only to a port whose link layer is InfiniBand, so no guest of this repository can create an IPoIB interface, with or without RXE.
 
-## 1. Proposal
+## 1. Decision
 
 1. **Cilium stays the only primary CNI, on `mgmt0`.** Every pod keeps `eth0` from Cilium, and Services, NetworkPolicy, DNS and the NCCL bootstrap stay on it. `devices: mgmt0` does not change, so the eBPF datapath never attaches to a rail. `helm/cilium/values-cel1.yaml` gains the two keys of ADR 0004 section 1.4, `cni.confPath: /etc/cni/multus/net.d` and `cni.exclusive: false`. cel1 sets neither today, and the chart's default `cni.exclusive: true` would rename every other CNI file the agent can see.
 2. **Multus comes from the repository's chart, and nothing else installs it.** The `multus` release in `helm/releases.yaml` adds `cel1` to its environments, with a `helm/multus/values-cel1.yaml` that sets `daemonConfig.multusAutoconfigDir: /etc/cni/multus/net.d` as the lab does. The NicClusterPolicy carries no `secondaryNetwork.multus`. A cel1 cluster built before this change needs `make cni-migrate` once, as a lab cluster did. Whereabouts stays lab only.
@@ -15,9 +15,9 @@ The cel1 simulation cannot run any of the data path. Its rails are virtio Ethern
    - `secondaryNetwork.multus`. Item 2 explains why.
    - `secondaryNetwork.cniPlugins`. The `containerd` role already installs the locked CNI plugins v1.10.0 into `/opt/cni/bin` (ADR 0001 section 7). A second copier into the same directory would break that lock.
 4. **One RDMA resource covers all eight rails.** The device plugin publishes `rdma/cel1_rails` with `"selectors": {"ifNames": ["rail0", …, "rail7"]}` and `"rdmaHcaMax": 16`. The selector matches the netdev names that the site's `.link` files assign (`docs/fleet.md` section 2.2), so the model's interface names are also the selector. A pod that asks for one unit gets the character devices of `mlx5_0` to `mlx5_7`. `rdmaHcaMax` equals the per-node address block of item 6, so a pod that is granted the resource always finds a free address on every rail.
-5. **One IPoIBNetwork and one IPPool per rail.** For each rail r the renderer writes an `IPoIBNetwork` named `cel1-rail<r>` with `master: rail<r>` and IPAM `{"type": "nv-ipam", "poolName": "cel1-rail<r>"}`, and an `IPPool` of the same name. The operator turns each IPoIBNetwork into a NetworkAttachmentDefinition in `networkNamespace`. ipoib-cni creates an IPoIB child of `rail<r>` and moves it into the pod, so the pod shares the rail's partition, the default one in this phase.
+5. **One IPoIBNetwork and one IPPool per rail.** For each rail r the renderer writes an `IPoIBNetwork` named `cel1-rail<r>` with `master: rail<r>` and IPAM `{"type": "nv-ipam", "poolName": "cel1-rail<r>"}`, and an `IPPool` of the same name. Each has `networkNamespace: rdma-jobs`, and the operator turns it into a NetworkAttachmentDefinition there (section 6, decision 2). ipoib-cni creates an IPoIB child of `rail<r>` and moves it into the pod, so the pod shares the rail's partition, the default one in this phase.
 6. **Pod rail addresses come from a new range, `10.143.<r>.0/24`.** Each pool has `subnet: 10.143.<r>.0/24`, `perNodeBlockSize: 16`, no gateway and a `nodeSelector` on the DGX class. Eight DGX nodes take 128 of 254 addresses, which leaves room for seven more nodes. The host rail addresses `10.142.<r>.21`–`28` do not change. The site model gains `networks.rail<r>.pod_cidr`, and the validator checks that each range is disjoint from every other network and from the pod and service ranges, and that the nodes of the class times the block size fit in it.
-7. **RDMA pods run without `privileged`.** The device plugin admits the HCA devices to the container's device cgroup, which is the piece Track A lacked (ADR 0004 section 2.1). A pod needs `IPC_LOCK`, the `rdma/cel1_rails` request, the eight networks and the GPUs. `IPC_LOCK` is not among the capabilities that PodSecurity `baseline` allows, so the workload namespace still runs at the `privileged` level, while the containers themselves are not privileged.
+7. **RDMA pods run without `privileged`.** The device plugin admits the HCA devices to the container's device cgroup, which is the piece Track A lacked (ADR 0004 section 2.1). A pod needs `IPC_LOCK`, the `rdma/cel1_rails` request, the eight networks and the GPUs. `IPC_LOCK` is not among the capabilities that PodSecurity `baseline` allows, so `rdma-jobs` runs at the `privileged` level, while the containers themselves are not privileged.
 8. **NCCL keeps verbs and IPoIB carries IP.** NCCL reaches the HCAs through verbs (`NCCL_IB_HCA=mlx5_0,mlx5_1,…,mlx5_7`) and bootstraps over `NCCL_SOCKET_IFNAME=eth0`. It does not need IPoIB on its data path. The IPoIB interfaces serve what needs an IP address on the rail: RDMA CM address resolution (`ib_write_bw -R`, UCX and MPI with rdmacm), and IP tools on the fabric. The network selection annotation names the pod interfaces `rail0` to `rail7`, as on the host, instead of Multus's default `net1` to `net8`.
 9. **Isolation on the rails belongs to InfiniBand partitions, not to Cilium.** Cilium NetworkPolicy applies to `eth0` only. A pod on the default partition can reach every other pod and host port on that partition. Isolation between tenants needs P_Key partitions in the subnet manager and, on each host, a P_Key child of `rail<r>` as the IPoIBNetwork master. That is phase 4.
 
@@ -25,6 +25,7 @@ A pod that uses the rails would look like this. Section 5 lists what renders it.
 
 ```yaml
 metadata:
+  namespace: rdma-jobs
   annotations:
     k8s.v1.cni.cncf.io/networks: |
       [{"name": "cel1-rail0", "interface": "rail0"}, {"name": "cel1-rail1", "interface": "rail1"},
@@ -63,7 +64,7 @@ The Multus thick daemon removes `00-multus.conf` when it stops, and a pod create
 
 - `ofedDriver`. DGX OS 7.6.0, released 2026-09-14, lists "Inbox OFED 50.0-2" in its ISO component table and supports the DOCA host package through the `doca-ofed` profile (DGX OS 7 release notes). The operator's example policy at v26.7.1 instead builds a driver container, `doca-driver` `doca3.5.0-26.07-0.7.7.0-1`, with drain-based upgrades. Two owners of the `mlx5` modules on one host would fight. `pkg/state/state_ofed.go` deletes the driver objects when the spec has no `ofedDriver`.
 - `cniPlugins`. Section 1 item 3. `pkg/state/state_cni_plugins.go` likewise skips an absent block.
-- NFD. The GPU Operator chart v26.7.2 already deploys Node Feature Discovery 0.19.0, and its PCI whitelist includes classes `0200` and `0207`, so ConnectX ports in Ethernet or InfiniBand mode get `feature.node.kubernetes.io/pci-15b3.present`. The Network Operator README allows `nfd.enabled=false` when an NFD of v0.13.2 or newer with the NodeFeature API runs. Two NFD instances would run two masters over the same nodes. The proposal uses the class label for placement anyway, so NFD labels decide nothing here.
+- NFD. The GPU Operator chart v26.7.2 already deploys Node Feature Discovery 0.19.0, and its PCI whitelist includes classes `0200` and `0207`, so ConnectX ports in Ethernet or InfiniBand mode get `feature.node.kubernetes.io/pci-15b3.present`. The Network Operator README allows `nfd.enabled=false` when an NFD of v0.13.2 or newer with the NodeFeature API runs. Two NFD instances would run two masters over the same nodes. The policy uses the class label for placement anyway, so NFD labels decide nothing here.
 
 ### 2.4 Why the rdma shared device plugin and not SR-IOV
 
@@ -87,7 +88,7 @@ The shared plugin needs no firmware change, no VF count and no fabric manager. E
 | IPoIB under Cilium as the primary network | Section 2.1. Not tried |
 | The operator's driver container | Section 2.3. It is the option if a site prefers it to the DGX OS driver, and then DGX OS must not load its own |
 
-## 4. What the proposal assumes
+## 4. What the decision assumes
 
 These are inferences from documentation and source, not results.
 
@@ -111,12 +112,14 @@ Each phase lists its proof. Nothing past phase 1 runs without hardware or a late
 
 Until phase 3 runs on hardware, `README.md` keeps IPoIB among the non-claims, and `docs/fleet.md` section 10 keeps "InfiniBand on the rails" at `not_run`.
 
-## 6. Decisions for the user
+## 6. Decisions
 
-| Decision | Proposed default |
+The user took these on 2026-11-18.
+
+| Decision | Outcome |
 |---|---|
-| 1. The host RDMA driver on DGX nodes | What DGX OS installs, inbox OFED or the `doca-ofed` profile, and `ofedDriver` left out. Which of the two the site runs is the site's choice |
-| 2. The namespace that holds the NetworkAttachmentDefinitions | One workload namespace, named in the model. Multus can refer to a network in another namespace by `<namespace>/<name>` |
+| 1. The host RDMA driver on DGX nodes | The driver that DGX OS installs. `ofedDriver` stays out of the policy |
+| 2. The namespace that holds the NetworkAttachmentDefinitions | `rdma-jobs`, a namespace of its own at PodSecurity `privileged`, which also runs the RDMA pods, so they name each network without a namespace. kube-system stays for cluster components. A pod in another namespace names `rdma-jobs/cel1-rail<r>`, because the Multus daemon config sets no `namespaceIsolation` |
 | 3. The pod range and block size | `10.143.<r>.0/24`, 16 addresses per node per rail, `rdmaHcaMax: 16` |
 | 4. Interface names in pods | `rail0` to `rail7`, as on the host |
 | 5. When partitions start | Phase 4, after the default partition works on hardware |

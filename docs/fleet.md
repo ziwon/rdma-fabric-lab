@@ -225,7 +225,7 @@ The cel1 simulation ran the three fleet targets on 13 guests (section 13). That 
 | Placement driven by the GPU Operator labels | `not_run` | There is no GPU. The guests have none either, so NFD reports no NVIDIA device and the Operator creates no operand |
 | The real NVIDIA container toolkit on DGX nodes | `not_run` | The simulation uses a stand-in runtime that execs runc |
 | The toolkit drop-in on PCIe GPU servers | `not_run` | Section 6. Only a server with a GPU can confirm it |
-| InfiniBand on the rails | `not_run` | The simulation rails carry Ethernet. Track B simulates the fabric's management plane in B-04. `docs/adr/0007-cel1-ipoib-pod-networks.md` proposes the pod networks on them |
+| InfiniBand on the rails | `not_run` | The simulation rails carry Ethernet. Track B simulates the fabric's management plane in B-04. `docs/adr/0007-cel1-ipoib-pod-networks.md` decides the pod networks on them |
 | Schema validation of the 9 GPU Operator CRDs and ClusterPolicy | `not_run` | No kubeconform schema exists |
 
 ## 11. Applying this to another site
