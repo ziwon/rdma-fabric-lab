@@ -39,7 +39,7 @@ A profile is one TSV file under `tests/integration/qemu-lab/profiles/`. Each lin
 ## The switch and the cable
 
 ```mermaid
-%%{init: {"theme": "base", "themeVariables": {"background": "#1b1f23", "primaryColor": "#22272c", "primaryTextColor": "#e6e9ed", "primaryBorderColor": "#616c78", "lineColor": "#8f9aa7", "fontFamily": "DM Sans, Inter, Arial, sans-serif"}}}%%
+%%{init: {"theme": "base", "themeVariables": {"background": "#1b1f23", "primaryColor": "#22272c", "primaryTextColor": "#e6e9ed", "primaryBorderColor": "#616c78", "lineColor": "#8f9aa7", "edgeLabelBackground": "#1b1f23", "fontFamily": "DM Sans, Inter, Arial, sans-serif"}}}%%
 flowchart TB
     SW["switch.py, learning switch<br/>mgmt 192.168.140.0/24"]
     CP[QEMU cp1] <-->|AF_UNIX dgram| SW

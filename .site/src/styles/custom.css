@@ -278,6 +278,22 @@ a {
   padding: 1rem;
 }
 
+/* The diagrams are drawn once, in the dark palette. Mermaid writes its node colors as inline !important styles,
+   which no stylesheet can override, and the SVG figures are images. So the light theme inverts each whole
+   figure, panel and border included, and turns its hues back: the dark panel becomes light, lime becomes
+   green, and red stays red. Both kinds of figure end on the same surface. The zoomed copy that
+   starlight-image-zoom opens gets the same treatment. */
+:root[data-theme="light"] .sl-markdown-content pre.mermaid,
+:root[data-theme="light"] :is(.sl-markdown-content, .starlight-image-zoom-dialog) img[src$=".svg"] {
+  filter: invert(1) hue-rotate(180deg);
+}
+
+/* The image keeps the dark theme's border color here, so the filter turns it into the same light hairline the
+   Mermaid panel gets. */
+:root[data-theme="light"] .sl-markdown-content img[src$=".svg"] {
+  border-color: #363e47;
+}
+
 .sl-markdown-content pre.mermaid[data-processed] svg :is(.edge-pattern-dashed, .edge-pattern-dotted) {
   stroke-width: 2px !important;
   opacity: 1;

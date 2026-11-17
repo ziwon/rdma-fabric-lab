@@ -14,7 +14,7 @@ Kubernetes gives every pod an IP address and leaves the wiring to plugins. The l
 Each Track A worker has three NICs, and each carries different traffic. The path checks of the labs depend on keeping them apart.
 
 ```mermaid
-%%{init: {"theme": "base", "themeVariables": {"background": "#1b1f23", "primaryColor": "#22272c", "primaryTextColor": "#e6e9ed", "primaryBorderColor": "#616c78", "lineColor": "#8f9aa7", "fontFamily": "DM Sans, Inter, Arial, sans-serif"}}}%%
+%%{init: {"theme": "base", "themeVariables": {"background": "#1b1f23", "primaryColor": "#22272c", "primaryTextColor": "#e6e9ed", "primaryBorderColor": "#616c78", "lineColor": "#8f9aa7", "edgeLabelBackground": "#1b1f23", "fontFamily": "DM Sans, Inter, Arial, sans-serif"}}}%%
 flowchart LR
     U[User NIC<br/>10.0.2.15, default route<br/>SSH, package downloads]
     M[Management NIC<br/>192.168.140.0/24<br/>Kubernetes API, VXLAN]
@@ -71,7 +71,7 @@ A cluster with three control planes needs one address for the API that survives 
 Multus is a meta-plugin. In the thick-plugin form the lab uses, `/etc/cni/net.d/00-multus.conf` names a shim, and a daemon on every node does the work. For each pod it first calls its default delegate, Cilium, for `eth0`. Then it reads the pod's annotation and calls the plugin of each named NetworkAttachmentDefinition for `net1`, `net2` and so on.
 
 ```mermaid
-%%{init: {"theme": "base", "themeVariables": {"background": "#1b1f23", "primaryColor": "#22272c", "primaryTextColor": "#e6e9ed", "primaryBorderColor": "#616c78", "lineColor": "#8f9aa7", "fontFamily": "DM Sans, Inter, Arial, sans-serif"}}}%%
+%%{init: {"theme": "base", "themeVariables": {"background": "#1b1f23", "primaryColor": "#22272c", "primaryTextColor": "#e6e9ed", "primaryBorderColor": "#616c78", "lineColor": "#8f9aa7", "edgeLabelBackground": "#1b1f23", "fontFamily": "DM Sans, Inter, Arial, sans-serif"}}}%%
 flowchart TB
     K[kubelet and containerd] --> F["/etc/cni/net.d<br/>00-multus.conf only"]
     F --> MD[Multus daemon]
