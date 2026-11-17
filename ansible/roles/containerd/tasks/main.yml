@@ -103,12 +103,13 @@
 - name: Apply runtime changes now
   ansible.builtin.meta: flush_handlers
 
+# No daemon-reload here, as in the rxe role: the handler reloads when the unit file changed, and a reload on a node
+# with pods drops the kubelet slices' Conflicts=shutdown.target.
 - name: Enable and start containerd
   ansible.builtin.systemd_service:
     name: containerd.service
     enabled: true
     state: started
-    daemon_reload: true
 
 - name: Read what the installed runtime reports
   ansible.builtin.command: "{{ item.value }}"

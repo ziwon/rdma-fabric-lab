@@ -1,8 +1,8 @@
 track: a-soft-roce
 scenario: vm-environment
 description: >-
-  make collect. Snapshot of the host and the lab workers, and a comparison of every lab.* value in
-  versions.lock.yaml with what the workers report. No traffic runs.
+  make collect. Snapshot of the host and the lab workers, their resolved inventory variables, and a comparison
+  of every lab.* value in versions.lock.yaml with what the workers report. No traffic runs.
 required: false
 result_kind: software-rdma-measurement
 security:
@@ -17,3 +17,7 @@ checks:
     description: Every guest snapshot command exited 0 on every worker.
   - id: host-state-collected
     description: Every host snapshot command exited 0.
+  - id: no-credential-collected
+    description: >-
+      No written file carries a private key, a kubeconfig client credential, a token or a password. A file that
+      would is replaced by a note, and the check fails.

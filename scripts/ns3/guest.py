@@ -49,6 +49,8 @@ def synced_tar(repo: Path) -> bytes:
                 info.uid = info.gid = 0
                 info.uname = info.gname = ""
                 info.mtime = 0
+                # Git keeps only 755 and 644. Without this the umask of the checkout reaches the image digest.
+                info.mode = 0o755 if info.isdir() or info.mode & 0o111 else 0o644
                 if info.isfile():
                     with path.open("rb") as handle:
                         tar.addfile(info, handle)

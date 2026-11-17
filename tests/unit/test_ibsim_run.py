@@ -17,7 +17,8 @@ FIXTURES = REPO / "tests" / "fixtures" / "b-ibsim"
 CONFIG = yaml.safe_load((REPO / "tracks/b-ibsim/config/scenarios.yaml").read_text())
 SCENARIOS = sorted(CONFIG["scenarios"])
 LOCK = yaml.safe_load((REPO / "versions.lock.yaml").read_text())
-IMAGE = LOCK["components"]["ibsim.image"]["value"]
+# The image of run 20261115T142123Z, which tests/fixtures/b-ibsim/b-01/container was captured from.
+IMAGE = "sha256:cb3e3550f4f60de5414abe55dbe81e45fd68106ef5ecc4cfa4d701b6083ee279"
 
 
 def params(scenario: str) -> dict:
@@ -149,6 +150,7 @@ def test_every_dockerfile_argument_comes_from_the_lock():
     assert all(args.values()) and "null" not in args.values()
     base = LOCK["components"]["ibsim.base_image"]
     assert args["BASE_IMAGE"] == f"{base['ref']}@{base['value']}" and base["value"].startswith("sha256:")
+    assert args["SOURCE_DATE_EPOCH"] == "1794700800"
 
 
 def test_the_guest_copy_is_the_same_bytes_for_the_same_tree_and_keeps_scripts_executable():

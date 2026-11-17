@@ -10,6 +10,7 @@
 #   guest.sh inspect <key>                          docker inspect of the container
 #   guest.sh top <key>                              UID, PID and command of every process in the container
 #   guest.sh stop <key>                             remove the container and the run's files, if any
+#   guest.sh stop-run <run-id>                      stop every scenario of one run id, then fail if any is left
 #   guest.sh ls                                     every Track B container, running or not
 #
 # <key> is <run-id>-<scenario>, for example 20261115T140000Z-b-01.
@@ -46,14 +47,17 @@ run_dir() {
 
 build() {
   [[ $# -ge 2 ]] || die "usage: guest.sh build <context> <tag> KEY=VALUE..."
-  local context=$1 tag=$2 kv args=()
+  local context=$1 tag=$2 kv epoch="" args=()
   shift 2
   for kv in "$@"; do
     [[ $kv =~ ^[A-Z][A-Z_]*=[^[:space:]]+$ ]] || die "build argument $kv is not KEY=VALUE"
+    [[ $kv == SOURCE_DATE_EPOCH=* ]] && epoch=${kv#*=}
     args+=(--build-arg "$kv")
   done
-  docker build --progress=plain --provenance=false --sbom=false --build-context guest-ca=/etc/ssl/certs \
-    --tag "$tag" "${args[@]}" "$context" >&2
+  [[ $epoch =~ ^[0-9]+$ ]] || die "build needs SOURCE_DATE_EPOCH=<seconds>, so the image carries no build time"
+  docker buildx build --progress=plain --provenance=false --sbom=false --build-context guest-ca=/etc/ssl/certs \
+    --output "type=image,name=$tag,rewrite-timestamp=true,unpack=false" "${args[@]}" "$context" >&2
+  # rewrite-timestamp conflicts with the unpack of type=docker. Docker unpacks the image when a container starts.
   # The image ID that docker image inspect and every container of the image report, the manifest digest.
   docker image inspect --format '{{.Id}}' "$tag"
 }
@@ -84,9 +88,33 @@ start() {
   cat "$dir/docker-run.txt"
 }
 
+stop_key() {
+  docker rm --force "$(name_of "$1")" > /dev/null 2>&1 || true
+  rm -rf -- "$(run_dir "$1")"
+}
+
+# Every key of the run that a container label or a run directory still names.
+keys_of_run() {
+  { docker ps --all --filter label=rfl.track=b-ibsim --format '{{.Label "rfl.run"}}'; ls -1 "$root/runs" 2> /dev/null || true; } \
+    | grep -E "^$1-" | sort -u || true
+}
+
+stop_run() {
+  [[ $# -eq 1 && $1 =~ ^[0-9]{8}T[0-9]{6}Z$ ]] || die "usage: guest.sh stop-run <run-id>"
+  local key keys left
+  keys=$(keys_of_run "$1")
+  for key in $keys; do
+    stop_key "$key"
+    printf 'removed %s\n' "$key"
+  done
+  left=$(keys_of_run "$1")
+  [[ -z $left ]] || die "still present after stop-run: $left"
+  printf 'run %s: %s keys removed, none left\n' "$1" "$(wc -w <<< "$keys")"
+}
+
 case ${1:-} in
-  build | start | exec | read | inspect | top | stop | ls) require_guest ;;
-  *) die "usage: guest.sh build|start|exec|read|inspect|top|stop|ls ..." ;;
+  build | start | exec | read | inspect | top | stop | stop-run | ls) require_guest ;;
+  *) die "usage: guest.sh build|start|exec|read|inspect|top|stop|stop-run|ls ..." ;;
 esac
 
 case $1 in
@@ -99,10 +127,7 @@ case $1 in
     ;;
   inspect) [[ $# -eq 2 ]] || die "usage: guest.sh inspect <key>"; docker container inspect "$(name_of "$2")" ;;
   top) [[ $# -eq 2 ]] || die "usage: guest.sh top <key>"; docker top "$(name_of "$2")" -eo uid,pid,comm ;;
-  stop)
-    [[ $# -eq 2 ]] || die "usage: guest.sh stop <key>"
-    docker rm --force "$(name_of "$2")" > /dev/null 2>&1 || true
-    rm -rf -- "$(run_dir "$2")"
-    ;;
+  stop) [[ $# -eq 2 ]] || die "usage: guest.sh stop <key>"; stop_key "$2" ;;
+  stop-run) shift; stop_run "$@" ;;
   ls) docker ps --all --filter label=rfl.track=b-ibsim --format '{{.Names}} {{.Status}} {{.Image}}' ;;
 esac

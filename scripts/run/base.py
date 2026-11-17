@@ -32,8 +32,8 @@ def failed(failure_class: str, evidence: list[str], detail: str, exit_code: int 
 class RunBase:
     """A run started from a scenario spec. Subclasses add the guests and their parameters."""
 
-    def __init__(self, spec: Path, run_id: str | None):
-        self.dir = rfl.init(spec, run_id)
+    def __init__(self, spec: Path, run_id: str | None, deliberate_break: dict | None = None):
+        self.dir = rfl.init(spec, run_id, deliberate_break)
         self.run_id = self.dir.parts[-3]
         self.log = CommandLog(self.dir / "commands.log")
         self.started = time.monotonic()

@@ -85,12 +85,12 @@ step vm-rxe-baseline-on-k8s 0 make rxe-test
 step inventory-check-lab 0 make inventory-check INVENTORY=lab
 
 step break-delete-worker1-cilium-agent 0 delete_worker1_agent
-step k8s-baseline-agent-deleted nonzero make k8s-test
+step k8s-baseline-agent-deleted nonzero env RFL_BREAK=cilium-agent-deleted RFL_BREAK_WHAT='the Cilium agent pod of worker1 was deleted just before the run' make k8s-test
 step restore-cilium-agents 0 agents_back
 step k8s-baseline-agents-back 0 make k8s-test
 
 step break-drop-vxlan-on-worker1 0 vxlan_fault -I
-step k8s-baseline-vxlan-dropped nonzero make k8s-test
+step k8s-baseline-vxlan-dropped nonzero env RFL_BREAK=vxlan-dropped RFL_BREAK_WHAT='iptables on worker1 drops VXLAN on the management NIC' make k8s-test
 step restore-vxlan-on-worker1 0 vxlan_fault -D
 step k8s-baseline-vxlan-restored 0 make k8s-test
 

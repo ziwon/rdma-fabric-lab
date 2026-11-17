@@ -47,6 +47,7 @@ def run(argv: list[str], env: dict, stdin: bytes = b"") -> subprocess.CompletedP
         ["fetch", KEY, "run1"],
         ["inspect", KEY, "run1"],
         ["stop", KEY],
+        ["stop-run", KEY.split("-")[0]],
         ["ls"],
     ],
 )

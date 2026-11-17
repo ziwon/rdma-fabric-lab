@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -18,7 +19,10 @@ DEFAULT_LOCK = manifest.REPO_ROOT / "versions.lock.yaml"
 
 
 def _cmd_run_init(args: argparse.Namespace) -> int:
-    print(manifest.init(args.spec, args.results_root, args.run_id))
+    if bool(args.break_name) != bool(args.break_what):
+        raise manifest.ManifestError("a deliberate break needs both --break and --break-what")
+    broken = {"name": args.break_name, "description": args.break_what} if args.break_name else None
+    print(manifest.init(args.spec, args.results_root, args.run_id, broken))
     return 0
 
 
@@ -78,19 +82,40 @@ def _cmd_specs(args: argparse.Namespace) -> int:
     return manifest.EXIT_INVALID if invalid else 0
 
 
+REPORT_STATUSES = ("passed", "failed", "blocked", "not_run", "never ran")
+
+
+def _report_status(row: dict) -> str:
+    return row["latest"]["status"] if row["latest"] else "never ran"
+
+
 def _cmd_report(args: argparse.Namespace) -> int:
-    rows = manifest.tally(args.results_root, args.run_id)
-    invalid = [r for r in rows if not r["valid"]]
+    rows, invalid = manifest.latest_runs(args.results_root, args.run_id, args.specs or None)
+    print("Latest finished run of each scenario. Deliberate breaks, unfinished runs and older runs are not counted.")
+    for kind in manifest.RESULT_KINDS:
+        of_kind = [r for r in rows if r["result_kind"] == kind]
+        print(f"\n{kind}")
+        for label, wanted in (("required", True), ("optional", False)):
+            group = [r for r in of_kind if r["required"] is wanted]
+            counts = ", ".join(f"{s} {sum(_report_status(r) == s for r in group)}" for s in REPORT_STATUSES)
+            print(f"  {label}: {counts}")
+            for r in group:
+                run = r["latest"]["run_id"] if r["latest"] else "-"
+                print(f"    {_report_status(r):9} {r['track'] + '/' + r['scenario']:40} {run:16}"
+                      f"  older {r['older']}, breaks {r['breaks']}, unfinished {r['unfinished']}")
+    print()
     for label, wanted in (("required (MVP)", True), ("optional", False)):
-        group = [r for r in rows if r["valid"] and r["required"] is wanted]
-        counts = {s: sum(r["status"] == s for r in group) for s in manifest.STATUS_SEVERITY}
-        print(f"{label}: " + ", ".join(f"{s}={n}" for s, n in counts.items()))
-        for row in group:
-            print(f"  {row['status']:8} {row['result_kind']:28} {row['dir']}")
+        group = [r for r in rows if r["required"] is wanted]
+        print(f"{label}: {sum(_report_status(r) == 'passed' for r in group)} of {len(group)} scenarios passed")
+    print(f"not counted: {sum(r['breaks'] for r in rows)} deliberate break runs, "
+          f"{sum(r['unfinished'] for r in rows)} unfinished runs, {sum(r['older'] for r in rows)} older runs")
     print(f"invalid: {len(invalid)}")
     for row in invalid:
         print(f"  {row['dir']}: {'; '.join(row['problems'])}")
-    return manifest.EXIT_INVALID if invalid else 0
+    if invalid:
+        return manifest.EXIT_INVALID
+    unmet = [r for r in rows if r["required"] and _report_status(r) != "passed"]
+    return 1 if args.strict and unmet else 0
 
 
 def _cmd_versions(args: argparse.Namespace) -> int:
@@ -133,6 +158,11 @@ def _parser() -> argparse.ArgumentParser:
 
     p = sub.add_parser("run-init", help="create a run directory from a scenario spec")
     p.add_argument("--spec", type=Path, required=True)
+    # A wrapper that breaks the environment before it calls a runner names the break in these variables.
+    p.add_argument("--break", dest="break_name", default=os.environ.get("RFL_BREAK"),
+                   help="name of the deliberate break this run carries, default $RFL_BREAK")
+    p.add_argument("--break-what", default=os.environ.get("RFL_BREAK_WHAT"),
+                   help="what the break does, default $RFL_BREAK_WHAT")
     results_options(p)
     p.set_defaults(func=_cmd_run_init)
 
@@ -170,8 +200,10 @@ def _parser() -> argparse.ArgumentParser:
     p.add_argument("specs", type=Path, nargs="*")
     p.set_defaults(func=_cmd_specs)
 
-    p = sub.add_parser("report", help="tally results, required and optional runs apart")
+    p = sub.add_parser("report", help="latest finished run of each scenario that is not a deliberate break")
     results_options(p)
+    p.add_argument("--strict", action="store_true", help="exit 1 unless every required scenario passed")
+    p.add_argument("--specs", type=Path, nargs="*", help="scenario specs to report on, default tracks/*/scenarios/*.yaml")
     p.set_defaults(func=_cmd_report)
 
     p = sub.add_parser("versions", help="validate the version lock")

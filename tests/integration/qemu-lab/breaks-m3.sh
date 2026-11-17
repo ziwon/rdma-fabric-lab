@@ -70,6 +70,13 @@ print("\t".join([sys.argv[1], b["run_id"], b["status"], failed, r["run_id"], r["
 EOF
 }
 
+# broken_run <name> <what> <command...>: the run's manifest names the deliberate break it carries.
+broken_run() {
+  local name=$1 what=$2
+  shift 2
+  RFL_BREAK=$name RFL_BREAK_WHAT=$what "$@"
+}
+
 # break <name> <scenario: hostnet|multus> <checks that must fail> -- <break command> -- <repair command> [-- <broken run options>]
 selected=("$@")
 breaks() {
@@ -84,7 +91,7 @@ breaks() {
   [[ $# -gt 0 ]] && shift
   opts=("$@")
   if [[ ${#brk[@]} -gt 0 ]]; then step "break-$name" 0 "${brk[@]}"; fi
-  step "run-$name-broken" nonzero "$scenario" "${opts[@]}"
+  step "run-$name-broken" nonzero broken_run "$name" "breaks-m3.sh break $name: ${brk[*]:-the options ${opts[*]}}" "$scenario" "${opts[@]}"
   # shellcheck disable=SC2086 # checks is a space-separated list of check ids
   step "failed-$name" 0 failed_with "run-$name-broken" $checks
   if [[ ${#fix[@]} -gt 0 ]]; then step "repair-$name" 0 "${fix[@]}"; fi

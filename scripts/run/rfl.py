@@ -24,8 +24,13 @@ def _rfl(*args: str, check: bool = True) -> subprocess.CompletedProcess:
     return out
 
 
-def init(spec: Path, run_id: str | None = None) -> Path:
-    return Path(_rfl("run-init", "--spec", str(spec), *(["--run-id", run_id] if run_id else [])).stdout.strip())
+def init(spec: Path, run_id: str | None = None, deliberate_break: dict | None = None) -> Path:
+    """Without deliberate_break, rfl run-init reads RFL_BREAK and RFL_BREAK_WHAT, which a wrapper that broke the
+    environment sets."""
+    args = ["run-init", "--spec", str(spec), *(["--run-id", run_id] if run_id else [])]
+    if deliberate_break:
+        args += ["--break", deliberate_break["name"], "--break-what", deliberate_break["description"]]
+    return Path(_rfl(*args).stdout.strip())
 
 
 def check(

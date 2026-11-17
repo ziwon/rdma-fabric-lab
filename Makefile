@@ -46,7 +46,7 @@ versions: venv ## Validate versions.lock.yaml against this environment. SCOPE=<n
 validate: venv ## Check result directories against the result contract. RUN=<run-id> narrows it
 	$(RFL) validate $(if $(RUN),--run-id $(RUN))
 
-report: venv ## Tally validated results, required and optional runs apart
-	$(RFL) report $(if $(RUN),--run-id $(RUN))
+report: venv ## Latest finished run of each scenario that is not a deliberate break, by result kind, required and optional apart. STRICT=1 fails unless every required one passed
+	$(RFL) report $(if $(RUN),--run-id $(RUN)) $(if $(STRICT),--strict)
 
 -include mk/*.mk

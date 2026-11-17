@@ -85,8 +85,22 @@ k8s-multus-test: k8s-lock ## Run k8s-multus-net1: Multus net1 with Whereabouts b
 	$(RFL) versions --scope m3
 	$(LAB_RUN) run.multus test $(foreach i,$(LAB_INVENTORIES),-i $(i)) $(if $(RUN),--run-id $(RUN))
 
+# Every required Track A scenario, target:scenario, in the order they run. vm-rxe-reboot runs last because
+# k8s-baseline reads the Cilium agents once, and a rebooted node's agent turns Ready up to 30 s after its boot.
+TRACK_A_STEPS := rxe-test:vm-rxe-baseline rxe-test:vm-rxe-rerun k8s-test:k8s-baseline k8s-hostnet-test:k8s-hostnet-rdma \
+	k8s-multus-test:k8s-multus-net1 rxe-test:vm-rxe-reboot
+
+.PHONY: track-a
+track-a: lab-lock ## Every required Track A scenario in order, on a lab with Kubernetes, the addons and the RDMA test image. Each still runs when an earlier one failed
+	@failed=""; \
+	for step in $(TRACK_A_STEPS); do \
+	  $(MAKE) --no-print-directory $${step%%:*} SCENARIO=$${step#*:} || failed="$$failed $${step#*:}"; \
+	done; \
+	echo "make track-a: failed:$${failed:- none}"; \
+	test -z "$$failed"
+
 .PHONY: cleanup
-cleanup: venv ## Stop the processes and delete the guest files of run RUN=<run-id>. The device and the guests stay
+cleanup: venv ## Remove what run RUN=<run-id> left on the guests of LAB_PROFILE and on this host: its processes, files, namespaces and containers
 	@test -n "$(RUN)" || { echo "make cleanup needs RUN=<run-id>" >&2; exit 2; }
 	$(LAB_RUN) cleanup --run-id $(RUN) $(foreach i,$(LAB_INVENTORIES),-i $(i))
 
@@ -107,7 +121,7 @@ BUILDER_ENV = env LAB_PROFILE=ibsim $(if $(BUILDER_LAB_DIR),LAB_DIR=$(BUILDER_LA
 
 .PHONY: rdma-tools-image rdma-tools-load
 rdma-tools-image: venv ## Build images/rdma-tools inside the Track B guest into RDMA_TOOLS_ARCHIVE. Fails when its digest is not lab.rdma_tools_image
-	$(BUILDER_ENV) $(MAKE) --no-print-directory track-b-guest
+	$(BUILDER_ENV) $(MAKE) --no-print-directory track-b-guest $(if $(BUILDER_LAB_DIR),LAB_DIR=$(BUILDER_LAB_DIR))
 	$(LAB_RUN) run.image $(foreach i,$(shell $(BUILDER_ENV) $(LAB_HARNESS) inventories),-i $(i)) --out $(RDMA_TOOLS_ARCHIVE)
 
 rdma-tools-load: lab-lock ## Import RDMA_TOOLS_ARCHIVE into containerd on every worker without a registry, by its locked digest

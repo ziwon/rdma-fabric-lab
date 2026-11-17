@@ -16,6 +16,7 @@ from pathlib import Path
 import yaml
 
 from fleet import site
+from run.image import source_date_epoch
 from run.remote import CommandLog
 
 from . import guest, run, topology
@@ -59,7 +60,8 @@ def build_args(lock: dict) -> list[str]:
     components = lock["components"]
     base = components["ibsim.base_image"]
     args = [f"BASE_IMAGE={base['ref']}@{base['value']}"]
-    return args + [f"{arg}={components[name]['value']}" for arg, name in BUILD_ARGS.items()]
+    args += [f"{arg}={components[name]['value']}" for arg, name in BUILD_ARGS.items()]
+    return args + [f"SOURCE_DATE_EPOCH={source_date_epoch(components['ibsim.apt_snapshot']['value'])}"]
 
 
 def _cmd_image(args: argparse.Namespace) -> int:

@@ -73,12 +73,13 @@
   check_mode: false
 
 # The unit is a oneshot that stays active, so a device deleted since boot comes back only through a restart.
+# No daemon-reload here: the handler reloads when the unit file changed, and a reload on a node with pods makes
+# systemd 255 drop Conflicts=shutdown.target from the kubelet's slices, so the next shutdown kills the pods unstopped.
 - name: Enable and start the unit, and run it again when the device is missing
   ansible.builtin.systemd_service:
     name: rfl-rxe.service
     enabled: true
     state: "{{ 'restarted' if rxe_missing else 'started' }}"
-    daemon_reload: true
   vars:
     rxe_missing: "{{ rxe_links_settled.stdout | from_json | selectattr('ifname', 'equalto', lab_rxe_device) | list | length == 0 }}"
 
