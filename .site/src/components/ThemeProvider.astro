@@ -1,0 +1,42 @@
+---
+import { Icon } from '@astrojs/starlight/components';
+---
+
+{/* Starlight's ThemeProvider, with one change: a visitor who has not picked a theme gets the dark one, the face
+    the sibling labs share. Inlined, as Starlight's is, so the page never flashes the other theme. */}
+<script is:inline>
+	window.StarlightThemeProvider = (() => {
+		const storedTheme =
+			typeof localStorage !== 'undefined' && localStorage.getItem('starlight-theme');
+		const theme =
+			storedTheme === 'light' || storedTheme === 'dark'
+				? storedTheme
+				: storedTheme === 'auto' && window.matchMedia('(prefers-color-scheme: light)').matches
+					? 'light'
+					: 'dark';
+		document.documentElement.dataset.theme = theme;
+		return {
+			updatePickers(theme = storedTheme === 'light' || storedTheme === 'auto' ? storedTheme : 'dark') {
+				document.querySelectorAll('starlight-theme-select').forEach((picker) => {
+					const select = picker.querySelector('select');
+					if (select) select.value = theme;
+					/** @type {HTMLTemplateElement | null} */
+					const tmpl = document.querySelector(`#theme-icons`);
+					const newIcon = tmpl && tmpl.content.querySelector('.' + theme);
+					if (newIcon) {
+						const oldIcon = picker.querySelector('svg.label-icon');
+						if (oldIcon) {
+							oldIcon.replaceChildren(...newIcon.cloneNode(true).childNodes);
+						}
+					}
+				});
+			},
+		};
+	})();
+</script>
+
+<template id="theme-icons">
+	<Icon name="sun" class="light" />
+	<Icon name="moon" class="dark" />
+	<Icon name="laptop" class="auto" />
+</template>

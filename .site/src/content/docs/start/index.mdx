@@ -12,7 +12,7 @@ Each question gets its own track with its own tools and its own definition of su
 ## The pieces
 
 ```mermaid
-%%{init: {"theme": "base", "themeVariables": {"background": "#171717", "primaryColor": "#232323", "primaryTextColor": "#f5f5f5", "primaryBorderColor": "#d0d0d0", "lineColor": "#cfcfcf", "fontFamily": "Inter, Arial, sans-serif"}}}%%
+%%{init: {"theme": "base", "themeVariables": {"background": "#1b1f23", "primaryColor": "#22272c", "primaryTextColor": "#e6e9ed", "primaryBorderColor": "#616c78", "lineColor": "#8f9aa7", "fontFamily": "DM Sans, Inter, Arial, sans-serif"}}}%%
 flowchart TB
     H[Ubuntu host<br/>unprivileged QEMU, no simulator]
     H --> A[Track A guests<br/>cp1, worker1, worker2]
@@ -24,9 +24,9 @@ flowchart TB
     C --> C1[Pinned container<br/>ns-3 RDMA model]
     X --> X1[Fleet playbooks<br/>Cilium, GPU Operator]
 
-    classDef primary fill:#232323,stroke:#d0d0d0,color:#f5f5f5,stroke-width:2px;
-    classDef secondary fill:#3b2f20,stroke:#d0d0d0,color:#f5f5f5,stroke-width:2px;
-    classDef note fill:#52676b,stroke:#d0d0d0,color:#f5f5f5,stroke-width:2px;
+    classDef primary fill:#22272c,stroke:#616c78,color:#e6e9ed,stroke-width:1.5px;
+    classDef secondary fill:#21393e,stroke:#70c5d0,color:#e6e9ed,stroke-width:1.5px;
+    classDef note fill:#2b3138,stroke:#616c78,color:#b6bfc9,stroke-width:1.5px;
     class H primary
     class A,B,C,X secondary
     class A1,B1,C1,X1 note

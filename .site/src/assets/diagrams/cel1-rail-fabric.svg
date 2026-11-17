@@ -1,18 +1,18 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 430" width="900" height="430" role="img" aria-labelledby="t d">
   <title id="t">The cel1 rail-optimized compute fabric</title>
-  <desc id="d">Eight DGX hosts each connect HCA i to the leaf switch of rail i. Eight leaves each connect twice to each of four spines. Rail 0 is drawn in red, and the leaf r3 to spine 02 pair, where B-04 fails one link, is dashed.</desc>
+  <desc id="d">Eight DGX hosts each connect HCA i to the leaf switch of rail i. Eight leaves each connect twice to each of four spines. Rail 0 is drawn in lime, and the leaf r3 to spine 02 pair, where B-04 fails one link, is dashed in red.</desc>
   <style>
-    .bg { fill: #F5F1EA; }
-    .box { fill: #F5F1EA; stroke: #111111; stroke-width: 1.4; }
-    .hot { fill: #F5F1EA; stroke: #D9392E; stroke-width: 2; }
-    .up { stroke: #A49C92; stroke-width: 1; }
-    .rail { stroke: #D8D1C7; stroke-width: 1; }
-    .rail0 { stroke: #D9392E; stroke-width: 1.6; }
-    .fault { stroke: #D9392E; stroke-width: 2.4; stroke-dasharray: 6 4; }
-    .name { font: 700 13px Inter, Arial, sans-serif; fill: #050505; text-anchor: middle; }
-    .tier { font: 12px Inter, Arial, sans-serif; fill: #6F6A63; paint-order: stroke; stroke: #F5F1EA; stroke-width: 5px; stroke-linejoin: round; }
-    .note { font: 12px Inter, Arial, sans-serif; fill: #6F6A63; }
-    .red { font: 700 12px Inter, Arial, sans-serif; fill: #D9392E; }
+    .bg { fill: #1b1f23; }
+    .box { fill: #1b1f23; stroke: #b6bfc9; stroke-width: 1.4; }
+    .hot { fill: #1b1f23; stroke: #b2e879; stroke-width: 2; }
+    .up { stroke: #8f9aa7; stroke-width: 1; }
+    .rail { stroke: #363e47; stroke-width: 1; }
+    .rail0 { stroke: #b2e879; stroke-width: 1.6; }
+    .fault { stroke: #f2867a; stroke-width: 2.4; stroke-dasharray: 6 4; }
+    .name { font: 700 13px 'DM Sans', Inter, Arial, sans-serif; fill: #e6e9ed; text-anchor: middle; }
+    .tier { font: 12px 'DM Sans', Inter, Arial, sans-serif; fill: #a0aab6; paint-order: stroke; stroke: #1b1f23; stroke-width: 5px; stroke-linejoin: round; }
+    .note { font: 12px 'DM Sans', Inter, Arial, sans-serif; fill: #a0aab6; }
+    .red { font: 700 12px 'DM Sans', Inter, Arial, sans-serif; fill: #b2e879; }
   </style>
   <rect class="bg" x="0" y="0" width="900" height="430"/>
   <line class="up" x1="73.0" y1="175" x2="215.0" y2="74"/>
@@ -154,5 +154,5 @@
   <text class="tier" x="30" y="26">4 spines, 64 ports each</text>
   <text class="tier" x="30" y="161">8 leaves, one per rail. Each leaf has 2 links to each spine</text>
   <text class="tier" x="30" y="386">8 DGX B200 hosts. HCA mlx5_i on port rail i cables to leaf r i</text>
-  <text class="red" x="30" y="408">Red: rail 0, the eight HCAs that share leaf r0. Dashed: leaf r3 to spine 02, where B-04 fails one of the two links.</text>
+  <text class="red" x="30" y="408">Lime: rail 0, the eight HCAs that share leaf r0. Dashed red: leaf r3 to spine 02, where B-04 fails one of the two links.</text>
 </svg>

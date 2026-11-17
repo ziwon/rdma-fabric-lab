@@ -2,16 +2,16 @@
   <title id="t">ECN marking probability against the egress queue</title>
   <desc id="d">No mark at or below kmin of 400000 bytes. Between kmin and kmax of 1600000 bytes the probability rises linearly to pmax 0.2. Above kmax every packet is marked.</desc>
   <style>
-    .bg { fill: #F5F1EA; }
-    .axis { stroke: #111111; stroke-width: 1.4; fill: none; }
-    .grid { stroke: #D8D1C7; stroke-width: 1; }
-    .curve { stroke: #111111; stroke-width: 2.4; fill: none; }
-    .jump { stroke: #D9392E; stroke-width: 2; stroke-dasharray: 5 4; fill: none; }
-    .hot { stroke: #D9392E; stroke-width: 2.4; fill: none; }
-    .tick { font: 12px Inter, Arial, sans-serif; fill: #6F6A63; text-anchor: middle; }
-    .ytick { font: 12px Inter, Arial, sans-serif; fill: #6F6A63; text-anchor: end; }
-    .label { font: 12px Inter, Arial, sans-serif; fill: #050505; }
-    .red { font: 700 12px Inter, Arial, sans-serif; fill: #D9392E; }
+    .bg { fill: #1b1f23; }
+    .axis { stroke: #b6bfc9; stroke-width: 1.4; fill: none; }
+    .grid { stroke: #363e47; stroke-width: 1; }
+    .curve { stroke: #b6bfc9; stroke-width: 2.4; fill: none; }
+    .jump { stroke: #b2e879; stroke-width: 2; stroke-dasharray: 5 4; fill: none; }
+    .hot { stroke: #b2e879; stroke-width: 2.4; fill: none; }
+    .tick { font: 12px 'DM Sans', Inter, Arial, sans-serif; fill: #a0aab6; text-anchor: middle; }
+    .ytick { font: 12px 'DM Sans', Inter, Arial, sans-serif; fill: #a0aab6; text-anchor: end; }
+    .label { font: 12px 'DM Sans', Inter, Arial, sans-serif; fill: #e6e9ed; }
+    .red { font: 700 12px 'DM Sans', Inter, Arial, sans-serif; fill: #b2e879; }
   </style>
   <rect class="bg" x="0" y="0" width="720" height="330"/>
 

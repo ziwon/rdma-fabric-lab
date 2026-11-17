@@ -1,82 +1,261 @@
 @import "katex/dist/katex.min.css";
+@import "@fontsource/dm-sans/400.css";
+@import "@fontsource/dm-sans/500.css";
+@import "@fontsource/dm-sans/600.css";
+@import "@fontsource/dm-sans/700.css";
+@import "@fontsource/ibm-plex-mono/400.css";
+@import "@fontsource/ibm-plex-mono/500.css";
 
+/* The palette of the sibling labs: charcoal surfaces, one lime accent, cyan for information, and orange and red
+   for the rare warning. Dark is the default face. The light face keeps the same roles at calm contrast. */
 :root {
-  --sl-font: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  --sl-font-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
-  --sl-color-accent-low: #d5f7fb;
-  --sl-color-accent: #007f94;
-  --sl-color-accent-high: #004a57;
-  --sl-color-text-accent: #006f82;
-  --sl-color-white: #050505;
-  --sl-color-gray-1: #25211d;
-  --sl-color-gray-2: #3c3833;
-  --sl-color-gray-3: #6f6a63;
-  --sl-color-gray-4: #a49c92;
-  --sl-color-gray-5: #d8d1c7;
-  --sl-color-gray-6: #ebe5dc;
-  --sl-color-black: #f5f1ea;
-  --rfl-accent-red: #d9392e;
-  --rfl-cyan: #008aa0;
-  --rfl-figure: #f5f1ea;
+  --rfl-page: #121416;
+  --rfl-inset: #15181b;
+  --rfl-surface: #1b1f23;
+  --rfl-raised: #22272c;
+  --rfl-hover: #2b3138;
+  --rfl-line: #363e47;
+  --rfl-control: #616c78;
+  --rfl-text: #e6e9ed;
+  --rfl-text-2: #b6bfc9;
+  --rfl-muted: #a0aab6;
+  --rfl-lime: #b2e879;
+  --rfl-lime-hover: #c6f59b;
+  --rfl-lime-dim: #243027;
+  --rfl-lime-line: #4a5d3d;
+  --rfl-lime-ink: #1b2a0d;
+  --rfl-cyan: #70c5d0;
+  --rfl-cyan-dim: #21393e;
+  --rfl-orange: #e1ad7d;
+  --rfl-red: #f2867a;
+  --rfl-figure: #1b1f23;
+
+  --sl-font: "DM Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --sl-font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --sl-content-width: 48rem;
+  --sl-text-h1: 2.1rem;
+  --sl-text-h2: 1.5rem;
+  --sl-text-h3: 1.18rem;
+  --sl-text-h4: 1.02rem;
 }
 
+:root,
 :root[data-theme="dark"] {
-  --sl-color-accent-low: #062337;
-  --sl-color-accent: #25f4ff;
-  --sl-color-accent-high: #bdf8ff;
-  --sl-color-text-accent: #25f4ff;
-  --sl-color-white: #f8f4ed;
-  --sl-color-gray-1: #ebe5dc;
-  --sl-color-gray-2: #d8d1c7;
-  --sl-color-gray-3: #a49c92;
-  --sl-color-gray-4: #6f6a63;
-  --sl-color-gray-5: #3c3833;
-  --sl-color-gray-6: #25211d;
-  --sl-color-black: #020817;
-  --rfl-cyan: #18cfff;
+  --sl-color-white: #f3f5f7;
+  --sl-color-gray-1: #e6e9ed;
+  --sl-color-gray-2: #d0d6dc;
+  --sl-color-gray-3: #a0aab6;
+  --sl-color-gray-4: #616c78;
+  --sl-color-gray-5: #363e47;
+  --sl-color-gray-6: #1b1f23;
+  --sl-color-black: #121416;
+
+  --sl-color-accent-low: #243027;
+  --sl-color-accent: #b2e879;
+  --sl-color-accent-high: #c6f59b;
+  --sl-color-text-accent: #b2e879;
+  --sl-color-text-invert: #1b2a0d;
+  --sl-color-bg-accent: #b2e879;
+
+  --sl-color-bg-nav: #121416;
+  --sl-color-bg-sidebar: #15181b;
+  --sl-color-bg-inline-code: #22272c;
+  --sl-color-hairline-light: #2b3138;
+  --sl-color-hairline: #2b3138;
+  --sl-color-hairline-shade: #121416;
+
+  --sl-color-blue: #70c5d0;
+  --sl-color-blue-low: #1a2c30;
+  --sl-color-blue-high: #a9e1e8;
+  --sl-color-green: #b2e879;
+  --sl-color-green-low: #1f2a20;
+  --sl-color-green-high: #d4f5b3;
+  --sl-color-orange: #e1ad7d;
+  --sl-color-orange-low: #2e261d;
+  --sl-color-orange-high: #f0d0b0;
+  --sl-color-red: #f2867a;
+  --sl-color-red-low: #2f201f;
+  --sl-color-red-high: #f8c0b8;
+  --sl-color-purple: #b7a0dc;
+  --sl-color-purple-low: #26222f;
+  --sl-color-purple-high: #ddd0f0;
+}
+
+:root[data-theme="light"] {
+  --rfl-surface: #ffffff;
+  --rfl-raised: #f2f4f5;
+  --rfl-hover: #eaeef0;
+  --rfl-line: #d9dee3;
+  --rfl-text: #1b1f23;
+  --rfl-text-2: #3d4650;
+  --rfl-muted: #5d6874;
+  --rfl-lime-dim: #eef7e2;
+  --rfl-lime-line: #b9d79a;
+  --rfl-cyan-dim: #e3f3f5;
+
+  --sl-color-white: #121416;
+  --sl-color-gray-1: #1b1f23;
+  --sl-color-gray-2: #2f363d;
+  --sl-color-gray-3: #5d6874;
+  --sl-color-gray-4: #8f9aa7;
+  --sl-color-gray-5: #d9dee3;
+  --sl-color-gray-6: #eef1f3;
+  --sl-color-gray-7: #f6f7f8;
+  --sl-color-black: #fbfbfa;
+
+  --sl-color-accent-low: #eef7e2;
+  --sl-color-accent: #4d7c0f;
+  --sl-color-accent-high: #365314;
+  --sl-color-text-accent: #3f6212;
+  --sl-color-text-invert: #1b2a0d;
+  --sl-color-bg-accent: #b2e879;
+
+  --sl-color-bg-nav: #fbfbfa;
+  --sl-color-bg-sidebar: #f6f7f8;
+  --sl-color-bg-inline-code: #eef1f3;
+  --sl-color-hairline-light: #e3e7ea;
+  --sl-color-hairline: #e3e7ea;
+  --sl-color-hairline-shade: #e3e7ea;
+
+  --sl-color-blue: #2b7f8a;
+  --sl-color-blue-low: #e6f4f6;
+  --sl-color-blue-high: #1d5960;
+  --sl-color-green: #4d7c0f;
+  --sl-color-green-low: #eef7e2;
+  --sl-color-green-high: #365314;
+  --sl-color-orange: #a86224;
+  --sl-color-orange-low: #f8efe6;
+  --sl-color-orange-high: #7a4518;
+  --sl-color-red: #b9473b;
+  --sl-color-red-low: #fbeceb;
+  --sl-color-red-high: #8a3128;
+  --sl-color-purple: #6f56a0;
+  --sl-color-purple-low: #f2eef8;
+  --sl-color-purple-high: #4e3c73;
 }
 
 body {
   letter-spacing: 0;
+  font-feature-settings: "ss01", "tnum";
 }
 
 a {
-  text-underline-offset: 0.18em;
+  text-underline-offset: 0.2em;
+  text-decoration-thickness: 1px;
+}
+
+/* Header: one hairline, the lime mark, and "Lab" in the accent as the sibling labs write their names. */
+.header {
+  border-block-end: 1px solid var(--sl-color-hairline);
 }
 
 .site-title {
+  gap: 0.6rem;
   color: var(--sl-color-white);
-  letter-spacing: 0;
+  font-weight: 600;
+  letter-spacing: -0.01em;
 }
 
-.site-title::before {
+.site-title img {
+  height: 1.4rem;
+  width: auto;
+}
+
+.site-title::after {
   content: "";
-  display: inline-block;
-  width: 0.62rem;
-  height: 0.62rem;
-  margin-inline-end: 1.6rem;
+  width: 0.34rem;
+  height: 0.34rem;
+  margin-inline-start: -0.35rem;
+  align-self: flex-start;
+  margin-block-start: 0.15rem;
   border-radius: 999px;
-  background: var(--rfl-cyan);
-  box-shadow:
-    0.7rem -0.18rem 0 var(--sl-color-accent),
-    1.18rem 0.36rem 0 var(--rfl-accent-red);
-  vertical-align: 0.02rem;
+  background: var(--rfl-lime);
 }
 
-.sl-markdown-content :is(h1, h2) {
-  color: #172032;
+/* Sidebar: quiet labels, and the current page as the sibling labs mark a selected item. */
+.sidebar-pane {
+  border-inline-end: 1px solid var(--sl-color-hairline);
 }
 
-:root[data-theme="dark"] .sl-markdown-content :is(h1, h2) {
+.sidebar-content .top-level > li > details > summary .group-label > .large,
+.sidebar-content details summary .group-label span {
+  color: var(--sl-color-gray-3);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.sidebar-content a {
+  border: 1px solid transparent;
+  border-radius: 5px;
+  color: var(--sl-color-gray-2);
+  font-size: 0.875rem;
+}
+
+.sidebar-content a:hover {
+  background: var(--rfl-hover);
   color: var(--sl-color-white);
 }
 
-/* Diagrams are figures on a cream surface in both themes, as the SVG palette assumes. */
+.sidebar-content a[aria-current="page"],
+.sidebar-content a[aria-current="page"]:hover {
+  border-color: var(--rfl-lime-line);
+  background: var(--rfl-lime-dim);
+  color: var(--sl-color-text-accent);
+  font-weight: 600;
+}
+
+/* The topic switcher of starlight-sidebar-topics reads as the workspace list of the sibling labs. */
+.starlight-sidebar-topics a {
+  border-radius: 6px;
+}
+
+.starlight-sidebar-topics a[aria-current="page"],
+.starlight-sidebar-topics a.starlight-sidebar-topics-current {
+  border: 1px solid var(--rfl-lime-line);
+  background: var(--rfl-lime-dim);
+  color: var(--sl-color-text-accent);
+}
+
+/* Content. */
+.sl-markdown-content :is(h1, h2, h3, h4) {
+  color: var(--sl-color-white);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.sl-markdown-content .sl-heading-wrapper.level-h2 {
+  padding-block-end: 0.45rem;
+  border-block-end: 1px solid var(--sl-color-hairline);
+}
+
+.sl-markdown-content .sl-anchor-link {
+  opacity: 0.45;
+}
+
+.content-panel + .content-panel,
+.right-sidebar {
+  border-color: var(--sl-color-hairline);
+}
+
+.sl-markdown-content a:not(:where(.not-content *)) {
+  color: var(--sl-color-text-accent);
+}
+
+/* Diagrams sit on a panel of the page's own family in both themes, as the SVG palette assumes. */
 .sl-markdown-content img[src$=".svg"],
 .sl-markdown-content .rfl-figure img {
-  border: 1px solid var(--sl-color-gray-5);
+  border: 1px solid var(--rfl-line);
   border-radius: 6px;
   background: var(--rfl-figure);
+}
+
+/* A display formula wider than the column scrolls in its own box, so it never widens the page on a phone. */
+.sl-markdown-content .katex-display {
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-block: 0.25rem;
 }
 
 .sl-markdown-content .katex svg,
@@ -88,15 +267,14 @@ a {
 }
 
 /* Mermaid measures HTML labels with its own font. Starlight would otherwise lend <pre> its monospace font after
-   the measurement and clip the last characters of each label. The diagrams use the shared dark palette, so the
-   figure gets the dark surface that palette assumes. :root outranks the theme-scoped backgrounds that
+   the measurement and clip the last characters of each label. :root outranks the theme-scoped backgrounds that
    astro-mermaid injects after rendering. */
 :root .sl-markdown-content pre.mermaid,
 :root .sl-markdown-content pre.mermaid[data-processed] {
-  font-family: Inter, Arial, sans-serif;
-  border: 1px solid #3c3833;
-  border-radius: 8px;
-  background: #171717;
+  font-family: "DM Sans", Inter, Arial, sans-serif;
+  border: 1px solid #363e47;
+  border-radius: 6px;
+  background: #1b1f23;
   padding: 1rem;
 }
 
@@ -106,14 +284,19 @@ a {
 }
 
 .sl-markdown-content blockquote {
-  border-inline-start-color: var(--rfl-cyan);
-  background: color-mix(in srgb, var(--rfl-cyan), transparent 92%);
+  border-inline-start: 2px solid var(--rfl-cyan);
+  border-radius: 0 5px 5px 0;
+  background: var(--rfl-cyan-dim);
+  color: var(--sl-color-gray-2);
 }
 
 /* Inline code wraps at the break points src/plugins/rehype-code-breaks.mjs adds, and a long token anywhere. */
 .sl-markdown-content code:not(:where(.expressive-code *)) {
-  border: 1px solid color-mix(in srgb, var(--rfl-cyan), transparent 78%);
-  background: color-mix(in srgb, var(--rfl-cyan), transparent 92%);
+  border: 1px solid var(--rfl-line);
+  border-radius: 4px;
+  background: var(--sl-color-bg-inline-code);
+  color: var(--sl-color-gray-1);
+  font-size: 0.86em;
   overflow-wrap: break-word;
 }
 
@@ -123,22 +306,74 @@ a {
   overflow-wrap: anywhere;
 }
 
+/* Tables read as the panels of the sibling labs: a raised header, hairlines, and mono figures. */
+/* Tables stay blocks that scroll on their own, so a wide one never widens the page. Hairlines between rows and a
+   quiet header row carry the structure, with no box that the table's own width could leave half filled. */
 .sl-markdown-content table {
   display: block;
   max-width: 100%;
   overflow-x: auto;
-  font-size: 0.88rem;
+  border-collapse: collapse;
+  font-size: 0.86rem;
 }
 
-.sl-markdown-content :is(h2, h3, h4) {
-  letter-spacing: 0;
+.sl-markdown-content table :is(th, td) {
+  border: 0;
+  border-block-end: 1px solid var(--sl-color-hairline);
+  padding: 0.5rem 0.9rem 0.5rem 0;
+}
+
+.sl-markdown-content table th {
+  border-block-end-color: var(--rfl-line);
+  color: var(--sl-color-gray-3);
+  font-size: 0.74rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-align: start;
+}
+
+/* Asides keep one thin accent edge on a dim surface instead of a full colored box. */
+.starlight-aside {
+  border-inline-start-width: 2px;
+  border-radius: 0 6px 6px 0;
+}
+
+/* Buttons: the lime primary with dark ink, and a hairline secondary. */
+.sl-link-button.primary {
+  border: 1px solid var(--rfl-lime);
+  border-radius: 6px;
+  background: var(--rfl-lime);
+  color: var(--rfl-lime-ink);
+  font-weight: 600;
+}
+
+.sl-link-button.primary:hover {
+  border-color: var(--rfl-lime-hover);
+  background: var(--rfl-lime-hover);
+  color: var(--rfl-lime-ink);
+}
+
+.sl-link-button.minimal,
+.sl-link-button.secondary {
+  border: 1px solid var(--rfl-line);
+  border-radius: 6px;
+  padding-inline: 1.25rem;
+  color: var(--sl-color-white);
+}
+
+.sl-link-button.minimal:hover,
+.sl-link-button.secondary:hover {
+  border-color: var(--sl-color-gray-4);
+  background: var(--rfl-hover);
 }
 
 .rfl-spec-meta {
   display: flex;
   flex-wrap: wrap;
   gap: 0.35rem 1rem;
-  font-size: 0.85rem;
+  font-family: var(--sl-font-mono);
+  font-size: 0.78rem;
   color: var(--sl-color-gray-3);
 }
 
@@ -153,32 +388,125 @@ a {
 
 .rfl-excerpt figcaption {
   margin-block-end: 0.4rem;
-  font-size: 0.82rem;
+  font-family: var(--sl-font-mono);
+  font-size: 0.74rem;
   color: var(--sl-color-gray-3);
 }
 
 .rfl-excerpt table {
   font-family: var(--sl-font-mono);
-  font-size: 0.8rem;
+  font-size: 0.78rem;
 }
 
-.rfl-home-hero {
-  margin-block: 0 2rem;
+/* Home: a calm header, a strip of measured figures, and panels instead of colored cards. */
+.hero {
+  padding-block: 3rem 1.5rem;
+}
+
+.hero h1 {
+  color: var(--sl-color-white);
+  font-size: clamp(2.2rem, 5vw, 3.1rem);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.hero .tagline {
+  max-width: 40rem;
+  color: var(--sl-color-gray-3);
+  font-size: 1.05rem;
+  line-height: 1.6;
 }
 
 .rfl-home-kicker {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   margin: 0 0 0.6rem;
-  color: var(--rfl-accent-red);
-  font-size: 0.82rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
+  color: var(--sl-color-gray-3);
+  font-family: var(--sl-font-mono);
+  font-size: 0.74rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
+}
+
+.sl-markdown-content * + .rfl-home-kicker {
+  margin-block-start: 2.5rem;
+}
+
+.rfl-home-kicker::before {
+  content: "";
+  width: 0.4rem;
+  height: 0.4rem;
+  border-radius: 999px;
+  background: var(--rfl-lime);
+}
+
+.rfl-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  margin-block: 1.25rem 2.5rem;
+  border-block: 1px solid var(--sl-color-hairline);
+}
+
+.rfl-stats > div {
+  margin: 0;
+  padding: 1rem 1.1rem 0.9rem;
+  border-inline-start: 1px solid var(--sl-color-hairline);
+}
+
+.rfl-stats > div:first-child {
+  border-inline-start: 0;
+  padding-inline-start: 0;
+}
+
+/* Two by two on a narrow screen: the left column sits on the page edge, and a hairline parts the rows. */
+@media (max-width: 50rem) {
+  .rfl-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .rfl-stats > div:nth-child(odd) {
+    border-inline-start: 0;
+    padding-inline-start: 0;
+  }
+
+  .rfl-stats > div:nth-child(n + 3) {
+    border-block-start: 1px solid var(--sl-color-hairline);
+  }
+}
+
+.rfl-stats .rfl-stat-label {
+  margin: 0;
+  color: var(--sl-color-gray-3);
+  font-size: 0.78rem;
+}
+
+.rfl-stats .rfl-stat-value {
+  margin: 0.25rem 0 0;
+  color: var(--sl-color-white);
+  font-family: var(--sl-font-mono);
+  font-size: 1.7rem;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+.rfl-stats .rfl-stat-value span {
+  color: var(--sl-color-gray-3);
+  font-size: 0.8rem;
+}
+
+.rfl-stats .rfl-stat-note {
+  margin: 0.2rem 0 0;
+  color: var(--sl-color-gray-3);
+  font-family: var(--sl-font-mono);
+  font-size: 0.7rem;
 }
 
 .rfl-card-grid ul {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
-  gap: 0.9rem;
+  gap: 0.75rem;
   margin-block: 1rem 2rem;
   padding: 0;
   list-style: none;
@@ -186,25 +514,50 @@ a {
 
 .rfl-card-grid li {
   margin: 0;
-  border: 1px solid var(--sl-color-gray-5);
-  border-top: 3px solid var(--rfl-cyan);
-  border-radius: 8px;
-  padding: 1rem;
-  color: var(--sl-color-gray-2);
-  font-size: 0.9rem;
-  line-height: 1.5;
+  border: 1px solid var(--rfl-line);
+  border-radius: 6px;
+  padding: 1rem 1.05rem;
+  background: var(--rfl-surface);
+  color: var(--sl-color-gray-3);
+  font-size: 0.875rem;
+  line-height: 1.55;
+  transition: border-color 120ms ease, background-color 120ms ease;
 }
 
 .rfl-card-grid li a {
   display: block;
-  margin-block-end: 0.4rem;
+  margin-block-end: 0.35rem;
   color: var(--sl-color-white);
-  font-size: 1.02rem;
+  font-size: 0.98rem;
+  font-weight: 600;
   text-decoration: none;
 }
 
+.rfl-card-grid li a::after {
+  content: " →";
+  color: var(--sl-color-text-accent);
+}
+
 .rfl-card-grid li:hover {
-  border-color: var(--rfl-cyan);
+  border-color: var(--rfl-lime-line);
+  background: var(--rfl-raised);
+}
+
+/* The lab's limits as one quiet line at the foot of the home page, as the sibling labs state theirs. */
+.rfl-home-note {
+  margin-block-start: 2.5rem;
+  padding-block-start: 1rem;
+  border-block-start: 1px solid var(--sl-color-hairline);
+}
+
+.rfl-home-note p {
+  margin: 0;
+  color: var(--sl-color-gray-3);
+  font-size: 0.82rem;
+}
+
+.rfl-title-accent {
+  color: var(--sl-color-text-accent);
 }
 
 .rfl-duration code {
@@ -237,11 +590,11 @@ table[data-make-targets] td:first-child code {
 }
 
 .rfl-excerpt table[data-format="tsv"] {
-  font-size: 0.74rem;
+  font-size: 0.72rem;
 }
 
 .rfl-excerpt table[data-format="tsv"] :is(td, th) {
-  padding-inline: 0.3rem;
+  padding-inline: 0.35rem;
 }
 
 .rfl-excerpt td.rfl-long {

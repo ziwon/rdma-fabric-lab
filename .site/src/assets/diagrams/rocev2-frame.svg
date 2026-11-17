@@ -2,16 +2,16 @@
   <title id="t">RoCEv2 frame</title>
   <desc id="d">An Ethernet frame carrying IPv4, UDP to port 4791, the InfiniBand base transport header, an optional RDMA extended header, the payload, the invariant CRC and the Ethernet FCS.</desc>
   <style>
-    .bg { fill: #F5F1EA; }
-    .box { fill: none; stroke: #111111; stroke-width: 1.4; }
-    .opt { fill: none; stroke: #111111; stroke-width: 1.2; stroke-dasharray: 5 4; }
-    .hot { fill: none; stroke: #D9392E; stroke-width: 2; }
-    .name { font: 700 14px Inter, Arial, sans-serif; fill: #050505; text-anchor: middle; }
-    .size { font: 12px Inter, Arial, sans-serif; fill: #6F6A63; text-anchor: middle; }
-    .red { font: 700 12px Inter, Arial, sans-serif; fill: #D9392E; text-anchor: middle; }
-    .note { font: 12px Inter, Arial, sans-serif; fill: #6F6A63; }
-    .brace { fill: none; stroke: #6F6A63; stroke-width: 1.2; }
-    .label { font: 12px Inter, Arial, sans-serif; fill: #050505; text-anchor: middle; }
+    .bg { fill: #1b1f23; }
+    .box { fill: none; stroke: #b6bfc9; stroke-width: 1.4; }
+    .opt { fill: none; stroke: #b6bfc9; stroke-width: 1.2; stroke-dasharray: 5 4; }
+    .hot { fill: none; stroke: #b2e879; stroke-width: 2; }
+    .name { font: 700 14px 'DM Sans', Inter, Arial, sans-serif; fill: #e6e9ed; text-anchor: middle; }
+    .size { font: 12px 'DM Sans', Inter, Arial, sans-serif; fill: #a0aab6; text-anchor: middle; }
+    .red { font: 700 12px 'DM Sans', Inter, Arial, sans-serif; fill: #b2e879; text-anchor: middle; }
+    .note { font: 12px 'DM Sans', Inter, Arial, sans-serif; fill: #a0aab6; }
+    .brace { fill: none; stroke: #a0aab6; stroke-width: 1.2; }
+    .label { font: 12px 'DM Sans', Inter, Arial, sans-serif; fill: #e6e9ed; text-anchor: middle; }
   </style>
   <rect class="bg" x="0" y="0" width="760" height="252"/>
 
