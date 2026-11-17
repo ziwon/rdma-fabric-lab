@@ -249,6 +249,7 @@ The tracks stay manual. They need `/dev/kvm`, a host with tens of GiB of memory 
 | RDMA in pods and the secondary network | `docs/adr/0004-track-a-pods-and-net1.md` |
 | The InfiniBand management simulation | `docs/adr/0005-track-b-fabric-simulation.md` |
 | The packet model | `docs/adr/0006-track-c-packet-model.md` |
+| Pod networks on the cel1 InfiniBand rails, accepted and not implemented yet | `docs/adr/0007-cel1-ipoib-pod-networks.md` |
 | Failures and their causes | `docs/troubleshooting.md` |
 | The cel1 region and its fleet targets | `docs/fleet.md` |
 | VMware Workstation variant, not verified on this host | `docs/setup-vmware.md` |
