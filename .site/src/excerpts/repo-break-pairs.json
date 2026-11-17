@@ -1,0 +1,8 @@
+{
+  "id": "repo-break-pairs",
+  "run": "breaks-m3 20261116T000255Z",
+  "source": "docs/milestones/evidence/m3/breaks-3/pairs.tsv",
+  "lines": "1-4",
+  "format": "tsv",
+  "text": "break\tbroken_run\tbroken_status\tfailed_checks\trepaired_run\trepaired_status\nshadow-cni-file-at-boot-on-worker2\t20261116T000300Z\tfailed\treboot-keeps-cni-order,new-pod-after-reboot-gets-net1\t20261116T000602Z\tpassed\ndelete-timeout-1s-multus\t20261116T000756Z\tfailed\ttest-namespace-removed\t20261116T001031Z\tpassed\nrespawning-run-process-multus\t20261116T001322Z\tfailed\tno-process-left\t20261116T001604Z\tpassed"
+}

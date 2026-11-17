@@ -1,0 +1,8 @@
+{
+  "id": "a-hostnet-time",
+  "run": "20261116T002950Z",
+  "source": "docs/milestones/evidence/m3/runs/20261116T002950Z/a-soft-roce/k8s-hostnet-rdma/manifest.json",
+  "lines": "10-11",
+  "format": "text",
+  "text": "  \"created_at\": \"2026-11-16T00:29:50Z\",\n  \"finished_at\": \"2026-11-16T00:30:39Z\","
+}

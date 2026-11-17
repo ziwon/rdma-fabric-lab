@@ -1,0 +1,23 @@
+---
+// The time a run of record took, computed from the created_at and finished_at lines of its manifest excerpt.
+interface Props {
+  id: string;
+}
+
+const excerpts = import.meta.glob<{ default: { run: string; source: string; text: string } }>('../excerpts/*.json', { eager: true });
+const { id } = Astro.props;
+const excerpt = excerpts[`../excerpts/${id}.json`]?.default;
+if (!excerpt) throw new Error(`Duration: no src/excerpts/${id}.json`);
+const stamp = (key: string) => {
+  const match = new RegExp(`"${key}": "([^"]+)"`).exec(excerpt.text);
+  if (!match) throw new Error(`Duration: ${id} has no ${key}`);
+  return match[1];
+};
+const created = stamp('created_at');
+const finished = stamp('finished_at');
+const seconds = (Date.parse(finished) - Date.parse(created)) / 1000;
+---
+
+<span class="rfl-duration">
+  <strong>{seconds} s</strong> for run <code>{excerpt.run}</code>, from <code>created_at</code> {created} to <code>finished_at</code> {finished} in <code>{excerpt.source}</code>
+</span>

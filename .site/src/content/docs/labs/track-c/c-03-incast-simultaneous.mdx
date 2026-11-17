@@ -1,0 +1,113 @@
+---
+title: c-03 simultaneous incast under four profiles
+description: 2, 4 and 8 senders start one flow each at the same time into one receiver. Four profiles of PFC, ECN and DCQCN, five seeds, run twice, with each feature's activation read from the model's counters.
+sidebar:
+  order: 3
+---
+
+import Duration from '../../../../components/Duration.astro';
+import Excerpt from '../../../../components/Excerpt.astro';
+import ScenarioChecks from '../../../../components/ScenarioChecks.astro';
+
+This is the central experiment of Track C. Every sender starts one flow of 1000000 bytes at time 0 toward one receiver behind one switch. The same traffic runs under four profiles, with no control, with PFC, with ECN and DCQCN, and with both, for fan-ins of 2, 4 and 8 and seeds 1 to 5. Then the whole set runs again and must repeat byte for byte.
+
+## Goal
+
+Compare the four profiles on identical traffic, and prove from the model's own counters that each profile turned on exactly the features it claims and that the features changed the outcome where their trigger occurred.
+
+## Concepts it uses
+
+- [Incast](/concepts/roce-congestion-control/), [PFC and its headroom](/concepts/roce-congestion-control/), [ECN marking](/concepts/roce-congestion-control/) and [DCQCN](/concepts/roce-congestion-control/).
+- [FCT and its bounds](/concepts/roce-congestion-control/).
+
+## Before you start
+
+| Item | Value |
+|---|---|
+| Profile | `ns3`: `ns3sim1`, 12 vCPU, 16 GiB, 100 GiB |
+| Image | `rfl-ns3:m6`, `sha256:da7a3245…`, with the patch `qbb-resume-qp-lookup.patch` pinned as `ns3.resume_patch` |
+| Cases | 3 fan-ins × 4 profiles × 5 seeds = 60, twice |
+
+**Time taken.** <Duration id="c03-time" />. M6 gives about 35 s for one 60-case run including both containers. `rfl-star` used at most 65408 KiB of RSS in any case.
+
+## The profiles as this model implements them
+
+A profile sets three things and nothing else. `same-traffic` checks that every case of one fan-in differs only in the lines `pfc`, `ecn`, `cc_mode` and `seed` of its network file.
+
+| Profile | `QbbEnabled` on every port | switch `EcnEnabled` | RdmaHw `CcMode` |
+|---|---|---|---|
+| c-none | false | false | 0 |
+| c-pfc | true | false | 0 |
+| c-ecn | false | true | 1 |
+| c-both | true | true | 1 |
+
+> [!IMPORTANT]
+> The switch sends PAUSE in every profile. `QbbEnabled` decides only whether a host acts on a PAUSE it receives. So "PFC off" means the hosts ignore PAUSE, not that the switch stops sending it, and a pure lossy switch that uses its whole buffer does not exist at this commit ([M6](/docs/milestones/m6/) section 4).
+
+The shared network: MTU 1000 B, a 4194304 B buffer, PFC pause time 5 us, headroom 37500 B per port, alpha shift 3, ECN kmin 400000 B, kmax 1600000 B and pmax 0.2, and SimAI.conf's DCQCN values. The buffer is SimAI.conf's 32 MiB divided by 8, so that the PFC threshold falls inside the range these flows reach. That is a choice for the comparison, not a recommended switch buffer.
+
+## Run it
+
+```bash
+make track-c
+```
+
+## What every check proves
+
+<ScenarioChecks spec="c-ns3/c-03-incast-simultaneous" />
+
+## Real output
+
+The run of record of M6.
+
+<Excerpt id="c03-checks" />
+
+The comparison the run derived from its 60 cases, selected columns. FCT figures are min/median/max over the five seeds with the sample count.
+
+<Excerpt id="c03-comparison" />
+
+## What the model did
+
+At fan-in 8, seed 1, the counters show each profile's mechanism at work ([M6](/docs/milestones/m6/) section 4).
+
+| Profile | PAUSE frames received by hosts | Host pause handler ran | CE marks | DCQCN rate cuts | MMU refusals |
+|---|---:|---:|---:|---:|---:|
+| c-none | 31 | 0 | 0 | 0 | 9962 |
+| c-pfc | 190 | 190 | 0 | 0 | 0 |
+| c-ecn | 14 | 0 | 2679 | 414 | 1078 |
+| c-both | 48 | 48 | 2294 | 434 | 0 |
+
+- **Without control** the queue passed the PFC threshold and the headroom, and the switch refused packets. Go-back-N recovered them at a cost of 2% to 18% of the median large-flow FCT.
+- **PFC** kept every case lossless here, and c-pfc had the lowest median large-flow FCT and the highest goodput, 93.0 to 94.7 Gb/s, of the four profiles in every case with congestion.
+- **ECN with DCQCN** was slowest for large flows. With SimAI.conf's values a sender's rate can fall to the 100 Mb/s floor within 36 us and recover only after the 900 us timer. At fan-in 8, c-ecn still refused packets, and its peak queue of 2363844 B exceeded c-none's 2242864 B.
+- **Both** combined losslessness with DCQCN's rate collapse. c-both refused no packet and paused far less than c-pfc, but its FCTs follow c-ecn's.
+
+The rate trace of flow 0 in `n8-c-ecn-s1` shows the collapse, from the fixture copied from this run.
+
+<Excerpt id="c03-rates-flow0" />
+
+At fan-in 2 and 4, c-ecn and c-both gave byte-identical outputs. DCQCN kept the queue below the PFC threshold, no PAUSE was sent, and so nothing triggered PFC. `profiles-differ` allows that and reports it.
+
+## Break it yourself
+
+The incast breaks ran on c-03. c-04, c-05 and c-06 use the same check code.
+
+<Excerpt id="c03-breaks" />
+
+## The patch behind this scenario
+
+M5 found that a PFC RESUME crashed a host with fewer QPs than the paused priority index. `QbbNetDevice::Resume(qIndex)` read `m_qps[qIndex]`, the host's QP list indexed by priority, on every RESUME, and a sender with one QP on priority 3 died with SIGSEGV. An incast with PFC on and one QP per sender hits exactly that. The one patch to upstream source tests the node type before the lookup, which only node type 2 needs. With it, the four-QP case is byte-identical to the unpatched build, and the one-QP case completes at 340107 ns with 25 PAUSE and 25 RESUME ([M6](/docs/milestones/m6/) section 2).
+
+## Questions to think about
+
+- The ranking here puts c-pfc first and the ECN profiles last. Which DCQCN parameter would you change first to test whether the ranking holds, and what would you expect?
+- Why can c-none still refuse packets although hosts received PAUSE frames?
+- The ECN profiles gave 5 distinct outcomes for 5 seeds while c-none and c-pfc gave 1. Where does the model draw a random number, and why only there?
+- 40 large flows at fan-in 8 give a maximum and a median. Why would a p99 of those flows mislead?
+
+## What the result means and does not mean
+
+The run shows how ns-3-alibabacloud at this commit, with one patch and these parameters, behaves under simultaneous incast, and that every profile turned on exactly what it claims.
+
+> [!WARNING]
+> These are model results, not the behavior of a NIC, a switch ASIC or a production network. The parameters decide the ranking. "PFC off" is a host setting. The model has go-back-N and no retransmission timer. Few flows give no tail statistic. The link rates are not comparable with Track A's RXE bandwidth.

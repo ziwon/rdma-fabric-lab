@@ -1,0 +1,19 @@
+{
+  "id": "c06-comparison",
+  "run": "20261116T151213Z",
+  "source": "docs/milestones/evidence/m6/20261116T151213Z/c-ns3/c-06-sensitivity-kmin/raw/comparison.tsv",
+  "lines": "1-5",
+  "columns": [
+    "group",
+    "profile",
+    "large_fct_ns",
+    "goodput_gbps",
+    "peak_queue_bytes_max",
+    "pauses_handled",
+    "marks",
+    "rate_reductions",
+    "mmu_drops"
+  ],
+  "format": "tsv",
+  "text": "group\tprofile\tlarge_fct_ns\tgoodput_gbps\tpeak_queue_bytes_max\tpauses_handled\tmarks\trate_reductions\tmmu_drops\nn8\tc-none\t791928/794826/795624 (n=40)\t80.44/80.44/80.44 (n=5)\t2242864\t0/0/0 (n=5)\t0/0/0 (n=5)\t0/0/0 (n=5)\t9962/9962/9962 (n=5)\nn8\tc-pfc\t663492/675126/676092 (n=40)\t94.6617/94.6617/94.6617 (n=5)\t2125040\t190/190/190 (n=5)\t0/0/0 (n=5)\t0/0/0 (n=5)\t0/0/0 (n=5)\nn8\tc-ecn\t1.31789e+06/2.38459e+06/2.46223e+06 (n=40)\t25.9927/26.3507/26.6966 (n=5)\t2343856\t0/0/0 (n=5)\t2529/2584/2713 (n=5)\t401/448/478 (n=5)\t869/1145/1185 (n=5)\nn8\tc-both\t1.39532e+06/2.39669e+06/2.47362e+06 (n=40)\t25.873/26.1341/26.2405 (n=5)\t2007216\t34/37/42 (n=5)\t2170/2331/2540 (n=5)\t421/433/471 (n=5)\t0/0/0 (n=5)"
+}

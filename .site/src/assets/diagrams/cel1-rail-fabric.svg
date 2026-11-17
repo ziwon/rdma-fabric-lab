@@ -1,0 +1,158 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 430" width="900" height="430" role="img" aria-labelledby="t d">
+  <title id="t">The cel1 rail-optimized compute fabric</title>
+  <desc id="d">Eight DGX hosts each connect HCA i to the leaf switch of rail i. Eight leaves each connect twice to each of four spines. Rail 0 is drawn in red, and the leaf r3 to spine 02 pair, where B-04 fails one link, is dashed.</desc>
+  <style>
+    .bg { fill: #F5F1EA; }
+    .box { fill: #F5F1EA; stroke: #111111; stroke-width: 1.4; }
+    .hot { fill: #F5F1EA; stroke: #D9392E; stroke-width: 2; }
+    .up { stroke: #A49C92; stroke-width: 1; }
+    .rail { stroke: #D8D1C7; stroke-width: 1; }
+    .rail0 { stroke: #D9392E; stroke-width: 1.6; }
+    .fault { stroke: #D9392E; stroke-width: 2.4; stroke-dasharray: 6 4; }
+    .name { font: 700 13px Inter, Arial, sans-serif; fill: #050505; text-anchor: middle; }
+    .tier { font: 12px Inter, Arial, sans-serif; fill: #6F6A63; paint-order: stroke; stroke: #F5F1EA; stroke-width: 5px; stroke-linejoin: round; }
+    .note { font: 12px Inter, Arial, sans-serif; fill: #6F6A63; }
+    .red { font: 700 12px Inter, Arial, sans-serif; fill: #D9392E; }
+  </style>
+  <rect class="bg" x="0" y="0" width="900" height="430"/>
+  <line class="up" x1="73.0" y1="175" x2="215.0" y2="74"/>
+  <line class="up" x1="73.0" y1="175" x2="371.7" y2="74"/>
+  <line class="up" x1="73.0" y1="175" x2="528.3" y2="74"/>
+  <line class="up" x1="73.0" y1="175" x2="685.0" y2="74"/>
+  <line class="up" x1="180.7" y1="175" x2="215.0" y2="74"/>
+  <line class="up" x1="180.7" y1="175" x2="371.7" y2="74"/>
+  <line class="up" x1="180.7" y1="175" x2="528.3" y2="74"/>
+  <line class="up" x1="180.7" y1="175" x2="685.0" y2="74"/>
+  <line class="up" x1="288.4" y1="175" x2="215.0" y2="74"/>
+  <line class="up" x1="288.4" y1="175" x2="371.7" y2="74"/>
+  <line class="up" x1="288.4" y1="175" x2="528.3" y2="74"/>
+  <line class="up" x1="288.4" y1="175" x2="685.0" y2="74"/>
+  <line class="up" x1="396.1" y1="175" x2="215.0" y2="74"/>
+  <line class="fault" x1="396.1" y1="175" x2="371.7" y2="74"/>
+  <line class="up" x1="396.1" y1="175" x2="528.3" y2="74"/>
+  <line class="up" x1="396.1" y1="175" x2="685.0" y2="74"/>
+  <line class="up" x1="503.9" y1="175" x2="215.0" y2="74"/>
+  <line class="up" x1="503.9" y1="175" x2="371.7" y2="74"/>
+  <line class="up" x1="503.9" y1="175" x2="528.3" y2="74"/>
+  <line class="up" x1="503.9" y1="175" x2="685.0" y2="74"/>
+  <line class="up" x1="611.6" y1="175" x2="215.0" y2="74"/>
+  <line class="up" x1="611.6" y1="175" x2="371.7" y2="74"/>
+  <line class="up" x1="611.6" y1="175" x2="528.3" y2="74"/>
+  <line class="up" x1="611.6" y1="175" x2="685.0" y2="74"/>
+  <line class="up" x1="719.3" y1="175" x2="215.0" y2="74"/>
+  <line class="up" x1="719.3" y1="175" x2="371.7" y2="74"/>
+  <line class="up" x1="719.3" y1="175" x2="528.3" y2="74"/>
+  <line class="up" x1="719.3" y1="175" x2="685.0" y2="74"/>
+  <line class="up" x1="827.0" y1="175" x2="215.0" y2="74"/>
+  <line class="up" x1="827.0" y1="175" x2="371.7" y2="74"/>
+  <line class="up" x1="827.0" y1="175" x2="528.3" y2="74"/>
+  <line class="up" x1="827.0" y1="175" x2="685.0" y2="74"/>
+  <line class="rail0" x1="40.0" y1="330" x2="73.0" y2="209"/>
+  <line class="rail" x1="49.4" y1="330" x2="180.7" y2="209"/>
+  <line class="rail" x1="58.9" y1="330" x2="288.4" y2="209"/>
+  <line class="rail" x1="68.3" y1="330" x2="396.1" y2="209"/>
+  <line class="rail" x1="77.7" y1="330" x2="503.9" y2="209"/>
+  <line class="rail" x1="87.1" y1="330" x2="611.6" y2="209"/>
+  <line class="rail" x1="96.6" y1="330" x2="719.3" y2="209"/>
+  <line class="rail" x1="106.0" y1="330" x2="827.0" y2="209"/>
+  <line class="rail0" x1="147.7" y1="330" x2="73.0" y2="209"/>
+  <line class="rail" x1="157.1" y1="330" x2="180.7" y2="209"/>
+  <line class="rail" x1="166.6" y1="330" x2="288.4" y2="209"/>
+  <line class="rail" x1="176.0" y1="330" x2="396.1" y2="209"/>
+  <line class="rail" x1="185.4" y1="330" x2="503.9" y2="209"/>
+  <line class="rail" x1="194.9" y1="330" x2="611.6" y2="209"/>
+  <line class="rail" x1="204.3" y1="330" x2="719.3" y2="209"/>
+  <line class="rail" x1="213.7" y1="330" x2="827.0" y2="209"/>
+  <line class="rail0" x1="255.4" y1="330" x2="73.0" y2="209"/>
+  <line class="rail" x1="264.9" y1="330" x2="180.7" y2="209"/>
+  <line class="rail" x1="274.3" y1="330" x2="288.4" y2="209"/>
+  <line class="rail" x1="283.7" y1="330" x2="396.1" y2="209"/>
+  <line class="rail" x1="293.1" y1="330" x2="503.9" y2="209"/>
+  <line class="rail" x1="302.6" y1="330" x2="611.6" y2="209"/>
+  <line class="rail" x1="312.0" y1="330" x2="719.3" y2="209"/>
+  <line class="rail" x1="321.4" y1="330" x2="827.0" y2="209"/>
+  <line class="rail0" x1="363.1" y1="330" x2="73.0" y2="209"/>
+  <line class="rail" x1="372.6" y1="330" x2="180.7" y2="209"/>
+  <line class="rail" x1="382.0" y1="330" x2="288.4" y2="209"/>
+  <line class="rail" x1="391.4" y1="330" x2="396.1" y2="209"/>
+  <line class="rail" x1="400.9" y1="330" x2="503.9" y2="209"/>
+  <line class="rail" x1="410.3" y1="330" x2="611.6" y2="209"/>
+  <line class="rail" x1="419.7" y1="330" x2="719.3" y2="209"/>
+  <line class="rail" x1="429.1" y1="330" x2="827.0" y2="209"/>
+  <line class="rail0" x1="470.9" y1="330" x2="73.0" y2="209"/>
+  <line class="rail" x1="480.3" y1="330" x2="180.7" y2="209"/>
+  <line class="rail" x1="489.7" y1="330" x2="288.4" y2="209"/>
+  <line class="rail" x1="499.1" y1="330" x2="396.1" y2="209"/>
+  <line class="rail" x1="508.6" y1="330" x2="503.9" y2="209"/>
+  <line class="rail" x1="518.0" y1="330" x2="611.6" y2="209"/>
+  <line class="rail" x1="527.4" y1="330" x2="719.3" y2="209"/>
+  <line class="rail" x1="536.9" y1="330" x2="827.0" y2="209"/>
+  <line class="rail0" x1="578.6" y1="330" x2="73.0" y2="209"/>
+  <line class="rail" x1="588.0" y1="330" x2="180.7" y2="209"/>
+  <line class="rail" x1="597.4" y1="330" x2="288.4" y2="209"/>
+  <line class="rail" x1="606.9" y1="330" x2="396.1" y2="209"/>
+  <line class="rail" x1="616.3" y1="330" x2="503.9" y2="209"/>
+  <line class="rail" x1="625.7" y1="330" x2="611.6" y2="209"/>
+  <line class="rail" x1="635.1" y1="330" x2="719.3" y2="209"/>
+  <line class="rail" x1="644.6" y1="330" x2="827.0" y2="209"/>
+  <line class="rail0" x1="686.3" y1="330" x2="73.0" y2="209"/>
+  <line class="rail" x1="695.7" y1="330" x2="180.7" y2="209"/>
+  <line class="rail" x1="705.1" y1="330" x2="288.4" y2="209"/>
+  <line class="rail" x1="714.6" y1="330" x2="396.1" y2="209"/>
+  <line class="rail" x1="724.0" y1="330" x2="503.9" y2="209"/>
+  <line class="rail" x1="733.4" y1="330" x2="611.6" y2="209"/>
+  <line class="rail" x1="742.9" y1="330" x2="719.3" y2="209"/>
+  <line class="rail" x1="752.3" y1="330" x2="827.0" y2="209"/>
+  <line class="rail0" x1="794.0" y1="330" x2="73.0" y2="209"/>
+  <line class="rail" x1="803.4" y1="330" x2="180.7" y2="209"/>
+  <line class="rail" x1="812.9" y1="330" x2="288.4" y2="209"/>
+  <line class="rail" x1="822.3" y1="330" x2="396.1" y2="209"/>
+  <line class="rail" x1="831.7" y1="330" x2="503.9" y2="209"/>
+  <line class="rail" x1="841.1" y1="330" x2="611.6" y2="209"/>
+  <line class="rail" x1="850.6" y1="330" x2="719.3" y2="209"/>
+  <line class="rail" x1="860.0" y1="330" x2="827.0" y2="209"/>
+  <rect class="box" x="150.0" y="40" width="130" height="34"/>
+  <text class="name" x="215.0" y="62">cel1-ib-spine-01</text>
+  <rect class="box" x="306.7" y="40" width="130" height="34"/>
+  <text class="name" x="371.7" y="62">cel1-ib-spine-02</text>
+  <rect class="box" x="463.3" y="40" width="130" height="34"/>
+  <text class="name" x="528.3" y="62">cel1-ib-spine-03</text>
+  <rect class="box" x="620.0" y="40" width="130" height="34"/>
+  <text class="name" x="685.0" y="62">cel1-ib-spine-04</text>
+  <rect class="hot" x="30.0" y="175" width="86" height="34"/>
+  <text class="name" x="73.0" y="197">leaf-r0</text>
+  <rect class="box" x="137.7" y="175" width="86" height="34"/>
+  <text class="name" x="180.7" y="197">leaf-r1</text>
+  <rect class="box" x="245.4" y="175" width="86" height="34"/>
+  <text class="name" x="288.4" y="197">leaf-r2</text>
+  <rect class="box" x="353.1" y="175" width="86" height="34"/>
+  <text class="name" x="396.1" y="197">leaf-r3</text>
+  <rect class="box" x="460.9" y="175" width="86" height="34"/>
+  <text class="name" x="503.9" y="197">leaf-r4</text>
+  <rect class="box" x="568.6" y="175" width="86" height="34"/>
+  <text class="name" x="611.6" y="197">leaf-r5</text>
+  <rect class="box" x="676.3" y="175" width="86" height="34"/>
+  <text class="name" x="719.3" y="197">leaf-r6</text>
+  <rect class="box" x="784.0" y="175" width="86" height="34"/>
+  <text class="name" x="827.0" y="197">leaf-r7</text>
+  <rect class="box" x="30.0" y="330" width="86" height="34"/>
+  <text class="name" x="73.0" y="352">cel1-dgx-01</text>
+  <rect class="box" x="137.7" y="330" width="86" height="34"/>
+  <text class="name" x="180.7" y="352">cel1-dgx-02</text>
+  <rect class="box" x="245.4" y="330" width="86" height="34"/>
+  <text class="name" x="288.4" y="352">cel1-dgx-03</text>
+  <rect class="box" x="353.1" y="330" width="86" height="34"/>
+  <text class="name" x="396.1" y="352">cel1-dgx-04</text>
+  <rect class="box" x="460.9" y="330" width="86" height="34"/>
+  <text class="name" x="503.9" y="352">cel1-dgx-05</text>
+  <rect class="box" x="568.6" y="330" width="86" height="34"/>
+  <text class="name" x="611.6" y="352">cel1-dgx-06</text>
+  <rect class="box" x="676.3" y="330" width="86" height="34"/>
+  <text class="name" x="719.3" y="352">cel1-dgx-07</text>
+  <rect class="box" x="784.0" y="330" width="86" height="34"/>
+  <text class="name" x="827.0" y="352">cel1-dgx-08</text>
+  <text class="tier" x="30" y="26">4 spines, 64 ports each</text>
+  <text class="tier" x="30" y="161">8 leaves, one per rail. Each leaf has 2 links to each spine</text>
+  <text class="tier" x="30" y="386">8 DGX B200 hosts. HCA mlx5_i on port rail i cables to leaf r i</text>
+  <text class="red" x="30" y="408">Red: rail 0, the eight HCAs that share leaf r0. Dashed: leaf r3 to spine 02, where B-04 fails one of the two links.</text>
+</svg>

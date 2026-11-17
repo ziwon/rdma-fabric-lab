@@ -1,0 +1,43 @@
+---
+title: RDMA Fabric Lab
+description: A software-only lab for RDMA, InfiniBand management and RoCE congestion control on one Ubuntu host, with the concepts behind each experiment and the commands to run it.
+template: splash
+hero:
+  tagline: RDMA, InfiniBand management and RoCE congestion control on one Ubuntu host, with no HCA, no InfiniBand switch and no GPU. Every figure on this site comes from a recorded run.
+  actions:
+    - text: What the lab is
+      link: /rdma-fabric-lab/start/
+      icon: right-arrow
+    - text: Run the labs
+      link: /rdma-fabric-lab/labs/
+      icon: laptop
+      variant: minimal
+---
+
+<p class="rfl-home-kicker">Explain, show, then do</p>
+
+Each page teaches the idea first, then shows a real output excerpt with its run id and source file, then gives the commands to repeat it. Each lab also lists the deliberate breaks that make its checks fail, so you can watch a check catch a fault.
+
+## Three tracks and one region
+
+<div class="rfl-card-grid">
+
+- [**Track A. Soft-RoCE and Kubernetes**](/labs/track-a/vm-rxe-baseline/) RDMA between two QEMU workers over plain Ethernet, then the same tests inside hostNetwork pods, and a Multus secondary network beside Cilium.
+- [**Track B. InfiniBand management**](/labs/track-b/b-01/) OpenSM against ibsim inside a dedicated guest. Discovery, LIDs, port states, a link fault and rerouting on the cel1 rail fabric.
+- [**Track C. RoCE congestion control**](/labs/track-c/c-01-example/) The ns-3 RDMA model in a pinned image. One flow against its bound, then incast under four profiles of PFC, ECN and DCQCN.
+- [**cel1 simulation**](/labs/cel1/cel1-sim-baseline/) The invented GPU region cel1 built as 13 guests by the same Ansible and kubeadm code the lab uses.
+
+</div>
+
+## Where to go next
+
+<div class="rfl-card-grid">
+
+- [**Concepts**](/concepts/) Verbs, queue pairs and RoCEv2, Kubernetes networking as the labs use it, the subnet manager, and lossless Ethernet with PFC, ECN and DCQCN.
+- [**Repository**](/repository/) The layout, the results contract, the version lock, the QEMU harness, the cel1 site model and the deliberate-break method.
+- [**Reference**](/reference/) Every make target, and the milestone records, ADRs and runbooks of the repository, copied at build time.
+
+</div>
+
+> [!WARNING]
+> The lab measures software and simulates management and packet models. RXE numbers are software results of one host and guest pair. ibsim results are a management simulation. ns-3 results are the behavior of a model. None of them stands in for hardware, and a result of one track never stands in for another.

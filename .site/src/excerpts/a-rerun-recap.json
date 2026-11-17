@@ -1,0 +1,8 @@
+{
+  "id": "a-rerun-recap",
+  "run": "20261115T020040Z",
+  "source": "tests/fixtures/a-soft-roce/ansible/bootstrap-rerun.recap.txt",
+  "lines": "1-7",
+  "format": "text",
+  "text": "PLAY RECAP *********************************************************************\nworker1                    : ok=19   changed=0    unreachable=0    failed=0    skipped=6    rescued=0    ignored=0   \nworker2                    : ok=19   changed=0    unreachable=0    failed=0    skipped=6    rescued=0    ignored=0   \n\n\nTASKS RECAP ********************************************************************\nSunday 15 November 2026  11:00:46 +0900 (0:00:00.097)       0:00:04.756 *******"
+}

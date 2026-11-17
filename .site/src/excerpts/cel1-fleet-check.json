@@ -1,0 +1,8 @@
+{
+  "id": "cel1-fleet-check",
+  "run": "cel1 simulation gates",
+  "source": "docs/milestones/evidence/cel1-sim/gates/fleet-check.log",
+  "lines": "1-9",
+  "format": "text",
+  "text": "make --no-print-directory fleet-site-check fleet-render-check fleet-sim-profile-check\nPYTHONPATH=scripts .venv/bin/python -m fleet site-check sites/cel1.yaml --lab-plan ansible/inventories/lab/group_vars/all\nsites/cel1.yaml: valid, 13 hosts, 11 networks, 128 fabric links, checked against the lab plan\nPYTHONPATH=scripts .venv/bin/python -m fleet render sites/cel1.yaml --out ansible/inventories/cel1 --check\nansible/inventories/cel1: 0 differences from sites/cel1.yaml over 18 rendered files\nPYTHONPATH=scripts .venv/bin/python -m fleet sim-profile sites/cel1.yaml --inventory ansible/inventories/cel1 --out tests/integration/qemu-lab/profiles/cel1.tsv --check\ntests/integration/qemu-lab/profiles/cel1.tsv: equals what sites/cel1.yaml renders, 14 guests, 27 vCPUs, 35584 MiB, 270 GiB of virtual disk\nmake --no-print-directory inventory-check INVENTORY=cel1\nPYTHONPATH=scripts .venv/bin/python -m inventory check -i ansible/inventories/cel1 --explicit"
+}

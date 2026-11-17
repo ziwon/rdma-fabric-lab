@@ -1,0 +1,26 @@
+---
+title: Labs
+description: One page per experiment, each with its goal, prerequisites, commands, checks, real output, deliberate breaks and limits.
+sidebar:
+  order: 0
+---
+
+import LabIndex from '../../../components/LabIndex.astro';
+
+Every lab page follows the same order. It states the goal and the concepts it uses, gives the profile, guest sizes and time taken as its milestone record measured them, and lists the exact commands. A table generated from the scenario spec shows every check the run records. A real output excerpt names its run id and source file. "Break it yourself" lists the deliberate breaks that made checks fail, with the runs that recorded them. Questions follow, and the page ends with what the result does and does not mean.
+
+## Every scenario
+
+This table is generated at build time from `tracks/*/scenarios/*.yaml`. A scenario added to the repository appears here at the next build, and the build fails until a page shows its checks.
+
+<LabIndex />
+
+## Order to follow
+
+Track A builds up. Start with [vm-rxe-baseline](/labs/track-a/vm-rxe-baseline/), then the reboot and rerun scenarios, then the cluster with [k8s-baseline](/labs/track-a/k8s-baseline/), and only then the pods of [k8s-hostnet-rdma](/labs/track-a/k8s-hostnet-rdma/) and [k8s-multus-net1](/labs/track-a/k8s-multus-net1/). [k8s-ha-vip](/labs/track-a/k8s-ha-vip/) needs its own profile.
+
+Track B and Track C each need only their own guest. Run [B-01](/labs/track-b/b-01/) to [B-04](/labs/track-b/b-04/) in order, because each adds one idea. In Track C, [c-01](/labs/track-c/c-01-example/) and [c-02](/labs/track-c/c-02-single-flow/) prove the model before [c-03](/labs/track-c/c-03-incast-simultaneous/) compares the profiles.
+
+The [cel1 simulation](/labs/cel1/cel1-sim-baseline/) needs the most resources and is easier to read after the Track A cluster labs.
+
+`vm-environment` is `make collect`, a snapshot of the host and the workers compared with the version lock. It runs no traffic, and the [version lock](/repository/version-lock/) page shows its checks.

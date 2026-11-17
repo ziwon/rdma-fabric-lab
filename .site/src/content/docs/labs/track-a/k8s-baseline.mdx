@@ -1,0 +1,84 @@
+---
+title: k8s-baseline
+description: The kubeadm cluster with Cilium in VXLAN tunnel mode and kube-proxy kept. Pod to pod traffic, DNS, a ClusterIP Service and a NetworkPolicy across two workers, with the NICs captured.
+sidebar:
+  order: 4
+---
+
+import Duration from '../../../../components/Duration.astro';
+import Excerpt from '../../../../components/Excerpt.astro';
+import ScenarioChecks from '../../../../components/ScenarioChecks.astro';
+
+The lab cluster is three guests built by the same Ansible and kubeadm code that describes cel1. Cilium, installed by Helm, gives every pod its address and tunnels pod traffic between nodes in VXLAN. This scenario checks the cluster the way an application would use it, and it checks the path the traffic took from packet captures.
+
+## Goal
+
+Show that the three nodes are Ready, that a pod on `worker2` reaches a pod on `worker1` by IP, by DNS name and through a ClusterIP Service, that a NetworkPolicy blocks and then allows that traffic, and that the pod traffic rides VXLAN on the management NIC and never touches the lab NIC.
+
+## Concepts it uses
+
+- [CNI and Cilium in tunnel mode](/concepts/kubernetes-networking/).
+- [The three networks per worker](/concepts/kubernetes-networking/), which the capture checks keep apart.
+
+## Before you start
+
+| Item | Value |
+|---|---|
+| Profile | `lab`: `cp1` 2 vCPU, 4 GiB, 30 GiB, and `worker1`, `worker2` 4 vCPU, 6 GiB, 40 GiB each |
+| Versions | Kubernetes v1.36.6, containerd 2.4.2, runc 1.5.3, CNI plugins v1.10.0, Cilium chart 1.20.4 |
+| Version lock | `make versions SCOPE=m2` must return 0 |
+
+**Time taken.** <Duration id="a-k8s-time" />.
+
+## Run it
+
+```bash
+make lab-wipe lab-up
+make bootstrap rxe-up
+make k8s                                              # kubeconfig in .lab/kubeconfig, mode 0600
+make addons ENV=lab KUBECONFIG_FILE=.lab/kubeconfig   # Cilium, then Multus and Whereabouts
+make k8s-test                                         # this scenario
+```
+
+A second `make k8s` must report `3 hosts, 0 with changes`, and a second `make addons` must print `cilium: unchanged` and leave the release at revision 1. `make addons` compares the deployed chart version and values with the lock and the values file before it upgrades, because `helm upgrade --install` writes a new revision even when nothing changed ([M2](/docs/milestones/m2/) section 4).
+
+## What every check proves
+
+<ScenarioChecks spec="a-soft-roce/k8s-baseline" />
+
+The two NetworkPolicy checks run only when the Service check passed, because a blocked request means nothing on a path that does not work. `vxlan-on-mgmt-nic` requires VXLAN frames carrying pod flows in both directions. `no-pod-traffic-on-lab-nic` counts marker pings to prove its capture was alive.
+
+## Real output
+
+The run of record of M2, on guests built from wiped disks.
+
+<Excerpt id="a-k8s-checks" />
+
+## Break it yourself
+
+| Break | How | Checks that failed | Broken run | Repaired run |
+|---|---|---|---|---|
+| Cilium agent restarting | Delete the Cilium agent pod on worker1 | `cilium-agents-ready` only | `20261115T060709Z` | `20261115T060758Z` after `rollout status daemonset/cilium` |
+| VXLAN blocked | DROP UDP 8472 in INPUT on worker1's management NIC | `pod-to-pod-cross-node`, `cluster-dns`, `clusterip-service`, `vxlan-on-mgmt-nic`. The two policy checks `not_run` | `20261115T060838Z` | `20261115T061038Z` after the rule was removed |
+
+The agent deletion. The existing datapath stayed, so traffic still passed.
+
+<Excerpt id="a-k8s-agent-deleted" />
+
+The VXLAN block. Every agent was still ready, while the traffic timed out and the capture saw one direction only.
+
+<Excerpt id="a-k8s-vxlan-dropped" />
+
+## Questions to think about
+
+- With UDP 8472 dropped on worker1, all three Cilium agents still reported ready. What does agent readiness measure, and what does it not?
+- Why does the capture see VXLAN from worker2 to worker1 but nothing back, when the rule drops only incoming packets on worker1?
+- A restarted agent could not reach the API through the ClusterIP in the first M2 acceptance run. Which property of the harness's default route caused it, and why did first installation work?
+- Why is DNS resolution a separate check from the Service request, when the request uses the name?
+
+## What the result means and does not mean
+
+The run shows ordinary pod networking across nodes on Cilium's VXLAN tunnel with kube-proxy kept, DNS, a ClusterIP Service and a working NetworkPolicy, with the tunnel on the management network.
+
+> [!NOTE]
+> It does not show kube-proxy replacement or native routing, which the [cel1 simulation](/labs/cel1/cel1-sim-baseline/) checks, or Hubble, or NetworkPolicy on `net1` or on hostNetwork pods, which no scenario declares. The spec's result kind is `software-cluster-test`. It checks behavior and measures no performance.

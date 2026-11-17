@@ -1,0 +1,101 @@
+---
+title: c-02 one flow against its bound
+description: One RDMA flow of 1000000 bytes through one switch on two 100 Gbps links, with PFC, ECN and DCQCN on and nothing to trigger them. The FCT is explained to the nanosecond.
+sidebar:
+  order: 2
+---
+
+import Duration from '../../../../components/Duration.astro';
+import Excerpt from '../../../../components/Excerpt.astro';
+import ScenarioChecks from '../../../../components/ScenarioChecks.astro';
+
+A model you cannot explain in its simplest case cannot be trusted in a hard one. c-02 sends one flow alone, from a sender through one switch to a receiver, with every congestion feature on and no other traffic. Nothing should trigger them. The flow completion time is then checked against its lower bound, and every nanosecond above the bound is accounted for.
+
+## Goal
+
+Show that the model applies every declared parameter, that the flow completes with every byte in order, that its FCT never beats the payload bound, that nothing drops, pauses or marks, and that a second run gives the same outputs.
+
+## Concepts it uses
+
+- [FCT and its bounds](/concepts/roce-congestion-control/).
+- [PFC, ECN and DCQCN](/concepts/roce-congestion-control/), on but idle here.
+
+## Before you start
+
+| Item | Value |
+|---|---|
+| Profile | `ns3`: `ns3sim1`, 12 vCPU, 16 GiB, 100 GiB |
+| Image | `rfl-ns3:m6`, `sha256:da7a3245…` |
+| Driver | `tracks/c-ns3/driver/rfl-star.cc`, the repository's own ns-3 program, built inside SimAI's ns-3 tree |
+
+**Time taken.** <Duration id="c02-time" />. `rfl-star` itself ran in 0.023 s of wall time with 61 MB RSS.
+
+## Run it
+
+```bash
+make track-c
+```
+
+`scripts/ns3/network.py` maps each human unit to the integer the model applies. Rates use SI units, so `100Gbps` is $10^{11}$ bit/s. Times become nanoseconds. Sizes are bytes only, so KB and KiB never mix. `config-applied` then reads every value back from the model objects ([M5](/docs/milestones/m5/) section 7).
+
+## What every check proves
+
+<ScenarioChecks spec="c-ns3/c-02-single-flow" />
+
+## Real output
+
+The run of record of M6, on the patched image. The figures equal M5's.
+
+<Excerpt id="c02-checks" />
+
+The flow record from the same run, `flows.tsv`.
+
+<Excerpt id="c02-flows" />
+
+## How far above the bound, and why
+
+The bound is the payload at the bottleneck rate plus the one-way propagation delay.
+
+$$
+\frac{8 \times 1000000}{10^{11}}\ \text{s} + 2 \times 1000\ \text{ns} = 80000\ \text{ns} + 2000\ \text{ns} = 82000\ \text{ns}
+$$
+
+The model's FCT is 88092 ns, 6092 ns or 7.43% above it. M5 derived every part of the difference from the model's code ([M5](/docs/milestones/m5/) section 8).
+
+| Part | ns | Why |
+|---|---:|---|
+| Payload at 100 Gbps | 80000 | the first term of the bound |
+| Headers and integer nanoseconds | 4000 | Each packet is 1052 B on the wire, 52 B more than its payload. 1052 B take 84.16 ns at 100 Gbps, which the model truncates to 84 ns |
+| Propagation, sender to receiver | 2000 | the second term of the bound |
+| Store and forward of the last packet | 84 | The switch forwards a packet only once it has fully arrived |
+| The last ACK returns | 2008 | The QP completes when the ACK reaches the sender: two 4 ns transmissions of 60 B and 2000 ns of propagation |
+| Total | 88092 | equal to the measured FCT |
+
+The 52 B are 10 B of SimpleSeqTsHeader, 8 B of UDP, 20 B of IPv4 and 14 B of this fork's PPP header. The first c-02 run failed `config-applied`, with 52 B per data packet and 60 B per ACK against the 40 B and 48 B first derived from the headers. The constants now follow the code ([M5](/docs/milestones/m5/) section 11).
+
+## Break it yourself
+
+<Excerpt id="c02-breaks" />
+
+| Break | What it changes | What the failed check saw |
+|---|---|---|
+| `rate-not-applied` | The simulator gets 200 Gbps on every link | `config-applied`: rate 200000000000, want 100000000000. `fct-lower-bound`: FCT 46046 ns below the bound 82000 ns |
+| `flow-cut-short` | The simulator stops at 10 us | The flow did not complete |
+| `lossy-links` | 1% receive errors on every link device | Packets lost on links, PhyRxDrop events, NACKs, segments sent again |
+| `ecn-bottleneck` | The receiver link at 25 Gbps | CE marks, CNP-flagged ACKs and CNPs in RdmaHw |
+| `pfc-bottleneck` | The receiver link at 25 Gbps, a 1 MB buffer, ECN off, one QP | 50 PFC frames sent, 25 PAUSE and 25 RESUME received |
+
+A break may fail more checks than it targets. `flow-cut-short` also fails `config-applied`, `fct-lower-bound` and `zero-drops`, because packets were still in flight. The unpatched model crashed on `pfc-bottleneck` with one QP, which led to the patch of M6 ([c-03](/labs/track-c/c-03-incast-simultaneous/)).
+
+## Questions to think about
+
+- The model sends 1052 B per 84 ns, 100.19 Gbps on the wire, slightly faster than the link rate. Where does that come from, and does it matter for the bound?
+- Why does the FCT include the return of the last ACK, and would a receiver-side definition give a different number?
+- PFC, ECN and DCQCN were on and silent. Why does that prove the features are off the path, but not that they work?
+
+## What the result means and does not mean
+
+The run shows that the model applies the declared parameters and that its FCT for one flow alone is exactly what its mechanics predict.
+
+> [!WARNING]
+> These are model results of ns-3-alibabacloud at one commit, not of a NIC, a switch ASIC or a cable. The decomposition holds for one flow alone on a path of equal-rate links and is not a general formula. The link rates are model inputs, not comparable with Track A's RXE bandwidth.

@@ -1,0 +1,18 @@
+{
+  "id": "c04-comparison",
+  "run": "20261116T151213Z",
+  "source": "docs/milestones/evidence/m6/20261116T151213Z/c-ns3/c-04-incast-staggered/raw/comparison.tsv",
+  "lines": "1-13",
+  "columns": [
+    "group",
+    "profile",
+    "completion_ratio_min",
+    "unfinished_flows",
+    "large_fct_ns",
+    "goodput_gbps",
+    "mmu_drops",
+    "retransmitted_packets"
+  ],
+  "format": "tsv",
+  "text": "group\tprofile\tcompletion_ratio_min\tunfinished_flows\tlarge_fct_ns\tgoodput_gbps\tmmu_drops\tretransmitted_packets\nn2\tc-none\t1.000\tnone\t152016/155246/158476 (n=10)\t89.6479/89.6479/89.6479 (n=5)\t60/60/60 (n=5)\t136/136/136 (n=5)\nn2\tc-pfc\t1.000\tnone\t152016/152054/152092 (n=10)\t92.9735/92.9735/92.9735 (n=5)\t0/0/0 (n=5)\t0/0/0 (n=5)\nn2\tc-ecn\t1.000\tnone\t153010/745514/1.03145e+06 (n=10)\t15.2171/15.6324/21.1512 (n=5)\t0/0/0 (n=5)\t0/0/0 (n=5)\nn2\tc-both\t1.000\tnone\t153010/745514/1.03145e+06 (n=10)\t15.2171/15.6324/21.1512 (n=5)\t0/0/0 (n=5)\t0/0/0 (n=5)\nn4\tc-none\t1.000\tnone\t260964/303456/327132 (n=20)\t82.6591/82.6591/82.6591 (n=5)\t1583/1583/1583 (n=5)\t2143/2143/2143 (n=5)\nn4\tc-pfc\t1.000\tnone\t224760/275102/281360 (n=20)\t94.0922/94.0922/94.0922 (n=5)\t0/0/0 (n=5)\t0/0/0 (n=5)\nn4\tc-ecn\t1.000\tnone\t778979/1.15151e+06/1.20651e+06 (n=20)\t25.6717/25.7599/26.7421 (n=5)\t349/369/428 (n=5)\t491/502/624 (n=5)\nn4\tc-both\t1.000\tnone\t261110/1.11916e+06/1.20224e+06 (n=20)\t25.7599/26.748/27.5485 (n=5)\t0/0/0 (n=5)\t0/0/0 (n=5)\nn8\tc-none\t0.875\ts1:flow4,s2:flow4,s3:flow4,s4:flow4,s5:flow4\t359244/556344/618284 (n=35)\t82.7981/82.7981/82.7981 (n=5)\t6393/6393/6393 (n=5)\t6396/6396/6396 (n=5)\nn8\tc-pfc\t1.000\tnone\t274320/538910/561576 (n=40)\t94.6617/94.6617/94.6617 (n=5)\t0/0/0 (n=5)\t0/0/0 (n=5)\nn8\tc-ecn\t0.875\ts1:flow4,s2:flow4,s3:flow4,s5:flow4\t229408/1.24611e+06/1.33135e+06 (n=36)\t39.6131/40.4223/44.7206 (n=5)\t3028/3100/3110 (n=5)\t2547/2756/3448 (n=5)\nn8\tc-both\t1.000\tnone\t379744/1.26792e+06/1.42341e+06 (n=40)\t43.7335/44.8524/45.2191 (n=5)\t0/0/0 (n=5)\t0/0/0 (n=5)"
+}

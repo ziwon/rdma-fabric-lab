@@ -1,0 +1,21 @@
+---
+// Every target `make help` lists, read at build time from the ## comments of Makefile and mk/*.mk.
+import targets from '../generated/make-targets.json';
+---
+
+<table data-make-targets>
+  <thead>
+    <tr><th>Target</th><th>What it does</th><th>Defined in</th></tr>
+  </thead>
+  <tbody>
+    {
+      targets.map((t) => (
+        <tr data-target={t.target}>
+          <td><code>make {t.target}</code></td>
+          <td>{t.description}</td>
+          <td><code>{t.file}</code></td>
+        </tr>
+      ))
+    }
+  </tbody>
+</table>

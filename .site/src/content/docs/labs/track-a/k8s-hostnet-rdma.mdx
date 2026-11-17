@@ -1,0 +1,111 @@
+---
+title: k8s-hostnet-rdma
+description: The vm-rxe-baseline tests repeated between a hostNetwork pod on each worker, with the node's RXE device, the pinned RDMA test image and every NIC captured.
+sidebar:
+  order: 6
+---
+
+import Duration from '../../../../components/Duration.astro';
+import Excerpt from '../../../../components/Excerpt.astro';
+import ScenarioChecks from '../../../../components/ScenarioChecks.astro';
+
+The simplest way to give a container RDMA is to let it use the node's own device. This scenario starts one pod per worker with `hostNetwork: true`, runs the pinned RDMA test image in it, and repeats [vm-rxe-baseline](/labs/track-a/vm-rxe-baseline/) unchanged between the pods, against the lab NIC addresses.
+
+## Goal
+
+Show that a container on each worker can open the node's `rxe0` and complete rping and RDMA Read, Write and Send, with the frames on the lab NIC only, and record exactly which pod security profile that needs and that every narrower profile fails.
+
+## Concepts it uses
+
+- [hostNetwork pods with RDMA devices](/concepts/kubernetes-networking/), the device cgroup and Pod Security Standards.
+- [Memory regions and memlock](/concepts/rdma/), which the pods' limits must allow.
+- Every concept of [vm-rxe-baseline](/labs/track-a/vm-rxe-baseline/), whose checks run inside the pods.
+
+## Before you start
+
+| Item | Value |
+|---|---|
+| Profile | `lab`: `cp1` 2 vCPU, 4 GiB, and `worker1`, `worker2` 4 vCPU, 6 GiB each. Only these three ran during the runs of record |
+| Cluster | `make k8s` and `make addons ENV=lab` done, Cilium, Multus and Whereabouts installed |
+| Image | `docker.io/library/rfl-rdma-tools:m3@sha256:756e51cf…`, built in the Track B guest with `make rdma-tools-image` and imported with `make rdma-tools-load` |
+| Version lock | `make versions SCOPE=m3` must return 0 |
+
+**Time taken.** <Duration id="a-hostnet-time" />. Each perftest test is one burst of about 16 ms.
+
+## Run it
+
+```bash
+make rdma-tools-image               # builds inside the Track B guest, never on the host
+make lab-down LAB_PROFILE=ibsim     # stop the builder before measuring
+make rdma-tools-load                # ctr import on both workers, by digest, no registry
+make k8s-hostnet-test               # this scenario
+```
+
+The pods sleep, and the runner starts every process through `kubectl exec` on `cp1`, under `timeout`. The image is referenced by digest with `imagePullPolicy: Never`. `ctr import --digests` names it by the sha256 of `index.json`, and CRI resolves a pod's `name@digest` only by that name, so the lock pins the index digest ([M3](/docs/milestones/m3/) section 2).
+
+## What every check proves
+
+<ScenarioChecks spec="a-soft-roce/k8s-hostnet-rdma" />
+
+The checks from `rxe-bound-to-lab-nic` to `no-roce-on-mgmt-nic` are the M1 suite, now executed in the pods. `pod-security-as-declared` and `narrower-profiles-fail` keep the security finding honest on every run: a dry-run relabel to `baseline` and `restricted` must refuse both pods, and the narrower profiles must still fail.
+
+## Real output
+
+The run of record of M3, on guests built from wiped disks.
+
+<Excerpt id="a-hostnet-checks" />
+
+`ibv_devinfo` inside the server pod of an earlier run. The pod sees the node's device.
+
+<Excerpt id="a-hostnet-ibv-devinfo" />
+
+The dry-run relabel to `baseline` in the same run. Kubernetes names both reasons the namespace would refuse the pods.
+
+<Excerpt id="a-hostnet-baseline-refused" />
+
+## The narrowest profile that works
+
+| # | Profile | Result |
+|---|---|---|
+| 1 | Namespace at PodSecurity `restricted` | Refused at admission for `hostNetwork=true` |
+| 2 | Namespace at PodSecurity `baseline` | Refused at admission for `hostNetwork=true` |
+| 3 | `privileged` level, uid 65534, all capabilities dropped, no privilege escalation, `RuntimeDefault` seccomp, no device | No `/dev/infiniband`. `ibv_devinfo` exits 255 with `No IB devices found` |
+| 4 | Profile 3 with `/dev/infiniband` as a hostPath | The files appear with mode 0666, but opening `uverbs0` and `rdma_cm` gives `Operation not permitted` |
+| 5 | `privileged: true`, uid and gid 65534, no host PID or IPC, no volume, no runtime socket | `rxe0` is `PORT_ACTIVE`, no effective capability, and `ib_write_bw` completes between the pods |
+
+The user accepted `privileged` for the lab RDMA pods on 2026-11-16. The pods run with 8388608 bytes of memlock, containerd's default, and the tests need less than 64 KiB ([M3](/docs/milestones/m3/) section 5).
+
+## Break it yourself
+
+Every check failed on at least one break and passed after the repair. These are the breaks of the series in [M3](/docs/milestones/m3/) section 8.
+
+| Break | Checks that failed | Broken run | Repaired run |
+|---|---|---|---|
+| Image removed from worker2's containerd | `rdma-pods-ready` | `20261115T224241Z` | `20261115T224600Z` |
+| `lab.perftest` in the lock set to another value | `pod-tools-match-lock` | `20261115T224648Z` | `20261115T224739Z` |
+| Config adds `privileged` to the levels that must refuse | `pod-security-as-declared` | `20261115T224832Z` | `20261115T224923Z` |
+| Config lists the working profile as a narrower one | `narrower-profiles-fail` | `20261115T225012Z` | `20261115T225107Z` |
+| `rdma link delete rxe0` on worker2 | `ibv-devinfo-in-pods`, `rxe-bound-to-lab-nic`, `rping-verified`, `rdma-read`, `rdma-write`, `rdma-send`, `roce-on-lab-nic` | `20261115T225159Z` | `20261115T225329Z` after `make rxe-up` |
+| Lab address deleted on worker2 | `route-via-lab-nic`, rping, Read, Write, Send, `roce-on-lab-nic` | `20261115T225417Z` | `20261115T225540Z` |
+| containerd `LimitMEMLOCK=65536` on worker2 | `memlock-in-pods` | `20261115T225629Z` | `20261115T225718Z` |
+| ICMP echo dropped at OUTPUT on both management NICs | `no-roce-on-mgmt-nic`, because the capture could not show it was live | `20261115T225805Z` | `20261115T225902Z` |
+| Config `delete_timeout_s: 1` | `rdma-pods-removed` | `20261115T225952Z` | `20261115T230039Z` |
+| A process with the run id that systemd restarts | `no-process-left` | `20261115T230130Z` | `20261115T230220Z` |
+
+The device deletion, selected rows.
+
+<Excerpt id="a-hostnet-rxe-deleted" />
+
+## Questions to think about
+
+- Profile 4 shows the device files with mode 0666, yet opening them fails. Which kernel mechanism decides, and why does dropping or adding capabilities not change it?
+- The pods share the node's network namespace and the whole RDMA device. What could one pod do to another pod's RDMA traffic on the same node?
+- With `LimitMEMLOCK=65536`, rping and the perftest tests still passed. What does that tell you about the size of the registrations these tests make?
+- The pod bandwidth figures fall inside the spread of the VM runs. Why does that not show that a container costs nothing?
+
+## What the result means and does not mean
+
+The run shows that a container on a worker can open the node's RXE device and run RDMA CM, Read, Write and Send against the lab NIC addresses, with the frames on the lab NIC only.
+
+> [!WARNING]
+> It does not show a pod-private interface, device isolation between pods, Cilium's pod data path, or any way to run RDMA without `privileged`. Bandwidth is a software measurement of this host and guest pair, one 16 ms burst per figure, with no pass threshold.

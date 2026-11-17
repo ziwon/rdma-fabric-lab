@@ -1,0 +1,82 @@
+---
+title: B-03 endpoint link down and up
+description: On the B-02 fabric the link of hca3 goes down, so hca3 leaves the subnet and its LID leaves every forwarding table. After the ReLink it returns with the same LID.
+sidebar:
+  order: 3
+---
+
+import Duration from '../../../../components/Duration.astro';
+import Excerpt from '../../../../components/Excerpt.astro';
+import ScenarioChecks from '../../../../components/ScenarioChecks.astro';
+
+A fabric is managed to survive change. B-03 takes the B-02 fabric, cuts the only link of one HCA, and watches the SM resweep. The HCA has no other path, so the right outcome is not that it stays reachable. Its LID must leave the forwarding tables and stop answering, every other LID must keep working, and after the link returns everything must equal the baseline.
+
+## Goal
+
+Show that OpenSM notices an endpoint link fault and its repair, resweeps within 60 s each time, removes the cut-off LID from every route, keeps every other route shortest, and restores the baseline exactly after the ReLink.
+
+## Concepts it uses
+
+- [The sweep](/concepts/infiniband-management/) and the traps and periodic sweeps that trigger it.
+- [Linear forwarding tables](/concepts/infiniband-management/) and [port states](/concepts/infiniband-management/).
+
+## Before you start
+
+| Item | Value |
+|---|---|
+| Profile | `ibsim`: `ibsim1`, 4 vCPU, 6 GiB, 20 GiB |
+| Fabric | `tracks/b-ibsim/topologies/b-02.net`, as in [B-02](/labs/track-b/b-02/) |
+| Fault | `Unlink "hca3"[1]`, then `ReLink "hca3"[1]`, sent to the ibsim console |
+
+**Time taken.** <Duration id="b03-time" />. In simulator time, the first SUBNET UP came 0.003 s after start, a new one 0.042 s after the Unlink and 0.047 s after the ReLink.
+
+## Run it
+
+```bash
+make track-b
+```
+
+The runner records a baseline, sends the fault to ibsim's console, waits for a new SUBNET UP in OpenSM's log, records the fabric again, sends the ReLink, waits again and records a third time. The expectations after the fault come from the topology file without that link, reduced to what the SM still reaches.
+
+## What every check proves
+
+<ScenarioChecks spec="b-ibsim/b-03" />
+
+## Real output
+
+The run of record of M4. `hca3` left the subnet, its one route on `sw2` left with LID 5, and LID 5 stopped answering. After the ReLink `hca3` came back with LID 5.
+
+<Excerpt id="b03-checks" />
+
+These three outputs come from an earlier passing run of B-03, the source of the fixtures, after the Unlink. The link states first. `sw2` port 1, where `hca3` was, now polls.
+
+<Excerpt id="b03-fault-iblinkinfo" />
+
+The forwarding tables. LID 5, the LID of `hca3`, is gone from both switches.
+
+<Excerpt id="b03-fault-ibroute" />
+
+The LID probe. Every LID answers its node description, except LID 5.
+
+<Excerpt id="b03-fault-smpquery" />
+
+## Break it yourself
+
+The break removes the inter-switch link `"sw1"[7]-"sw2"[7]` from the simulated fabric for the whole run.
+
+<Excerpt id="b03-break" />
+
+The fault and recovery checks fail too, because their expectations still include the removed link. The resweep checks pass, since OpenSM still resweeps after the Unlink and the ReLink of `hca3`.
+
+## Questions to think about
+
+- Why must `fault-reachability` require LID 5 to stay silent, rather than only the other LIDs to answer?
+- After the ReLink, `hca3` got LID 5 again. Which SM behavior makes that likely, and why would a different LID break clients that cached the old one?
+- The resweep took 42 ms of simulator time. Why is that no prediction of a real fabric's convergence?
+
+## What the result means and does not mean
+
+The run shows OpenSM handling an endpoint link fault and its repair as ibsim presents them: resweep, route removal, silence of the cut-off LID, and an exact return to the baseline.
+
+> [!WARNING]
+> A management simulation. ibsim changes the link state at once and simulates no physical failure, no link training and no error counters. The convergence times are observations of one simulator process inside one VM on a busy host.

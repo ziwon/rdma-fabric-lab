@@ -1,0 +1,8 @@
+{
+  "id": "repo-validate",
+  "run": "acceptance-m3 20261116T001921Z, step 39",
+  "source": "docs/milestones/evidence/m3/acceptance-m3/39-validate.log",
+  "lines": "1-3",
+  "format": "text",
+  "text": "$ make validate\nPYTHONPATH=scripts .venv/bin/python -m rfl validate \nvalidated 192 run directories, 0 invalid"
+}

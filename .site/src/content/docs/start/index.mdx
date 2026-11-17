@@ -1,0 +1,73 @@
+---
+title: What the lab is
+description: A software-only lab for RDMA, InfiniBand management and RoCE congestion control, what it builds, and what it does not claim.
+sidebar:
+  order: 0
+---
+
+The lab answers three questions on one Ubuntu host that has no HCA, no InfiniBand switch and no GPU. How do RDMA programs run over plain Ethernet, and how do Kubernetes workloads reach them? How does a subnet manager discover a fabric, assign LIDs and react to a link fault? How do PFC, ECN and DCQCN settings change queues, rates and flow completion?
+
+Each question gets its own track with its own tools and its own definition of success. The same Ansible and kubeadm code that builds the lab cluster also describes `cel1`, an invented GPU region, so every lab run exercises that code.
+
+## The pieces
+
+```mermaid
+%%{init: {"theme": "base", "themeVariables": {"background": "#171717", "primaryColor": "#232323", "primaryTextColor": "#f5f5f5", "primaryBorderColor": "#d0d0d0", "lineColor": "#cfcfcf", "fontFamily": "Inter, Arial, sans-serif"}}}%%
+flowchart TB
+    H[Ubuntu host<br/>unprivileged QEMU, no simulator]
+    H --> A[Track A guests<br/>cp1, worker1, worker2]
+    H --> B[Track B guest<br/>ibsim1]
+    H --> C[Track C guest<br/>ns3sim1]
+    H --> X[cel1 guests<br/>13 nodes and a syslog stand-in]
+    A --> A1[RXE rxe0 on the lab NIC<br/>Kubernetes, Cilium, Multus]
+    B --> B1[Pinned container<br/>ibsim, OpenSM, diagnostics]
+    C --> C1[Pinned container<br/>ns-3 RDMA model]
+    X --> X1[Fleet playbooks<br/>Cilium, GPU Operator]
+
+    classDef primary fill:#232323,stroke:#d0d0d0,color:#f5f5f5,stroke-width:2px;
+    classDef secondary fill:#3b2f20,stroke:#d0d0d0,color:#f5f5f5,stroke-width:2px;
+    classDef note fill:#52676b,stroke:#d0d0d0,color:#f5f5f5,stroke-width:2px;
+    class H primary
+    class A,B,C,X secondary
+    class A1,B1,C1,X1 note
+```
+
+The tracks share the repository, the result format and the version lock. They do not share a data path. The virtual HCAs of Track B are not PCI devices of the Track A guests, and the switch of the Track C model is not wired into the Track A lab network.
+
+| Track | Question | Stack | Result kind |
+|---|---|---|---|
+| A. Kubernetes and Soft-RoCE | How do RDMA programs run over plain Ethernet, and how do Kubernetes workloads reach them? | QEMU guests, Ansible, kubeadm, containerd, Cilium by Helm, Multus, Whereabouts, RXE | `software-rdma-measurement`, `software-cluster-test` |
+| B. InfiniBand management | How does a subnet manager discover a fabric, assign LIDs and react to link faults? | ibsim, OpenSM, infiniband-diags in a pinned image | `ib-management-simulation` |
+| C. RoCE congestion control | How do PFC, ECN and DCQCN settings change queues, rates and flow completion? | The ns-3-alibabacloud model built through SimAI, in a pinned image | `packet-model-simulation` |
+
+The result kind is a field of every scenario spec and every `metrics.json`, so a software measurement, a management simulation and a model result never pass for one another. `make report` tallies required and optional runs apart and prints the result kind of each run.
+
+## What the lab does not claim
+
+These lines come from the repository README and hold for every page of this site.
+
+- **IPoIB.** RXE runs over Ethernet and ibsim simulates management datagrams. Neither creates the IPoIB data path, so nothing here validates IPoIB or an IPoIB CNI.
+- **HCA performance.** RXE numbers are software results of one host, kernel and guest combination. They say nothing about offload, InfiniBand or RoCE hardware latency, or 200, 400 or 800 Gb/s throughput.
+- **Lossless switching.** PFC, ECN and DCQCN results in Track C are the behavior of the simulation model, not of a real switch or of the hypervisor's virtual switch.
+- **GPU and NCCL performance.** GPUDirect RDMA, NVLink and NCCL are out of scope. Nothing in this repository has run against GPU hardware.
+
+## How each experiment is recorded
+
+Every scenario declares its checks in a spec file. A run writes a result directory with a manifest, logs, raw captures and metrics, and its status comes only from the recorded checks. A passed check must point at evidence in the run directory. The milestone records keep the run ids, the exit codes and the findings. The [results contract](/repository/results-contract/) page explains the format.
+
+Every lab check was also broken once on purpose. A check that has never failed proves nothing, so each lab page lists the [deliberate breaks](/repository/deliberate-breaks/) that made its checks fail and the runs that recorded them.
+
+## Status
+
+The milestones M0 to M6 are done. Their records are under [Reference](/reference/). Each lab page names the milestone record its figures come from.
+
+| Milestone | What it proved | Record |
+|---|---|---|
+| M0 design lock | The address plan overlaps nothing on the host. The guest kernel can load `rdma_rxe` | [M0](/docs/milestones/m0/) |
+| M1 RXE between VMs | rping and RDMA Read, Write and Send between two workers over RDMA CM, RoCEv2 frames on the lab NIC only, the device back after a reboot | [M1](/docs/milestones/m1/) |
+| M2 Kubernetes | Kubernetes v1.36.6 with Cilium 1.20.4 by Helm. Three control planes behind a kube-vip address answered again 6.0 s after the address holder lost power | [M2](/docs/milestones/m2/) |
+| M3 hostNetwork RDMA and Multus | The M1 tests between hostNetwork pods, and `net1` from Whereabouts beside Cilium through pod recreation and a worker reboot | [M3](/docs/milestones/m3/) |
+| M4 ibsim and OpenSM | B-01 to B-04 inside the Track B guest, each failing on its deliberate break | [M4](/docs/milestones/m4/) |
+| cel1 simulation | The cel1 cluster on 13 guests from wiped disks with the fleet targets | [cel1-sim](/docs/milestones/cel1-sim/) |
+| M5 ns-3 baseline | The model builds in a pinned image, its smoke test repeats byte for byte, and one flow completes 7.43% above its payload bound with the gap explained | [M5](/docs/milestones/m5/) |
+| M6 congestion profiles | Incast under four profiles, three workloads and five seeds, with each feature's activation read from the model's counters | [M6](/docs/milestones/m6/) |

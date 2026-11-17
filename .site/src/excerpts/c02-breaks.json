@@ -1,0 +1,13 @@
+{
+  "id": "c02-breaks",
+  "run": "track-c-breaks 20261116T151446Z to 20261116T152133Z",
+  "source": "docs/milestones/evidence/m6/break-details.tsv",
+  "lines": "1,9-19",
+  "columns": [
+    "run_id",
+    "break",
+    "check"
+  ],
+  "format": "tsv",
+  "text": "run_id\tbreak\tcheck\n20261116T151549Z\timage-unpinned\timage-pinned\n20261116T151551Z\tcontainer-unlocked\tcontainer-locked-down\n20261116T151556Z\tcontainer-left\tno-container-left\n20261116T151601Z\thost-process\thost-untouched\n20261116T151607Z\trerun-input-differs\trerun-identical\n20261116T151612Z\trate-not-applied\tconfig-applied\n20261116T151612Z\trate-not-applied\tfct-lower-bound\n20261116T151617Z\tflow-cut-short\tflow-completes\n20261116T151622Z\tlossy-links\tzero-drops\n20261116T151628Z\tecn-bottleneck\tno-ecn-mark\n20261116T151633Z\tpfc-bottleneck\tno-pfc-pause"
+}

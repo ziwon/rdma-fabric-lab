@@ -1,0 +1,399 @@
+# Every output excerpt on the site. `npm run excerpts pull` copies the named lines into src/excerpts/, and
+# `npm run excerpts check` proves the copies still equal their source. A source under docs/milestones/evidence/
+# exists only on the machine that ran the lab. A source under tests/fixtures/ is tracked, and its README names
+# the run it came from, which `run` repeats here.
+#
+# Selection: `lines: a-b`, `block: <line prefix>` (to the next blank line) with optional `rows: [first cells]`,
+# or `grep: <regex>` with `header: true`. `format: tsv` renders tab-separated rows as a table, and `columns`
+# keeps the named TSV columns.
+
+a-probe-rxe-link:
+  run: probe 20261115T012426Z
+  source: docs/milestones/evidence/m1/probe.log
+  lines: 192-212
+a-probe-rping:
+  run: probe 20261115T012426Z
+  source: docs/milestones/evidence/m1/probe.log
+  lines: 253-264
+a-baseline-checks:
+  run: 20261115T022240Z
+  source: docs/milestones/evidence/m1/20261115T022240Z/a-soft-roce/vm-rxe-baseline/summary.md
+  block: '| check |'
+a-baseline-metrics:
+  run: 20261115T022240Z
+  source: docs/milestones/evidence/m1/20261115T022240Z/a-soft-roce/vm-rxe-baseline/summary.md
+  block: '| metric |'
+a-write-bw-client:
+  run: 20261115T020022Z
+  source: tests/fixtures/a-soft-roce/perftest/ib_write_bw.client.stdout
+  lines: 1-22
+a-rping-client:
+  run: 20261115T020022Z
+  source: tests/fixtures/a-soft-roce/rping/client.stdout
+  lines: 1-10
+a-baseline-link-down:
+  run: 20261115T022449Z
+  source: docs/milestones/evidence/m1/20261115T022449Z/a-soft-roce/vm-rxe-baseline/summary.md
+  block: '| check |'
+a-baseline-netem:
+  run: 20261115T022539Z
+  source: docs/milestones/evidence/m1/20261115T022539Z/a-soft-roce/vm-rxe-baseline/summary.md
+  block: '| check |'
+a-reboot-checks:
+  run: 20261115T022327Z
+  source: docs/milestones/evidence/m1/20261115T022327Z/a-soft-roce/vm-rxe-reboot/summary.md
+  block: '| check |'
+a-reboot-unit-disabled:
+  run: 20261115T022358Z
+  source: docs/milestones/evidence/m1/20261115T022358Z/a-soft-roce/vm-rxe-reboot/summary.md
+  block: '| check |'
+  rows: [rxe-restored-without-ansible, rxe-bound-to-lab-nic, rping-verified, rdma-read]
+a-rerun-checks:
+  run: 20261115T022311Z
+  source: docs/milestones/evidence/m1/20261115T022311Z/a-soft-roce/vm-rxe-rerun/summary.md
+  block: '| check |'
+a-rerun-recap:
+  run: 20261115T020040Z
+  source: tests/fixtures/a-soft-roce/ansible/bootstrap-rerun.recap.txt
+  lines: 1-7
+a-collect-checks:
+  run: 20261115T022919Z
+  source: docs/milestones/evidence/m1/20261115T022919Z/a-soft-roce/vm-environment/summary.md
+  block: '| check |'
+a-k8s-checks:
+  run: 20261115T060520Z
+  source: docs/milestones/evidence/m2/20261115T060520Z/a-soft-roce/k8s-baseline/summary.md
+  block: '| check |'
+a-k8s-agent-deleted:
+  run: 20261115T060709Z
+  source: docs/milestones/evidence/m2/20261115T060709Z/a-soft-roce/k8s-baseline/summary.md
+  block: '| check |'
+  rows: [cilium-agents-ready, pod-to-pod-cross-node]
+a-k8s-vxlan-dropped:
+  run: 20261115T060838Z
+  source: docs/milestones/evidence/m2/20261115T060838Z/a-soft-roce/k8s-baseline/summary.md
+  block: '| check |'
+  rows: [cilium-agents-ready, pod-to-pod-cross-node, cluster-dns, network-policy-blocks, vxlan-on-mgmt-nic]
+a-ha-checks:
+  run: 20261115T060557Z
+  source: docs/milestones/evidence/m2/20261115T060557Z/a-soft-roce/k8s-ha-vip/summary.md
+  block: '| check |'
+a-ha-probes:
+  run: 20261115T052220Z
+  source: tests/fixtures/a-soft-roce/ha/probes.txt
+  lines: 1-19
+a-ha-kube-vip-removed:
+  run: 20261115T052346Z
+  source: docs/milestones/evidence/m2/20261115T052346Z/a-soft-roce/k8s-ha-vip/summary.md
+  block: '| check |'
+  rows: [vip-holder-identified, api-survives-holder-loss, cluster-works-after-loss]
+a-hostnet-checks:
+  run: 20261116T002950Z
+  source: docs/milestones/evidence/m3/runs/20261116T002950Z/a-soft-roce/k8s-hostnet-rdma/summary.md
+  block: '| check |'
+a-hostnet-ibv-devinfo:
+  run: 20261115T221204Z
+  source: tests/fixtures/a-soft-roce/m3/ibv-devinfo.stdout
+  lines: 1-17
+a-hostnet-baseline-refused:
+  run: 20261115T221204Z
+  source: tests/fixtures/a-soft-roce/m3/podsecurity-dry-run-baseline.stderr
+  lines: 1-2
+a-hostnet-rxe-deleted:
+  run: 20261115T225159Z
+  source: docs/milestones/evidence/m3/breaks-runs/20261115T225159Z/a-soft-roce/k8s-hostnet-rdma/summary.md
+  block: '| check |'
+  rows: [ibv-devinfo-in-pods, rxe-bound-to-lab-nic, rping-verified, rdma-write, roce-on-lab-nic]
+a-multus-checks:
+  run: 20261116T072640Z
+  source: docs/milestones/evidence/m3-cni-dir/runs/20261116T072640Z/a-soft-roce/k8s-multus-net1/summary.md
+  block: '| check |'
+a-multus-cni-ls:
+  run: 20261116T053228Z
+  source: tests/fixtures/a-soft-roce/m3-cni-dir/cni-ls.stdout
+  lines: 1-3
+a-multus-conf:
+  run: 20261116T053228Z
+  source: tests/fixtures/a-soft-roce/m3-cni-dir/00-multus.conf
+  lines: 1
+a-multus-route:
+  run: 20261115T222245Z
+  source: tests/fixtures/a-soft-roce/m3/net1-server-ip-route.stdout
+  lines: 1-3
+a-multus-cilium-copy:
+  run: 20261116T053519Z
+  source: docs/milestones/evidence/m3-cni-dir/runs/20261116T053519Z/a-soft-roce/k8s-multus-net1/summary.md
+  block: '| check |'
+  rows: [cni-dir-holds-only-multus, pod-at-boot-waits-for-multus, new-pod-after-reboot-gets-net1]
+
+b01-checks:
+  run: 20261115T151655Z
+  source: docs/milestones/evidence/m4/20261115T151655Z/b-ibsim/b-01/summary.md
+  block: '| check |'
+b01-ibnetdiscover:
+  run: 20261115T142123Z
+  source: tests/fixtures/b-ibsim/b-01/baseline/ibnetdiscover.txt
+  lines: 1-27
+b01-opensm:
+  run: 20261115T142123Z
+  source: tests/fixtures/b-ibsim/b-01/baseline/opensm.log
+  lines: 1-12
+b01-break:
+  run: 20261115T151828Z
+  source: docs/milestones/evidence/m4/20261115T151828Z/b-ibsim/b-01/summary.md
+  block: '| check |'
+  rows: [topology-discovered, lids-unique, port-states, routes-shortest]
+b02-checks:
+  run: 20261115T151655Z
+  source: docs/milestones/evidence/m4/20261115T151655Z/b-ibsim/b-02/summary.md
+  block: '| check |'
+b02-updn-fallback:
+  run: 20261115T141931Z
+  source: tests/fixtures/b-ibsim/b-02-updn-fallback/container/opensm.log
+  lines: 10-14
+b02-break:
+  run: 20261115T151828Z
+  source: docs/milestones/evidence/m4/20261115T151828Z/b-ibsim/b-02/summary.md
+  block: '| check |'
+  rows: [topology-discovered, port-states, routes-shortest]
+b03-checks:
+  run: 20261115T151655Z
+  source: docs/milestones/evidence/m4/20261115T151655Z/b-ibsim/b-03/summary.md
+  block: '| check |'
+b03-fault-iblinkinfo:
+  run: 20261115T142143Z
+  source: tests/fixtures/b-ibsim/b-03/fault/iblinkinfo.txt
+  lines: 1-19
+b03-fault-ibroute:
+  run: 20261115T142143Z
+  source: tests/fixtures/b-ibsim/b-03/fault/ibroute.txt
+  lines: 1-21
+b03-fault-smpquery:
+  run: 20261115T142143Z
+  source: tests/fixtures/b-ibsim/b-03/fault/smpquery-nodedesc.txt
+  lines: 1-19
+b03-break:
+  run: 20261115T151828Z
+  source: docs/milestones/evidence/m4/20261115T151828Z/b-ibsim/b-03/summary.md
+  block: '| check |'
+  rows: [topology-discovered, port-states, fault-topology, recovered]
+b04-checks:
+  run: 20261115T151655Z
+  source: docs/milestones/evidence/m4/20261115T151655Z/b-ibsim/b-04/summary.md
+  block: '| check |'
+b04-opensm-sweeps:
+  run: 20261115T142204Z
+  source: tests/fixtures/b-ibsim/b-04/container/opensm.log
+  lines: 11-28
+b04-break:
+  run: 20261115T151828Z
+  source: docs/milestones/evidence/m4/20261115T151828Z/b-ibsim/b-04/summary.md
+  block: '| check |'
+  rows: [topology-discovered, port-states, fault-topology, recovered]
+
+c01-checks:
+  run: 20261116T151213Z
+  source: docs/milestones/evidence/m6/20261116T151213Z/c-ns3/c-01-example/summary.md
+  block: '| check |'
+c01-stdout-tail:
+  run: probe simai-noble run1, image rfl-ns3:m5
+  source: tests/fixtures/c-ns3/probe/simai-run1-stdout-tail.txt
+  lines: 17-20
+c01-breaks:
+  run: track-c-breaks 20261116T151446Z to 20261116T152133Z
+  source: docs/milestones/evidence/m6/break-details.tsv
+  format: tsv
+  grep: '^\S+\tc-01-example\t'
+  header: true
+  columns: [run_id, break, check]
+c02-checks:
+  run: 20261116T151213Z
+  source: docs/milestones/evidence/m6/20261116T151213Z/c-ns3/c-02-single-flow/summary.md
+  block: '| check |'
+c02-flows:
+  run: 20261116T151213Z
+  source: tests/fixtures/c-ns3/baseline/flows.tsv
+  format: tsv
+  lines: 1-2
+  columns: [flow, bytes, start_ns, completed, finish_ns, cnp_acks, rx_in_order_bytes]
+c02-breaks:
+  run: track-c-breaks 20261116T151446Z to 20261116T152133Z
+  source: docs/milestones/evidence/m6/break-details.tsv
+  format: tsv
+  grep: '^\S+\tc-02-single-flow\t'
+  header: true
+  columns: [run_id, break, check]
+c03-checks:
+  run: 20261116T151213Z
+  source: docs/milestones/evidence/m6/20261116T151213Z/c-ns3/c-03-incast-simultaneous/summary.md
+  block: '| check |'
+c03-comparison:
+  run: 20261116T151213Z
+  source: docs/milestones/evidence/m6/20261116T151213Z/c-ns3/c-03-incast-simultaneous/raw/comparison.tsv
+  format: tsv
+  lines: 1-13
+  columns: [group, profile, large_fct_ns, goodput_gbps, peak_queue_bytes_max, pauses_handled, marks, rate_reductions, mmu_drops]
+c03-rates-flow0:
+  run: 20261116T151213Z
+  source: tests/fixtures/c-ns3/incast/c-03-incast-simultaneous/n8-c-ecn-s1/rates.tsv
+  format: tsv
+  grep: '^(\d{1,6}|10\d{5})\t0\t'
+  header: true
+c03-breaks:
+  run: track-c-breaks 20261116T151446Z to 20261116T152133Z
+  source: docs/milestones/evidence/m6/break-details.tsv
+  format: tsv
+  grep: '^\S+\tc-03-incast-simultaneous\t'
+  header: true
+  columns: [run_id, break, check, detail]
+c04-checks:
+  run: 20261116T151213Z
+  source: docs/milestones/evidence/m6/20261116T151213Z/c-ns3/c-04-incast-staggered/summary.md
+  block: '| check |'
+c04-comparison:
+  run: 20261116T151213Z
+  source: docs/milestones/evidence/m6/20261116T151213Z/c-ns3/c-04-incast-staggered/raw/comparison.tsv
+  format: tsv
+  lines: 1-13
+  columns: [group, profile, completion_ratio_min, unfinished_flows, large_fct_ns, goodput_gbps, mmu_drops, retransmitted_packets]
+c04-stalled-flow:
+  run: 20261116T151213Z
+  source: tests/fixtures/c-ns3/incast/c-04-incast-staggered/n8-c-none-s1/flows.tsv
+  format: tsv
+  lines: 1-9
+  columns: [flow, src, bytes, start_ns, completed, finish_ns, rx_in_order_bytes]
+c05-checks:
+  run: 20261116T151213Z
+  source: docs/milestones/evidence/m6/20261116T151213Z/c-ns3/c-05-incast-mixed/summary.md
+  block: '| check |'
+c05-comparison:
+  run: 20261116T151213Z
+  source: docs/milestones/evidence/m6/20261116T151213Z/c-ns3/c-05-incast-mixed/raw/comparison.tsv
+  format: tsv
+  lines: 1-13
+  columns: [group, profile, large_fct_ns, small_fct_ns, goodput_gbps, peak_queue_bytes_max, marks, mmu_drops]
+c06-checks:
+  run: 20261116T151213Z
+  source: docs/milestones/evidence/m6/20261116T151213Z/c-ns3/c-06-sensitivity-kmin/summary.md
+  block: '| check |'
+c06-comparison:
+  run: 20261116T151213Z
+  source: docs/milestones/evidence/m6/20261116T151213Z/c-ns3/c-06-sensitivity-kmin/raw/comparison.tsv
+  format: tsv
+  lines: 1-5
+  columns: [group, profile, large_fct_ns, goodput_gbps, peak_queue_bytes_max, pauses_handled, marks, rate_reductions, mmu_drops]
+
+cel1-checks:
+  run: 20261115T164615Z
+  source: docs/milestones/evidence/cel1-sim/20261115T164615Z/cel1/cel1-sim-baseline/summary.md
+  block: '| check |'
+cel1-rsyslog-stopped:
+  run: 20261115T165039Z
+  source: docs/milestones/evidence/cel1-sim/20261115T165039Z/cel1/cel1-sim-baseline/summary.md
+  block: '| check |'
+  rows: [syslog-to-central-address, api-survives-holder-loss]
+cel1-fleet-check:
+  run: cel1 simulation gates
+  source: docs/milestones/evidence/cel1-sim/gates/fleet-check.log
+  lines: 1-9
+
+repo-validate:
+  run: acceptance-m3 20261116T001921Z, step 39
+  source: docs/milestones/evidence/m3/acceptance-m3/39-validate.log
+  lines: 1-3
+repo-versions-m3:
+  run: acceptance-m3 20261116T001921Z, step 06
+  source: docs/milestones/evidence/m3/acceptance-m3/06-versions-m3.log
+  lines: 1-4
+repo-harness-sockets:
+  run: acceptance-m2 20261115T060116Z, step 04
+  source: docs/milestones/evidence/m2/acceptance-m2-harness-sockets.log
+  lines: 1-12
+repo-break-pairs:
+  run: breaks-m3 20261116T000255Z
+  source: docs/milestones/evidence/m3/breaks-3/pairs.tsv
+  format: tsv
+  lines: 1-4
+
+# The created_at and finished_at lines of each run of record's manifest. <Duration> computes the time taken.
+a-baseline-time:
+  run: 20261115T022240Z
+  source: docs/milestones/evidence/m1/20261115T022240Z/a-soft-roce/vm-rxe-baseline/manifest.json
+  lines: 10-11
+a-reboot-time:
+  run: 20261115T022327Z
+  source: docs/milestones/evidence/m1/20261115T022327Z/a-soft-roce/vm-rxe-reboot/manifest.json
+  lines: 10-11
+a-rerun-time:
+  run: 20261115T022311Z
+  source: docs/milestones/evidence/m1/20261115T022311Z/a-soft-roce/vm-rxe-rerun/manifest.json
+  lines: 10-11
+a-collect-time:
+  run: 20261115T022919Z
+  source: docs/milestones/evidence/m1/20261115T022919Z/a-soft-roce/vm-environment/manifest.json
+  lines: 10-11
+a-k8s-time:
+  run: 20261115T060520Z
+  source: docs/milestones/evidence/m2/20261115T060520Z/a-soft-roce/k8s-baseline/manifest.json
+  lines: 10-11
+a-ha-time:
+  run: 20261115T060557Z
+  source: docs/milestones/evidence/m2/20261115T060557Z/a-soft-roce/k8s-ha-vip/manifest.json
+  lines: 10-11
+a-hostnet-time:
+  run: 20261116T002950Z
+  source: docs/milestones/evidence/m3/runs/20261116T002950Z/a-soft-roce/k8s-hostnet-rdma/manifest.json
+  lines: 10-11
+a-multus-time:
+  run: 20261116T072640Z
+  source: docs/milestones/evidence/m3-cni-dir/runs/20261116T072640Z/a-soft-roce/k8s-multus-net1/manifest.json
+  lines: 10-11
+b01-time:
+  run: 20261115T151655Z
+  source: docs/milestones/evidence/m4/20261115T151655Z/b-ibsim/b-01/manifest.json
+  lines: 10-11
+b02-time:
+  run: 20261115T151655Z
+  source: docs/milestones/evidence/m4/20261115T151655Z/b-ibsim/b-02/manifest.json
+  lines: 10-11
+b03-time:
+  run: 20261115T151655Z
+  source: docs/milestones/evidence/m4/20261115T151655Z/b-ibsim/b-03/manifest.json
+  lines: 10-11
+b04-time:
+  run: 20261115T151655Z
+  source: docs/milestones/evidence/m4/20261115T151655Z/b-ibsim/b-04/manifest.json
+  lines: 10-11
+c01-time:
+  run: 20261116T151213Z
+  source: docs/milestones/evidence/m6/20261116T151213Z/c-ns3/c-01-example/manifest.json
+  lines: 10-11
+c02-time:
+  run: 20261116T151213Z
+  source: docs/milestones/evidence/m6/20261116T151213Z/c-ns3/c-02-single-flow/manifest.json
+  lines: 10-11
+c03-time:
+  run: 20261116T151213Z
+  source: docs/milestones/evidence/m6/20261116T151213Z/c-ns3/c-03-incast-simultaneous/manifest.json
+  lines: 10-11
+c04-time:
+  run: 20261116T151213Z
+  source: docs/milestones/evidence/m6/20261116T151213Z/c-ns3/c-04-incast-staggered/manifest.json
+  lines: 10-11
+c05-time:
+  run: 20261116T151213Z
+  source: docs/milestones/evidence/m6/20261116T151213Z/c-ns3/c-05-incast-mixed/manifest.json
+  lines: 10-11
+c06-time:
+  run: 20261116T151213Z
+  source: docs/milestones/evidence/m6/20261116T151213Z/c-ns3/c-06-sensitivity-kmin/manifest.json
+  lines: 10-11
+cel1-time:
+  run: 20261115T164615Z
+  source: docs/milestones/evidence/cel1-sim/20261115T164615Z/cel1/cel1-sim-baseline/manifest.json
+  lines: 10-11
+
+repo-manifest-check:
+  run: 20261115T022240Z
+  source: docs/milestones/evidence/m1/20261115T022240Z/a-soft-roce/vm-rxe-baseline/manifest.json
+  lines: 102-112

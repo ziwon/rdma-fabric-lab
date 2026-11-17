@@ -1,0 +1,103 @@
+---
+title: cel1-sim-baseline
+description: The invented GPU region cel1 built as 13 QEMU guests by the fleet targets from wiped disks, with kube-proxy replacement, native routing, the GPU Operator and a VIP power cut.
+sidebar:
+  order: 1
+---
+
+import Duration from '../../../../components/Duration.astro';
+import Excerpt from '../../../../components/Excerpt.astro';
+import ScenarioChecks from '../../../../components/ScenarioChecks.astro';
+
+cel1 exists only as a site model. Its 3 control planes, 8 DGX B200 nodes and 2 PCIe GPU servers have invented names and addresses. The simulation builds the whole region as QEMU guests on one host, one guest per host of the model with one NIC per model interface, and runs the fleet targets against them exactly as they would run against the real region. The scenario then checks the cluster those targets built.
+
+## Goal
+
+Show that `make fleet-k8s`, `make fleet-addons` and `make fleet-rsyslog` build the cel1 cluster from wiped guests, that a second run changes nothing, and that the cluster has the shape the site model asks for: class labels, kube-proxy replacement with native routing, the nvidia runtime as the default on the DGX nodes, syslog to the central address, and an API that survives the loss of its VIP holder.
+
+## Concepts it uses
+
+- [Cilium with kube-proxy replacement](/concepts/kubernetes-networking/) and [kube-vip](/concepts/kubernetes-networking/).
+- [The cel1 site model and the inventory contract](/repository/cel1-site-model/).
+- [The QEMU harness](/repository/qemu-harness/), which renders a profile from the model.
+
+## Before you start
+
+| Item | Value |
+|---|---|
+| Profile | `cel1`, written by `make fleet-sim-profile` from `sites/cel1.yaml` |
+| Guest sizes | `cel1-cp-01` to `03` 2 vCPU, 3072 MiB. `cel1-dgx-01` to `08` and `cel1-pcie-01`, `02` 2 vCPU, 2560 MiB. `cel1-sim-syslog` 1 vCPU, 768 MiB. 20 GiB disks, 10 GiB for the stand-in. 27 vCPU and 34.75 GiB in all |
+| Disk | About 41 GB at the end of the acceptance run. Put it under `LAB_DIR` |
+| Host during the run | 79.5 GiB available with the 14 guests booted, 55.6 GiB at the end. CPU pressure near 50 percent from other work before any guest booted |
+| Versions | Kubernetes v1.36.6, containerd 2.4.2, runc 1.5.3, Cilium chart 1.20.4, kube-vip v1.3.1, GPU Operator chart v26.7.2 |
+| Required | No. The spec marks it optional |
+
+**Time taken.** <Duration id="cel1-time" />. The development boot of the 14 guests took 32 s, `fleet-k8s` 3 min 30 s and `fleet-addons` 2 min 16 s.
+
+## Run it
+
+```bash
+LAB_DIR=/path/with/room bash tests/integration/qemu-lab/acceptance-cel1.sh
+```
+
+That script runs 46 steps from wiped guests. The core of it is this.
+
+```bash
+make fleet-sim-profile-check                                   # the profile equals what the model renders
+make lab-up LAB_PROFILE=cel1
+make fleet-sim-stand-ins CONFIRM=cel1 FLEET_CONNECT=<simulation inventory>
+make fleet-k8s           CONFIRM=cel1 FLEET_CONNECT=<simulation inventory>
+make fleet-addons        CONFIRM=cel1 FLEET_CONNECT=<simulation inventory>
+make fleet-rsyslog       CONFIRM=cel1 FLEET_CONNECT=<simulation inventory>
+make fleet-sim-test      FLEET_CONNECT=<simulation inventory>  # this scenario
+```
+
+Without `CONFIRM=cel1`, without the simulation inventory, or with any host or kubeconfig server not on 127.0.0.1, each fleet target exits 2 before ssh or helm. Under strace, ten refusals made no IPv4 or IPv6 call ([cel1-sim](/docs/milestones/cel1-sim/) section 7).
+
+## How the simulation differs from the site model
+
+| Site model | Simulation |
+|---|---|
+| Bare-metal hosts, DGX OS 7 on the DGX nodes | KVM guests, Ubuntu 24.04.5 on every class |
+| 8 B200 GPUs per DGX node | No GPU, no NVIDIA driver, no NVIDIA PCI device |
+| The NVIDIA container toolkit | A stand-in `/usr/bin/nvidia-container-runtime` that logs each call and execs runc |
+| `rail0` to `rail7` are InfiniBand ports | virtio NICs on one unprivileged Ethernet switch per rail. No RDMA device |
+| The central syslog server outside the model | The guest `cel1-sim-syslog` holding `10.140.0.5` |
+| The control node reaches the API on the VIP | Port 6443 of `cel1-cp-01` forwarded to `127.0.0.1:22340` |
+
+## What every check proves
+
+<ScenarioChecks spec="cel1/cel1-sim-baseline" />
+
+## Real output
+
+The run of record of the cel1 simulation.
+
+<Excerpt id="cel1-checks" />
+
+## Break it yourself
+
+| Break | How | Checks that failed | Broken run | Repaired run |
+|---|---|---|---|---|
+| A node stops forwarding syslog | Stop rsyslog on `cel1-dgx-06` | `syslog-to-central-address` only | `20261115T165039Z` | `20261115T165516Z` after `make fleet-rsyslog`, which changed only `Ensure rsyslog runs` on that node |
+
+<Excerpt id="cel1-rsyslog-stopped" />
+
+The VIP check passed in the same broken run, with a gap of 6.032 s, so the break failed exactly one check. The five measured VIP gaps of the simulation runs were 9.042, 7.535, 7.534, 6.032 and 6.029 seconds.
+
+## A finding worth knowing
+
+The kubelet of every DGX guest registers two opt-out labels, `nvidia.com/gpu.deploy.driver=false` and `nvidia.com/gpu.deploy.container-toolkit=false`. All 8 DGX Nodes carried them before the GPU Operator ran, and none after. In the GPU Operator at tag v26.7.2, the node labeling controller removes the GPU state labels from every node without `nvidia.com/gpu.present`, and guests without GPUs never get that label. The next `make fleet-k8s` put the labels back and changed nothing else. So the simulation cannot show the opt-outs surviving, and the check reads them from the kubelet registration ([cel1-sim](/docs/milestones/cel1-sim/) section 7).
+
+## Questions to think about
+
+- The guests' default route sits on the QEMU user NIC, not on the node IP's NIC. Which M2 defect does that recreate, and which check shows cel1's Cilium values avoid it?
+- `no-pod-traffic-on-storage-or-rail-nics` captures 20 interfaces. Why does each capture need its own marker pings?
+- The GPU Operator created none of its 8 operand DaemonSets. What would a node with a GPU add to this run, and which checks would change?
+
+## What the result means and does not mean
+
+The run shows the fleet code building the cel1 cluster's shape from the site model on guests, converging on a second run, and keeping the API through the loss of its VIP holder.
+
+> [!WARNING]
+> No GPU workload, NVIDIA driver, real container toolkit, NCCL or GPUDirect RDMA ran. The rails carry Ethernet, not InfiniBand, and no RDMA traffic crossed them. Every guest runs Ubuntu, not DGX OS. The VIP gaps are measurements of these guests on a busy host with no pass threshold.

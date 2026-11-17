@@ -1,0 +1,27 @@
+---
+// Every scenario spec under tracks/*/scenarios/, with the page that teaches it.
+import scenarios from '../generated/scenarios.json';
+import { labRoute } from '../lib/labs';
+
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+const rows = Object.values(scenarios);
+---
+
+<table data-lab-index>
+  <thead>
+    <tr><th>Scenario</th><th>Track</th><th>Required</th><th>Result kind</th><th>Checks</th></tr>
+  </thead>
+  <tbody>
+    {
+      rows.map((s) => (
+        <tr>
+          <td><a href={`${base}${labRoute(s.track, s.scenario)}`}><code>{s.scenario}</code></a></td>
+          <td><code>{s.track}</code></td>
+          <td>{s.required ? 'yes' : 'no'}</td>
+          <td><code>{s.result_kind}</code></td>
+          <td>{s.checks.length}</td>
+        </tr>
+      ))
+    }
+  </tbody>
+</table>

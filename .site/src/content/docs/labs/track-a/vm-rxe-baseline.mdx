@@ -1,0 +1,102 @@
+---
+title: vm-rxe-baseline
+description: RDMA between two worker guests over Soft-RoCE. rping and perftest Read, Write and Send over RDMA CM, with both NICs of both workers captured.
+sidebar:
+  order: 1
+---
+
+import Duration from '../../../../components/Duration.astro';
+import Excerpt from '../../../../components/Excerpt.astro';
+import ScenarioChecks from '../../../../components/ScenarioChecks.astro';
+
+The first success point of the lab is RDMA between two worker guests before any Kubernetes exists. Each worker has `rxe0` on its lab NIC. One worker serves and the other connects, first with `rping`, then with perftest Read, Write and Send. While they run, tcpdump captures every NIC of both workers, so the run proves which wire the RDMA traffic used.
+
+## Goal
+
+Show that a connection made through RDMA CM carries verified data and all three verb operations between `worker1` and `worker2`, that the RoCEv2 frames cross the lab NIC, and that none cross the management NIC.
+
+## Concepts it uses
+
+- [Verbs, queue pairs and memory regions](/concepts/rdma/), and Send against one-sided Read and Write.
+- [RDMA CM](/concepts/rdma/), because both tools resolve the peer through it and set no GID index.
+- [The RoCEv2 frame](/concepts/rdma/), which the capture counts by UDP port 4791.
+- [Soft-RoCE and RXE](/concepts/rdma/), the software device on each worker.
+
+## Before you start
+
+| Item | Value |
+|---|---|
+| Profile | `lab`, only `worker1` and `worker2` take part. `cp1` exists from M2 on |
+| Guest sizes | `worker1` and `worker2` 4 vCPU, 6 GiB, 40 GiB each |
+| Guest software | Ubuntu 24.04.5, kernel 6.8.0-147-generic, rdma-core 50.0-2ubuntu0.2, perftest 24.01.0+0.38-1build2 |
+| Version lock | `make versions SCOPE=m1` must return 0. `make bootstrap`, `rxe-up`, `rxe-test`, `preflight` and `collect` depend on it |
+
+**Time taken.** <Duration id="a-baseline-time" />. Each perftest test is one burst of 1000 messages of 4096 B, about 16 ms.
+
+## Run it
+
+```bash
+make lab-wipe lab-up        # boot the guests from wiped disks
+make bootstrap              # locked packages, rdma_rxe module, lab NIC address
+make preflight              # read-only: 12 items per worker
+make rxe-up                 # rxe0 on the lab NIC through rfl-rxe.service
+make rxe-test               # this scenario, recorded under results/<run-id>/
+make validate
+```
+
+The runner starts every guest process under `timeout -k 5 <seconds>` with `RFL_RUN=<run-id>` in its environment. perftest runs with `-d rxe0 -R -p 18515 -s 4096 -n 1000 -F --report_gbits`, and rping with `-a <server address> -p 7174 -C 10 -S 64 -V -v` ([M1](/docs/milestones/m1/) section 2). The server counts as ready when `rdma -j resource show cm_id` shows its LISTEN entry, and only then does the client start.
+
+## What every check proves
+
+<ScenarioChecks spec="a-soft-roce/vm-rxe-baseline" />
+
+`rxe-bound-to-lab-nic` and `route-via-lab-nic` come first because a wrong device or route makes every later check meaningless. `rping-verified` is the connection and data test. The three perftest checks exercise the two one-sided operations and the two-sided one apart. The two capture checks are the path proof, and the SSH connection starts counted on the management NIC prove its capture was alive. `no-process-left` keeps a dead run from leaking into the next.
+
+## Real output
+
+This is the run of record of M1, on guests built from wiped disks.
+
+<Excerpt id="a-baseline-checks" />
+
+<Excerpt id="a-baseline-metrics" />
+
+The perftest client of an earlier run, the source of the parser fixtures, shows what the tool itself prints. Note `Link type : Ethernet`, `GID index : 1` and the IPv4-mapped GIDs of `10.77.0.13` and `10.77.0.12`.
+
+<Excerpt id="a-write-bw-client" />
+
+rping with `-V` prints each ping it validated.
+
+<Excerpt id="a-rping-client" />
+
+## Break it yourself
+
+Each break below ran in M1 and failed the named checks. Repair the break and run `make rxe-test` again, and the next run passes. The M1 record lists the runs after each repair.
+
+| Break | How | Checks that failed | Broken run |
+|---|---|---|---|
+| Lab link down on worker1 | `ip link set dev <lab NIC> down` on worker1 | `rxe-bound-to-lab-nic`, `route-via-lab-nic`, `rping-verified`, `rdma-read`, `rdma-write`, `rdma-send`, `roce-on-lab-nic` | `20261115T022449Z` |
+| Frames dropped on the lab link | `tc qdisc add dev <lab NIC> root netem loss 100%` on worker1 | `rping-verified` with class `timeout`, `rdma-read`, `rdma-write` and `rdma-send` with `command-failed`, `roce-on-lab-nic` | `20261115T022539Z` |
+
+The link-down run, all checks.
+
+<Excerpt id="a-baseline-link-down" />
+
+The netem run, all checks.
+
+<Excerpt id="a-baseline-netem" />
+
+The two faults fail differently. With the link down, systemd-networkd removes the static address, so the servers fail at once with `rdma_bind_addr: Cannot assign requested address` and `Port number 1 state is Down`, and the route to the peer falls back to the management NIC. With the link up and every frame dropped, the rping client waits for a reply until the 30-second runner limit and ends with exit code 124 ([M1](/docs/milestones/m1/) section 6).
+
+## Questions to think about
+
+- With the lab link down, the kernel sends the peer's lab address over the default route on the management NIC. Why does RDMA CM still fail to connect there, and what would plain IP traffic do?
+- Why does the runner wait for the LISTEN cm_id instead of sleeping a fixed time before it starts the client?
+- The capture filter on the management NIC takes only RoCEv2 and SSH SYN packets. Why is a count of zero RoCEv2 frames worth nothing without the SYN count?
+- A 10-second `ib_write_bw -D 10` averaged 0.88 Gb/s while the 16 ms bursts averaged about 2 Gb/s. Which number would you report, and why?
+
+## What the result means and does not mean
+
+The run shows that two Ubuntu guests can connect RXE devices through RDMA CM and complete verified rping, RDMA Read, Write and Send over the lab NIC, with no RoCEv2 frame on the management NIC.
+
+> [!WARNING]
+> Bandwidth has no pass threshold. The figures are software measurements of this host, kernel and guest combination, measured while the host was busy, with a load average of 30 on 24 cores. They say nothing about HCA offload, InfiniBand or RoCE hardware latency, or hardware throughput. The limiting factor was not isolated ([M1](/docs/milestones/m1/) section 5).

@@ -1,0 +1,8 @@
+{
+  "id": "b04-break",
+  "run": "20261115T151828Z",
+  "source": "docs/milestones/evidence/m4/20261115T151828Z/b-ibsim/b-04/summary.md",
+  "lines": "5-6,10,12,16,20",
+  "format": "md-table",
+  "text": "| check | status | failure class | detail |\n|---|---|---|---|\n| topology-discovered | failed | assertion-failed | 1 problems: missing link \"cel1-ib-leaf-r0\"[33]-\"cel1-ib-spine-01\"[1] |\n| port-states | failed | assertion-failed | 2 problems: \"cel1-ib-leaf-r0\"[33] is Down/Polling to None, want Active/LinkUp to \"cel1-ib-spine-01\"[1], \"cel1-ib-spine-01\"[1] is Down/Polling to None, want Active/LinkUp to \"cel1-ib-leaf-r0\"[33] |\n| fault-topology | failed | assertion-failed | 1 problems: missing link \"cel1-ib-leaf-r0\"[33]-\"cel1-ib-spine-01\"[1]; 2 problems: \"cel1-ib-leaf-r0\"[33] is Down/Polling to None, want Active/LinkUp to \"cel1-ib-spine-01\"[1], \"cel1-ib-spine-01\"[1] is Down/Polling to None, want Active/LinkUp to \"cel1-ib-leaf-r0\"[33]; every endpoint kept its LID |\n| recovered | failed | assertion-failed | 1 problems: missing link \"cel1-ib-leaf-r0\"[33]-\"cel1-ib-spine-01\"[1]; 2 problems: \"cel1-ib-leaf-r0\"[33] is Down/Polling to None, want Active/LinkUp to \"cel1-ib-spine-01\"[1], \"cel1-ib-spine-01\"[1] is Down/Polling to None, want Active/LinkUp to \"cel1-ib-leaf-r0\"[33]; every endpoint kept its LID; 768 switch routes to endpoint LIDs, each one hop closer to its endpoint; 76 LIDs answer with their node name |"
+}

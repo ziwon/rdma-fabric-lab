@@ -1,0 +1,8 @@
+{
+  "id": "b01-opensm",
+  "run": "20261115T142123Z",
+  "source": "tests/fixtures/b-ibsim/b-01/baseline/opensm.log",
+  "lines": "1-12",
+  "format": "text",
+  "text": "Nov 15 14:21:25 409442 [3B87740] 0x03 -> OpenSM 3.3.23\nNov 15 14:21:25 409458 [3B87740] 0x80 -> OpenSM 3.3.23\nNov 15 14:21:25 410338 [3B87740] 0x02 -> osm_vendor_init: 1000 pending umads specified\nNov 15 14:21:25 410595 [3B87740] 0x80 -> Entering DISCOVERING state\nNov 15 14:21:25 410678 [3B87740] 0x02 -> osm_vendor_bind: Mgmt class 0x81 binding to port GUID 0x100001\nNov 15 14:21:25 411006 [3B87740] 0x02 -> osm_vendor_bind: Mgmt class 0x03 binding to port GUID 0x100001\nNov 15 14:21:25 411011 [3B87740] 0x02 -> osm_vendor_bind: Mgmt class 0x04 binding to port GUID 0x100001\nNov 15 14:21:25 411016 [3B87740] 0x02 -> osm_vendor_bind: Mgmt class 0x21 binding to port GUID 0x100001\nNov 15 14:21:25 411020 [3B87740] 0x02 -> osm_opensm_bind: Setting IS_SM on port 0x0000000000100001\nNov 15 14:21:25 411751 [FFB7E6C0] 0x80 -> Entering MASTER state\nNov 15 14:21:25 411972 [FFB7E6C0] 0x02 -> osm_ucast_mgr_process: minhop tables configured on all switches\nNov 15 14:21:25 412158 [FFB7E6C0] 0x02 -> SUBNET UP"
+}

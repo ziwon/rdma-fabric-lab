@@ -1,0 +1,57 @@
+---
+title: Deliberate breaks
+description: Why every check of every scenario was made to fail on purpose once, how each track breaks its own runs, and how the breaks are recorded.
+sidebar:
+  order: 5
+---
+
+import Excerpt from '../../../components/Excerpt.astro';
+
+A check that has only ever passed proves nothing. It might test the wrong thing, read a file that is always empty, or compare a value with itself. So every check of every scenario in the lab was broken once on purpose: the thing it checks was damaged, the run had to end `failed` with exactly that check failed, and the next run after the repair had to pass.
+
+## The method
+
+```mermaid
+%%{init: {"theme": "base", "themeVariables": {"background": "#171717", "primaryColor": "#232323", "primaryTextColor": "#f5f5f5", "primaryBorderColor": "#d0d0d0", "lineColor": "#cfcfcf", "fontFamily": "Inter, Arial, sans-serif"}}}%%
+flowchart TB
+    P[Passing run] --> B[Break one thing<br/>the check depends on]
+    B --> F[Run must end failed<br/>with the named checks failed]
+    F --> R[Repair]
+    R --> P2[Next run must pass]
+    F -. a check that still passes .-> X[The check is weak<br/>or the break missed]
+
+    classDef primary fill:#232323,stroke:#d0d0d0,color:#f5f5f5,stroke-width:2px;
+    classDef secondary fill:#3b2f20,stroke:#d0d0d0,color:#f5f5f5,stroke-width:2px;
+    classDef note fill:#52676b,stroke:#d0d0d0,color:#f5f5f5,stroke-width:2px;
+    classDef accent fill:#62164d,stroke:#d0d0d0,color:#f5f5f5,stroke-width:2px;
+    class P,P2 primary
+    class B,R secondary
+    class F accent
+    class X note
+```
+
+A break may fail more checks than it targets, and the records say so when it does. A check that keeps passing on a break is either correct, because the break does not touch what it checks, or a defect. The records name which, for example `routes-shortest` passing in every Track B break run, because each route still leaves by a port one hop closer to its endpoint.
+
+## How each track breaks itself
+
+| Track | Mechanism | Where |
+|---|---|---|
+| A, VM scenarios | Faults applied in the guests by hand or by the acceptance script: a link down, `netem loss 100%`, a disabled unit | `tests/integration/qemu-lab/acceptance.sh`, [M1](/docs/milestones/m1/) |
+| A, cluster scenarios | `tests/integration/qemu-lab/breaks-m3.sh` runs each break, requires the named checks failed, repairs, and requires the next run to pass | [M3](/docs/milestones/m3/) section 8 |
+| B | `python -m ibsim run --break` removes one link from the net file the simulator gets, while every expectation keeps the full topology. `make track-b-breaks` fails unless every run ends `failed` | [M4](/docs/milestones/m4/) section 7 |
+| C | `python -m ns3 run --break <name>` applies one entry of the break table in `scripts/ns3/run.py`. `make track-c-breaks` fails unless each run exits 1 with all of the entry's checks failed, and a unit test asserts the breaks together target every check | [M5](/docs/milestones/m5/) section 9, [M6](/docs/milestones/m6/) section 9 |
+| cel1 | rsyslog stopped on one DGX guest, then `make fleet-rsyslog` as the repair | [cel1-sim](/docs/milestones/cel1-sim/) section 5 |
+
+The Track A break script writes a pair table per series. This is the third M3 series.
+
+<Excerpt id="repo-break-pairs" />
+
+## Breaks of the tests themselves
+
+The unit tests break their own verdicts too. A mutation check of M4 changed one line in each of eight places, such as the route direction, duplicate LIDs, link symmetry and the QEMU flag allowlist, and each change failed at least one test ([M4](/docs/milestones/m4/) section 7). The tests of Track C break each incast verdict on fixtures captured from real runs.
+
+This site applies the same method to itself. `scripts/verify-dist.mjs` runs after every build and fails when a page lacks a declared check, a make target or a copied document. Its own unit tests feed it a scenario that gained a check the site does not show, and require it to fail.
+
+## Every lab lists its breaks
+
+Each lab page has a "Break it yourself" section with the breaks of its scenario, the checks that failed, and the broken and repaired runs. Where no break ran for a scenario, the page says so and points to the scenario whose breaks cover the same check code.

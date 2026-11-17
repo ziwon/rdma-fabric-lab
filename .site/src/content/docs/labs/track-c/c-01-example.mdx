@@ -1,0 +1,101 @@
+---
+title: c-01 the SimAI smoke test
+description: The quick smoke test SimAI ships, unchanged, run twice in the pinned ns-3 image inside the Track C guest. Its result files must repeat byte for byte.
+sidebar:
+  order: 1
+---
+
+import Duration from '../../../../components/Duration.astro';
+import Excerpt from '../../../../components/Excerpt.astro';
+import ScenarioChecks from '../../../../components/ScenarioChecks.astro';
+
+Before any experiment, the model must build from pinned sources, run, and repeat. c-01 runs the smoke test from SimAI's installation guide without changing it: a topology generator, then the SimAI ns-3 simulator on the `microAllReduce` workload of eight GPUs behind one switch. It runs twice with the same inputs, and every result file must match.
+
+## Goal
+
+Show that the pinned image runs SimAI's own example to completion, writes its result files, and gives byte-identical results on a second run.
+
+## Concepts it uses
+
+- [Incast and the ns-3 model](/concepts/roce-congestion-control/) in general. This example tests the toolchain, not a congestion question.
+- The [version lock](/repository/version-lock/), which pins every source commit and the image digest.
+
+## Before you start
+
+| Item | Value |
+|---|---|
+| Profile | `ns3`: the guest `ns3sim1`, 12 vCPU, 16 GiB, 100 GiB. SSH only on the 127.0.0.1:22241 forward |
+| Image | `rfl-ns3:m6`, `sha256:da7a3245b1b91dd472d1ddb9497b3bd1abb3efdbaee38c45fe790dff565a61c6` |
+| Sources | SimAI `a57d765`, ns-3-alibabacloud `3e0c7c1` with one patch, SimCCL `fd7cd57`. gcc 13.3.0, CMake 3.28.3, Python 3.12.3 |
+| Version lock | `make versions SCOPE=m6` must return 0 |
+
+The guest size came from measurement. One build peaked at 4.78 GB of container memory, and two probe builds overlapping with the image build peaked at 9.84 GB. 16 GiB holds 1.7 times that peak ([M5](/docs/milestones/m5/) section 4).
+
+> [!CAUTION]
+> The build and every simulator run happen inside the Track C guest. `guest.sh` and the image entry point refuse on the host. See [Safety rules](/start/safety/).
+
+**Time taken.** <Duration id="c01-time" />. One ns-3 build with 12 jobs took 62 s in the probe. The example itself ran in 4.0 s of wall time with 2.5 GB RSS.
+
+## Run it
+
+```bash
+make track-c                         # boots ns3sim1, prepares it, builds or reuses the image, runs c-01 to c-06
+make track-c-image CLEAN=1           # optional: rebuild from nothing, must give the pinned digest
+make track-c-breaks
+make lab-down LAB_PROFILE=ns3
+```
+
+Inside the container the example runs exactly as the guide gives it.
+
+```bash
+gen_Topo_Template.py --ro -g 8 -gt H20 -bw 200Gbps -nvbw 2400Gbps
+SimAI_simulator -t 8 -w example/microAllReduce.txt -n ./Rail_Opti_SingleToR_8g_8gps_200Gbps_H20 -c inputs/config/SimAI.conf
+```
+
+SimAI's guide runs `git submodule update --remote`, which follows moving branches. The image never does. `images/ns3/fetch-sources` fetches each repository at its pinned commit and refuses a submodule commit other than the gitlink SimAI records ([M5](/docs/milestones/m5/) section 2).
+
+## What every check proves
+
+<ScenarioChecks spec="c-ns3/c-01-example" />
+
+Two files differ between equal runs, and the scenario names them as logs, not results. `SimAI.log` starts with the wall-clock time and a thread id, and the simulator's stdout prints the exit time and thread ids.
+
+## Real output
+
+The run of record of M6.
+
+<Excerpt id="c01-checks" />
+
+The end of the simulator's stdout in the backend probe, the source of the fixture.
+
+<Excerpt id="c01-stdout-tail" />
+
+Its simulated time, 0.38940403 s, is the `total time` of `ncclFlowModel_EndToEnd.csv`. M5 traced the unit in the code. `Layer.cc` writes `Sys::boostedTick() / FREQ`, `boostedTick` counts nanoseconds and `FREQ` is 1000, so the file is in microseconds ([M5](/docs/milestones/m5/) section 6).
+
+## Break it yourself
+
+`python -m ns3 run --break <name>` applies one entry of the break table in `scripts/ns3/run.py`. Every expectation keeps the declared scenario.
+
+<Excerpt id="c01-breaks" />
+
+| Break | What it changes |
+|---|---|
+| `image-unpinned` | The runner expects the base image digest instead of the pin |
+| `container-unlocked` | `guest.sh run` leaves out `--read-only` |
+| `container-left` | No `guest.sh stop` before the check |
+| `host-process` | A copy of `sleep` named `SimAI_simulator` runs on the host |
+| `rerun-input-differs` | Run 2's topology gets `-nvbw 1200Gbps` |
+| `workload-missing` | The simulate step names a workload that does not exist |
+
+## Questions to think about
+
+- Why does a byte-identical rerun matter before any comparison between profiles?
+- With `-t 8` the multi-threaded scheduler ran, and the result files still matched in every run. Why is that an observation, not a proof of determinism?
+- Why does the image fetch sources by commit rather than trust SimAI's own submodule step?
+
+## What the result means and does not mean
+
+The run shows that the backend builds from pinned sources, runs SimAI's example to completion and repeats it exactly.
+
+> [!WARNING]
+> It is a smoke test. Its 0.389 s of simulated time for a microAllReduce on eight GPUs is a model output, not a prediction of training time. 4.0 s and 2.5 GB are costs of one process in one VM on a shared host, not network performance.

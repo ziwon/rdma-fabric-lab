@@ -1,0 +1,8 @@
+{
+  "id": "cel1-rsyslog-stopped",
+  "run": "20261115T165039Z",
+  "source": "docs/milestones/evidence/cel1-sim/20261115T165039Z/cel1/cel1-sim-baseline/summary.md",
+  "lines": "5-6,21,24",
+  "format": "md-table",
+  "text": "| check | status | failure class | detail |\n|---|---|---|---|\n| syslog-to-central-address | failed | assertion-failed | no marker from cel1-dgx-06 at 10.140.0.5; cel1-dgx-06 connections to 10.140.0.5:514 come from nowhere, want 10.140.0.26 |\n| api-survives-holder-loss | passed |  | cel1-cp-02 powered off; 4 of 9 probes failed, API back on 10.140.0.10 after 6.032 s; lease and VIP now on cel1-cp-03 |"
+}

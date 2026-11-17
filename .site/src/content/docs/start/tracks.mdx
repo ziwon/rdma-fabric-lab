@@ -1,0 +1,53 @@
+---
+title: The three tracks and cel1
+description: What each track asks, which tools answer it, where it runs, and how the invented region cel1 ties the lab to the fleet code.
+sidebar:
+  order: 1
+---
+
+Three tracks answer three separate questions. RXE creates a software RDMA device on an Ethernet interface. ibsim imitates the management datagrams of an InfiniBand fabric. The ns-3 RDMA model simulates hosts, switches and congestion control. Each tool covers a different problem, so a success in one track never replaces a success in another.
+
+## Track A. Soft-RoCE and Kubernetes
+
+Track A runs RDMA programs over plain Ethernet and then asks how Kubernetes workloads reach them. Two worker guests each create `rxe0` on their lab NIC. rping and perftest Read, Write and Send run between them over RDMA CM while every NIC is captured, so the frames prove which path the traffic took.
+
+On top of that, kubeadm builds a cluster with Cilium installed by Helm. hostNetwork pods repeat the RDMA tests with the node's device, and Multus adds a secondary IP network `net1` beside Cilium. A three-control-plane profile shows the API on a kube-vip address surviving the loss of its holder.
+
+- Runs in: QEMU guests `cp1`, `worker1`, `worker2`, and the `ha` profile for the VIP test.
+- Labs: [vm-rxe-baseline](/labs/track-a/vm-rxe-baseline/), [vm-rxe-reboot](/labs/track-a/vm-rxe-reboot/), [vm-rxe-rerun](/labs/track-a/vm-rxe-rerun/), [k8s-baseline](/labs/track-a/k8s-baseline/), [k8s-ha-vip](/labs/track-a/k8s-ha-vip/), [k8s-hostnet-rdma](/labs/track-a/k8s-hostnet-rdma/), [k8s-multus-net1](/labs/track-a/k8s-multus-net1/).
+- Concepts: [RDMA](/concepts/rdma/), [Kubernetes networking](/concepts/kubernetes-networking/).
+
+## Track B. InfiniBand management
+
+Track B watches a subnet manager work. ibsim simulates a fabric from a net file, and libumad2sim redirects the management datagrams of OpenSM and the diagnostic tools to it. OpenSM discovers the fabric, assigns LIDs, brings ports up and fills the forwarding tables. A link fault and its repair show the subnet manager resweep and reroute.
+
+- Runs in: a pinned container inside the dedicated guest `ibsim1`, never on the host.
+- Labs: [B-01](/labs/track-b/b-01/), [B-02](/labs/track-b/b-02/), [B-03](/labs/track-b/b-03/), [B-04](/labs/track-b/b-04/).
+- Concept: [InfiniBand management](/concepts/infiniband-management/).
+
+## Track C. RoCE congestion control
+
+Track C asks how PFC, ECN and DCQCN change queues, rates and flow completion inside a packet model. The ns-3-alibabacloud model builds through SimAI in a pinned image. One flow alone is checked against its lower bound to the nanosecond. Incast of 2, 4 and 8 senders then runs under four profiles, three workloads and five seeds, with each feature's activation read from the model's own counters.
+
+- Runs in: a pinned container inside the dedicated guest `ns3sim1`, never on the host.
+- Labs: [c-01-example](/labs/track-c/c-01-example/) to [c-06-sensitivity-kmin](/labs/track-c/c-06-sensitivity-kmin/).
+- Concept: [RoCE congestion control](/concepts/roce-congestion-control/).
+
+## cel1, the invented region
+
+`cel1` is a data center that does not exist. It has 3 control planes, 8 DGX B200 nodes and 2 previous-generation PCIe GPU servers, an address plan and a rail-optimized InfiniBand fabric. Every name and address in it is invented. `sites/cel1.yaml` is its single source, and `make fleet-render` writes its Ansible inventory from it.
+
+The lab and cel1 use the same playbook `ansible/playbooks/kubernetes.yml` and the same roles. They differ only in inventory variables. cel1 has no GPU hardware, so running the lab is the only path that confirms the fleet code by running it. The [cel1 simulation](/labs/cel1/cel1-sim-baseline/) goes one step further and builds the whole region as 13 guests. Track B renders the cel1 compute fabric into a net file and fails a link in it in [B-04](/labs/track-b/b-04/).
+
+See [the cel1 site model](/repository/cel1-site-model/) for how the model, the inventory and the contract fit together.
+
+## What the tracks share
+
+| Shared | How |
+|---|---|
+| Repository | One tree. Track code under `tracks/`, runners under `scripts/` |
+| Result format | Every scenario writes a run directory that `make validate` checks against `schemas/` |
+| Version lock | Every pinned version lives in `versions.lock.yaml`, in scopes per milestone |
+| Harness | Every guest is an unprivileged QEMU process started by `tests/integration/qemu-lab/lab.sh` |
+
+They share no data path. Track B's HCAs are not visible to Track A's guests, and Track C's link rates are model inputs, not comparable with Track A's RXE bandwidth.

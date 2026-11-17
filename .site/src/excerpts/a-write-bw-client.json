@@ -1,0 +1,8 @@
+{
+  "id": "a-write-bw-client",
+  "run": "20261115T020022Z",
+  "source": "tests/fixtures/a-soft-roce/perftest/ib_write_bw.client.stdout",
+  "lines": "1-22",
+  "format": "text",
+  "text": "---------------------------------------------------------------------------------------\n                    RDMA_Write BW Test\n Dual-port       : OFF\t\tDevice         : rxe0\n Number of qps   : 1\t\tTransport type : IB\n Connection type : RC\t\tUsing SRQ      : OFF\n PCIe relax order: ON\n ibv_wr* API     : OFF\n TX depth        : 128\n CQ Moderation   : 100\n Mtu             : 1024[B]\n Link type       : Ethernet\n GID index       : 1\n Max inline data : 0[B]\n rdma_cm QPs\t : ON\n Data ex. method : rdma_cm\n---------------------------------------------------------------------------------------\n local address: LID 0000 QPN 0x0022 PSN 0xa09ce\n GID: 00:00:00:00:00:00:00:00:00:00:255:255:10:77:00:13\n remote address: LID 0000 QPN 0x0022 PSN 0x70e6f9\n GID: 00:00:00:00:00:00:00:00:00:00:255:255:10:77:00:12\n---------------------------------------------------------------------------------------\n #bytes     #iterations    BW peak[Gb/sec]    BW average[Gb/sec]   MsgRate[Mpps]"
+}

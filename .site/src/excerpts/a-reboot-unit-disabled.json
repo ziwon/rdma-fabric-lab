@@ -1,0 +1,8 @@
+{
+  "id": "a-reboot-unit-disabled",
+  "run": "20261115T022358Z",
+  "source": "docs/milestones/evidence/m1/20261115T022358Z/a-soft-roce/vm-rxe-reboot/summary.md",
+  "lines": "5-6,8-9,11-12",
+  "format": "md-table",
+  "text": "| check | status | failure class | detail |\n|---|---|---|---|\n| rxe-restored-without-ansible | failed | assertion-failed | worker1: rfl-rxe.service is inactive with result success; worker1: the journal of this boot does not show rfl-rxe adding rxe0 on enp0s4; worker2: rfl-rxe.service is inactive with result success; worker2: the journal of this boot does not show rfl-rxe adding rxe0 on enp0s4; worker1: links on enp0s4 are [], want [rxe0]; worker2: links on enp0s4 are [], want [rxe0] |\n| rxe-bound-to-lab-nic | failed | assertion-failed | worker1: links on enp0s4 are [], want [rxe0]; worker2: links on enp0s4 are [], want [rxe0] |\n| rping-verified | failed | command-failed | the server exited 19 before it listened, client not started |\n| rdma-read | failed | command-failed | the server exited 7 before it listened, client not started |"
+}

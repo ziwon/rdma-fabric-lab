@@ -1,0 +1,8 @@
+{
+  "id": "b01-checks",
+  "run": "20261115T151655Z",
+  "source": "docs/milestones/evidence/m4/20261115T151655Z/b-ibsim/b-01/summary.md",
+  "lines": "5-16",
+  "format": "md-table",
+  "text": "| check | status | failure class | detail |\n|---|---|---|---|\n| image-pinned | passed |  | rfl-ibsim:m4 in ibsim1 is sha256:cb3e3550f4f60de5414abe55dbe81e45fd68106ef5ecc4cfa4d701b6083ee279, the ibsim.image pin |\n| container-locked-down | passed |  | ibsim1 is a kvm guest on kernel 6.8.0-147-generic; the container runs the locked image as 10001:10001 with no network, no device, no capabilities, no-new-privileges, a read-only root and AppArmor docker-default, and every process in it runs as UID 10001 |\n| subnet-up | passed |  | master at LID 1, 1 SUBNET UP, every sweep routed by minhop |\n| topology-discovered | passed |  | 1 switches, 2 HCAs and 2 links, as expected |\n| lids-unique | passed |  | 2 endpoint LIDs, non-zero, unique, LMC 0 |\n| port-states | passed |  | 10 ports as expected, 4 of them Active/LinkUp |\n| routes-shortest | passed |  | 2 switch routes to endpoint LIDs, each one hop closer to its endpoint |\n| lid-reachability | passed |  | 3 LIDs answer with their node name |\n| no-container-left | passed |  | guest.sh stop removed rfl-ibsim-20261115T151655Z-b-01; no Track B container remains |\n| host-untouched | passed |  | no simulator process and no Track B container on the host at the start and the end of the run |"
+}

@@ -1,0 +1,8 @@
+{
+  "id": "a-baseline-checks",
+  "run": "20261115T022240Z",
+  "source": "docs/milestones/evidence/m1/20261115T022240Z/a-soft-roce/vm-rxe-baseline/summary.md",
+  "lines": "5-15",
+  "format": "md-table",
+  "text": "| check | status | failure class | detail |\n|---|---|---|---|\n| rxe-bound-to-lab-nic | passed |  | worker1 rxe0 on enp0s4 ACTIVE, worker2 rxe0 on enp0s4 ACTIVE |\n| route-via-lab-nic | passed |  | worker1 to 10.77.0.13 via enp0s4, worker2 to 10.77.0.12 via enp0s4 |\n| rping-verified | passed |  | 10 iterations of 64 bytes validated with -V, both ends exit 0 |\n| rdma-read | passed |  | 1000 x 4096 B, 1.96 Gb/sec average, GID index 1 chosen by rdma_cm |\n| rdma-write | passed |  | 1000 x 4096 B, 1.94 Gb/sec average, GID index 1 chosen by rdma_cm |\n| rdma-send | passed |  | 1000 x 4096 B, 2.8 Gb/sec average, GID index 1 chosen by rdma_cm |\n| roce-on-lab-nic | passed |  | worker1 enp0s4 15335 RoCEv2 frames, worker2 enp0s4 15335 RoCEv2 frames |\n| no-roce-on-mgmt-nic | passed |  | worker1 enp0s3 0 RoCEv2, 23 SSH SYN, worker2 enp0s3 0 RoCEv2, 23 SSH SYN |\n| no-process-left | passed |  | worker1: 0 stopped by the runner, 0 remaining; worker2: 0 stopped by the runner, 0 remaining |"
+}

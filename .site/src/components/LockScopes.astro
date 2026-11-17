@@ -1,0 +1,32 @@
+---
+// The scopes of versions.lock.yaml and the components each one pins, read at build time.
+import lock from '../generated/lock.json';
+
+type Component = { kind: string; value: string | null; ref?: string };
+const components = lock.components as Record<string, Component>;
+const scopes = Object.entries(lock.scopes as Record<string, string[]>);
+---
+
+{
+  scopes.map(([scope, names]) => (
+    <details class="rfl-scope">
+      <summary>
+        Scope <code>{scope}</code>, {names.length} components
+      </summary>
+      <table data-lock-scope={scope}>
+        <thead>
+          <tr><th>Component</th><th>Kind</th><th>Value</th></tr>
+        </thead>
+        <tbody>
+          {names.map((name) => (
+            <tr>
+              <td><code>{name}</code></td>
+              <td>{components[name]?.kind ?? 'missing'}</td>
+              <td><code>{components[name]?.value ?? 'null, undecided'}</code>{components[name]?.ref && <> ({components[name].ref})</>}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </details>
+  ))
+}

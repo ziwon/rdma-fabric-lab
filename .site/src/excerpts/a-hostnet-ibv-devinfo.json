@@ -1,0 +1,8 @@
+{
+  "id": "a-hostnet-ibv-devinfo",
+  "run": "20261115T221204Z",
+  "source": "tests/fixtures/a-soft-roce/m3/ibv-devinfo.stdout",
+  "lines": "1-17",
+  "format": "text",
+  "text": "hca_id:\trxe0\n\ttransport:\t\t\tInfiniBand (0)\n\tfw_ver:\t\t\t\t0.0.0\n\tnode_guid:\t\t\t5054:00ff:fe4d:0012\n\tsys_image_guid:\t\t\t5054:00ff:fe4d:0012\n\tvendor_id:\t\t\t0xffffff\n\tvendor_part_id:\t\t\t0\n\thw_ver:\t\t\t\t0x0\n\tphys_port_cnt:\t\t\t1\n\t\tport:\t1\n\t\t\tstate:\t\t\tPORT_ACTIVE (4)\n\t\t\tmax_mtu:\t\t4096 (5)\n\t\t\tactive_mtu:\t\t1024 (3)\n\t\t\tsm_lid:\t\t\t0\n\t\t\tport_lid:\t\t0\n\t\t\tport_lmc:\t\t0x00\n\t\t\tlink_layer:\t\tEthernet"
+}

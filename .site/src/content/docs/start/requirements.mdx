@@ -1,0 +1,60 @@
+---
+title: Hardware and host requirements
+description: The host the lab needs, the tools it calls, and the guest sizes of every harness profile with the resources the milestone records measured.
+sidebar:
+  order: 2
+---
+
+The lab needs one Linux host with KVM and enough memory and cores for the guests of the profile you boot. It needs no sudo, no HCA, no InfiniBand switch and no GPU. Every guest is an unprivileged QEMU process, and every lab network is a user-space socket on the host.
+
+## The host
+
+- Ubuntu 24.04 with KVM, and `/dev/kvm` usable by your user.
+- `qemu-system-x86_64`, `qemu-img`, `cloud-localds`, `ssh-keygen`, `uv`, `make`, `git` and `curl`.
+- Internet access for the guests. They download packages, the pinned images and the ns-3 sources through their QEMU user NIC.
+- To build this site, Node.js 22 or newer and npm. The site workflow uses Node 24.
+
+`make doctor` checks the host without changing it. It reads the interface addresses, every routing table, the docker networks and the libvirt networks, and fails when the lab address plan overlaps any of them. It warns, and does not fail, when disk, memory or CPU fall below the lab budget.
+
+The records ran on one host with Ubuntu 24.04.5, kernel 7.0.0-42-generic and later 7.0.0-43-generic, `qemu-system-x86 1:8.2.2+ds-0ubuntu1.18` with KVM, 24 threads and 125 GiB of memory ([M0](/docs/milestones/m0/), [cel1-sim](/docs/milestones/cel1-sim/)). The host had other work running during several measurements, which the records name where it matters.
+
+> [!CAUTION]
+> Ubuntu kernels 7.0.0-42 and 7.0.0-43 have an AppArmor bug that froze this host three times. Read [Safety rules](/start/safety/) before you run Track B or Track C.
+
+## Guest sizes per profile
+
+The harness reads one profile file per guest set under `tests/integration/qemu-lab/profiles/`. These are the sizes those files declare.
+
+| Profile | Guests | vCPU | Memory | Virtual disk | Used by |
+|---|---|---:|---:|---:|---|
+| `lab` | `cp1` | 2 | 4 GiB | 30 GiB | Track A |
+| | `worker1`, `worker2` | 4 each | 6 GiB each | 40 GiB each | Track A |
+| `ha` | `ha-cp1` to `ha-cp3` | 2 each | 2.5 GiB each | 20 GiB each | [k8s-ha-vip](/labs/track-a/k8s-ha-vip/) |
+| | `ha-w1` | 2 | 2 GiB | 20 GiB | [k8s-ha-vip](/labs/track-a/k8s-ha-vip/) |
+| `ibsim` | `ibsim1` | 4 | 6 GiB | 20 GiB | Track B, and the builder of the RDMA test image |
+| `ns3` | `ns3sim1` | 12 | 16 GiB | 100 GiB | Track C |
+| `cel1` | 14 guests | 27 in all | 34.75 GiB in all | 270 GiB in all | [cel1 simulation](/labs/cel1/cel1-sim-baseline/) |
+
+Disks are qcow2 overlays on one base cloud image, so they grow only as far as they are written. The records measured what the guests really used.
+
+| What | Measured | Record |
+|---|---|---|
+| Lab, builder and ha guests of M3 at cleanup | 31,248,421,015 bytes under one `LAB_DIR` | [M3](/docs/milestones/m3/) section 15 |
+| The 14 cel1 guests at the end of the acceptance run | 41.0 GB, about 2.9 GB per guest | [cel1-sim](/docs/milestones/cel1-sim/) section 2 |
+| Host memory with the 14 cel1 guests booted | 79.5 GiB available of 91.1 GiB before the boot | [cel1-sim](/docs/milestones/cel1-sim/) section 2 |
+| One ns-3 build with 12 parallel jobs | 4.78 GB container memory peak, largest process 0.97 GB | [M5](/docs/milestones/m5/) section 4 |
+| The SimAI example, and `rfl-star` with one flow | 2.5 GB RSS, and 61 MB RSS | [M5](/docs/milestones/m5/) section 4 |
+
+`LAB_DIR` moves the guest disks of a profile to another file system. Put the cel1 disks where there are about 40 GB free.
+
+```bash
+LAB_DIR=/path/with/room bash tests/integration/qemu-lab/acceptance-cel1.sh
+```
+
+## Running profiles side by side
+
+Profiles can run at the same time, and the records did so. RXE bandwidth is a software measurement, so the runs of record that collect it were preceded by a step that failed unless only `cp1`, `worker1` and `worker2` ran ([M3](/docs/milestones/m3/) section 7). If you compare bandwidth figures, stop the other guests first.
+
+## Hypervisors other than QEMU
+
+`docs/setup-vmware.md` describes the same lab as VMware Workstation guests with two VMnets. The host of these records has no VMware Workstation, so that path is not verified. Read it under [Reference](/docs/setup-vmware/).

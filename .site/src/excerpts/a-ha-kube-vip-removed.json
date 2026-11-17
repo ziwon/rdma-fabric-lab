@@ -1,0 +1,8 @@
+{
+  "id": "a-ha-kube-vip-removed",
+  "run": "20261115T052346Z",
+  "source": "docs/milestones/evidence/m2/20261115T052346Z/a-soft-roce/k8s-ha-vip/summary.md",
+  "lines": "5-6,9-11",
+  "format": "md-table",
+  "text": "| check | status | failure class | detail |\n|---|---|---|---|\n| vip-holder-identified | passed |  | lease plndr-cp-lock held by ha-cp3, VIP 192.168.140.20 on ha-cp3 only |\n| api-survives-holder-loss | failed | timeout | /livez on 192.168.140.20 did not answer steadily within 120 s (82 failed probes); after the loss the lease names None and the VIP is on no host |\n| cluster-works-after-loss | failed | assertion-failed | kubectl get nodes from ha-cp1 exited 1; ConfigMap write, read, delete exited 1, 1, 1; etcd healthy endpoints [], below quorum of 3 |"
+}

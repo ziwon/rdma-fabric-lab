@@ -1,0 +1,8 @@
+{
+  "id": "b03-fault-smpquery",
+  "run": "20261115T142143Z",
+  "source": "tests/fixtures/b-ibsim/b-03/fault/smpquery-nodedesc.txt",
+  "lines": "1-19",
+  "format": "text",
+  "text": "== 1\nNode Description:............................hca1\nrc=0\n== 2\nNode Description:.............................sw1\nrc=0\n== 3\nNode Description:.............................sw2\nrc=0\n== 4\nNode Description:............................hca2\nrc=0\n== 5\nibwarn: [249] mad_rpc: _do_madrpc failed; dport (Lid 5)\nsmpquery: iberror: failed: operation nodedesc: node info query failed\nrc=255\n== 6\nNode Description:............................hca4\nrc=0"
+}

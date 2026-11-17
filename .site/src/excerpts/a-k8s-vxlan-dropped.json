@@ -1,0 +1,8 @@
+{
+  "id": "a-k8s-vxlan-dropped",
+  "run": "20261115T060838Z",
+  "source": "docs/milestones/evidence/m2/20261115T060838Z/a-soft-roce/k8s-baseline/summary.md",
+  "lines": "5-6,8,10-11,13,15",
+  "format": "md-table",
+  "text": "| check | status | failure class | detail |\n|---|---|---|---|\n| cilium-agents-ready | passed |  | cp1 cilium-gthw2; worker1 cilium-55wwn; worker2 cilium-8knw9 |\n| pod-to-pod-cross-node | failed | timeout | http://10.244.1.73:8080/ not after 3 attempts, last exit 1 'wget: download timed out\\ncommand terminated with exit code 1' |\n| cluster-dns | failed | assertion-failed | server.rfl-20261115t060838z.svc.cluster.local resolved to nothing (exit 1), want 10.106.120.155; kubernetes.default.svc.cluster.local resolved to nothing (exit 1), want 10.96.0.1 |\n| network-policy-blocks | not_run | not-attempted | not attempted: clusterip-service did not pass, so the result would not mean what the check says |\n| vxlan-on-mgmt-nic | failed | assertion-failed | worker1: pod flows inside VXLAN ['10.244.2.172>10.244.1.73'], want both of ['10.244.1.73>10.244.2.172', '10.244.2.172>10.244.1.73']; worker2: pod flows inside VXLAN ['10.244.2.172>10.244.1.73'], want both of ['10.244.1.73>10.244.2.172', '10.244.2.172>10.244.1.73'] |"
+}

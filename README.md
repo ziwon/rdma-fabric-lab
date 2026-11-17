@@ -141,6 +141,7 @@ Every scenario declares its checks in `tracks/<track>/scenarios/*.yaml`. A run w
 
 ## Documents
 
+- `.site/`: the learning site. It explains each concept, gives one page per lab with the commands to run it and real output from recorded runs, and covers the repository's structure. `make site` builds it and `make site-dev` serves it locally. It is not published yet; `.site/README.md` says how to turn on GitHub Pages.
 - `docs/adr/0001-kubernetes-stack.md`: one Ansible and kubeadm stack for the lab and cel1, and the inventory contract.
 - `docs/adr/0002-execution-environments.md`: where each track runs and why.
 - `docs/fleet.md`: the cel1 runbook.

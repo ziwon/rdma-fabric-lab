@@ -1,0 +1,8 @@
+{
+  "id": "b01-ibnetdiscover",
+  "run": "20261115T142123Z",
+  "source": "tests/fixtures/b-ibsim/b-01/baseline/ibnetdiscover.txt",
+  "lines": "1-27",
+  "format": "text",
+  "text": "#\n# Topology file: generated on Sun Nov 15 14:21:28 2026\n#\n# Initiated from node 0000000000100000 port 0000000000100001\n\nvendid=0x0\ndevid=0x0\nsysimgguid=0x200000\nswitchguid=0x200000(200000)\nSwitch\t8 \"S-0000000000200000\"\t\t# \"sw1\" base port 0 lid 2 lmc 0\n[1]\t\"H-0000000000100000\"[1](100001) \t\t# \"hca1\" lid 1 4xSDR\n[2]\t\"H-0000000000100002\"[1](100003) \t\t# \"hca2\" lid 3 4xSDR\n\nvendid=0x0\ndevid=0x0\nsysimgguid=0x100002\ncaguid=0x100002\nCa\t1 \"H-0000000000100002\"\t\t# \"hca2\"\n[1](100003) \t\"S-0000000000200000\"[2]\t\t# lid 3 lmc 0 \"sw1\" lid 2 4xSDR\n\nvendid=0x0\ndevid=0x0\nsysimgguid=0x100000\ncaguid=0x100000\nCa\t1 \"H-0000000000100000\"\t\t# \"hca1\"\n[1](100001) \t\"S-0000000000200000\"[1]\t\t# lid 1 lmc 0 \"sw1\" lid 2 4xSDR"
+}

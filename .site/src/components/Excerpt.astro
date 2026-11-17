@@ -1,0 +1,64 @@
+---
+// Real output copied by scripts/excerpts.mjs from a run's evidence or a tracked fixture, with its source.
+import { Code } from '@astrojs/starlight/components';
+
+interface Props {
+  id: string;
+  lang?: string;
+}
+
+interface Excerpt {
+  id: string;
+  run: string;
+  source: string;
+  lines: string;
+  columns?: string[];
+  format: 'text' | 'md-table' | 'tsv';
+  text: string;
+}
+
+const excerpts = import.meta.glob<{ default: Excerpt }>('../excerpts/*.json', { eager: true });
+const { id, lang = 'text' } = Astro.props;
+const excerpt = excerpts[`../excerpts/${id}.json`]?.default;
+if (!excerpt) throw new Error(`Excerpt: no src/excerpts/${id}.json. Add it to excerpts.yaml and run npm run excerpts pull`);
+
+const split =
+  excerpt.format === 'tsv'
+    ? (line: string) => line.split('\t')
+    : (line: string) => line.trim().replace(/^\||\|$/g, '').split('|').map((cell) => cell.trim());
+const rows =
+  excerpt.format === 'text'
+    ? []
+    : excerpt.text
+        .split('\n')
+        .filter((line) => line.trim() && !/^\|[\s|:-]+\|$/.test(line.trim()))
+        .map(split);
+const [head = [], ...body] = rows;
+// Invisible break opportunities after separators let a long value wrap without changing its text.
+const breakable = (cell: string) => cell.split(/(?<=[/_,;:])/);
+// A token longer than 24 characters between break points, such as a digest, may break anywhere.
+const long = (cell: string) => breakable(cell).some((part) => part.length > 24);
+---
+
+<figure class="rfl-excerpt" data-excerpt={excerpt.id}>
+  <figcaption>
+    Run <code>{excerpt.run}</code>, from <code>{excerpt.source}</code>, lines {excerpt.lines}
+    {excerpt.columns && <>, columns {excerpt.columns.join(', ')}</>}
+  </figcaption>
+  {
+    excerpt.format === 'text' ? (
+      <Code code={excerpt.text} lang={lang} />
+    ) : (
+      <table data-format={excerpt.format}>
+        <thead>
+          <tr>{head.map((cell) => <th>{breakable(cell).map((part, i) => (i ? <><wbr />{part}</> : part))}</th>)}</tr>
+        </thead>
+        <tbody>
+          {body.map((row) => (
+            <tr>{row.map((cell) => <td class={long(cell) ? 'rfl-long' : undefined}>{breakable(cell).map((part, i) => (i ? <><wbr />{part}</> : part))}</td>)}</tr>
+          ))}
+        </tbody>
+      </table>
+    )
+  }
+</figure>

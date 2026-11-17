@@ -1,0 +1,76 @@
+---
+title: c-04 staggered incast
+description: Sender k starts one flow of 1000000 bytes at k × 20 us. The same four profiles and five seeds as c-03, and the case where a refused tail stalls a flow for good.
+sidebar:
+  order: 4
+---
+
+import Duration from '../../../../components/Duration.astro';
+import Excerpt from '../../../../components/Excerpt.astro';
+import ScenarioChecks from '../../../../components/ScenarioChecks.astro';
+
+Real incast rarely starts in the same nanosecond. c-04 spreads the starts: sender k begins at k × 20 us. The queue builds more slowly, and late senders arrive at a switch that is already full. This workload found a gap in the model's loss recovery.
+
+## Goal
+
+Compare the four profiles on staggered incast, with the same checks as [c-03](/labs/track-c/c-03-incast-simultaneous/), and record every flow that does not finish by the 20 ms stop.
+
+## Concepts it uses
+
+- [Incast, PFC, ECN and DCQCN](/concepts/roce-congestion-control/).
+- [FCT and its bounds](/concepts/roce-congestion-control/).
+
+## Before you start
+
+| Item | Value |
+|---|---|
+| Profile | `ns3`: `ns3sim1`, 12 vCPU, 16 GiB, 100 GiB |
+| Image | `rfl-ns3:m6`, `sha256:da7a3245…` |
+| Cases | 60, twice, as in c-03 |
+
+**Time taken.** <Duration id="c04-time" />. M6 gives about 35 s for one 60-case run including both containers.
+
+## Run it
+
+```bash
+make track-c
+```
+
+## What every check proves
+
+<ScenarioChecks spec="c-ns3/c-04-incast-staggered" />
+
+## Real output
+
+The run of record of M6.
+
+<Excerpt id="c04-checks" />
+
+The comparison, selected columns.
+
+<Excerpt id="c04-comparison" />
+
+## A flow that never finishes
+
+At fan-in 8, c-none completed only 35 of 40 large flows, and c-ecn 36. In every one of those cases the same flow, flow 4, stalled. This is the fixture of `n8-c-none-s1` from this run.
+
+<Excerpt id="c04-stalled-flow" />
+
+Flow 4 delivered 305000 bytes in order and stopped. The switch refused its tail whole, so no later packet arrived to reveal the gap, the receiver sent no NACK, and the sender, which has go-back-N on NACK and no retransmission timer, never resent ([M6](/docs/milestones/m6/) section 7). `flows-accounted` lists the flow as unfinished, and the completion ratio of the row shows it.
+
+## Break it yourself
+
+No break ran on c-04 in the records. Its configuration sets `run_breaks: false`, because it uses the same check code as [c-03](/labs/track-c/c-03-incast-simultaneous/), whose breaks failed every incast check. Use those breaks to see the checks fail. The stalled flow above is the failure this workload adds, and the checks record it rather than hide it.
+
+## Questions to think about
+
+- Why does the stall hit the same flow in every seed of c-none, but only four of five seeds of c-ecn?
+- A real RDMA transport has a retransmission timer. Which figures of this table would change if the model had one?
+- c-both paused much less than c-pfc at fan-in 8. What did DCQCN do to the queue that made fewer pauses necessary?
+
+## What the result means and does not mean
+
+The run shows the four profiles on staggered incast in this model, and one gap of the model's loss recovery.
+
+> [!WARNING]
+> The completion ratio of c-none and c-ecn reflects a gap of the model, a missing retransmission timer, not a property of RDMA transports. Every figure is model behavior for these parameters, not hardware.

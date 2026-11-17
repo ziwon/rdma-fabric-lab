@@ -1,0 +1,8 @@
+{
+  "id": "c01-checks",
+  "run": "20261116T151213Z",
+  "source": "docs/milestones/evidence/m6/20261116T151213Z/c-ns3/c-01-example/summary.md",
+  "lines": "5-13",
+  "format": "md-table",
+  "text": "| check | status | failure class | detail |\n|---|---|---|---|\n| image-pinned | passed |  | rfl-ns3:m6 in ns3sim1 is sha256:da7a3245b1b91dd472d1ddb9497b3bd1abb3efdbaee38c45fe790dff565a61c6, the ns3.image pin |\n| container-locked-down | passed |  | ns3sim1 is a kvm guest on kernel 6.8.0-147-generic; both containers ran the locked image as 10001:10001 with no network, no device, no capabilities, no-new-privileges, a read-only root, AppArmor docker-default and one writable mount /run/rfl/out; the entry point reported uid and gid 10001 |\n| example-completes | passed |  | both runs exited 0 in every step (topology, simulate) and simulate.stdout holds 'All data received by node 7 is' |\n| result-files-written | passed |  | both runs wrote the 6 result files, each non-empty, and the 3 files this example leaves empty |\n| rerun-identical | passed |  | the two runs gave the same 9 result files: astra-sim/simulation/llama_hpn7_fct.txt, astra-sim/simulation/llama_hpn7_mix.tr, astra-sim/simulation/llama_hpn7_pfc.txt, work/Rail_Opti_SingleToR_8g_8gps_200Gbps_H20, work/ncclFlowModel_EndToEnd.csv, work/ncclFlowModel_detailed_9.csv, work/ncclFlowModel_detailed_flows.csv, work/ncclFlowModel_test1_dimension_utilization_0.csv, work/send.txt |\n| no-container-left | passed |  | guest.sh stop removed the containers of 20261116T151213Z-c-01-example; no Track C container remains |\n| host-untouched | passed |  | no simulator process and no Track C container on the host at the start and the end of the run |"
+}

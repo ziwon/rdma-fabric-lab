@@ -1,0 +1,8 @@
+{
+  "id": "a-hostnet-baseline-refused",
+  "run": "20261115T221204Z",
+  "source": "tests/fixtures/a-soft-roce/m3/podsecurity-dry-run-baseline.stderr",
+  "lines": "1-2",
+  "format": "text",
+  "text": "Warning: existing pods in namespace \"rdma-lab\" violate the new PodSecurity enforce level \"baseline:latest\"\nWarning: rdma-client (and 1 other pod): host namespaces, privileged"
+}

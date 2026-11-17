@@ -1,0 +1,8 @@
+{
+  "id": "repo-versions-m3",
+  "run": "acceptance-m3 20261116T001921Z, step 06",
+  "source": "docs/milestones/evidence/m3/acceptance-m3/06-versions-m3.log",
+  "lines": "1-4",
+  "format": "text",
+  "text": "$ make versions SCOPE=m3\nPYTHONPATH=scripts .venv/bin/python -m rfl versions --environment --scope m3\n54 components, 3 undecided\nscope m3: every component is pinned"
+}
