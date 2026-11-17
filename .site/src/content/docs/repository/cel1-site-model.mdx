@@ -12,7 +12,7 @@ cel1 is a region that does not exist. Its hosts, addresses, interface names and 
 ## One source, many outputs
 
 ```mermaid
-%%{init: {"theme": "base", "themeVariables": {"background": "#1b1f23", "primaryColor": "#22272c", "primaryTextColor": "#e6e9ed", "primaryBorderColor": "#616c78", "lineColor": "#8f9aa7", "fontFamily": "DM Sans, Inter, Arial, sans-serif"}}}%%
+%%{init: {"theme": "base", "themeVariables": {"background": "#1b1f23", "primaryColor": "#22272c", "primaryTextColor": "#e6e9ed", "primaryBorderColor": "#616c78", "lineColor": "#8f9aa7", "edgeLabelBackground": "#1b1f23", "fontFamily": "DM Sans, Inter, Arial, sans-serif"}}}%%
 flowchart LR
     S[sites/cel1.yaml<br/>hosts, classes, address plan<br/>API VIP, syslog, fabric] --> I[ansible/inventories/cel1/<br/>make fleet-render]
     S --> N[tracks/b-ibsim/topologies/<br/>cel1-compute.net<br/>make track-b-render]

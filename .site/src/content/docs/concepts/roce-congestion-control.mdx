@@ -14,7 +14,7 @@ RDMA transports were designed for a fabric that does not drop packets. A reliabl
 Incast means many senders send to one receiver at once. Every sender's link is idle enough, but the switch port toward the receiver must carry the sum. Its egress queue grows until the senders slow down, the switch pauses them, or the buffer overflows.
 
 ```mermaid
-%%{init: {"theme": "base", "themeVariables": {"background": "#1b1f23", "primaryColor": "#22272c", "primaryTextColor": "#e6e9ed", "primaryBorderColor": "#616c78", "lineColor": "#8f9aa7", "fontFamily": "DM Sans, Inter, Arial, sans-serif"}}}%%
+%%{init: {"theme": "base", "themeVariables": {"background": "#1b1f23", "primaryColor": "#22272c", "primaryTextColor": "#e6e9ed", "primaryBorderColor": "#616c78", "lineColor": "#8f9aa7", "edgeLabelBackground": "#1b1f23", "fontFamily": "DM Sans, Inter, Arial, sans-serif"}}}%%
 flowchart LR
     S1[sender 0] --> SW[switch<br/>egress queue to the receiver]
     S2[sender 1] --> SW

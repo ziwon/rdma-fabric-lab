@@ -14,7 +14,7 @@ On 2026-11-15, `ibnetdiscover` and `opensm` running inside host containers froze
 Containers share the host kernel, so a host kernel bug freezes the whole host even when it fires inside a container. Inside a guest, the same bug freezes only that guest, because the guest runs its own kernel.
 
 ```mermaid
-%%{init: {"theme": "base", "themeVariables": {"background": "#1b1f23", "primaryColor": "#22272c", "primaryTextColor": "#e6e9ed", "primaryBorderColor": "#616c78", "lineColor": "#8f9aa7", "fontFamily": "DM Sans, Inter, Arial, sans-serif"}}}%%
+%%{init: {"theme": "base", "themeVariables": {"background": "#1b1f23", "primaryColor": "#22272c", "primaryTextColor": "#e6e9ed", "primaryBorderColor": "#616c78", "lineColor": "#8f9aa7", "edgeLabelBackground": "#1b1f23", "fontFamily": "DM Sans, Inter, Arial, sans-serif"}}}%%
 flowchart LR
     S[ibsim and OpenSM<br/>AF_UNIX datagrams] --> HC[Container on the host<br/>host kernel 7.0]
     S --> GC[Container in a guest<br/>guest kernel 6.8]
