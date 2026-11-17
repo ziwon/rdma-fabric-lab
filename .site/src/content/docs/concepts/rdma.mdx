@@ -14,7 +14,7 @@ Remote Direct Memory Access lets one host read or write the memory of another wi
 The verbs API, `libibverbs` in rdma-core, is the user-space interface to an RDMA device. A program builds a small set of objects, each owned by the one before it.
 
 ```mermaid
-%%{init: {"theme": "base", "themeVariables": {"background": "#171717", "primaryColor": "#232323", "primaryTextColor": "#f5f5f5", "primaryBorderColor": "#d0d0d0", "lineColor": "#cfcfcf", "fontFamily": "Inter, Arial, sans-serif"}}}%%
+%%{init: {"theme": "base", "themeVariables": {"background": "#1b1f23", "primaryColor": "#22272c", "primaryTextColor": "#e6e9ed", "primaryBorderColor": "#616c78", "lineColor": "#8f9aa7", "fontFamily": "DM Sans, Inter, Arial, sans-serif"}}}%%
 flowchart LR
     D[Device context<br/>ibv_open_device] --> PD[Protection domain<br/>ibv_alloc_pd]
     PD --> MR[Memory region<br/>ibv_reg_mr<br/>lkey, rkey]
@@ -24,10 +24,10 @@ flowchart LR
     QP --> W[Work requests<br/>ibv_post_send, ibv_post_recv]
     W --> C[Completions<br/>ibv_poll_cq]
 
-    classDef primary fill:#232323,stroke:#d0d0d0,color:#f5f5f5,stroke-width:2px;
-    classDef secondary fill:#3b2f20,stroke:#d0d0d0,color:#f5f5f5,stroke-width:2px;
-    classDef note fill:#52676b,stroke:#d0d0d0,color:#f5f5f5,stroke-width:2px;
-    classDef accent fill:#62164d,stroke:#d0d0d0,color:#f5f5f5,stroke-width:2px;
+    classDef primary fill:#22272c,stroke:#616c78,color:#e6e9ed,stroke-width:1.5px;
+    classDef secondary fill:#21393e,stroke:#70c5d0,color:#e6e9ed,stroke-width:1.5px;
+    classDef note fill:#2b3138,stroke:#616c78,color:#b6bfc9,stroke-width:1.5px;
+    classDef accent fill:#243027,stroke:#b2e879,color:#e6e9ed,stroke-width:1.5px;
     class D primary
     class PD,CQ secondary
     class MR,QP accent
@@ -53,7 +53,7 @@ perftest has one tool per operation: `ib_send_bw`, `ib_write_bw` and `ib_read_bw
 A reliable QP needs the peer's QP number, its starting packet sequence number and an address to reach it. RDMA CM, `librdmacm`, exchanges these for the application in a way that looks like sockets. The server binds an address and listens. The client resolves the address to a device and port, resolves a route, and connects. RDMA CM moves both QPs through their states.
 
 ```mermaid
-%%{init: {"theme": "base", "themeVariables": {"background": "#171717", "primaryColor": "#232323", "primaryTextColor": "#f5f5f5", "primaryBorderColor": "#d0d0d0", "lineColor": "#cfcfcf", "fontFamily": "Inter, Arial, sans-serif"}}}%%
+%%{init: {"theme": "base", "themeVariables": {"background": "#1b1f23", "primaryColor": "#22272c", "primaryTextColor": "#e6e9ed", "primaryBorderColor": "#616c78", "lineColor": "#8f9aa7", "fontFamily": "DM Sans, Inter, Arial, sans-serif"}}}%%
 sequenceDiagram
     participant S as Server worker1
     participant C as Client worker2

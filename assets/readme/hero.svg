@@ -4,19 +4,18 @@
   <style>
     .sans { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; }
     .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
-    .ink { fill: #050505; }
-    .muted { fill: #6f6a63; }
-    .teal { fill: #007f94; }
-    .red { fill: #d9392e; }
-    .rule { stroke: #d8d1c7; }
-    .box { fill: #fbf9f5; stroke: #050505; stroke-width: 1.5; }
+    .ink { fill: #e6e9ed; }
+    .muted { fill: #a0aab6; }
+    .lime { fill: #b2e879; }
+    .rule { stroke: #363e47; }
+    .box { fill: #22272c; stroke: #616c78; stroke-width: 1.5; }
   </style>
 
-  <rect width="1200" height="420" rx="22" fill="#f5f1ea"/>
+  <rect x="0.75" y="0.75" width="1198.5" height="418.5" rx="22" fill="#121416" stroke="#363e47" stroke-width="1.5"/>
 
   <g id="title-block" class="sans">
-    <text x="56" y="92" class="mono teal" font-size="18" letter-spacing="1.5">RDMA · INFINIBAND · ROCE CONGESTION</text>
-    <text x="56" y="164" class="ink" font-size="66" font-weight="700" letter-spacing="-1">RDMA Fabric Lab</text>
+    <text x="56" y="92" class="mono lime" font-size="18" letter-spacing="1.5">RDMA · INFINIBAND · ROCE CONGESTION</text>
+    <text x="56" y="164" class="ink" font-size="66" font-weight="700" letter-spacing="-1">RDMA Fabric <tspan class="lime">Lab</tspan></text>
     <text x="56" y="214" class="ink" font-size="25">RDMA, subnet management and congestion</text>
     <text x="56" y="248" class="ink" font-size="25">control you can run and break on one host.</text>
     <text x="56" y="282" class="muted" font-size="22">No HCA, no InfiniBand switch, no GPU.</text>
@@ -26,45 +25,45 @@
   </g>
 
   <g id="host" class="sans" transform="translate(664 40)">
-    <rect x="0" y="0" width="480" height="340" rx="14" fill="none" stroke="#050505" stroke-width="1.5"/>
+    <rect x="0" y="0" width="480" height="340" rx="14" fill="#1b1f23" stroke="#363e47" stroke-width="1.5"/>
     <text x="20" y="34" class="mono muted" font-size="18">one Ubuntu host · QEMU/KVM guests</text>
 
     <g id="track-a" transform="translate(20 58)">
-      <circle cx="16" cy="22" r="16" fill="#007f94"/>
-      <text x="16" y="29" text-anchor="middle" font-size="19" font-weight="700" fill="#f5f1ea">A</text>
+      <circle cx="16" cy="22" r="16" fill="#b2e879"/>
+      <text x="16" y="29" text-anchor="middle" font-size="19" font-weight="700" fill="#1b2a0d">A</text>
       <rect x="44" y="4" width="112" height="36" rx="6" class="box"/>
       <text x="100" y="29" text-anchor="middle" class="mono ink" font-size="18">worker1</text>
-      <line x1="156" y1="22" x2="300" y2="22" stroke="#d9392e" stroke-width="3"/>
-      <circle cx="156" cy="22" r="4" fill="#d9392e"/>
-      <circle cx="300" cy="22" r="4" fill="#d9392e"/>
-      <text x="228" y="14" text-anchor="middle" class="mono red" font-size="18">RoCEv2</text>
+      <line x1="156" y1="22" x2="300" y2="22" stroke="#b2e879" stroke-width="3"/>
+      <circle cx="156" cy="22" r="4" fill="#b2e879"/>
+      <circle cx="300" cy="22" r="4" fill="#b2e879"/>
+      <text x="228" y="14" text-anchor="middle" class="mono lime" font-size="18">RoCEv2</text>
       <rect x="300" y="4" width="112" height="36" rx="6" class="box"/>
       <text x="356" y="29" text-anchor="middle" class="mono ink" font-size="18">worker2</text>
       <text x="44" y="66" class="muted" font-size="18">rxe0 · Kubernetes · Cilium · Multus</text>
     </g>
 
     <g id="track-b" transform="translate(20 148)">
-      <circle cx="16" cy="22" r="16" fill="#007f94"/>
-      <text x="16" y="29" text-anchor="middle" font-size="19" font-weight="700" fill="#f5f1ea">B</text>
+      <circle cx="16" cy="22" r="16" fill="#b2e879"/>
+      <text x="16" y="29" text-anchor="middle" font-size="19" font-weight="700" fill="#1b2a0d">B</text>
       <rect x="44" y="4" width="112" height="36" rx="6" class="box"/>
       <text x="100" y="29" text-anchor="middle" class="mono ink" font-size="18">ibsim1</text>
       <text x="172" y="29" class="ink" font-size="20">OpenSM on an 8-rail fabric</text>
     </g>
 
     <g id="track-c" transform="translate(20 206)">
-      <circle cx="16" cy="22" r="16" fill="#007f94"/>
-      <text x="16" y="29" text-anchor="middle" font-size="19" font-weight="700" fill="#f5f1ea">C</text>
+      <circle cx="16" cy="22" r="16" fill="#b2e879"/>
+      <text x="16" y="29" text-anchor="middle" font-size="19" font-weight="700" fill="#1b2a0d">C</text>
       <rect x="44" y="4" width="112" height="36" rx="6" class="box"/>
       <text x="100" y="29" text-anchor="middle" class="mono ink" font-size="18">ns3sim1</text>
       <text x="172" y="29" class="ink" font-size="20">PFC · ECN · DCQCN incast</text>
     </g>
 
     <g id="cel1" transform="translate(20 264)">
-      <text x="0" y="29" class="mono teal" font-size="19" font-weight="700">cel1</text>
+      <text x="0" y="29" class="mono lime" font-size="19" font-weight="700">cel1</text>
       <g transform="translate(56 10)">
-        <rect x="0" y="0" width="20" height="20" rx="3" fill="#050505"/>
-        <rect x="26" y="0" width="20" height="20" rx="3" fill="#050505"/>
-        <rect x="52" y="0" width="20" height="20" rx="3" fill="#050505"/>
+        <rect x="0" y="0" width="20" height="20" rx="3" fill="#e6e9ed"/>
+        <rect x="26" y="0" width="20" height="20" rx="3" fill="#e6e9ed"/>
+        <rect x="52" y="0" width="20" height="20" rx="3" fill="#e6e9ed"/>
         <rect x="86" y="0" width="20" height="20" rx="3" class="box"/>
         <rect x="112" y="0" width="20" height="20" rx="3" class="box"/>
         <rect x="138" y="0" width="20" height="20" rx="3" class="box"/>
@@ -73,8 +72,8 @@
         <rect x="216" y="0" width="20" height="20" rx="3" class="box"/>
         <rect x="242" y="0" width="20" height="20" rx="3" class="box"/>
         <rect x="268" y="0" width="20" height="20" rx="3" class="box"/>
-        <rect x="302" y="0" width="20" height="20" rx="3" fill="#007f94"/>
-        <rect x="328" y="0" width="20" height="20" rx="3" fill="#007f94"/>
+        <rect x="302" y="0" width="20" height="20" rx="3" fill="#70c5d0"/>
+        <rect x="328" y="0" width="20" height="20" rx="3" fill="#70c5d0"/>
       </g>
       <text x="56" y="58" class="muted" font-size="18">3 control planes · 8 DGX B200 · 2 PCIe GPU</text>
     </g>

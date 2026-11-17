@@ -34,7 +34,13 @@ export default defineConfig({
       description:
         'A software-only lab for RDMA, InfiniBand management and RoCE congestion control: the concepts, the experiments, and how to run them.',
       favicon: '/favicon.svg',
+      logo: { dark: './src/assets/logo.svg', light: './src/assets/logo-light.svg', alt: '' },
       customCss: ['./src/styles/custom.css'],
+      components: {
+        ThemeProvider: './src/components/ThemeProvider.astro',
+        ThemeSelect: './src/components/ThemeSelect.astro',
+        SiteTitle: './src/components/SiteTitle.astro',
+      },
       social: [{ icon: 'github', label: 'GitHub', href: repoUrl }],
       tableOfContents: { minHeadingLevel: 2, maxHeadingLevel: 3 },
       plugins: [

@@ -14,11 +14,34 @@ hero:
       variant: minimal
 ---
 
+<div class="rfl-stats not-content">
+  <div>
+    <p class="rfl-stat-label">Required scenarios</p>
+    <p class="rfl-stat-value">15<span> / 15 passed</span></p>
+    <p class="rfl-stat-note">make report STRICT=1</p>
+  </div>
+  <div>
+    <p class="rfl-stat-label">Optional scenarios</p>
+    <p class="rfl-stat-value">4<span> / 4 passed</span></p>
+    <p class="rfl-stat-note">ha VIP, cel1, collect, kmin</p>
+  </div>
+  <div>
+    <p class="rfl-stat-label">Full rerun</p>
+    <p class="rfl-stat-value">100.5<span> min</span></p>
+    <p class="rfl-stat-note">from wiped guests</p>
+  </div>
+  <div>
+    <p class="rfl-stat-label">Hardware needed</p>
+    <p class="rfl-stat-value">0</p>
+    <p class="rfl-stat-note">no HCA, switch or GPU</p>
+  </div>
+</div>
+
 <p class="rfl-home-kicker">Explain, show, then do</p>
 
-Each page teaches the idea first, then shows a real output excerpt with its run id and source file, then gives the commands to repeat it. Each lab also lists the deliberate breaks that make its checks fail, so you can watch a check catch a fault.
+Each page teaches the idea first, then shows a real output excerpt with its run id and source file, then gives the commands to repeat it. Each lab also lists the deliberate breaks that make its checks fail, so you can watch a check catch a fault. The figures above come from `acceptance-all.sh` run `20261116T190004Z`, recorded in the [verification record](/docs/verification/).
 
-## Three tracks and one region
+<p class="rfl-home-kicker">Three tracks and one region</p>
 
 <div class="rfl-card-grid">
 
@@ -29,7 +52,7 @@ Each page teaches the idea first, then shows a real output excerpt with its run 
 
 </div>
 
-## Where to go next
+<p class="rfl-home-kicker">Where to go next</p>
 
 <div class="rfl-card-grid">
 
@@ -39,5 +62,8 @@ Each page teaches the idea first, then shows a real output excerpt with its run 
 
 </div>
 
-> [!WARNING]
-> The lab measures software and simulates management and packet models. RXE numbers are software results of one host and guest pair. ibsim results are a management simulation. ns-3 results are the behavior of a model. None of them stands in for hardware, and a result of one track never stands in for another.
+<div class="rfl-home-note">
+
+Software measurements and simulations, not a hardware benchmark. A result of one track never stands in for another. See [what the lab does not claim](/start/#what-the-lab-does-not-claim).
+
+</div>
