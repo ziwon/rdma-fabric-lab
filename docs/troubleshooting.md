@@ -1,6 +1,6 @@
-# Track A troubleshooting
+# Troubleshooting
 
-This document records failures actually observed in M0 to M3 and their causes. The evidence for each item is the run logs and result directories. Items without a confirmed cause are left out.
+This document records failures actually observed in M0 to M7 and in the cel1 simulation, with their causes. Sections 1 to 14 cover Track A, section 15 the host and the QEMU harness, section 16 Track B, section 17 Track C, section 18 the cel1 simulation and section 19 results, the report, cleanup and CI. Each item names its evidence: a run id under `results/`, a fixture under `tests/fixtures/`, or a log under `docs/milestones/evidence/`. The evidence copies and `results/` exist only on the machine that ran them. Items without a confirmed cause are left out.
 
 ## 1. `make doctor` fails
 
@@ -68,7 +68,7 @@ When the link comes back up, networkd restores the address and the RXE port retu
 
 Every guest process the runner starts runs under `timeout` and carries the environment variable `RFL_RUN=<run-id>`. Output, pids and exit codes sit in `/var/tmp/rfl/<run-id>/` on the guest. When the runner exits normally or receives SIGINT or SIGTERM, it stops its own processes and deletes this directory.
 
-If the runner dies from SIGKILL or similar, run `make cleanup RUN=<run-id>`. This command stops only the processes with that run id and deletes only that directory. It does not touch the RXE device, `rfl-rxe.service`, the network configuration, other runs or the guests.
+If the runner dies from SIGKILL or similar, run `make cleanup RUN=<run-id>`. It stops only the processes with that run id, deletes only that directory, and deletes the namespaces labeled `rdma-fabric-lab/run=<run-id>` with the pods and the NetworkAttachmentDefinition they hold. It does not touch the RXE device, `rfl-rxe.service`, the network configuration, other runs or the guests. `docs/runbook.md` section 8 has what it removes in the other tracks.
 
 ## 7. QEMU harness
 
@@ -135,6 +135,7 @@ An unprivileged container sees no `/dev/infiniband`, and `ibv_devinfo` prints `N
 | `cni-dir-holds-only-multus` with `clusterNetwork is '/host/etc/cni/net.d/05-cilium.conflist'` | The Multus daemon on that node still runs with the old daemon config. It reads the config only at start, and a ConfigMap change does not roll the DaemonSet. `make cni-migrate` restarts it |
 | `pod-at-boot-waits-for-multus` with `containerd reported a network ... while 00-multus.conf was absent` | A CNI file other than Multus's sits in `/etc/cni/net.d`. After a boot, before Multus writes its file, containerd runs that file alone, and a pod started then gets eth0 and no `net1`, without an error. Remove the file |
 | `pod-at-boot-waits-for-multus` with `missed the window` | Multus wrote its file before the run could look at the node after creating the pod. The check proves nothing then. Run it again. Multus writes the file about 18 s after the boot, and SSH answers about 6 s after it |
+| `pod-at-boot-waits-for-multus` with `00-multus.conf survived the reboot` | The node's shutdown did not stop its pods, so Multus never removed its file. A `systemctl daemon-reload` since the kubelet started drops `Conflicts=shutdown.target` from the kubelet's slices on systemd 255. Before M7, every `make rxe-up` and `make k8s` reloaded. The console shows `systemd-shutdown[1]: Waiting for process: … (multus-daemon)` | `systemctl show kubepods.slice -p Conflicts` must print `shutdown.target`. A reboot after the reload restores it. The roles reload only from handlers now (`docs/milestones/M7.md` section 8) |
 | `cni-dir-holds-only-multus` with `... is not JSON`, and every new pod on that node stays in `ContainerCreating` | Multus chose its default delegate when its daemon started and keeps it. If that file is gone, `00-multus.conf` names a missing file. The Multus log shows `failed to get clusterNetwork` on every ADD and no regeneration. Restart the Multus pod on that node: `kubectl -n kube-system delete pod -l name=multus --field-selector spec.nodeName=<node>` |
 | `network-attachment-from-inventory` with `command-failed` | The NetworkAttachmentDefinition CRD is missing. `make addons ENV=lab KUBECONFIG_FILE=.lab/kubeconfig RELEASE=multus FORCE=1` creates it again |
 | `no-duplicate-addresses` and `recreate-releases-addresses` | Whereabouts holds an address for a pod that does not exist. The detail names the address and the pod. Remove the allocation from the IPPool in `kube-system`, or let the Whereabouts reconciler remove it |
@@ -155,3 +156,57 @@ An unprivileged container sees no `/dev/infiniband`, and `ibv_devinfo` prints `N
 | `<node> has no /etc/cni/multus/net.d/05-cilium.conflist` | The Cilium agent on that node has not written its file to its own directory | Run `make addons` first and let the Cilium rollout finish |
 | `/etc/cni/net.d on <node> holds [...]` | A CNI file other than Cilium's and Multus's sits there. The role removes only Cilium's file | Remove the other file by hand |
 
+## 15. The host and the QEMU harness, every track
+
+| Symptom | Cause | Fix | Evidence |
+|---|---|---|---|
+| The host freezes while ibsim, OpenSM or a diagnostic tool runs in a container on it | Ubuntu kernels 7.0.0-42 and 7.0.0-43 hit a NULL dereference in AppArmor when a confined process writes to a connected AF_UNIX datagram socket. ibsim and libumad2sim use that socket, and Docker confines every container. It froze the host three times on 2026-11-15 | Run Track B and Track C only through `make track-b` and `make track-c`, which run them in a guest on the guest's own kernel. Never start them on the host, in a container or not | `docs/adr/0002-execution-environments.md` |
+| `guest.sh: refusing to run: /etc/rfl/track-b-guest is missing, so this machine is not the Track B guest` (or `track-c-guest`), exit 2 | A `guest.sh` command ran on the host. Both scripts refuse before they touch Docker | Use the make targets. They copy `guest.sh` into the guest and call it there | `docs/milestones/evidence/m4/host-refusal.log`, `docs/milestones/evidence/m5/host-refusal.log`, `tests/unit/test_ibsim_host_refusal.py` |
+| RXE figures of a run differ from the earlier runs with no change to the lab | Another profile's guests competed for the host. The acceptance scripts fail the step before each RXE run with `other guests run:` when any QEMU process other than cp1, worker1 and worker2 runs | Stop the other profile with `make lab-down LAB_PROFILE=<profile>` before you measure | `only_lab_guests` in `tests/integration/qemu-lab/acceptance-m3.sh` |
+| `/cache` or `/` runs out of space during a run | Guest disks live in `.lab/` by default, and the cel1 simulation alone wrote 41 GB | Give each profile a `LAB_DIR` on a file system with room. `acceptance-all.sh` takes `LAB_ROOT` and puts each profile in `LAB_ROOT/<profile>` | `docs/milestones/cel1-sim.md` section 11 |
+| `make track-b LAB_DIR=<dir>` boots the guest in `<dir>` but runs against `.lab/ibsim/inventory.yml`. `make rdma-tools-image LAB_DIR=<dir>` boots the builder into the lab's own `<dir>` | Make 4.3 exports no command line variable to `$(shell)`, and a sub-make takes the parent's command line `LAB_DIR` over its environment. Seen with `make -n` before M7 | Fixed in M7: the Track B and Track C inventory calls pass `LAB_DIR`, and the builder sub-make gets `LAB_DIR=$(BUILDER_LAB_DIR)` on its command line. The environment form `LAB_DIR=<dir> make` always worked | `tests/unit/test_lab_make.py`, `docs/milestones/M7.md` |
+
+## 16. Track B
+
+| Symptom | Cause | Fix | Evidence |
+|---|---|---|---|
+| `subnet-up` fails, and `opensm.log` says `disabling UPDN algorithm, no root nodes were found` | updn needs root switches. On the single-tier fabrics of B-01 to B-03 it finds none and falls back to minhop. `subnet-up` fails a run whose log names an engine other than the configured one | B-01 to B-03 use minhop. B-04, the two-tier cel1 fabric, uses updn | Runs `20261115T141931Z` and `20261115T141940Z`, `tests/fixtures/b-ibsim/b-02-updn-fallback/container/opensm.log` |
+| ftree routes the healthy cel1 fabric but logs `ERR AB0B` on the degraded one and falls back to minhop | ftree rejects a fat tree with a missing link | B-04 uses updn, which routed through the fault and the recovery | `docs/milestones/evidence/m4/probe/12-engines-under-fault.txt` |
+| OpenSM rejects the `no_fallback` engine option | OpenSM 3.3.23 has no such option, so a failed engine always falls back and OpenSM keeps running | Rely on the `subnet-up` check, which reads the engine from the log | `docs/milestones/evidence/m4/probe/10-routing-engines-cel1.txt` |
+| `make track-b-image` exits 1 with an image ID other than `ibsim.image` | An input changed: the Dockerfile, the snapshot or a locked version. Before M7 the build was not reproducible, and a wiped guest gave `sha256:0b462da8…` | Find the changed input before you pin the new ID. Two builds from wiped guests give the same ID since M7 | `docs/milestones/M7.md` section 8, `docs/milestones/evidence/m7/ibsim-digest/` |
+| `guest.sh: container rfl-ibsim-<key> already exists. Run guest.sh stop <key> first.` | A run of that key was killed before it stopped its container | `LAB_PROFILE=ibsim make cleanup RUN=<run-id>` removes every container and run directory of that run id inside the guest | `tests/integration/qemu-lab/cleanup-check.sh b` |
+| `make track-b-breaks` exits 1 and names a scenario `(exit 0)` | A break run passed, so that scenario's checks no longer see the missing link | Read the break run's failed and passed checks against `docs/milestones/M4.md` section 7 | `docs/milestones/evidence/m4/track-b-breaks.log` |
+
+## 17. Track C
+
+| Symptom | Cause | Fix | Evidence |
+|---|---|---|---|
+| The image build fails to link `rfl-star` with an undefined `g_e_inCriticalSection` | libpoint-to-point uses libmtp's lock without linking libmtp, and Ubuntu's gcc links with `--as-needed` | `rfl-star` calls `MtpInterface::isEnabled()`, which keeps libmtp in the link | `docs/milestones/evidence/m5/image-build-0-link-error.log` |
+| BuildKit refuses `rewrite-timestamp` | BuildKit 0.30.1 refuses it with the unpack that `type=docker` implies | `guest.sh build` exports with `type=image,rewrite-timestamp=true,unpack=false` | `docs/milestones/evidence/m5/probe/03-rewrite-timestamp.txt` |
+| The simulator dies with SIGSEGV, exit 139, before it writes any counter, in a run with PFC on | `QbbNetDevice::Resume` looked up the QP by the resumed priority index, so a host with fewer QPs than that index crashed on the first RESUME | `images/ns3/qbb-resume-qp-lookup.patch` tests the node type first. If `git apply --check` fails in the build, the patch no longer matches the pinned source | Run `20261116T135921Z`, `docs/milestones/evidence/m5/probe/05-pfc-resume-qp-index.txt`, `docs/milestones/evidence/m6/patch-proof/patch-proof.txt` |
+| `config-applied` fails on packet sizes, 52 B per data packet and 60 B per ACK | This fork's `PppHeader` writes 14 bytes, not 2 | The constants follow the code, and the expected FCT matches to the nanosecond | Run `20261116T135412Z`, `docs/milestones/M5.md` section 11 |
+| With PFC off the switch still sends PAUSE, and a small buffer drops packets until the flow stalls | In this model PFC off means the hosts ignore PAUSE. The switch side is unchanged. Without a retransmission timer a refused tail stalls forever | This is model behavior, not a fault of the run. A switch without PFC needs a model change, which is an open experiment | `docs/milestones/evidence/m5/probe/06-mmu-drop-probe.txt`, `docs/milestones/M6.md` section 12 |
+| The receiver's ECN counts wrap | `RdmaRxQueuePair::ECNAccount` keeps them as `uint16_t` | `rfl-star` counts marks from trace sources instead | `docs/milestones/M5.md` section 11 |
+| `make track-c-image` exits 1 with an image ID other than `ns3.image` | An input changed, or the build reused a cache from other inputs. Before M7 the file modes of the checkout reached the image: a checkout made with umask 002 gave `rfl-ns3` mode 0775 and `sha256:2f14f43e…` | `make track-c-image CLEAN=1` removes the tag, the base image and every BuildKit cache entry and builds from nothing. It gave the pinned ID in M5, M6 and M7. Since M7 the guest copy sends the modes Git keeps | `docs/milestones/evidence/m7/ns3-digest/layer-diff.txt` |
+| `guest.sh: container rfl-ns3-<key>-<slot> already exists` | A run of that key was killed before it stopped its containers | `LAB_PROFILE=ns3 make cleanup RUN=<run-id>` | `tests/integration/qemu-lab/cleanup-check.sh c` |
+| `host-untouched` fails on a `SimAI_simulator` process on the host | A `host-process` break run was killed before it killed its decoy, a copy of sleep that lives 600 s | The decoy carries `RFL_RUN=<run-id>`, so `make cleanup RUN=<run-id>` stops it | `tests/integration/qemu-lab/cleanup-check.sh c` |
+
+## 18. The cel1 simulation
+
+| Symptom | Cause | Fix | Evidence |
+|---|---|---|---|
+| A fleet target exits 2 with `Nothing was changed. Rerun with CONFIRM=cel1.`, or the simulation gate refuses an address | The targets that change cel1 hosts need `CONFIRM=cel1` and a connection inventory whose every host, kubeconfig server and API address is on 127.0.0.1 | Pass `CONFIRM=cel1 FLEET_CONNECT=<LAB_DIR>/inventory.yml` from `lab.sh up` of the cel1 profile. strace saw no IPv4 or IPv6 call in any refusal | `docs/milestones/evidence/cel1-sim/acceptance/strace-summary.txt` |
+| `make fleet-rsyslog` fails on all 13 hosts at `apt-mark manual rsyslog` | The play installed a package as the SSH user | The play has `become: true` | `docs/milestones/evidence/cel1-sim/fleet-rsyslog-1-no-become.log` |
+| The DGX Nodes lose `nvidia.com/gpu.deploy.driver=false` and `nvidia.com/gpu.deploy.container-toolkit=false` after `make fleet-addons` | The GPU Operator removes every GPU state label from a node without `nvidia.com/gpu.present`, and the guests have no GPU | The next `make fleet-k8s` puts them back and changes nothing else. The checks read the opt-outs from the kubelet registration | `docs/milestones/evidence/cel1-sim/label-watch.log`, run `20261115T165516Z` |
+| `native-routing` fails with tunnel links on a node without VXLAN | `ip -d -j link show type vxlan` prints one `{}` per link of another type | `tunnel_links` reads `ifname` | Run `20261115T161414Z`, `tests/fixtures/cel1/ip-link-type-vxlan-dgx-02.json` |
+| `syslog-to-central-address` fails while every other check passes | rsyslog is stopped on a node. acceptance-cel1.sh does this on purpose on `cel1-dgx-06`, and the run's manifest names the break | `make fleet-rsyslog CONFIRM=cel1 FLEET_CONNECT=...` starts it again | Run `20261115T165039Z`, `docs/milestones/cel1-sim.md` section 8 |
+
+## 19. Results, the report, cleanup and CI
+
+| Symptom | Cause | Fix | Evidence |
+|---|---|---|---|
+| `make validate` reports `status is passed but the checks derive failed` | The manifest was edited by hand. Only the checks set the status | Run the scenario again | `tests/unit/test_rfl_manifest.py` |
+| `make validate` reports `'deliberate_break' is a required property` | A manifest of `schema_version` 2 lacks the field. Every run started by `rfl run-init` writes it, as null for an ordinary run | Start runs only through `rfl run-init` or a runner | `tests/unit/test_rfl_manifest.py` |
+| `make report` shows an older run than the one that just ran | The newer run is a deliberate break or it never finished, for example a run killed with SIGKILL. The report counts only finished runs that are not breaks, and prints per scenario how many of each it left out | Read the run's `manifest.json`: `finished_at` null means it was interrupted, and `deliberate_break` names a break | The killed runs of `docs/milestones/M7.md` section 5 |
+| `make report STRICT=1` exits 1 | A required scenario has no finished run that is not a break, or its latest such run did not pass | Run the scenario again, then read its failed checks | Step `report` of the first full run, `docs/milestones/M7.md` section 7 |
+| `make test` passes but skips the Multus chart tests | `.tools/bin/helm` does not exist yet. `make tools` installs it | Run `make tools` first, as the CI workflow does | `docs/milestones/evidence/m7/ci-local-1/03-make-test.log` |

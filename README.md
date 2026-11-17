@@ -2,7 +2,7 @@
 
 A software-only lab for RDMA, InfiniBand management and RoCE congestion control on one Ubuntu host, with no HCA, InfiniBand switch or GPU. The same Ansible and kubeadm code that builds the lab cluster also describes `cel1`, an invented GPU region with DGX B200 nodes, so every lab run exercises that code.
 
-This file says what exists today and how to run it. Design decisions live in `docs/adr/`.
+This file says what exists today and how to start. `docs/runbook.md` takes an operator from a fresh host through every track, with measured durations, cleanup and recovery. Design decisions live in `docs/adr/`.
 
 ## Tracks
 
@@ -68,7 +68,7 @@ make rxe-test                        # RDMA between the workers, recorded under 
 make k8s                             # kubeadm cluster, kubeconfig in .lab/kubeconfig
 make addons ENV=lab KUBECONFIG_FILE=.lab/kubeconfig   # Cilium, Multus and Whereabouts by Helm
 make k8s-test                        # nodes, pod traffic, DNS, Service, NetworkPolicy
-make validate report                 # check and tally every run directory
+make validate report                 # check every run directory, then the latest run of each scenario
 make lab-down
 ```
 
@@ -80,6 +80,7 @@ make lab-down LAB_PROFILE=ibsim     # free the builder before measuring
 make rdma-tools-load                # import the image on both workers
 make k8s-hostnet-test               # the M1 RDMA tests between hostNetwork pods
 make k8s-multus-test                # net1 from Whereabouts beside Cilium, recreation, worker reboot
+make track-a                        # every required Track A scenario in order, on the lab that is up
 ```
 
 Cilium writes its CNI file to `/etc/cni/multus/net.d`, so `/etc/cni/net.d` holds only Multus's file and a pod never starts without `net1`. A cluster built before that change needs `make cni-migrate` once after `make addons ENV=lab`. `tests/integration/qemu-lab/acceptance-m3.sh` runs all of M1, M2 and M3 from wiped guests. The three-control-plane profile runs with `LAB_PROFILE=ha`.
@@ -95,7 +96,7 @@ make lab-down LAB_PROFILE=ibsim
 Track C builds and runs the ns-3 model in its own guest, never on the host:
 
 ```bash
-make track-c                         # c-01 and c-02, the incast scenarios c-03 to c-05, and the optional c-06
+make track-c                         # track-c-smoke (c-01, c-02) and track-c-matrix (incast c-03 to c-05, optional c-06)
 make track-c-breaks                  # every scenario must fail on its deliberate breaks
 make lab-down LAB_PROFILE=ns3
 ```
@@ -106,7 +107,13 @@ The cel1 simulation boots 13 guests and needs about 40 GB of disk. Put the disks
 LAB_DIR=/path/with/room bash tests/integration/qemu-lab/acceptance-cel1.sh
 ```
 
-`make help` lists every target.
+Every required experiment, one profile after another from wiped guests, ending with `make validate` and `make report STRICT=1`:
+
+```bash
+LAB_ROOT=/path/with/room tests/integration/qemu-lab/acceptance-all.sh
+```
+
+`make cleanup RUN=<run-id>` removes what an interrupted run left, and `make help` lists every target.
 
 ## The cel1 region
 
@@ -137,7 +144,8 @@ Every scenario declares its checks in `tracks/<track>/scenarios/*.yaml`. A run w
 | `tests/` | Unit tests, fixtures captured from real runs, and the QEMU harness under `tests/integration/qemu-lab/` |
 | `schemas/` | JSON schemas of scenario specs, run manifests, metrics and the version lock |
 | `versions.lock.yaml` | Every pinned version and checksum, grouped in scopes per milestone |
-| `docs/` | ADRs, milestone records, the cel1 runbook, VMware setup and troubleshooting |
+| `docs/` | The runbook, ADRs, milestone records, the cel1 runbook, VMware setup and troubleshooting |
+| `.github/workflows/` | The checks that need no lab, on every pull request |
 
 ## Documents
 
@@ -146,4 +154,9 @@ Every scenario declares its checks in `tracks/<track>/scenarios/*.yaml`. A run w
 - `docs/adr/0002-execution-environments.md`: where each track runs and why.
 - `docs/fleet.md`: the cel1 runbook.
 - `docs/setup-vmware.md`: the same lab as VMware Workstation guests with two VMnets, not verified on the current host.
-- `docs/troubleshooting.md`: failures seen so far and how to read them.
+- `docs/runbook.md`: from a fresh host to every track, cleanup, recovery and the safety rules.
+- `docs/troubleshooting.md`: failures seen in every track and the cel1 simulation, with their evidence.
+
+## License
+
+The repository is under the MIT license (`LICENSE`). Two files are the exception: `tracks/c-ns3/driver/rfl-star.cc` links to ns-3 and `images/ns3/qbb-resume-qp-lookup.patch` patches it, so both are GPL-2.0-only, as their SPDX line says. The `rfl-ns3` image built from them holds GPL-2.0 ns-3. Building it locally creates no obligation; distributing the built image carries the GPL-2.0 terms.
