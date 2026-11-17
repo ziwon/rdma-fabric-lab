@@ -1,0 +1,86 @@
+---
+title: Results contract
+description: Scenario specs declare every check, runs record each one with its evidence, the status is derived from the checks, and make validate enforces the contract.
+sidebar:
+  order: 1
+---
+
+import Excerpt from '../../../components/Excerpt.astro';
+import RepoFile from '../../../components/RepoFile.astro';
+
+Every claim on this site rests on one rule. A run's status comes only from the checks it recorded, and a passed check must point at evidence inside the run directory. Nobody sets a status by hand. The contract lives in `scripts/rfl/` and `schemas/`, and every track uses it.
+
+## The scenario spec
+
+Each scenario has a spec under `tracks/<track>/scenarios/<scenario>.yaml` that validates against `schemas/scenario.schema.json`. It names the track and the scenario, says whether the run is required or optional, states its result kind and its security profile, and declares every check with a description. This is the shortest one.
+
+<RepoFile path="tracks/a-soft-roce/scenarios/vm-rxe-rerun.yaml" lang="yaml" />
+
+A run starts from the spec, so a runner that dies early leaves its remaining checks as `not_run` instead of missing. `make lint` validates every spec. The check tables on the lab pages of this site are generated from these files at build time.
+
+## Recording a run
+
+The runners drive a run through the `rfl` command line, where `RFL` is `PYTHONPATH=scripts .venv/bin/python -m rfl`.
+
+```text
+RFL run-init --spec <spec>                 prints the run directory
+RFL run-check <dir> --id <id> --status passed --exit-code 0 --evidence raw/<file>
+RFL run-check <dir> --id <id> --status failed --failure-class timeout --evidence raw/<file>
+RFL run-set <dir> --section environment --file <json>
+RFL run-input <dir> <file>...
+RFL run-finalize <dir>                     exits 0 passed, 1 failed, 2 blocked, 3 not_run, 4 invalid
+```
+
+A run directory holds the manifest and everything it points at.
+
+```text
+results/<run-id>/<track>/<scenario>/
+├── manifest.json
+├── resolved-config.yaml
+├── commands.log
+├── stdout.log
+├── stderr.log
+├── metrics.json          when metrics exist
+├── raw/
+└── summary.md
+```
+
+The manifest records each check with its status, exit code, failure class, evidence files and a one-line detail. This is the first check of the M1 baseline run.
+
+<Excerpt id="repo-manifest-check" lang="json" />
+
+## How the status is derived
+
+The run's status is the most severe status among its checks, in the order `failed`, `blocked`, `not_run`, `passed`. One failed check fails the run, and a run passes only when every declared check passed.
+
+| Rule | Why |
+|---|---|
+| A passed check needs at least one evidence file, inside the run directory and not empty | A pass that cannot be traced is not a pass |
+| A failed, blocked or not_run check needs a failure class, and a passed one has none | The class says why, such as `timeout`, `command-failed`, `assertion-failed` or `not-attempted` |
+| A metric nobody measured is `null` with a reason, never `0` | A zero would claim a measurement that did not happen |
+| `blocked` and unsupported optional runs never count as passed | The report keeps required and optional runs apart |
+
+`not-attempted` appears when a check would not mean what it says. In the VXLAN break of [k8s-baseline](/labs/track-a/k8s-baseline/), the two NetworkPolicy checks were `not_run`, because the Service they test did not work.
+
+## make validate and make report
+
+`make validate` checks every run directory under `results/` against the schemas and the evidence rules. `make report` tallies the validated runs, required and optional apart, and prints each run's result kind.
+
+<Excerpt id="repo-validate" />
+
+## Result kinds
+
+| Result kind | Used by | What a number in it means |
+|---|---|---|
+| `software-rdma-measurement` | RXE scenarios of Track A | A software measurement of one host, kernel and guest combination |
+| `software-cluster-test` | `k8s-baseline`, `k8s-ha-vip`, `k8s-multus-net1`, `cel1-sim-baseline` | The behavior of a cluster on harness guests. No performance claim |
+| `ib-management-simulation` | Track B | What OpenSM and the tools do against ibsim |
+| `packet-model-simulation` | Track C | What the ns-3 model computes for its inputs |
+
+`metrics.json` validates against `schemas/result.schema.json`. In Track C every metric also carries `labels.domain`, so `modeled-network` figures such as an FCT stay apart from `simulator-cost` figures such as the simulator's wall time and RSS.
+
+## What git keeps
+
+Results and logs are never committed. `results/`, `.lab/` and the evidence copies under `docs/milestones/evidence/` exist only on the machine that ran them. The milestone records keep the run ids, exit codes and findings, and cite those local paths. Test fixtures captured from real runs stay tracked, and each fixture README names its source run.
+
+The output excerpts on this site come from both. An excerpt from an evidence copy names its path under `docs/milestones/evidence/`. An excerpt from a fixture names its path under `tests/fixtures/`. `npm run excerpts check` in `.site/` proves every stored excerpt still equals its source lines, and skips the evidence copies on a machine that does not have them.

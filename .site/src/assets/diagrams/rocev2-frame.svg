@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 252" width="760" height="252" role="img" aria-labelledby="t d">
+  <title id="t">RoCEv2 frame</title>
+  <desc id="d">An Ethernet frame carrying IPv4, UDP to port 4791, the InfiniBand base transport header, an optional RDMA extended header, the payload, the invariant CRC and the Ethernet FCS.</desc>
+  <style>
+    .bg { fill: #F5F1EA; }
+    .box { fill: none; stroke: #111111; stroke-width: 1.4; }
+    .opt { fill: none; stroke: #111111; stroke-width: 1.2; stroke-dasharray: 5 4; }
+    .hot { fill: none; stroke: #D9392E; stroke-width: 2; }
+    .name { font: 700 14px Inter, Arial, sans-serif; fill: #050505; text-anchor: middle; }
+    .size { font: 12px Inter, Arial, sans-serif; fill: #6F6A63; text-anchor: middle; }
+    .red { font: 700 12px Inter, Arial, sans-serif; fill: #D9392E; text-anchor: middle; }
+    .note { font: 12px Inter, Arial, sans-serif; fill: #6F6A63; }
+    .brace { fill: none; stroke: #6F6A63; stroke-width: 1.2; }
+    .label { font: 12px Inter, Arial, sans-serif; fill: #050505; text-anchor: middle; }
+  </style>
+  <rect class="bg" x="0" y="0" width="760" height="252"/>
+
+  <path class="brace" d="M20 44 V36 H270 V44"/>
+  <text class="label" x="145" y="28">Ethernet, IPv4 and UDP headers</text>
+  <path class="brace" d="M270 44 V36 H680 V44"/>
+  <text class="label" x="475" y="28">InfiniBand transport inside the UDP payload</text>
+
+  <rect class="box" x="20" y="52" width="80" height="60"/>
+  <text class="name" x="60" y="78">Ethernet</text>
+  <text class="size" x="60" y="98">14 B</text>
+
+  <rect class="box" x="100" y="52" width="80" height="60"/>
+  <text class="name" x="140" y="78">IPv4</text>
+  <text class="size" x="140" y="98">20 B</text>
+
+  <rect class="hot" x="180" y="52" width="90" height="60"/>
+  <text class="name" x="225" y="78">UDP</text>
+  <text class="size" x="225" y="98">8 B</text>
+
+  <rect class="hot" x="270" y="52" width="80" height="60"/>
+  <text class="name" x="310" y="78">BTH</text>
+  <text class="size" x="310" y="98">12 B</text>
+
+  <rect class="opt" x="350" y="52" width="80" height="60"/>
+  <text class="name" x="390" y="78">RETH</text>
+  <text class="size" x="390" y="98">16 B</text>
+
+  <rect class="box" x="430" y="52" width="190" height="60"/>
+  <text class="name" x="525" y="78">Payload</text>
+  <text class="size" x="525" y="98">up to the path MTU</text>
+
+  <rect class="box" x="620" y="52" width="60" height="60"/>
+  <text class="name" x="650" y="78">ICRC</text>
+  <text class="size" x="650" y="98">4 B</text>
+
+  <rect class="box" x="680" y="52" width="60" height="60"/>
+  <text class="name" x="710" y="78">FCS</text>
+  <text class="size" x="710" y="98">4 B</text>
+
+  <text class="red" x="225" y="132">dst port 4791</text>
+  <text class="red" x="310" y="150">opcode, QPN, PSN</text>
+
+  <text class="note" x="20" y="182">RETH, dashed, carries the remote address, rkey and length. It opens RDMA Write and Read requests. A Send has none.</text>
+  <text class="note" x="20" y="202">The ICRC covers the transport headers and payload. The FCS is the Ethernet checksum of the whole frame.</text>
+  <text class="note" x="20" y="222">On the lab NIC, rxe0 reported an active MTU of 1024 B, so a 4096 B message travels as four packets.</text>
+</svg>

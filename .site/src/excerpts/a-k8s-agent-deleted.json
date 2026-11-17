@@ -1,0 +1,8 @@
+{
+  "id": "a-k8s-agent-deleted",
+  "run": "20261115T060709Z",
+  "source": "docs/milestones/evidence/m2/20261115T060709Z/a-soft-roce/k8s-baseline/summary.md",
+  "lines": "5-6,8,10",
+  "format": "md-table",
+  "text": "| check | status | failure class | detail |\n|---|---|---|---|\n| cilium-agents-ready | failed | assertion-failed | worker1 has 0 ready Cilium agents (cilium-55wwn Pending) |\n| pod-to-pod-cross-node | passed |  | http://10.244.1.4:8080/ returned 'server' after 1 attempts, last exit 0 'server' |"
+}

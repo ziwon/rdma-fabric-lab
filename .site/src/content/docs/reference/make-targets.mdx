@@ -1,0 +1,12 @@
+---
+title: Make targets
+description: Every target make help lists, generated at build time from the ## comments of Makefile and mk/*.mk.
+sidebar:
+  order: 1
+---
+
+import MakeTargets from '../../../components/MakeTargets.astro';
+
+`make help` prints one line for every target whose rule line carries a `##` comment. This table reads the same lines from `Makefile` and `mk/*.mk` at every build, so a target appears here exactly when `make help` lists it.
+
+<MakeTargets />

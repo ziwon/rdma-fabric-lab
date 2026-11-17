@@ -1,0 +1,76 @@
+---
+title: vm-rxe-reboot
+description: RXE persistence. Both workers reboot, rfl-rxe.service recreates rxe0 with no Ansible involved, and the baseline tests pass again.
+sidebar:
+  order: 2
+---
+
+import Duration from '../../../../components/Duration.astro';
+import Excerpt from '../../../../components/Excerpt.astro';
+import ScenarioChecks from '../../../../components/ScenarioChecks.astro';
+
+An RXE device is not configuration a kernel keeps. `rdma link add` creates it at runtime, and a reboot loses it. The lab makes it come back with a systemd oneshot unit, `rfl-rxe.service`, which runs the same script at first setup and at every boot. This scenario reboots both workers and requires the device and the whole baseline back with no Ansible run in between.
+
+## Goal
+
+Show that after a reboot each worker recreates `rxe0` on its lab NIC by itself, that the unit's journal of the new boot shows it, and that every check of [vm-rxe-baseline](/labs/track-a/vm-rxe-baseline/) passes again.
+
+## Concepts it uses
+
+- [Soft-RoCE and RXE](/concepts/rdma/), a runtime device that a reboot removes.
+- [RDMA CM and the verb operations](/concepts/rdma/) of the baseline it repeats.
+
+## Before you start
+
+| Item | Value |
+|---|---|
+| Profile | `lab`, `worker1` and `worker2` |
+| Guest sizes | 4 vCPU, 6 GiB, 40 GiB each |
+| Prerequisite | `make bootstrap` and `make rxe-up` have run, so the unit is installed and enabled |
+
+**Time taken.** <Duration id="a-reboot-time" />. A worker reboot of the Kubernetes guests took about 97 s in M3, because a Whereabouts container did not stop on SIGTERM. That applies to the cluster guests, not to this M1 run.
+
+## Run it
+
+```bash
+make rxe-test SCENARIO=vm-rxe-reboot
+```
+
+**How the device comes back.** The unit's script waits up to 90 seconds for the lab NIC to come up with its address. It then runs `rdma link add` only when `rxe0` does not exist, and it never deletes a device. If a device with the same name sits on another NIC, or another RDMA device sits on the lab NIC, the `rxe` role fails and changes nothing ([M1](/docs/milestones/m1/) section 2). Waiting for `network-online.target` alone would not prove the NIC and its address are ready.
+
+## What every check proves
+
+<ScenarioChecks spec="a-soft-roce/vm-rxe-reboot" />
+
+`guests-rebooted` compares the boot IDs before and after, so a run where a worker did not really reboot fails. `rxe-restored-without-ansible` reads the unit's state and the journal of the new boot, and the run invokes no Ansible, so the device can only have come from the unit.
+
+## Real output
+
+The run of record of M1.
+
+<Excerpt id="a-reboot-checks" />
+
+## Break it yourself
+
+| Break | How | Checks that failed | Broken run |
+|---|---|---|---|
+| The unit cannot start at boot | `systemctl disable rfl-rxe.service` on both workers, then this scenario | `rxe-restored-without-ansible`, `rxe-bound-to-lab-nic`, `rping-verified`, `rdma-read`, `rdma-write`, `rdma-send`, `roce-on-lab-nic` | `20261115T022358Z` |
+
+<Excerpt id="a-reboot-unit-disabled" />
+
+`route-via-lab-nic` still passed in that run, because the lab address comes from netplan and survives the reboot. Only the RDMA device was missing. The repair is `make rxe-up`, which enabled the unit again and created the device, and run `20261115T022431Z` passed.
+
+A related fault is a device deleted at runtime. `rdma link delete rxe0` leaves the oneshot unit active, so a plain `state: started` would do nothing. Since M3, `make rxe-up` reads the links after the unit settings and restarts the unit when the device is missing, while a healthy worker still reports `changed=0` ([M3](/docs/milestones/m3/) section 9).
+
+## Questions to think about
+
+- The script never deletes a device. What could go wrong if it deleted `rxe0` whenever it found it attached to an unexpected NIC?
+- Why is a passing `route-via-lab-nic` in the broken run evidence that the break is narrow, not that the check is weak?
+- systemd-networkd removes a static address when the NIC loses carrier. Which order of events at boot would make a 90-second wait too short?
+
+## What the result means and does not mean
+
+The run shows that the persistence path is the unit, not Ansible, and that it rebuilds a device the baseline accepts. It says nothing about a kernel or rdma-core upgrade, which the `common` role prevents by holding the kernel metapackage and installing exact versions.
+
+> [!WARNING]
+> The bandwidth figures in the run are software measurements of this host and guest pair with no pass threshold, as in [vm-rxe-baseline](/labs/track-a/vm-rxe-baseline/).

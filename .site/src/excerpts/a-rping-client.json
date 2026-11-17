@@ -1,0 +1,8 @@
+{
+  "id": "a-rping-client",
+  "run": "20261115T020022Z",
+  "source": "tests/fixtures/a-soft-roce/rping/client.stdout",
+  "lines": "1-10",
+  "format": "text",
+  "text": "ping data: rdma-ping-0: ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqr\nping data: rdma-ping-1: BCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrs\nping data: rdma-ping-2: CDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrst\nping data: rdma-ping-3: DEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstu\nping data: rdma-ping-4: EFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuv\nping data: rdma-ping-5: FGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvw\nping data: rdma-ping-6: GHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwx\nping data: rdma-ping-7: HIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxy\nping data: rdma-ping-8: IJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz\nping data: rdma-ping-9: JKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyzA"
+}

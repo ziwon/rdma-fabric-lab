@@ -1,0 +1,87 @@
+---
+title: k8s-ha-vip
+description: Three control planes behind a kube-vip address. The guest holding the address loses power, and the API must answer on the same address from the survivors.
+sidebar:
+  order: 5
+---
+
+import Duration from '../../../../components/Duration.astro';
+import Excerpt from '../../../../components/Excerpt.astro';
+import ScenarioChecks from '../../../../components/ScenarioChecks.astro';
+
+cel1 has three control planes behind one API address. The lab profile has one control plane, so it cannot test that shape. The `ha` profile can. It joins three control planes with `kubeadm join --control-plane` behind a kube-vip address on the management network, then cuts the power of the guest that holds the address and times the API's silence.
+
+## Goal
+
+Show that the playbook the fleet uses builds three joined control planes behind a VIP, that the API answers again on the same address after its holder loses power, that the survivors keep a working cluster with etcd at quorum, and that the holder rejoins when it boots.
+
+## Concepts it uses
+
+- [kube-vip](/concepts/kubernetes-networking/), the lease and the ARP announcement.
+- The [inventory contract](/repository/cel1-site-model/), whose `k8s_api_vip` must equal `k8s_api_endpoint` with two or more control planes.
+
+## Before you start
+
+| Item | Value |
+|---|---|
+| Profile | `ha`: `ha-cp1` to `ha-cp3` 2 vCPU, 2.5 GiB, 20 GiB each, `ha-w1` 2 vCPU, 2 GiB, 20 GiB |
+| Inventory | `tests/integration/qemu-lab/profiles/ha/inventory`, every contract variable explicit |
+| Versions | Kubernetes v1.36.6, kube-vip v1.3.1, Cilium chart 1.20.4 |
+| Required | No. The spec marks it optional, and `make report` counts it apart from the required runs |
+
+**Time taken.** <Duration id="a-ha-time" />. The API was silent for 6.031 s of it.
+
+## Run it
+
+```bash
+bash tests/integration/qemu-lab/acceptance-ha.sh       # the whole sequence from wiped guests
+# or step by step
+make lab-wipe lab-up LAB_PROFILE=ha
+make inventory-check INVENTORY=tests/integration/qemu-lab/profiles/ha/inventory
+make k8s LAB_PROFILE=ha
+make addons ENV=lab KUBECONFIG_FILE=.lab/ha/kubeconfig
+make k8s-ha-test LAB_PROFILE=ha
+```
+
+The control planes join one at a time with a fresh 15-minute token and the certificate key from `upload-certs`. `lab.sh kill` sends SIGKILL to the holder's QEMU, so the guest gets no shutdown sequence, as in a power failure ([M2](/docs/milestones/m2/) section 7).
+
+## What every check proves
+
+<ScenarioChecks spec="a-soft-roce/k8s-ha-vip" />
+
+`vip-holder-identified` matters before the fault. It finds the lease holder and requires the VIP on that node only, so the power cut hits the right guest.
+
+## Real output
+
+The run of record of M2.
+
+<Excerpt id="a-ha-checks" />
+
+The probe log of a development run of the same scenario, the source of the parser fixture. Each line is a `/livez` probe on the VIP, at 0.5-second intervals, with its Unix time.
+
+<Excerpt id="a-ha-probes" />
+
+The six failed probes span from 1794720149.58 to 1794720157.12, and the gap to the first good probe was 9.04 s in that run. The four measured gaps on the ha profile were 6.031, 7.538, 9.04 and 9.045 seconds. The gap runs from the power cut until the 5-second lease expires and the new holder announces the VIP by ARP. The probes come every 0.5 seconds, so a gap can read short by one interval.
+
+## Break it yourself
+
+| Break | How | Checks that failed | Broken run | Repaired run |
+|---|---|---|---|---|
+| No survivor can take the VIP | Remove the kube-vip manifests of the two surviving control planes | `api-survives-holder-loss`, `cluster-works-after-loss` | `20261115T052346Z` | `20261115T052745Z` after `make k8s LAB_PROFILE=ha` rewrote the manifests with `changed=1` on those two nodes only |
+
+<Excerpt id="a-ha-kube-vip-removed" />
+
+82 probes failed over 120 seconds, and after the loss the lease named nobody and the VIP sat on no host. The repair also proves the playbook converges a deleted static pod.
+
+## Questions to think about
+
+- The lease lasts 5 seconds, yet the API was silent for 6 to 9 seconds. What else has to happen between the lease expiry and the first good probe?
+- `cluster-works-after-loss` writes a ConfigMap. Why is a read alone not enough to show the cluster works with one etcd member gone?
+- In M2, `kubeadm init phase upload-certs` without `--config` looked up the version online and failed after 60 seconds. Why does an offline-capable lab care?
+
+## What the result means and does not mean
+
+The run shows the fleet's control plane shape working on harness guests: three control planes joined by the shared playbook, an API address that moves to a survivor after a power cut, quorum kept, and the holder rejoining.
+
+> [!NOTE]
+> The gap is a measurement of these guests on a busy host, with no pass threshold. It is not a prediction for cel1 hardware or for another network. The ha profile proves only the VIP. Its VXLAN and NetworkPolicy behavior were not tested ([M2](/docs/milestones/m2/) section 10).

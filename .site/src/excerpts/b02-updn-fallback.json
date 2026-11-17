@@ -1,0 +1,8 @@
+{
+  "id": "b02-updn-fallback",
+  "run": "20261115T141931Z",
+  "source": "tests/fixtures/b-ibsim/b-02-updn-fallback/container/opensm.log",
+  "lines": "10-14",
+  "format": "text",
+  "text": "Nov 15 14:19:33 539015 [EE81C6C0] 0x80 -> Entering MASTER state\nNov 15 14:19:33 539266 [EE81C6C0] 0x02 -> updn_lid_matrices: disabling UPDN algorithm, no root nodes were found\nNov 15 14:19:33 539269 [EE81C6C0] 0x01 -> ucast_mgr_route: updn: cannot build lid matrices\nNov 15 14:19:33 539276 [EE81C6C0] 0x02 -> osm_ucast_mgr_process: minhop tables configured on all switches\nNov 15 14:19:33 539674 [EE81C6C0] 0x02 -> SUBNET UP"
+}

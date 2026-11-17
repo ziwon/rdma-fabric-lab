@@ -1,0 +1,86 @@
+---
+title: Quick start
+description: The commands that set up the tooling, check the host, and run each track from wiped guests.
+sidebar:
+  order: 4
+---
+
+These commands come from the repository README. Each track can run on its own. Start with the offline checks, then pick a track.
+
+## Tooling and offline checks
+
+```bash
+make venv              # pinned Python tooling in .venv
+make lint test         # static checks and unit tests
+make doctor            # read-only host check, including address plan overlaps
+make tools             # pinned helm and kubeconform in .tools/bin
+```
+
+`make venv` builds `.venv` with `uv` from `requirements.txt`. The interpreter version must equal `tooling.python` in `versions.lock.yaml`, and `make versions` fails when they differ.
+
+## Track A from nothing
+
+This is the sequence `tests/integration/qemu-lab/acceptance-m2.sh` runs.
+
+```bash
+make lab-wipe lab-up                 # boot cp1, worker1 and worker2
+make bootstrap rxe-up                # packages, lab NIC address, rxe0
+make rxe-test                        # RDMA between the workers, recorded under results/
+make k8s                             # kubeadm cluster, kubeconfig in .lab/kubeconfig
+make addons ENV=lab KUBECONFIG_FILE=.lab/kubeconfig   # Cilium, Multus and Whereabouts by Helm
+make k8s-test                        # nodes, pod traffic, DNS, Service, NetworkPolicy
+make validate report                 # check and tally every run directory
+make lab-down
+```
+
+The hostNetwork RDMA pods need the RDMA test image. It is built inside the Track B guest, never on the host, and loaded into the workers' containerd without a registry.
+
+```bash
+make rdma-tools-image               # build in the Track B guest, fails unless the digest is lab.rdma_tools_image
+make lab-down LAB_PROFILE=ibsim     # free the builder before measuring
+make rdma-tools-load                # import the image on both workers
+make k8s-hostnet-test               # the M1 RDMA tests between hostNetwork pods
+make k8s-multus-test                # net1 from Whereabouts beside Cilium, recreation, worker reboot
+```
+
+A cluster built before Cilium got its own CNI directory needs `make cni-migrate` once after `make addons ENV=lab`. `tests/integration/qemu-lab/acceptance-m3.sh` runs all of M1, M2 and M3 from wiped guests. The three-control-plane profile runs with `LAB_PROFILE=ha`.
+
+## Track B
+
+Track B boots its own guest and runs everything inside it.
+
+```bash
+make track-b                         # B-01 to B-04 in the Track B guest
+make track-b-breaks                  # every scenario must fail on its deliberate break
+make lab-down LAB_PROFILE=ibsim
+```
+
+## Track C
+
+Track C builds and runs the ns-3 model in its own guest, never on the host.
+
+```bash
+make track-c                         # c-01 and c-02, the incast scenarios c-03 to c-05, and the optional c-06
+make track-c-breaks                  # every scenario must fail on its deliberate breaks
+make lab-down LAB_PROFILE=ns3
+```
+
+## The cel1 simulation
+
+The cel1 simulation boots 13 guests and a syslog stand-in, and needs about 40 GB of disk.
+
+```bash
+LAB_DIR=/path/with/room bash tests/integration/qemu-lab/acceptance-cel1.sh
+```
+
+## Read the results
+
+Every run writes `results/<run-id>/<track>/<scenario>/`. Open its `summary.md` for the checks and metrics, or let the contract check every run directory.
+
+```bash
+make validate                        # every run directory against schemas/
+make report                          # required and optional runs, tallied apart
+make cleanup RUN=<run-id>            # stop what one run left behind, nothing else
+```
+
+[Make targets](/reference/make-targets/) lists every target with its description, read from the Makefiles at build time.

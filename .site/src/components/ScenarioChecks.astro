@@ -1,0 +1,37 @@
+---
+// The check table of one scenario, read at build time from its spec under tracks/*/scenarios/.
+import scenarios from '../generated/scenarios.json';
+
+interface Props {
+  spec: keyof typeof scenarios;
+}
+
+const { spec } = Astro.props;
+const scenario = scenarios[spec];
+if (!scenario) throw new Error(`ScenarioChecks: no spec ${spec} under tracks/*/scenarios/`);
+---
+
+<div class="rfl-spec">
+  <p class="rfl-spec-meta">
+    <code>{scenario.path}</code>
+    <span>{scenario.required ? 'required' : 'optional'}</span>
+    <span>result kind <code>{scenario.result_kind}</code></span>
+    <span>privileged <code>{String(scenario.security.privileged)}</code></span>
+  </p>
+  <p class="rfl-spec-description">{scenario.description}</p>
+  <table data-scenario={spec}>
+    <thead>
+      <tr><th>Check</th><th>What it asserts</th></tr>
+    </thead>
+    <tbody>
+      {
+        scenario.checks.map((check) => (
+          <tr data-check={check.id}>
+            <td><code>{check.id}</code></td>
+            <td>{check.description}</td>
+          </tr>
+        ))
+      }
+    </tbody>
+  </table>
+</div>

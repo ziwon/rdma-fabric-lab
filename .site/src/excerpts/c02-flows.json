@@ -1,0 +1,17 @@
+{
+  "id": "c02-flows",
+  "run": "20261116T151213Z",
+  "source": "tests/fixtures/c-ns3/baseline/flows.tsv",
+  "lines": "1-2",
+  "columns": [
+    "flow",
+    "bytes",
+    "start_ns",
+    "completed",
+    "finish_ns",
+    "cnp_acks",
+    "rx_in_order_bytes"
+  ],
+  "format": "tsv",
+  "text": "flow\tbytes\tstart_ns\tcompleted\tfinish_ns\tcnp_acks\trx_in_order_bytes\n0\t1000000\t0\t1\t88092\t0\t1000000"
+}

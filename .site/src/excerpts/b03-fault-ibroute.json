@@ -1,0 +1,8 @@
+{
+  "id": "b03-fault-ibroute",
+  "run": "20261115T142143Z",
+  "source": "tests/fixtures/b-ibsim/b-03/fault/ibroute.txt",
+  "lines": "1-21",
+  "format": "text",
+  "text": "$ ibroute 2\nUnicast lids [0x0-0x6] of switch Lid 2 guid 0x0000000000200000 (sw1):\n  Lid  Out   Destination\n       Port     Info \n0x0001 001 : (Channel Adapter portguid 0x0000000000100001: 'hca1')\n0x0002 000 : (Switch portguid 0x0000000000200000: 'sw1')\n0x0003 007 : (Switch portguid 0x0000000000200001: 'sw2')\n0x0004 002 : (Channel Adapter portguid 0x0000000000100003: 'hca2')\n0x0006 008 : (Channel Adapter portguid 0x0000000000100007: 'hca4')\n5 valid lids dumped \n\n$ ibroute 3\nUnicast lids [0x0-0x6] of switch Lid 3 guid 0x0000000000200001 (sw2):\n  Lid  Out   Destination\n       Port     Info \n0x0001 007 : (Channel Adapter portguid 0x0000000000100001: 'hca1')\n0x0002 007 : (Switch portguid 0x0000000000200000: 'sw1')\n0x0003 000 : (Switch portguid 0x0000000000200001: 'sw2')\n0x0004 008 : (Channel Adapter portguid 0x0000000000100003: 'hca2')\n0x0006 002 : (Channel Adapter portguid 0x0000000000100007: 'hca4')\n5 valid lids dumped"
+}

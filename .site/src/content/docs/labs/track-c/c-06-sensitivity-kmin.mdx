@@ -1,0 +1,80 @@
+---
+title: c-06 sensitivity to kmin
+description: c-03 at fan-in 8 with the ECN kmin lowered from 400000 to 100000 bytes and nothing else changed. An optional run.
+sidebar:
+  order: 6
+---
+
+import Duration from '../../../../components/Duration.astro';
+import Excerpt from '../../../../components/Excerpt.astro';
+import ScenarioChecks from '../../../../components/ScenarioChecks.astro';
+
+A comparison that changes many things at once explains nothing. c-06 changes one. It repeats [c-03](/labs/track-c/c-03-incast-simultaneous/) at fan-in 8 with the ECN marking threshold kmin lowered to a quarter, from 400000 to 100000 bytes, and keeps everything else, the traffic, the seeds, kmax and pmax, as it was.
+
+## Goal
+
+Measure how much the ECN profiles depend on kmin in this setup, with every check of c-03 still holding.
+
+## Concepts it uses
+
+- [ECN marking with kmin, kmax and pmax](/concepts/roce-congestion-control/).
+- [DCQCN](/concepts/roce-congestion-control/), which reacts to the marks.
+
+## Before you start
+
+| Item | Value |
+|---|---|
+| Profile | `ns3`: `ns3sim1`, 12 vCPU, 16 GiB, 100 GiB |
+| Image | `rfl-ns3:m6`, `sha256:da7a3245…` |
+| Cases | 4 profiles × 5 seeds = 20, twice |
+| Required | No. The spec marks it optional, and `make report` counts it apart |
+
+**Time taken.** <Duration id="c06-time" />.
+
+## Run it
+
+```bash
+make track-c                         # c-06 runs with the others under the same run id
+```
+
+## What every check proves
+
+<ScenarioChecks spec="c-ns3/c-06-sensitivity-kmin" />
+
+## Real output
+
+The run of record of M6.
+
+<Excerpt id="c06-checks" />
+
+The comparison, selected columns.
+
+<Excerpt id="c06-comparison" />
+
+c-none and c-pfc do not depend on kmin, and they gave the same figures as in c-03. Lowering kmin to a quarter changed the ECN profiles little. The marks are dominated by the queue above kmax, where every packet is marked anyway ([M6](/docs/milestones/m6/) section 6).
+
+| Profile | kmin B | Large FCT us min / median / max | Peak queue B | CE marks |
+|---|---|---|---|---|
+| c-ecn | 400000, from c-03 | 1489 / 2348 / 2432 | 2363844 | 2464-2743 |
+| c-ecn | 100000 | 1318 / 2385 / 2462 | 2343856 | 2529-2713 |
+| c-both | 400000, from c-03 | 1387 / 2348 / 2456 | 2026152 | 2196-2444 |
+| c-both | 100000 | 1395 / 2397 / 2474 | 2007216 | 2170-2540 |
+
+That table is quoted from [M6](/docs/milestones/m6/) section 6.
+
+## Break it yourself
+
+No break ran on c-06 in the records. Its configuration sets `run_breaks: false`, because it uses the check code of [c-03](/labs/track-c/c-03-incast-simultaneous/), whose breaks failed every incast check.
+
+## Questions to think about
+
+- If the queue spends most of its time above kmax, which parameter would you vary next, and why?
+- The median large-flow FCT moved by about 2%. Is that a real effect or within the spread of five seeds? What would you need to tell?
+- Why does `same-traffic` matter even more in a sensitivity run than in a profile comparison?
+
+## What the result means and does not mean
+
+The run shows that, in this model at fan-in 8 with these values, the ECN profiles barely depend on kmin between 100000 and 400000 bytes.
+
+> [!WARNING]
+> Only kmin was varied, and only at fan-in 8. No buffer sensitivity and no other DCQCN values were run ([M6](/docs/milestones/m6/) section 15). The result is model behavior, not a recommended switch setting.

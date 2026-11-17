@@ -1,0 +1,17 @@
+{
+  "id": "c04-stalled-flow",
+  "run": "20261116T151213Z",
+  "source": "tests/fixtures/c-ns3/incast/c-04-incast-staggered/n8-c-none-s1/flows.tsv",
+  "lines": "1-9",
+  "columns": [
+    "flow",
+    "src",
+    "bytes",
+    "start_ns",
+    "completed",
+    "finish_ns",
+    "rx_in_order_bytes"
+  ],
+  "format": "tsv",
+  "text": "flow\tsrc\tbytes\tstart_ns\tcompleted\tfinish_ns\trx_in_order_bytes\n0\t0\t1000000\t0\t1\t359244\t1000000\n1\t1\t1000000\t20000\t1\t524388\t1000000\n2\t2\t1000000\t40000\t1\t658284\t1000000\n3\t3\t1000000\t60000\t1\t658788\t1000000\n4\t4\t1000000\t80000\t0\t\t305000\n5\t5\t1000000\t100000\t1\t675924\t1000000\n6\t6\t1000000\t120000\t1\t676344\t1000000\n7\t7\t1000000\t140000\t1\t676260\t1000000"
+}

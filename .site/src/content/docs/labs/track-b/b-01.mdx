@@ -1,0 +1,97 @@
+---
+title: B-01 two HCAs on one switch
+description: OpenSM discovers a hand-written fabric of two HCAs on one switch inside ibsim, brings every port Active and assigns unique LIDs.
+sidebar:
+  order: 1
+---
+
+import Duration from '../../../../components/Duration.astro';
+import Excerpt from '../../../../components/Excerpt.astro';
+import RepoFile from '../../../../components/RepoFile.astro';
+import ScenarioChecks from '../../../../components/ScenarioChecks.astro';
+
+The smallest fabric that needs a subnet manager is two HCAs on one switch. B-01 runs OpenSM against that fabric in ibsim and checks, with the standard diagnostic tools, everything the SM is supposed to have done: discovery, LIDs, port states, forwarding tables, and reachability by LID.
+
+## Goal
+
+Show that OpenSM reaches SUBNET UP on the B-01 fabric, that `ibnetdiscover` finds exactly the nodes and links of the net file, that every linked port is Active with a unique non-zero LID, and that the switch forwards every endpoint LID correctly.
+
+## Concepts it uses
+
+- [The subnet manager and its sweep](/concepts/infiniband-management/).
+- [GUIDs, LIDs and port states](/concepts/infiniband-management/).
+- [ibsim and libumad2sim](/concepts/infiniband-management/), the stand-in for hardware.
+
+## Before you start
+
+| Item | Value |
+|---|---|
+| Profile | `ibsim`: the guest `ibsim1`, 4 vCPU, 6 GiB, 20 GiB. SSH only on the 127.0.0.1:22231 forward |
+| Image | `rfl-ibsim:m4`, `sha256:cb3e3550f4f60de5414abe55dbe81e45fd68106ef5ecc4cfa4d701b6083ee279` |
+| Software in the image | ibsim 0.10-2build1, OpenSM 3.3.23-2, infiniband-diags 50.0-2ubuntu0.2, from the Ubuntu snapshot 20261115T000000Z |
+| Guest | Ubuntu 24.04.5, kernel 6.8.0-147-generic, Docker 29.1.3, `kernel.panic_on_oops=1`, QEMU `-no-reboot` |
+| Version lock | `make versions SCOPE=m4` must return 0 |
+
+> [!CAUTION]
+> Never run ibsim, libumad2sim, OpenSM or the diagnostic tools on the host, in a container or not. See [Safety rules](/start/safety/).
+
+**Time taken.** <Duration id="b01-time" />. The first SUBNET UP came 0.002 s after OpenSM started, in simulator time. The first image build fetched the apt layer in 75 s.
+
+## Run it
+
+```bash
+make track-b                         # boots ibsim1, prepares it, builds the image, runs B-01 to B-04
+make track-b-breaks                  # each scenario must end failed on its deliberate break
+make lab-down LAB_PROFILE=ibsim
+```
+
+`make track-b` runs `python -m ibsim run --scenario <name>` for each scenario under one run id. The runner on the host reaches the guest over SSH and never starts a simulator, a tool or a container itself. Inside the guest, `tracks/b-ibsim/scripts/guest.sh start` starts one container per run. OpenSM runs with `-R minhop`, attached at `hca1`.
+
+The fabric, hand-written in the ibsim net file format.
+
+<RepoFile path="tracks/b-ibsim/topologies/b-01.net" />
+
+## What every check proves
+
+<ScenarioChecks spec="b-ibsim/b-01" />
+
+`topology-discovered` compares against the net file, not against a list typed into the test, so a fabric change cannot pass by accident. `lid-reachability` sends a LID-routed `smpquery nodedesc` to every LID, which works only after the SM wrote the forwarding tables. `host-untouched` scans the host at the start and the end of the run for any simulator process or Track B container.
+
+## Real output
+
+The run of record of M4.
+
+<Excerpt id="b01-checks" />
+
+OpenSM's log in an earlier passing run of B-01, the source of the fixtures. It enters DISCOVERING, binds its management classes, becomes MASTER, configures minhop tables and reports SUBNET UP within 3 ms of start.
+
+<Excerpt id="b01-opensm" />
+
+What `ibnetdiscover` found in the same run.
+
+<Excerpt id="b01-ibnetdiscover" />
+
+## Break it yourself
+
+`python -m ibsim run --break` removes one link from the net file the simulator gets, while every expectation still comes from the full topology file. For B-01 the removed link is `"hca2"[1]-"sw1"[2]`.
+
+```bash
+make track-b-breaks
+```
+
+<Excerpt id="b01-break" />
+
+`routes-shortest` still passed, which is correct. With `hca2` gone, the switch still forwards the one remaining endpoint LID out of the right port. All four break runs of `20261115T151828Z` failed with class `assertion-failed`, and `rfl validate` accepted them ([M4](/docs/milestones/m4/) section 7).
+
+## Questions to think about
+
+- The SM attaches at `hca1`. How does it reach `hca2` before any forwarding table exists?
+- Why would a LID of 0 on an Active port be a failure, and what does LMC 0 promise about the number of LIDs per port?
+- The six unlinked ports of `sw1` show `Down/Polling`. Why does `port-states` check them at all?
+
+## What the result means and does not mean
+
+The run shows OpenSM discovering, addressing and routing a two-HCA fabric correctly as ibsim presents it, with the standard tools reading the result.
+
+> [!WARNING]
+> This is a management simulation. It shows no hardware, firmware, link timing, IPoIB or RDMA data path. MADs travel over ibsim's Unix socket through libumad2sim, and ibsim reports every link as 4X SDR at 2.5 Gbps.

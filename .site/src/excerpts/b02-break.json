@@ -1,0 +1,8 @@
+{
+  "id": "b02-break",
+  "run": "20261115T151828Z",
+  "source": "docs/milestones/evidence/m4/20261115T151828Z/b-ibsim/b-02/summary.md",
+  "lines": "5-6,10,12-13",
+  "format": "md-table",
+  "text": "| check | status | failure class | detail |\n|---|---|---|---|\n| topology-discovered | failed | assertion-failed | 1 problems: missing link \"sw1\"[8]-\"sw2\"[8] |\n| port-states | failed | assertion-failed | 2 problems: \"sw1\"[8] is Down/Polling to None, want Active/LinkUp to \"sw2\"[8], \"sw2\"[8] is Down/Polling to None, want Active/LinkUp to \"sw1\"[8] |\n| routes-shortest | passed |  | 8 switch routes to endpoint LIDs, each one hop closer to its endpoint |"
+}

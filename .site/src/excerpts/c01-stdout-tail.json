@@ -1,0 +1,8 @@
+{
+  "id": "c01-stdout-tail",
+  "run": "probe simai-noble run1, image rfl-ns3:m5",
+  "source": "tests/fixtures/c-ns3/probe/simai-run1-stdout-tail.txt",
+  "lines": "17-20",
+  "format": "text",
+  "text": "sim_finish on sent,  Thread id: 124252387878720\nAll data sent from node 7 is 146800640\nsim_finish on received,  Thread id: 124252387878720\nAll data received by node 7 is 146800640"
+}

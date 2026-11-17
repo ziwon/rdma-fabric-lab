@@ -1,0 +1,249 @@
+@import "katex/dist/katex.min.css";
+
+:root {
+  --sl-font: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --sl-font-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  --sl-color-accent-low: #d5f7fb;
+  --sl-color-accent: #007f94;
+  --sl-color-accent-high: #004a57;
+  --sl-color-text-accent: #006f82;
+  --sl-color-white: #050505;
+  --sl-color-gray-1: #25211d;
+  --sl-color-gray-2: #3c3833;
+  --sl-color-gray-3: #6f6a63;
+  --sl-color-gray-4: #a49c92;
+  --sl-color-gray-5: #d8d1c7;
+  --sl-color-gray-6: #ebe5dc;
+  --sl-color-black: #f5f1ea;
+  --rfl-accent-red: #d9392e;
+  --rfl-cyan: #008aa0;
+  --rfl-figure: #f5f1ea;
+}
+
+:root[data-theme="dark"] {
+  --sl-color-accent-low: #062337;
+  --sl-color-accent: #25f4ff;
+  --sl-color-accent-high: #bdf8ff;
+  --sl-color-text-accent: #25f4ff;
+  --sl-color-white: #f8f4ed;
+  --sl-color-gray-1: #ebe5dc;
+  --sl-color-gray-2: #d8d1c7;
+  --sl-color-gray-3: #a49c92;
+  --sl-color-gray-4: #6f6a63;
+  --sl-color-gray-5: #3c3833;
+  --sl-color-gray-6: #25211d;
+  --sl-color-black: #020817;
+  --rfl-cyan: #18cfff;
+}
+
+body {
+  letter-spacing: 0;
+}
+
+a {
+  text-underline-offset: 0.18em;
+}
+
+.site-title {
+  color: var(--sl-color-white);
+  letter-spacing: 0;
+}
+
+.site-title::before {
+  content: "";
+  display: inline-block;
+  width: 0.62rem;
+  height: 0.62rem;
+  margin-inline-end: 1.6rem;
+  border-radius: 999px;
+  background: var(--rfl-cyan);
+  box-shadow:
+    0.7rem -0.18rem 0 var(--sl-color-accent),
+    1.18rem 0.36rem 0 var(--rfl-accent-red);
+  vertical-align: 0.02rem;
+}
+
+.sl-markdown-content :is(h1, h2) {
+  color: #172032;
+}
+
+:root[data-theme="dark"] .sl-markdown-content :is(h1, h2) {
+  color: var(--sl-color-white);
+}
+
+/* Diagrams are figures on a cream surface in both themes, as the SVG palette assumes. */
+.sl-markdown-content img[src$=".svg"],
+.sl-markdown-content .rfl-figure img {
+  border: 1px solid var(--sl-color-gray-5);
+  border-radius: 6px;
+  background: var(--rfl-figure);
+}
+
+.sl-markdown-content .katex svg,
+.sl-markdown-content .sl-anchor-icon svg,
+.sl-markdown-content .starlight-aside__icon {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+/* Mermaid measures HTML labels with its own font. Starlight would otherwise lend <pre> its monospace font after
+   the measurement and clip the last characters of each label. The diagrams use the shared dark palette, so the
+   figure gets the dark surface that palette assumes. :root outranks the theme-scoped backgrounds that
+   astro-mermaid injects after rendering. */
+:root .sl-markdown-content pre.mermaid,
+:root .sl-markdown-content pre.mermaid[data-processed] {
+  font-family: Inter, Arial, sans-serif;
+  border: 1px solid #3c3833;
+  border-radius: 8px;
+  background: #171717;
+  padding: 1rem;
+}
+
+.sl-markdown-content pre.mermaid[data-processed] svg :is(.edge-pattern-dashed, .edge-pattern-dotted) {
+  stroke-width: 2px !important;
+  opacity: 1;
+}
+
+.sl-markdown-content blockquote {
+  border-inline-start-color: var(--rfl-cyan);
+  background: color-mix(in srgb, var(--rfl-cyan), transparent 92%);
+}
+
+/* Inline code wraps at the break points src/plugins/rehype-code-breaks.mjs adds, and a long token anywhere. */
+.sl-markdown-content code:not(:where(.expressive-code *)) {
+  border: 1px solid color-mix(in srgb, var(--rfl-cyan), transparent 78%);
+  background: color-mix(in srgb, var(--rfl-cyan), transparent 92%);
+  overflow-wrap: break-word;
+}
+
+.sl-markdown-content code.rfl-long,
+.sl-markdown-content table[data-lock-scope] td code,
+.rfl-duration code {
+  overflow-wrap: anywhere;
+}
+
+.sl-markdown-content table {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+  font-size: 0.88rem;
+}
+
+.sl-markdown-content :is(h2, h3, h4) {
+  letter-spacing: 0;
+}
+
+.rfl-spec-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 1rem;
+  font-size: 0.85rem;
+  color: var(--sl-color-gray-3);
+}
+
+.rfl-spec-description {
+  font-size: 0.92rem;
+  color: var(--sl-color-gray-2);
+}
+
+.rfl-excerpt {
+  margin-inline: 0;
+}
+
+.rfl-excerpt figcaption {
+  margin-block-end: 0.4rem;
+  font-size: 0.82rem;
+  color: var(--sl-color-gray-3);
+}
+
+.rfl-excerpt table {
+  font-family: var(--sl-font-mono);
+  font-size: 0.8rem;
+}
+
+.rfl-home-hero {
+  margin-block: 0 2rem;
+}
+
+.rfl-home-kicker {
+  margin: 0 0 0.6rem;
+  color: var(--rfl-accent-red);
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.rfl-card-grid ul {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: 0.9rem;
+  margin-block: 1rem 2rem;
+  padding: 0;
+  list-style: none;
+}
+
+.rfl-card-grid li {
+  margin: 0;
+  border: 1px solid var(--sl-color-gray-5);
+  border-top: 3px solid var(--rfl-cyan);
+  border-radius: 8px;
+  padding: 1rem;
+  color: var(--sl-color-gray-2);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.rfl-card-grid li a {
+  display: block;
+  margin-block-end: 0.4rem;
+  color: var(--sl-color-white);
+  font-size: 1.02rem;
+  text-decoration: none;
+}
+
+.rfl-card-grid li:hover {
+  border-color: var(--rfl-cyan);
+}
+
+.rfl-duration code {
+  font-size: 0.82em;
+}
+
+.rfl-scope {
+  margin-block: 0.5rem;
+}
+
+.rfl-scope summary {
+  cursor: pointer;
+}
+
+/* A check id or make target reads as one word. */
+.rfl-spec td:first-child code,
+table[data-make-targets] td:first-child code {
+  white-space: nowrap;
+  overflow-wrap: normal;
+}
+
+/* Real output holds long tokens such as digests. In a summary table only the detail column holds them, so it
+   alone may break anywhere, and the short status columns stay whole. */
+.rfl-excerpt table[data-format="md-table"] td:not(:first-child):not(:last-child) {
+  white-space: nowrap;
+}
+
+.rfl-excerpt table[data-format="md-table"] td:last-child {
+  overflow-wrap: anywhere;
+}
+
+.rfl-excerpt table[data-format="tsv"] {
+  font-size: 0.74rem;
+}
+
+.rfl-excerpt table[data-format="tsv"] :is(td, th) {
+  padding-inline: 0.3rem;
+}
+
+.rfl-excerpt td.rfl-long {
+  overflow-wrap: anywhere;
+}

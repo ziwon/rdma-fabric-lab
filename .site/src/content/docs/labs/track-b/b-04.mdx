@@ -1,0 +1,79 @@
+---
+title: B-04 rerouting on the cel1 rail fabric
+description: A leaf to spine link fails on the cel1 compute fabric rendered from sites/cel1.yaml, and updn moves every affected route to the other spine links.
+sidebar:
+  order: 4
+---
+
+import Duration from '../../../../components/Duration.astro';
+import Excerpt from '../../../../components/Excerpt.astro';
+import ScenarioChecks from '../../../../components/ScenarioChecks.astro';
+
+B-03 cut a link with no alternative. B-04 cuts one with many. The fabric is cel1's compute fabric, rendered from the site model: 8 DGX B200 hosts with one HCA per rail, a leaf per rail and 4 spines. When one leaf to spine link fails, every route that used it must move to another spine link, and every LID must keep answering.
+
+## Goal
+
+Show that OpenSM with the updn engine discovers the 76-node cel1 fabric exactly, routes all 768 switch routes shortest, moves every route off a failed leaf to spine link, keeps all 76 LIDs reachable, and restores the baseline after the ReLink.
+
+## Concepts it uses
+
+- [Rail-optimized fabrics](/concepts/infiniband-management/) and the cel1 compute fabric.
+- [updn routing](/concepts/infiniband-management/), free of credit loops on any topology.
+- [The cel1 site model](/repository/cel1-site-model/), the single source the net file is rendered from.
+
+## Before you start
+
+| Item | Value |
+|---|---|
+| Profile | `ibsim`: `ibsim1`, 4 vCPU, 6 GiB, 20 GiB |
+| Fabric | `tracks/b-ibsim/topologies/cel1-compute.net`: 12 switches, 64 HCAs, 768 switch ports, 128 links |
+| Engine | `opensm -R updn`, attached at `cel1-dgx-01 mlx5_0` |
+| Fault | `Unlink "cel1-ib-leaf-r3"[35]`, the link to `cel1-ib-spine-02`[7], then `ReLink` |
+
+**Time taken.** <Duration id="b04-time" />. In simulator time, the first SUBNET UP came 0.029 s after start, a new one 0.062 s after the Unlink and 0.070 s after the ReLink.
+
+## Run it
+
+```bash
+make track-b-render-check            # offline: the net file equals what sites/cel1.yaml renders
+make track-b
+```
+
+`make track-b-render` writes the net file from `fabrics.compute` of `sites/cel1.yaml`. Unit tests recompute the counts from the raw YAML, rebuild every link from the raw cable list, and compare both with the generator and the committed file.
+
+## What every check proves
+
+<ScenarioChecks spec="b-ibsim/b-04" />
+
+## Real output
+
+The run of record of M4. 64 endpoint LIDs and 768 switch routes. 13 routes left through the two ports of the failed link, and all 13 moved to other ports. All 76 LIDs still answered, and recovery restored the baseline.
+
+<Excerpt id="b04-checks" />
+
+OpenSM's log in an earlier passing run of B-04, the source of the fixtures. All three sweeps, before the fault, after it and after the repair, configured updn tables and reached SUBNET UP.
+
+<Excerpt id="b04-opensm-sweeps" />
+
+## Why updn here
+
+ftree also reached SUBNET UP on the healthy cel1 fabric, but rejected the degraded one with `ERR AB0B` and fell back to minhop. updn routed through the fault and the recovery ([M4](/docs/milestones/m4/) section 6). In a two-tier fabric where every leaf reaches every spine, up/down paths are shortest, and `routes-shortest` confirmed that for all 768 routes.
+
+## Break it yourself
+
+The break removes `"cel1-ib-leaf-r0"[33]-"cel1-ib-spine-01"[1]` from the simulated fabric for the whole run.
+
+<Excerpt id="b04-break" />
+
+## Questions to think about
+
+- Each leaf has two links to each spine. How many routes would you expect to leave through one failed link, and why were there 13?
+- Traffic between same-rank GPUs on different hosts stays on one leaf. Which traffic does a leaf to spine fault affect at all?
+- ftree rejected the degraded fabric. What property of a fat tree does one missing link break, and why does updn not care?
+
+## What the result means and does not mean
+
+The run shows OpenSM with updn rerouting around a leaf to spine fault on the cel1 rail fabric, as ibsim presents it, with every LID reachable throughout.
+
+> [!WARNING]
+> This is a management simulation of ibsim and OpenSM, not of NDR hardware or firmware. ibsim reports every link as 4X SDR at 2.5 Gbps while the site model says NDR. Nothing here shows switch or HCA firmware, VF GUIDs or LIDs, SR-IOV, partitions, QoS, multicast or SM failover.

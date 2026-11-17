@@ -1,0 +1,8 @@
+{
+  "id": "a-collect-checks",
+  "run": "20261115T022919Z",
+  "source": "docs/milestones/evidence/m1/20261115T022919Z/a-soft-roce/vm-environment/summary.md",
+  "lines": "13-18",
+  "format": "md-table",
+  "text": "| check | status | detail |\n|---|---|---|\n| guest-versions-match-lock | passed | lab.guest_kernel=6.8.0-147-generic, lab.guest_os=Ubuntu 24.04.5 LTS, lab.perftest=24.01.0+0.38-1build2, lab.rdma_core=50.0-2ubuntu0.2 |\n| guest-image-build | passed | build.info serial ['20261017', '20261017'] against lab.guest_image ref 20261017 |\n| guest-state-collected | passed | 16 snapshots from each of worker1, worker2 |\n| host-state-collected | passed | kernel 7.0.0-42-generic, 5 snapshots |"
+}

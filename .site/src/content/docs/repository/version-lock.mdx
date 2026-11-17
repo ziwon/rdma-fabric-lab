@@ -1,0 +1,53 @@
+---
+title: Version lock
+description: versions.lock.yaml, its components and scopes, make versions, and make collect, which compares the lock with what the guests report.
+sidebar:
+  order: 2
+---
+
+import Duration from '../../../components/Duration.astro';
+import Excerpt from '../../../components/Excerpt.astro';
+import LockScopes from '../../../components/LockScopes.astro';
+import ScenarioChecks from '../../../components/ScenarioChecks.astro';
+
+A lab result means something only for the exact versions that produced it. `versions.lock.yaml` holds every pinned version, commit, image digest and checksum the lab uses. Roles, values files and image builds read their versions from it and hard-code none. A component the lab has not decided yet is `null` with a reason, and any target that needs it refuses to run.
+
+## Components
+
+Each component has a `kind`, a `value`, a `reason` and a `source`, and validates against `schemas/versions-lock.schema.json`.
+
+| Kind | Example | Meaning |
+|---|---|---|
+| `version` | `k8s.kubernetes` | A release version |
+| `git-sha` | `ns3.simai` | A full commit SHA of an upstream repository |
+| `image-digest` | `ibsim.image` | An OCI digest, so an image is pinned by content, not by tag |
+| `checksum` | `k8s.containerd_archive` | The sha256 a role checks a download against |
+| `observed` | `lab.guest_kernel` | A value read from a running environment, such as a guest kernel release |
+
+The `reason` says why this value was chosen, and the `source` says where it was read. For example, the lab takes the latest Kubernetes v1.36 patch rather than v1.37, because the Cilium 1.20 compatibility table covers only 1.33 to 1.36 ([ADR 0001](/docs/adr/0001-kubernetes-stack/) section 3).
+
+## Scopes
+
+A scope lists the components one milestone needs. `make versions SCOPE=<name>` fails when any of them is still `null`, and the targets of that milestone depend on it. `make versions` alone also fails when the Python tooling in `.venv` drifts from `tooling.*`. This list is read from the lock at build time.
+
+<LockScopes />
+
+<Excerpt id="repo-versions-m3" />
+
+## What pinning costs
+
+The `common` role installs the exact locked package versions. When the Ubuntu archive moves rdma-core up, the old version drops out of its index and `make bootstrap` fails, naming the cause. The fix is to probe again and pin the lock ([M1](/docs/milestones/m1/) section 6). Track B, Track C and the RDMA test image avoid this by installing from a dated Ubuntu snapshot, `20261115T000000Z`, which never changes.
+
+The image digests go further. A rebuild of the Track C image from nothing, with the cache emptied, had to give the pinned digest, and did. `guest.sh build` exports with `SOURCE_DATE_EPOCH` and `rewrite-timestamp`, and the build removes the apt lists, logs and caches that carry build-time state ([M5](/docs/milestones/m5/) section 5).
+
+## make collect, the guests against the lock
+
+`make collect` runs the scenario `vm-environment`. It snapshots the host and the workers and compares every `lab.*` value of the lock that the guests report with what they report. No traffic runs.
+
+<ScenarioChecks spec="a-soft-roce/vm-environment" />
+
+**Time taken.** <Duration id="a-collect-time" />.
+
+<Excerpt id="a-collect-checks" />
+
+Since M2, the comparison covers only the guest-observed items of scope `m1`. `lab.k8s_test_image` is not a value the guests report ([M2](/docs/milestones/m2/) section 2).

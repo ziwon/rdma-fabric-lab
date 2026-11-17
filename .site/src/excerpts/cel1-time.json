@@ -1,0 +1,8 @@
+{
+  "id": "cel1-time",
+  "run": "20261115T164615Z",
+  "source": "docs/milestones/evidence/cel1-sim/20261115T164615Z/cel1/cel1-sim-baseline/manifest.json",
+  "lines": "10-11",
+  "format": "text",
+  "text": "  \"created_at\": \"2026-11-15T16:46:15Z\",\n  \"finished_at\": \"2026-11-15T16:49:13Z\","
+}

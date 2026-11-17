@@ -25,3 +25,10 @@ admin.conf
 
 # Local design draft, kept out of the repository.
 /PLAN.md
+
+# The learning site: its npm install, build output and the files its build writes.
+/.site/node_modules/
+/.site/dist/
+/.site/.astro/
+/.site/src/content/docs/docs/
+/.site/src/generated/

@@ -1,0 +1,66 @@
+---
+title: Repository layout
+description: Where each part of the lab lives in the repository, and which make targets drive it.
+sidebar:
+  order: 0
+---
+
+The repository holds the code of every track, the result contract they share, and the records of what ran. Results and logs stay out of git. Only the records and their run ids are committed.
+
+| Path | Contents |
+|---|---|
+| `ansible/` | Inventories for `lab` and `cel1`, playbooks, and the roles of the shared stack (`containerd`, `kubeadm`) and the lab (`preflight`, `common`, `network`, `rxe`, `rdma_tools`, `cni_layout`, `rsyslog_client`) |
+| `helm/` | `releases.yaml`, the Helm releases in install order, values per environment, and the repo-local Multus chart |
+| `images/` | The pinned Track B image, the Track C ns-3 image with its one patch, and the RDMA test image, all built inside a harness guest |
+| `sites/` | Site models. `sites/cel1.yaml` is the single source of cel1 |
+| `scripts/` | The result contract `rfl`, scenario runners, doctor, the addons runner, fleet and inventory checks, and the Track B and Track C runners |
+| `tracks/` | Scenario specs, their configuration, the Track B topologies, the Track C driver and the guest scripts |
+| `tests/` | Unit tests, fixtures captured from real runs, and the QEMU harness under `tests/integration/qemu-lab/` |
+| `schemas/` | JSON schemas of scenario specs, run manifests, metrics and the version lock |
+| `versions.lock.yaml` | Every pinned version and checksum, grouped in scopes per milestone |
+| `docs/` | ADRs, milestone records, the cel1 runbook, VMware setup and troubleshooting |
+| `mk/` | The make targets of each area, included by `Makefile` |
+| `.site/` | This site |
+
+## How a run flows through it
+
+```mermaid
+%%{init: {"theme": "base", "themeVariables": {"background": "#171717", "primaryColor": "#232323", "primaryTextColor": "#f5f5f5", "primaryBorderColor": "#d0d0d0", "lineColor": "#cfcfcf", "fontFamily": "Inter, Arial, sans-serif"}}}%%
+flowchart TB
+    L[versions.lock.yaml] --> M[make target in mk/]
+    S[tracks/*/scenarios/*.yaml] --> R[runner in scripts/]
+    M --> R
+    R --> G[guests of the QEMU harness]
+    G --> D[results/run-id/track/scenario/]
+    D --> V[make validate<br/>schemas/]
+    V --> Rec[milestone record<br/>run ids, exit codes, findings]
+
+    classDef primary fill:#232323,stroke:#d0d0d0,color:#f5f5f5,stroke-width:2px;
+    classDef secondary fill:#3b2f20,stroke:#d0d0d0,color:#f5f5f5,stroke-width:2px;
+    classDef note fill:#52676b,stroke:#d0d0d0,color:#f5f5f5,stroke-width:2px;
+    classDef accent fill:#62164d,stroke:#d0d0d0,color:#f5f5f5,stroke-width:2px;
+    class L,S primary
+    class M,R,G secondary
+    class D,V accent
+    class Rec note
+```
+
+## What stays local
+
+| Path | Why it is not in git |
+|---|---|
+| `results/` | Run directories with raw captures and logs. The records cite their run ids |
+| `docs/milestones/evidence/` | Copies of the evidence a record cites by path |
+| `.lab/` | Guest disks, cloud-init seeds, SSH keys, the kubeconfig and the harness logs |
+| `.tools/` | The pinned helm and kubeconform from `make tools`, and the charts they render |
+| `.venv/` | The pinned Python tooling from `make venv` |
+
+So a path under `docs/milestones/evidence/` or `.lab/` on this site is shown as code. It names a file that exists only on the machine that ran the lab.
+
+## The pages of this section
+
+- [Results contract](/repository/results-contract/): scenario specs, checks, evidence and `make validate`.
+- [Version lock](/repository/version-lock/): `versions.lock.yaml`, its scopes and `make versions`.
+- [QEMU harness](/repository/qemu-harness/): profiles, the user-space switch and cable, and the port forwards.
+- [cel1 site model](/repository/cel1-site-model/): `sites/cel1.yaml`, the rendered inventory and the inventory contract.
+- [Deliberate breaks](/repository/deliberate-breaks/): how every check was shown to fail.

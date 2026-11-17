@@ -1,0 +1,70 @@
+---
+title: vm-rxe-rerun
+description: RXE idempotence. A second bootstrap and rxe-up against configured workers change nothing and leave one device and one address on the lab NIC.
+sidebar:
+  order: 3
+---
+
+import Duration from '../../../../components/Duration.astro';
+import Excerpt from '../../../../components/Excerpt.astro';
+import ScenarioChecks from '../../../../components/ScenarioChecks.astro';
+
+A configuration tool that changes something on its second run has a bug, even when the result looks the same. This scenario runs `make bootstrap` and `make rxe-up` again on workers that are already configured. Both must report `changed=0`, and each worker must still hold exactly one device, one address, one netplan file and one unit.
+
+## Goal
+
+Prove that the `common`, `network` and `rxe` roles converge. A rerun must not duplicate the device, the address or the files, and must not touch a worker that is already right.
+
+## Concepts it uses
+
+- [Soft-RoCE and RXE](/concepts/rdma/). `rdma link add` would fail or duplicate state if the role ran it blindly.
+- The repository's [results contract](/repository/results-contract/), which records Ansible's recap as evidence.
+
+## Before you start
+
+| Item | Value |
+|---|---|
+| Profile | `lab`, `worker1` and `worker2` |
+| Guest sizes | 4 vCPU, 6 GiB, 40 GiB each |
+| Prerequisite | `make bootstrap` and `make rxe-up` have run once |
+
+**Time taken.** <Duration id="a-rerun-time" />. The `bootstrap` rerun of the fixture below took 4.756 s by Ansible's task profiler.
+
+## Run it
+
+```bash
+make rxe-test SCENARIO=vm-rxe-rerun
+```
+
+The `rxe` role reads `rdma -j link show` first. It refuses a device of the same name on another NIC and another RDMA device on the lab NIC, and changes nothing in either case. The network role writes a netplan file for the lab NIC only and checks before and after that SSH still comes in through the management NIC.
+
+## What every check proves
+
+<ScenarioChecks spec="a-soft-roce/vm-rxe-rerun" />
+
+## Real output
+
+The run of record of M1.
+
+<Excerpt id="a-rerun-checks" />
+
+The recap of the `bootstrap` rerun from an earlier run, the source of the parser fixture.
+
+<Excerpt id="a-rerun-recap" />
+
+## Break it yourself
+
+M1 recorded no deliberate break for this scenario. Its checks are counts that a broken role would raise, and the first `make bootstrap` on fresh guests is the contrast. It reported `changed=8` on each worker, and the first `make rxe-up` reported `changed=7` ([M1](/docs/milestones/m1/) section 3). To see `single-rxe-device` fail yourself, add a second netplan file for the lab NIC on one worker and run the scenario. That exercise was not run in the records, so its output is not shown here.
+
+## Questions to think about
+
+- Ansible reports `changed` per task. Which task would turn `changed=1` on every run if the netplan file were written with a timestamp in it?
+- The `common` role installs exact package versions. What happens to a rerun when the archive moves rdma-core up and drops the old version from its index?
+- Why does the role read the links before it acts, instead of running `rdma link add` and ignoring the error?
+
+## What the result means and does not mean
+
+The run shows that a second pass of the roles converges on configured workers. It does not show convergence from every partial state, such as a device deleted at runtime, which M3 found `make rxe-up` did not repair until its role was fixed.
+
+> [!NOTE]
+> This scenario measures no bandwidth. Its spec declares the result kind `software-rdma-measurement` like the other RXE scenarios, and its evidence is Ansible output.
