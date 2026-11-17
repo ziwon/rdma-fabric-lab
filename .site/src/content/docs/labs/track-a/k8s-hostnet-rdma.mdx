@@ -28,7 +28,7 @@ Show that a container on each worker can open the node's `rxe0` and complete rpi
 | Profile | `lab`: `cp1` 2 vCPU, 4 GiB, and `worker1`, `worker2` 4 vCPU, 6 GiB each. Only these three ran during the runs of record |
 | Cluster | `make k8s` and `make addons ENV=lab` done, Cilium, Multus and Whereabouts installed |
 | Image | `docker.io/library/rfl-rdma-tools:m3@sha256:756e51cf…`, built in the Track B guest with `make rdma-tools-image` and imported with `make rdma-tools-load` |
-| Version lock | `make versions SCOPE=m3` must return 0 |
+| Version lock | `make versions SCOPE=k8s-rdma` must return 0 |
 
 **Time taken.** <Duration id="a-hostnet-time" />. Each perftest test is one burst of about 16 ms.
 
@@ -41,17 +41,17 @@ make rdma-tools-load                # ctr import on both workers, by digest, no 
 make k8s-hostnet-test               # this scenario
 ```
 
-The pods sleep, and the runner starts every process through `kubectl exec` on `cp1`, under `timeout`. The image is referenced by digest with `imagePullPolicy: Never`. `ctr import --digests` names it by the sha256 of `index.json`, and CRI resolves a pod's `name@digest` only by that name, so the lock pins the index digest ([M3](/docs/milestones/m3/) section 2).
+The pods sleep, and the runner starts every process through `kubectl exec` on `cp1`, under `timeout`. The image is referenced by digest with `imagePullPolicy: Never`. `ctr import --digests` names it by the sha256 of `index.json`, and CRI resolves a pod's `name@digest` only by that name, so the lock pins the index digest (`.lab/evidence/m3/image-import-probe.txt`, [ADR 0004](/docs/adr/0004-track-a-pods-and-net1/) section 2.2).
 
 ## What every check proves
 
 <ScenarioChecks spec="a-soft-roce/k8s-hostnet-rdma" />
 
-The checks from `rxe-bound-to-lab-nic` to `no-roce-on-mgmt-nic` are the M1 suite, now executed in the pods. `pod-security-as-declared` and `narrower-profiles-fail` keep the security finding honest on every run: a dry-run relabel to `baseline` and `restricted` must refuse both pods, and the narrower profiles must still fail.
+The checks from `rxe-bound-to-lab-nic` to `no-roce-on-mgmt-nic` are the checks of `vm-rxe-baseline`, now executed in the pods. `pod-security-as-declared` and `narrower-profiles-fail` keep the security finding honest on every run: a dry-run relabel to `baseline` and `restricted` must refuse both pods, and the narrower profiles must still fail.
 
 ## Real output
 
-The run of record of M3, on guests built from wiped disks.
+The run of record, on guests built from wiped disks.
 
 <Excerpt id="a-hostnet-checks" />
 
@@ -73,11 +73,25 @@ The dry-run relabel to `baseline` in the same run. Kubernetes names both reasons
 | 4 | Profile 3 with `/dev/infiniband` as a hostPath | The files appear with mode 0666, but opening `uverbs0` and `rdma_cm` gives `Operation not permitted` |
 | 5 | `privileged: true`, uid and gid 65534, no host PID or IPC, no volume, no runtime socket | `rxe0` is `PORT_ACTIVE`, no effective capability, and `ib_write_bw` completes between the pods |
 
-The user accepted `privileged` for the lab RDMA pods on 2026-11-16. The pods run with 8388608 bytes of memlock, containerd's default, and the tests need less than 64 KiB ([M3](/docs/milestones/m3/) section 5).
+The user accepted `privileged` for the lab RDMA pods on 2026-11-16. The pods run with 8388608 bytes of memlock, containerd's default, and the tests need less than 64 KiB ([ADR 0004](/docs/adr/0004-track-a-pods-and-net1/) section 2.1).
+
+## Bandwidth beside the VM runs
+
+Average Gb/sec of the runs of the Track A acceptance `.lab/acceptance-m3/20261116T001921Z`, with only the lab guests running. Each figure is one burst of 4096 B x 1000, about 16 ms.
+
+| Run | Where the processes ran | Read | Write | Send |
+|---|---|---:|---:|---:|
+| `20261116T003401Z` vm-rxe-baseline | worker SSH sessions | 1.96 | 2.04 | 2.12 |
+| `20261116T003428Z` vm-rxe-baseline, net1 pods present | worker SSH sessions | 2.33 | 2.04 | 2.46 |
+| `20261116T003527Z` vm-rxe-reboot | worker SSH sessions | 1.79 | 2.18 | 2.16 |
+| `20261116T002950Z` k8s-hostnet-rdma | hostNetwork pods | 2.23 | 2.42 | 2.40 |
+| `20261116T003729Z` k8s-hostnet-rdma | hostNetwork pods | 1.87 | 2.43 | 2.39 |
+
+The pod runs fall inside the spread of the VM runs. The spread between runs is as large as any difference between the two places.
 
 ## Break it yourself
 
-Every check failed on at least one break and passed after the repair. These are the breaks of the series in [M3](/docs/milestones/m3/) section 8.
+Every check failed on at least one break and passed after the repair. These are the breaks of the series `.lab/breaks-m3/20261115T224237Z`, `20261115T231416Z` and `20261116T000255Z`, which `tests/integration/qemu-lab/breaks-k8s-rdma.sh` ran under its earlier name.
 
 | Break | Checks that failed | Broken run | Repaired run |
 |---|---|---|---|

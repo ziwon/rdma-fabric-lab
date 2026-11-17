@@ -1,7 +1,7 @@
 {
   "id": "c03-time",
   "run": "20261116T151213Z",
-  "source": "docs/milestones/evidence/m6/20261116T151213Z/c-ns3/c-03-incast-simultaneous/manifest.json",
+  "source": ".lab/evidence/m6/20261116T151213Z/c-ns3/c-03-incast-simultaneous/manifest.json",
   "lines": "10-11",
   "format": "text",
   "text": "  \"created_at\": \"2026-11-16T15:12:33Z\",\n  \"finished_at\": \"2026-11-16T15:13:05Z\","

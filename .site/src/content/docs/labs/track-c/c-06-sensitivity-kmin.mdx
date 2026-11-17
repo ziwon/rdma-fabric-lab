@@ -43,7 +43,7 @@ make track-c                         # c-06 runs with the others under the same 
 
 ## Real output
 
-The run of record of M6.
+The run of record.
 
 <Excerpt id="c06-checks" />
 
@@ -51,7 +51,7 @@ The comparison, selected columns.
 
 <Excerpt id="c06-comparison" />
 
-c-none and c-pfc do not depend on kmin, and they gave the same figures as in c-03. Lowering kmin to a quarter changed the ECN profiles little. The marks are dominated by the queue above kmax, where every packet is marked anyway ([M6](/docs/milestones/m6/) section 6).
+c-none and c-pfc do not depend on kmin, and they gave the same figures as in c-03. Lowering kmin to a quarter changed the ECN profiles little. The marks are dominated by the queue above kmax, where every packet is marked anyway (`raw/comparison.tsv` of run `20261116T151213Z`).
 
 | Profile | kmin B | Large FCT us min / median / max | Peak queue B | CE marks |
 |---|---|---|---|---|
@@ -60,7 +60,7 @@ c-none and c-pfc do not depend on kmin, and they gave the same figures as in c-0
 | c-both | 400000, from c-03 | 1387 / 2348 / 2456 | 2026152 | 2196-2444 |
 | c-both | 100000 | 1395 / 2397 / 2474 | 2007216 | 2170-2540 |
 
-That table is quoted from [M6](/docs/milestones/m6/) section 6.
+That table comes from `raw/comparison.tsv` of `c-06-sensitivity-kmin` and `c-03-incast-simultaneous` in run `20261116T151213Z` (`.lab/evidence/m6/20261116T151213Z/`).
 
 ## Break it yourself
 
@@ -77,4 +77,4 @@ No break ran on c-06 in the records. Its configuration sets `run_breaks: false`,
 The run shows that, in this model at fan-in 8 with these values, the ECN profiles barely depend on kmin between 100000 and 400000 bytes.
 
 > [!WARNING]
-> Only kmin was varied, and only at fan-in 8. No buffer sensitivity and no other DCQCN values were run ([M6](/docs/milestones/m6/) section 15). The result is model behavior, not a recommended switch setting.
+> Only kmin was varied, and only at fan-in 8. No buffer sensitivity and no other DCQCN values were run ([runbook](/docs/runbook/) section 14). The result is model behavior, not a recommended switch setting.

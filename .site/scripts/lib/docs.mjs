@@ -1,10 +1,12 @@
 import path from 'node:path';
 
 // The repository documents the site copies, by directory under docs/.
-export const DOC_DIRS = ['docs', 'docs/adr', 'docs/milestones'];
-export const EVIDENCE_PREFIX = 'docs/milestones/evidence/';
+export const DOC_DIRS = ['docs', 'docs/adr'];
+// The ignored copies of run evidence that documents cite by path. They stay on the machine that ran the lab.
+export const EVIDENCE_PREFIX = '.lab/evidence/';
 
-// docs/milestones/M1.md is served at /docs/milestones/m1/, so a route mirrors the repository path.
+// docs/adr/0002-execution-environments.md is served at /docs/adr/0002-execution-environments/, so a route
+// mirrors the repository path.
 export function routeOf(docPath) {
   return `/${docPath.replace(/\.md$/, '').toLowerCase()}/`;
 }
@@ -13,12 +15,12 @@ export function outputOf(docPath) {
   return path.join('src/content/docs', docPath.toLowerCase());
 }
 
-// Milestones in their order, the cel1 record after them. Other documents keep name order.
+// The operator's documents lead the sidebar in this order. Other documents keep name order after them.
+const LEADING_DOCS = ['docs/runbook.md', 'docs/verification.md', 'docs/troubleshooting.md'];
+
 export function sidebarOrder(docPath) {
-  const name = path.basename(docPath, '.md');
-  const milestone = /^M(\d+)$/.exec(name);
-  if (milestone) return Number(milestone[1]);
-  return name === 'cel1-sim' ? 50 : 100;
+  const lead = LEADING_DOCS.indexOf(docPath);
+  return lead === -1 ? 100 : lead + 1;
 }
 
 function codeOrLink(code, docRoutes) {
@@ -32,7 +34,7 @@ function rewriteLink(text, target, fromDir, docRoutes, repoUrl) {
   }
   const [file, hash] = target.split('#');
   const resolved = path.posix.normalize(path.posix.join(fromDir, file));
-  if (resolved.startsWith(EVIDENCE_PREFIX) || resolved.startsWith('.lab/') || resolved.startsWith('results/')) {
+  if (resolved.startsWith('.lab/') || resolved.startsWith('results/')) {
     return text === resolved || text === `\`${resolved}\`` ? `\`${resolved}\`` : `${text} (\`${resolved}\`)`;
   }
   const route = docRoutes.get(resolved);
@@ -78,7 +80,7 @@ export function transformDoc(docPath, text, docRoutes, repoUrl) {
     `  order: ${sidebarOrder(docPath)}`,
     '---',
     '',
-    `> This page is \`${docPath}\` of the repository, copied at build time. Paths under \`${EVIDENCE_PREFIX}\`, \`.lab/\` and \`results/\` name files that stay on the machine that ran them, so they appear as code, not as links.`,
+    `> This page is \`${docPath}\` of the repository, copied at build time. Paths under \`.lab/\`, its evidence copies in \`${EVIDENCE_PREFIX}\` among them, and \`results/\` name files that stay on the machine that ran them, so they appear as code, not as links.`,
   ];
   return `${frontmatter.join('\n')}\n${rewritten.join('\n')}`;
 }

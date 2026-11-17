@@ -1,7 +1,7 @@
 {
   "id": "a-hostnet-rxe-deleted",
   "run": "20261115T225159Z",
-  "source": "docs/milestones/evidence/m3/breaks-runs/20261115T225159Z/a-soft-roce/k8s-hostnet-rdma/summary.md",
+  "source": ".lab/evidence/m3/breaks-runs/20261115T225159Z/a-soft-roce/k8s-hostnet-rdma/summary.md",
   "lines": "5-6,11,13,15,17,19",
   "format": "md-table",
   "text": "| check | status | failure class | detail |\n|---|---|---|---|\n| ibv-devinfo-in-pods | failed | assertion-failed | rdma-client: exit 255 |\n| rxe-bound-to-lab-nic | failed | assertion-failed | worker2: links on lab0 are [], want [rxe0] |\n| rping-verified | failed | command-failed | server exit None, client exit 19 |\n| rdma-write | failed | command-failed | the server exited 1 before it listened, client not started |\n| roce-on-lab-nic | failed | assertion-failed | worker1: flows {}, want both directions of ['10.77.0.12', '10.77.0.13'] only; worker2: flows {}, want both directions of ['10.77.0.12', '10.77.0.13'] only |"

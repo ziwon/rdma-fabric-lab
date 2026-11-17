@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # shellcheck disable=SC2016 # single-quoted commands expand inside the guest
-# Answers the three questions M1 builds on, by observation on freshly booted guests:
+# Answers the three questions RXE between the workers builds on, by observation on freshly booted guests:
 #   1. Does the guest kernel ship rdma_rxe, or which package provides it?
 #   2. Does the lab NIC carry frames between the guests?
 #   3. Can rdma link add bind rxe0 to that NIC, and does rping complete across it?

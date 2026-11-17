@@ -52,7 +52,7 @@ make fleet-rsyslog       CONFIRM=cel1 FLEET_CONNECT=<simulation inventory>
 make fleet-sim-test      FLEET_CONNECT=<simulation inventory>  # this scenario
 ```
 
-Without `CONFIRM=cel1`, without the simulation inventory, or with any host or kubeconfig server not on 127.0.0.1, each fleet target exits 2 before ssh or helm. Under strace, ten refusals made no IPv4 or IPv6 call ([cel1-sim](/docs/milestones/cel1-sim/) section 7).
+Without `CONFIRM=cel1`, without the simulation inventory, or with any host or kubeconfig server not on 127.0.0.1, each fleet target exits 2 before ssh or helm. Under strace, ten refusals made no IPv4 or IPv6 call (`.lab/evidence/cel1-sim/acceptance/strace-summary.txt`, `.lab/evidence/cel1-sim/refusals-final.log`).
 
 ## How the simulation differs from the site model
 
@@ -87,11 +87,11 @@ The VIP check passed in the same broken run, with a gap of 6.032 s, so the break
 
 ## A finding worth knowing
 
-The kubelet of every DGX guest registers two opt-out labels, `nvidia.com/gpu.deploy.driver=false` and `nvidia.com/gpu.deploy.container-toolkit=false`. All 8 DGX Nodes carried them before the GPU Operator ran, and none after. In the GPU Operator at tag v26.7.2, the node labeling controller removes the GPU state labels from every node without `nvidia.com/gpu.present`, and guests without GPUs never get that label. The next `make fleet-k8s` put the labels back and changed nothing else. So the simulation cannot show the opt-outs surviving, and the check reads them from the kubelet registration ([cel1-sim](/docs/milestones/cel1-sim/) section 7).
+The kubelet of every DGX guest registers two opt-out labels, `nvidia.com/gpu.deploy.driver=false` and `nvidia.com/gpu.deploy.container-toolkit=false`. All 8 DGX Nodes carried them before the GPU Operator ran, and none after. In the GPU Operator at tag v26.7.2, the node labeling controller removes the GPU state labels from every node without `nvidia.com/gpu.present`, and guests without GPUs never get that label. The next `make fleet-k8s` put the labels back and changed nothing else. So the simulation cannot show the opt-outs surviving, and the check reads them from the kubelet registration ([fleet](/docs/fleet/) section 6, `.lab/evidence/cel1-sim/label-watch.log`).
 
 ## Questions to think about
 
-- The guests' default route sits on the QEMU user NIC, not on the node IP's NIC. Which M2 defect does that recreate, and which check shows cel1's Cilium values avoid it?
+- The guests' default route sits on the QEMU user NIC, not on the node IP's NIC. Which Cilium API defect of the lab does that recreate, and which check shows cel1's Cilium values avoid it?
 - `no-pod-traffic-on-storage-or-rail-nics` captures 20 interfaces. Why does each capture need its own marker pings?
 - The GPU Operator created none of its 8 operand DaemonSets. What would a node with a GPU add to this run, and which checks would change?
 

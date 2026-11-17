@@ -99,9 +99,9 @@ GUEST_REPORT = (
 
 
 def lock_rows(lock: dict, observed: dict[str, list[str]]) -> list[dict]:
-    """One row per guest component of scope m1: the locked value, what each guest reported, and whether all agree."""
+    """One row per guest component of scope lab: the locked value, what each guest reported, and whether all agree."""
     rows = []
-    for name in sorted(c for c in lock["scopes"]["m1"] if c.startswith("lab.")):
+    for name in sorted(c for c in lock["scopes"]["lab"] if c.startswith("lab.")):
         component = lock["components"][name]
         want = component["value"]
         if name == "lab.guest_image":

@@ -27,7 +27,7 @@ Show that OpenSM discovers two switches, four HCAs and six links, that every swi
 |---|---|
 | Profile | `ibsim`: `ibsim1`, 4 vCPU, 6 GiB, 20 GiB |
 | Image | `rfl-ibsim:m4`, `sha256:cb3e3550…`, as in [B-01](/labs/track-b/b-01/) |
-| Version lock | `make versions SCOPE=m4` must return 0 |
+| Version lock | `make versions SCOPE=ibsim` must return 0 |
 
 **Time taken.** <Duration id="b02-time" />. The first SUBNET UP came 0.003 s after OpenSM started, in simulator time.
 
@@ -41,7 +41,7 @@ The fabric, after upstream `net.2sw2path4hca`.
 
 <RepoFile path="tracks/b-ibsim/topologies/b-02.net" />
 
-OpenSM runs with `-R minhop`. updn needs root switches, and on this single-tier fabric it finds none. A development run with `opensm -R updn` showed the fallback, and the `subnet-up` check failed that run, because the log named an engine other than the configured one ([M4](/docs/milestones/m4/) section 6).
+OpenSM runs with `-R minhop`. updn needs root switches, and on this single-tier fabric it finds none. A development run with `opensm -R updn` showed the fallback, and the `subnet-up` check failed that run, because the log named an engine other than the configured one (runs `20261115T141931Z` and `20261115T141940Z`, [ADR 0005](/docs/adr/0005-track-b-fabric-simulation/) section 2).
 
 <Excerpt id="b02-updn-fallback" />
 
@@ -51,7 +51,7 @@ OpenSM runs with `-R minhop`. updn needs root switches, and on this single-tier 
 
 ## Real output
 
-The run of record of M4. 2 switches, 4 HCAs and 6 links, and 8 switch routes, each one hop closer.
+The run of record. 2 switches, 4 HCAs and 6 links, and 8 switch routes, each one hop closer.
 
 <Excerpt id="b02-checks" />
 

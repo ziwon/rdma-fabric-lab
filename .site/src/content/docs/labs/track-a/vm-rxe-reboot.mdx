@@ -28,7 +28,7 @@ Show that after a reboot each worker recreates `rxe0` on its lab NIC by itself, 
 | Guest sizes | 4 vCPU, 6 GiB, 40 GiB each |
 | Prerequisite | `make bootstrap` and `make rxe-up` have run, so the unit is installed and enabled |
 
-**Time taken.** <Duration id="a-reboot-time" />. A worker reboot of the Kubernetes guests took about 97 s in M3, because a Whereabouts container did not stop on SIGTERM. That applies to the cluster guests, not to this M1 run.
+**Time taken.** <Duration id="a-reboot-time" />. A worker reboot of the Kubernetes guests takes about 97 s, because a Whereabouts container does not stop on SIGTERM ([troubleshooting](/docs/troubleshooting/) section 12). That applies to the cluster guests, not to this run on the two workers.
 
 ## Run it
 
@@ -36,7 +36,7 @@ Show that after a reboot each worker recreates `rxe0` on its lab NIC by itself, 
 make rxe-test SCENARIO=vm-rxe-reboot
 ```
 
-**How the device comes back.** The unit's script waits up to 90 seconds for the lab NIC to come up with its address. It then runs `rdma link add` only when `rxe0` does not exist, and it never deletes a device. If a device with the same name sits on another NIC, or another RDMA device sits on the lab NIC, the `rxe` role fails and changes nothing ([M1](/docs/milestones/m1/) section 2). Waiting for `network-online.target` alone would not prove the NIC and its address are ready.
+**How the device comes back.** The unit's script waits up to 90 seconds for the lab NIC to come up with its address. It then runs `rdma link add` only when `rxe0` does not exist, and it never deletes a device. If a device with the same name sits on another NIC, or another RDMA device sits on the lab NIC, the `rxe` role fails and changes nothing (`ansible/roles/rxe/`). Waiting for `network-online.target` alone would not prove the NIC and its address are ready.
 
 ## What every check proves
 
@@ -46,7 +46,7 @@ make rxe-test SCENARIO=vm-rxe-reboot
 
 ## Real output
 
-The run of record of M1.
+The run of record.
 
 <Excerpt id="a-reboot-checks" />
 
@@ -60,7 +60,7 @@ The run of record of M1.
 
 `route-via-lab-nic` still passed in that run, because the lab address comes from netplan and survives the reboot. Only the RDMA device was missing. The repair is `make rxe-up`, which enabled the unit again and created the device, and run `20261115T022431Z` passed.
 
-A related fault is a device deleted at runtime. `rdma link delete rxe0` leaves the oneshot unit active, so a plain `state: started` would do nothing. Since M3, `make rxe-up` reads the links after the unit settings and restarts the unit when the device is missing, while a healthy worker still reports `changed=0` ([M3](/docs/milestones/m3/) section 9).
+A related fault is a device deleted at runtime. `rdma link delete rxe0` leaves the oneshot unit active, so a plain `state: started` would do nothing. Since 2026-11-16, `make rxe-up` reads the links after the unit settings and restarts the unit when the device is missing, while a healthy worker still reports `changed=0` ([troubleshooting](/docs/troubleshooting/) section 11).
 
 ## Questions to think about
 

@@ -1,16 +1,16 @@
 #!/usr/bin/env bash
-# M3 acceptance on the QEMU harness lab profile, from wiped guests to validated runs: RXE, Kubernetes,
+# Track A acceptance on the QEMU harness lab profile, from wiped guests to validated runs: RXE, Kubernetes,
 # Cilium, Multus and Whereabouts with Multus's file alone in /etc/cni/net.d, the CNI migration as a no-op,
-# the RDMA test image built in a wiped builder guest, both M3 scenarios,
-# the M1 and M2 scenarios on the same guests in alternation, with net1 pods on the lab NIC during the RXE
-# runs, and every idempotency rerun. Steps land in .lab/acceptance-m3/<UTC time>/NN-<step>.log, with
+# the RDMA test image built in a wiped builder guest, k8s-hostnet-rdma and k8s-multus-net1,
+# the RXE and k8s-baseline scenarios on the same guests in alternation, with net1 pods on the lab NIC during the RXE
+# runs, and every idempotency rerun. Steps land in .lab/acceptance-track-a/<UTC time>/NN-<step>.log, with
 # steps.tsv and runs.tsv. LAB_DIR moves the lab guests' files, as for lab.sh. The builder guest lives in
 # BUILDER_LAB_DIR, by default next to them, never in the Track B guest's own directory.
 set -euo pipefail
 
 here=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 repo=$(cd "$here/../../.." && pwd)
-out=$repo/.lab/acceptance-m3/$(date -u +%Y%m%dT%H%M%SZ)
+out=$repo/.lab/acceptance-track-a/$(date -u +%Y%m%dT%H%M%SZ)
 mkdir -p "$out"
 cd "$repo"
 export LAB_PROFILE=lab PATH=$repo/.venv/bin:$PATH
@@ -77,7 +77,7 @@ net1_hold() {
 }
 net1_release() { make cleanup RUN="$hold_id"; }
 # A rebooted node's Cilium agent turns Ready at its readiness probe's next tick, up to 30 s after it is healthy. So after
-# a step that reboots workers the run waits for the rollouts, as acceptance-m2.sh does after it deletes an agent.
+# a step that reboots workers the run waits for the rollouts, as acceptance-k8s.sh does after it deletes an agent.
 settled() {
   kc "-n kube-system rollout status daemonset/cilium --timeout=300s" < /dev/null \
     && kc "-n kube-system rollout status daemonset/kube-multus-ds --timeout=300s" < /dev/null \
@@ -106,7 +106,7 @@ step builder-down 0 builder lab-down
 step lab-wipe 0 make lab-wipe
 step builder-wipe 0 builder lab-wipe
 step lab-up 0 make lab-up
-step versions-m3 0 make versions SCOPE=m3
+step versions-k8s-rdma 0 make versions SCOPE=k8s-rdma
 step bootstrap 0 make bootstrap
 step rxe-up 0 make rxe-up
 step k8s 0 make k8s

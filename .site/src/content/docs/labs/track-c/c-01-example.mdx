@@ -27,9 +27,9 @@ Show that the pinned image runs SimAI's own example to completion, writes its re
 | Profile | `ns3`: the guest `ns3sim1`, 12 vCPU, 16 GiB, 100 GiB. SSH only on the 127.0.0.1:22241 forward |
 | Image | `rfl-ns3:m6`, `sha256:da7a3245b1b91dd472d1ddb9497b3bd1abb3efdbaee38c45fe790dff565a61c6` |
 | Sources | SimAI `a57d765`, ns-3-alibabacloud `3e0c7c1` with one patch, SimCCL `fd7cd57`. gcc 13.3.0, CMake 3.28.3, Python 3.12.3 |
-| Version lock | `make versions SCOPE=m6` must return 0 |
+| Version lock | `make versions SCOPE=ns3` must return 0 |
 
-The guest size came from measurement. One build peaked at 4.78 GB of container memory, and two probe builds overlapping with the image build peaked at 9.84 GB. 16 GiB holds 1.7 times that peak ([M5](/docs/milestones/m5/) section 4).
+The guest size came from measurement. One build peaked at 4.78 GB of container memory, and two probe builds overlapping with the image build peaked at 9.84 GB. 16 GiB holds 1.7 times that peak (`.lab/evidence/m5/guest-memory-peaks.txt`, [runbook](/docs/runbook/) section 4).
 
 > [!CAUTION]
 > The build and every simulator run happen inside the Track C guest. `guest.sh` and the image entry point refuse on the host. See [Safety rules](/start/safety/).
@@ -52,7 +52,7 @@ gen_Topo_Template.py --ro -g 8 -gt H20 -bw 200Gbps -nvbw 2400Gbps
 SimAI_simulator -t 8 -w example/microAllReduce.txt -n ./Rail_Opti_SingleToR_8g_8gps_200Gbps_H20 -c inputs/config/SimAI.conf
 ```
 
-SimAI's guide runs `git submodule update --remote`, which follows moving branches. The image never does. `images/ns3/fetch-sources` fetches each repository at its pinned commit and refuses a submodule commit other than the gitlink SimAI records ([M5](/docs/milestones/m5/) section 2).
+SimAI's guide runs `git submodule update --remote`, which follows moving branches. The image never does. `images/ns3/fetch-sources` fetches each repository at its pinned commit and refuses a submodule commit other than the gitlink SimAI records ([ADR 0002](/docs/adr/0002-execution-environments/) section 5).
 
 ## What every check proves
 
@@ -62,7 +62,7 @@ Two files differ between equal runs, and the scenario names them as logs, not re
 
 ## Real output
 
-The run of record of M6.
+The run of record.
 
 <Excerpt id="c01-checks" />
 
@@ -70,7 +70,7 @@ The end of the simulator's stdout in the backend probe, the source of the fixtur
 
 <Excerpt id="c01-stdout-tail" />
 
-Its simulated time, 0.38940403 s, is the `total time` of `ncclFlowModel_EndToEnd.csv`. M5 traced the unit in the code. `Layer.cc` writes `Sys::boostedTick() / FREQ`, `boostedTick` counts nanoseconds and `FREQ` is 1000, so the file is in microseconds ([M5](/docs/milestones/m5/) section 6).
+Its simulated time, 0.38940403 s, is the `total time` of `ncclFlowModel_EndToEnd.csv`. The unit was traced in the code of SimAI `a57d765`. `Layer.cc` writes `Sys::boostedTick() / FREQ`, `boostedTick` counts nanoseconds and `FREQ` is 1000, so the file is in microseconds (`Sys.cc:1746`, `Common.hh:18`).
 
 ## Break it yourself
 

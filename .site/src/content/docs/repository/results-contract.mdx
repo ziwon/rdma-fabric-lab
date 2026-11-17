@@ -45,7 +45,7 @@ results/<run-id>/<track>/<scenario>/
 └── summary.md
 ```
 
-The manifest records each check with its status, exit code, failure class, evidence files and a one-line detail. This is the first check of the M1 baseline run.
+The manifest records each check with its status, exit code, failure class, evidence files and a one-line detail. This is the first check of the `vm-rxe-baseline` run of record, `20261115T022240Z`.
 
 <Excerpt id="repo-manifest-check" lang="json" />
 
@@ -81,6 +81,6 @@ The run's status is the most severe status among its checks, in the order `faile
 
 ## What git keeps
 
-Results and logs are never committed. `results/`, `.lab/` and the evidence copies under `docs/milestones/evidence/` exist only on the machine that ran them. The milestone records keep the run ids, exit codes and findings, and cite those local paths. Test fixtures captured from real runs stay tracked, and each fixture README names its source run.
+Results and logs are never committed. `results/`, `.lab/` and the evidence copies under `.lab/evidence/` exist only on the machine that ran them. The repository documents and the lab pages keep the run ids, exit codes and findings, and cite those local paths. Test fixtures captured from real runs stay tracked, and each fixture README names its source run.
 
-The output excerpts on this site come from both. An excerpt from an evidence copy names its path under `docs/milestones/evidence/`. An excerpt from a fixture names its path under `tests/fixtures/`. `npm run excerpts check` in `.site/` proves every stored excerpt still equals its source lines, and skips the evidence copies on a machine that does not have them.
+The output excerpts on this site come from both. An excerpt from an evidence copy names its path under `.lab/evidence/`. An excerpt from a fixture names its path under `tests/fixtures/`. `npm run excerpts check` in `.site/` proves every stored excerpt still equals its source lines, and skips the evidence copies on a machine that does not have them.

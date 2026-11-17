@@ -1,0 +1,8 @@
+{
+  "id": "repo-versions-k8s-rdma",
+  "run": "make versions SCOPE=k8s-rdma, 2026-11-17",
+  "source": ".lab/evidence/retire/versions-k8s-rdma.log",
+  "lines": "1-4",
+  "format": "text",
+  "text": "$ make versions SCOPE=k8s-rdma\nPYTHONPATH=scripts .venv/bin/python -m rfl versions --environment --scope k8s-rdma\n63 components, 0 undecided\nscope k8s-rdma: every component is pinned"
+}

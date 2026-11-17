@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# M0 and M1 acceptance on the QEMU harness, from wiped guests to validated runs.
+# RXE acceptance on the QEMU harness, from wiped guests to validated runs: doctor, the lock, preflight,
+# bootstrap, rxe-up, the RXE scenarios, their faults, cleanup and reset-lab.
 # Every step's output lands in .lab/acceptance/<UTC time>/NN-<step>.log and its exit
 # code in steps.tsv next to the exit code the step should have.
 # It deletes the harness guests first, so it never runs against anything else.
@@ -54,7 +55,7 @@ step lab-up 0 make lab-up
 w1_lab=$(nic worker1 lab_rdma_nic)
 step doctor 0 make doctor
 step doctor-overlapping-plan nonzero make doctor LAB_PLAN="$overlap_plan"
-step versions-m1 0 make versions SCOPE=m1
+step versions-lab 0 make versions SCOPE=lab
 step preflight-before-bootstrap nonzero make preflight
 step bootstrap 0 make bootstrap
 step preflight 0 make preflight

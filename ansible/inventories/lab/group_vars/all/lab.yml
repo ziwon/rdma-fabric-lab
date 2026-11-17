@@ -10,7 +10,7 @@ lab_address_plan:
   rdma: 10.77.0.0/24
   multus_pool: 10.77.0.100-10.77.0.199
 
-# The namespace of the M3 test pods and the Multus NetworkAttachmentDefinition they attach to.
+# The namespace of the hostNetwork RDMA and net1 test pods and the Multus NetworkAttachmentDefinition they attach to.
 lab_k8s_namespace: rdma-lab
 
 lab_rdma_mtu: 1500

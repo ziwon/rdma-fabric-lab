@@ -39,7 +39,7 @@ kubelet registers the management address as the node IP, and Cilium's VXLAN tunn
 
 The Container Network Interface is a contract between the container runtime and a plugin binary. When a pod starts, containerd reads the first configuration file by name in `/etc/cni/net.d` and runs the plugin it names with the command `ADD`. The plugin creates the interface in the pod's network namespace and asks an IPAM plugin for an address. `DEL` undoes it when the pod stops. Plugins can delegate to other plugins, which is how Multus works.
 
-The order of files in that directory decides which plugin runs. Two of the lab's real failures came from it. A copy of Cilium's file that sorted first made pods start with `eth0` only, and a stray file at boot became Multus's delegate ([M3](/docs/milestones/m3/) section 9).
+The order of files in that directory decides which plugin runs. Two of the lab's real failures came from it. A copy of Cilium's file that sorted first made pods start with `eth0` only, and a stray file at boot became Multus's delegate ([troubleshooting](/docs/troubleshooting/) section 12, [ADR 0004](/docs/adr/0004-track-a-pods-and-net1/) section 2.4).
 
 ## Cilium
 
@@ -58,7 +58,7 @@ Cilium is the primary CNI. It runs an agent on every node that attaches eBPF pro
 
 **kube-proxy replacement.** cel1 runs without kube-proxy. Cilium then implements ClusterIP Services itself in eBPF, and native routing sends pod traffic unencapsulated over the management network. The [cel1 simulation](/labs/cel1/cel1-sim-baseline/) checks that no node holds a `KUBE` iptables chain and that neither node of the pod traffic test has a VXLAN or Geneve link.
 
-**Reaching the API.** The agent talks to the Kubernetes API. In M2 a restarted agent could not reach it through the ClusterIP `10.96.0.1`, because the harness default route sits on another NIC than the node IP and a Cilium mark skipped kube-proxy's masquerade. The fix makes Cilium dial the API address directly. The lab reads it from a ConfigMap the kubeadm role writes, and cel1 sets it to its VIP ([M2](/docs/milestones/m2/) section 9).
+**Reaching the API.** The agent talks to the Kubernetes API. In the first Kubernetes acceptance run a restarted agent could not reach it through the ClusterIP `10.96.0.1`, because the harness default route sits on another NIC than the node IP and a Cilium mark skipped kube-proxy's masquerade. The fix makes Cilium dial the API address directly. The lab reads it from a ConfigMap the kubeadm role writes, and cel1 sets it to its VIP ([ADR 0001](/docs/adr/0001-kubernetes-stack/) section 9).
 
 ## kube-vip
 
@@ -102,7 +102,7 @@ The layout matters after a reboot. The Multus daemon deletes its file when it st
 
 ## Whereabouts and macvlan
 
-**macvlan** creates a child interface on a master NIC, with its own MAC address. In bridge mode, children on the same master reach each other directly. The lab's master is the lab NIC `lab0`, so `net1` packets leave on the same wire as RoCEv2. A macvlan child needs the virtual NIC and switch to pass its extra MAC. The M3 probe showed the frames crossing with the children's own source MACs while `lab0` stayed at promiscuity 0 ([M3](/docs/milestones/m3/) section 4). ipvlan, which shares the master's MAC, was the fallback and was not needed.
+**macvlan** creates a child interface on a master NIC, with its own MAC address. In bridge mode, children on the same master reach each other directly. The lab's master is the lab NIC `lab0`, so `net1` packets leave on the same wire as RoCEv2. A macvlan child needs the virtual NIC and switch to pass its extra MAC. The extra-MAC probe showed the frames crossing with the children's own source MACs while `lab0` stayed at promiscuity 0 (`.lab/evidence/m3/probe-macvlan.log`, [ADR 0004](/docs/adr/0004-track-a-pods-and-net1/) section 2.3). ipvlan, which shares the master's MAC, was the fallback and was not needed.
 
 **Whereabouts** is an IPAM plugin that allocates addresses across the whole cluster from a pool stored in Kubernetes objects. Node-local IPAM would hand the same address to pods on two nodes. The lab pool is `10.77.0.100` to `10.77.0.199`, inside the lab network and outside every node address. The runner renders the attachment from the inventory alone.
 
@@ -114,7 +114,7 @@ That routing table of a `net1` pod shows the rule [k8s-multus-net1](/labs/track-
 
 A pod with `hostNetwork: true` shares the node's network namespace. It sees the node's NICs, addresses and RDMA devices, and it can bind the lab NIC address. The RDMA host namespace mode is `shared`, so every such pod sees the whole device. This is the simplest way to run RDMA in a container, and the most exposed.
 
-To open the device, the container needs the character files under `/dev/infiniband`, permission from the device cgroup, and enough locked memory for its registrations. M3 tried the profiles from narrowest to broadest.
+To open the device, the container needs the character files under `/dev/infiniband`, permission from the device cgroup, and enough locked memory for its registrations. The lab tried the profiles from narrowest to broadest.
 
 | Profile | Result |
 |---|---|
@@ -123,7 +123,7 @@ To open the device, the container needs the character files under `/dev/infiniba
 | The same with `/dev/infiniband` as a hostPath | The files appear, but the device cgroup refuses `uverbs0` and `rdma_cm` with `Operation not permitted` |
 | `privileged: true`, uid 65534, no capability, no host PID, IPC or volume | `rxe0` is `PORT_ACTIVE` and the RDMA tests pass |
 
-Kubernetes has no field that admits one character device to a container without a device plugin, and capabilities do not change the device cgroup. So the lab RDMA pods run `privileged` ([M3](/docs/milestones/m3/) section 5). A device plugin that would remove it is outside the milestones so far.
+Kubernetes has no field that admits one character device to a container without a device plugin, and capabilities do not change the device cgroup. So the lab RDMA pods run `privileged` ([ADR 0004](/docs/adr/0004-track-a-pods-and-net1/) section 2.1). A device plugin that would remove it is an open experiment.
 
 > [!NOTE]
 > `net1` is an IP network only. RXE lists the `net1` addresses as GIDs, but no pod got an RDMA device on `net1`. A hostNetwork pod proves that a container can use the node's device, not that a pod has its own RDMA interface.

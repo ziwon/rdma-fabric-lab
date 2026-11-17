@@ -55,11 +55,11 @@ flowchart TB
     class CP,W1,W2 secondary
 ```
 
-The management network is `switch.py`, a Python learning switch that moves frames between guests over AF_UNIX datagram sockets. It runs with user privileges and no capabilities. The lab network is a direct cable, two AF_UNIX sockets that join the lab NICs of `worker1` and `worker2` with `-netdev dgram`. The M2 acceptance checked both: only `u_dgr` sockets under `.lab/net/`, and a switch with no capability at all.
+The management network is `switch.py`, a Python learning switch that moves frames between guests over AF_UNIX datagram sockets. It runs with user privileges and no capabilities. The lab network is a direct cable, two AF_UNIX sockets that join the lab NICs of `worker1` and `worker2` with `-netdev dgram`. The Kubernetes acceptance checks both in its step `harness-sockets`: only `u_dgr` sockets under `.lab/net/`, and a switch with no capability at all.
 
 <Excerpt id="repo-harness-sockets" />
 
-The cable passes any MAC address, so the macvlan children of [k8s-multus-net1](/labs/track-a/k8s-multus-net1/) cross it. The cel1 simulation uses one switch per site network, 11 in all, and 188 `u_dgr` sockets ([cel1-sim](/docs/milestones/cel1-sim/) section 4).
+The cable passes any MAC address, so the macvlan children of [k8s-multus-net1](/labs/track-a/k8s-multus-net1/) cross it. The cel1 simulation uses one switch per site network, 11 in all, and 188 `u_dgr` sockets ([fleet](/docs/fleet/) section 13).
 
 ## Port forwards, the only way in
 
@@ -88,4 +88,4 @@ NIC names differ per hypervisor, so they are not in the tracked inventory. At `l
 | API from the host | `192.168.140.11:6443` through the NAT VMnet | The forward `127.0.0.1:22643` |
 | Power failure | Power off the VM | `lab.sh kill` sends SIGKILL to QEMU |
 
-The split default route matters. It is the condition behind the Cilium API defect of [M2](/docs/milestones/m2/) section 9. The VMware path is in [setup-vmware](/docs/setup-vmware/) and is not verified on this host.
+The split default route matters. It is the condition behind the Cilium API defect of [ADR 0001](/docs/adr/0001-kubernetes-stack/) section 9. The VMware path is in [setup-vmware](/docs/setup-vmware/), whose section 8 lists every difference from the harness, and is not verified on this host.

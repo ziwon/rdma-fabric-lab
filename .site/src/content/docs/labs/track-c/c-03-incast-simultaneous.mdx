@@ -28,7 +28,7 @@ Compare the four profiles on identical traffic, and prove from the model's own c
 | Image | `rfl-ns3:m6`, `sha256:da7a3245…`, with the patch `qbb-resume-qp-lookup.patch` pinned as `ns3.resume_patch` |
 | Cases | 3 fan-ins × 4 profiles × 5 seeds = 60, twice |
 
-**Time taken.** <Duration id="c03-time" />. M6 gives about 35 s for one 60-case run including both containers. `rfl-star` used at most 65408 KiB of RSS in any case.
+**Time taken.** <Duration id="c03-time" />. One 60-case run takes about 35 s including both containers. `rfl-star` used at most 65408 KiB of RSS in any case.
 
 ## The profiles as this model implements them
 
@@ -42,7 +42,7 @@ A profile sets three things and nothing else. `same-traffic` checks that every c
 | c-both | true | true | 1 |
 
 > [!IMPORTANT]
-> The switch sends PAUSE in every profile. `QbbEnabled` decides only whether a host acts on a PAUSE it receives. So "PFC off" means the hosts ignore PAUSE, not that the switch stops sending it, and a pure lossy switch that uses its whole buffer does not exist at this commit ([M6](/docs/milestones/m6/) section 4).
+> The switch sends PAUSE in every profile. `QbbEnabled` decides only whether a host acts on a PAUSE it receives. So "PFC off" means the hosts ignore PAUSE, not that the switch stops sending it, and a pure lossy switch that uses its whole buffer does not exist at this commit ([ADR 0006](/docs/adr/0006-track-c-packet-model/) sections 1.6 and 2).
 
 The shared network: MTU 1000 B, a 4194304 B buffer, PFC pause time 5 us, headroom 37500 B per port, alpha shift 3, ECN kmin 400000 B, kmax 1600000 B and pmax 0.2, and SimAI.conf's DCQCN values. The buffer is SimAI.conf's 32 MiB divided by 8, so that the PFC threshold falls inside the range these flows reach. That is a choice for the comparison, not a recommended switch buffer.
 
@@ -58,7 +58,7 @@ make track-c
 
 ## Real output
 
-The run of record of M6.
+The run of record.
 
 <Excerpt id="c03-checks" />
 
@@ -68,7 +68,7 @@ The comparison the run derived from its 60 cases, selected columns. FCT figures 
 
 ## What the model did
 
-At fan-in 8, seed 1, the counters show each profile's mechanism at work ([M6](/docs/milestones/m6/) section 4).
+At fan-in 8, seed 1, the counters show each profile's mechanism at work (`raw/incast/figures.tsv` of run `20261116T151213Z`).
 
 | Profile | PAUSE frames received by hosts | Host pause handler ran | CE marks | DCQCN rate cuts | MMU refusals |
 |---|---:|---:|---:|---:|---:|
@@ -96,7 +96,7 @@ The incast breaks ran on c-03. c-04, c-05 and c-06 use the same check code.
 
 ## The patch behind this scenario
 
-M5 found that a PFC RESUME crashed a host with fewer QPs than the paused priority index. `QbbNetDevice::Resume(qIndex)` read `m_qps[qIndex]`, the host's QP list indexed by priority, on every RESUME, and a sender with one QP on priority 3 died with SIGSEGV. An incast with PFC on and one QP per sender hits exactly that. The one patch to upstream source tests the node type before the lookup, which only node type 2 needs. With it, the four-QP case is byte-identical to the unpatched build, and the one-QP case completes at 340107 ns with 25 PAUSE and 25 RESUME ([M6](/docs/milestones/m6/) section 2).
+A break of the single-flow scenario found that a PFC RESUME crashed a host with fewer QPs than the paused priority index. `QbbNetDevice::Resume(qIndex)` read `m_qps[qIndex]`, the host's QP list indexed by priority, on every RESUME, and a sender with one QP on priority 3 died with SIGSEGV. An incast with PFC on and one QP per sender hits exactly that. The one patch to upstream source tests the node type before the lookup, which only node type 2 needs. With it, the four-QP case is byte-identical to the unpatched build, and the one-QP case completes at 340107 ns with 25 PAUSE and 25 RESUME (`.lab/evidence/m6/patch-proof/patch-proof.txt`, [ADR 0006](/docs/adr/0006-track-c-packet-model/) section 1.3).
 
 ## Questions to think about
 

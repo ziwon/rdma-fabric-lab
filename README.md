@@ -23,18 +23,7 @@ The tracks share the repository, the result format and the version lock, not a d
 
 ## Status
 
-| Milestone | State | Record |
-|---|---|---|
-| M0 design lock | done | `docs/milestones/M0.md` |
-| M1 RXE between two worker VMs | done. rping, RDMA Read, Write and Send pass over RDMA CM, RoCEv2 frames appear on the lab NIC and none on the management NIC, and the device returns after a reboot | `docs/milestones/M1.md` |
-| M2 Kubernetes | done. Kubernetes v1.36.6 with Cilium 1.20.4 installed by Helm. Three control planes behind a kube-vip address answered again 6.0 s after the address holder lost power | `docs/milestones/M2.md` |
-| cel1 region, offline | done. Site model, generated inventory, contract check and rendered charts pass | `docs/fleet.md` |
-| M4 ibsim and OpenSM | done. B-01 to B-04 pass inside the Track B guest: discovery, unique LIDs, port states, a link fault and its recovery, and rerouting on the cel1 rail fabric. Each scenario fails on its deliberate break | `docs/milestones/M4.md` |
-| cel1 region, simulated as 13 guests | done. `make fleet-k8s`, `fleet-addons` and `fleet-rsyslog` built the cluster on 13 guests from wiped disks. All 13 nodes Ready with their class labels, kube-proxy replacement with native routing, the nvidia runtime default on the DGX guests, and the API back on the VIP after its holder lost power | `docs/milestones/cel1-sim.md` |
-| M3 hostNetwork RDMA pods and Multus | done. Pods on the two workers repeat the M1 baseline over the node's RXE device, and Multus adds `net1` from Whereabouts beside Cilium through pod recreation and a worker reboot. The pods need `privileged` | `docs/milestones/M3.md` |
-| M5 ns-3 baseline | done. SimAI's ns-3 RDMA model builds in a pinned image inside the Track C guest, and a rebuild from clean gives the same digest. Its smoke test repeats byte for byte, and one flow through one switch completes 7.43% above the payload bound, with the gap accounted for to the nanosecond | `docs/milestones/M5.md` |
-| M6 congestion profiles | done. Incast of 2, 4 and 8 senders under four profiles (no control, PFC, ECN with DCQCN, both), three workloads and five seeds, with each feature's activation read from the model's own counters. A one-line patch fixes a model crash on PFC RESUME. In this model PFC off means hosts ignore PAUSE while the switch still sends it | `docs/milestones/M6.md` |
-| M7 wrap-up | not started | |
+The MVP is complete. `tests/integration/qemu-lab/acceptance-all.sh` run `20261116T190004Z` passed every required experiment again from wiped guests on 2026-11-16: 15 of 15 required and 4 of 4 optional scenarios. `docs/verification.md` says how the lab proves itself, lists the runs of record and gives the evidence for each item of the MVP checklist.
 
 Nothing in this repository has run against GPU hardware.
 
@@ -59,7 +48,7 @@ make doctor            # read-only host check, including address plan overlaps
 make tools             # pinned helm and kubeconform in .tools/bin
 ```
 
-Track A from nothing, the same sequence `tests/integration/qemu-lab/acceptance-m2.sh` runs:
+Track A from nothing, the same sequence `tests/integration/qemu-lab/acceptance-k8s.sh` runs:
 
 ```bash
 make lab-wipe lab-up                 # boot cp1, worker1 and worker2
@@ -72,18 +61,18 @@ make validate report                 # check every run directory, then the lates
 make lab-down
 ```
 
-M3 runs on the same cluster. The RDMA test image is built inside the Track B guest, never on the host, and loaded into the workers' containerd without a registry:
+The pod scenarios run on the same cluster. The RDMA test image is built inside the Track B guest, never on the host, and loaded into the workers' containerd without a registry:
 
 ```bash
 make rdma-tools-image               # build in the Track B guest, fails unless the digest is lab.rdma_tools_image
 make lab-down LAB_PROFILE=ibsim     # free the builder before measuring
 make rdma-tools-load                # import the image on both workers
-make k8s-hostnet-test               # the M1 RDMA tests between hostNetwork pods
+make k8s-hostnet-test               # the RXE tests between hostNetwork pods
 make k8s-multus-test                # net1 from Whereabouts beside Cilium, recreation, worker reboot
 make track-a                        # every required Track A scenario in order, on the lab that is up
 ```
 
-Cilium writes its CNI file to `/etc/cni/multus/net.d`, so `/etc/cni/net.d` holds only Multus's file and a pod never starts without `net1`. A cluster built before that change needs `make cni-migrate` once after `make addons ENV=lab`. `tests/integration/qemu-lab/acceptance-m3.sh` runs all of M1, M2 and M3 from wiped guests. The three-control-plane profile runs with `LAB_PROFILE=ha`.
+Cilium writes its CNI file to `/etc/cni/multus/net.d`, so `/etc/cni/net.d` holds only Multus's file and a pod never starts without `net1`. A cluster built before that change needs `make cni-migrate` once after `make addons ENV=lab`. `tests/integration/qemu-lab/acceptance-track-a.sh` runs all of Track A from wiped guests. The three-control-plane profile runs with `LAB_PROFILE=ha`.
 
 Track B boots its own guest and runs everything inside it:
 
@@ -123,7 +112,7 @@ Every name and address in `cel1` is invented. The targets that would change cel1
 
 ## Results
 
-Every scenario declares its checks in `tracks/<track>/scenarios/*.yaml`. A run writes `results/<run-id>/<track>/<scenario>/` with a manifest, logs, raw captures and metrics. The run status comes only from the recorded checks, and a passed check must point at evidence in the run directory. `make validate` enforces the contract in `schemas/`. Results and logs stay out of git: `results/`, `.lab/` and the evidence copies under `docs/milestones/evidence/` exist only on the machine that ran them. The milestone records in `docs/milestones/` keep the run ids, exit codes and findings, and cite those local paths.
+Every scenario declares its checks in `tracks/<track>/scenarios/*.yaml`. A run writes `results/<run-id>/<track>/<scenario>/` with a manifest, logs, raw captures and metrics. The run status comes only from the recorded checks, and a passed check must point at evidence in the run directory. `make validate` enforces the contract in `schemas/`. Results and logs stay out of git: `results/`, `.lab/` and the evidence copies under `.lab/evidence/` exist only on the machine that ran them. The documents in `docs/` and the site keep the run ids, exit codes and findings, and cite those local paths.
 
 ## Safety
 
@@ -143,8 +132,8 @@ Every scenario declares its checks in `tracks/<track>/scenarios/*.yaml`. A run w
 | `tracks/` | Scenario specs and their configuration |
 | `tests/` | Unit tests, fixtures captured from real runs, and the QEMU harness under `tests/integration/qemu-lab/` |
 | `schemas/` | JSON schemas of scenario specs, run manifests, metrics and the version lock |
-| `versions.lock.yaml` | Every pinned version and checksum, grouped in scopes per milestone |
-| `docs/` | The runbook, ADRs, milestone records, the cel1 runbook, VMware setup and troubleshooting |
+| `versions.lock.yaml` | Every pinned version and checksum, grouped in scopes per part of the lab |
+| `docs/` | The runbook, the verification record, ADRs, the cel1 runbook, VMware setup and troubleshooting |
 | `.github/workflows/` | The checks that need no lab, on every pull request |
 
 ## Documents
@@ -152,9 +141,11 @@ Every scenario declares its checks in `tracks/<track>/scenarios/*.yaml`. A run w
 - `.site/`: the learning site. It explains each concept, gives one page per lab with the commands to run it and real output from recorded runs, and covers the repository's structure. `make site` builds it and `make site-dev` serves it locally. It is not published yet; `.site/README.md` says how to turn on GitHub Pages.
 - `docs/adr/0001-kubernetes-stack.md`: one Ansible and kubeadm stack for the lab and cel1, and the inventory contract.
 - `docs/adr/0002-execution-environments.md`: where each track runs and why.
+- `docs/adr/0003-results-and-breaks.md` to `docs/adr/0006-track-c-packet-model.md`: the result contract and deliberate breaks, RDMA in pods and `net1`, the Track B simulation and the Track C model.
 - `docs/fleet.md`: the cel1 runbook.
 - `docs/setup-vmware.md`: the same lab as VMware Workstation guests with two VMnets, not verified on the current host.
 - `docs/runbook.md`: from a fresh host to every track, cleanup, recovery and the safety rules.
+- `docs/verification.md`: how the lab proves itself, the latest full reproduction and the MVP checklist.
 - `docs/troubleshooting.md`: failures seen in every track and the cel1 simulation, with their evidence.
 
 ## License

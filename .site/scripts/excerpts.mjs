@@ -16,7 +16,8 @@ if (mode !== 'pull' && mode !== 'check') {
 
 const manifest = parse(readFileSync(path.join(siteDir, 'excerpts.yaml'), 'utf8'));
 const outDir = path.join(siteDir, 'src/excerpts');
-const evidenceRepo = existsSync(evidenceDir) ? path.resolve(realpathSync(evidenceDir), '../../..') : null;
+// The evidence directory is <checkout>/.lab/evidence, so its checkout is two levels up.
+const evidenceRepo = existsSync(evidenceDir) ? path.resolve(realpathSync(evidenceDir), '../..') : null;
 const redact = makeRedactor({
   roots: [repoRoot, realpathSync(repoRoot), ...(evidenceRepo ? [evidenceRepo] : [])],
   home: os.homedir(),

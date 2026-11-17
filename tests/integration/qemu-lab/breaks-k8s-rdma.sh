@@ -1,17 +1,17 @@
 #!/usr/bin/env bash
 # shellcheck disable=SC2016 # single-quoted commands expand inside the guests
-# The deliberate breaks of the M3 scenarios on running lab guests that have Kubernetes, the addons and
+# The deliberate breaks of k8s-hostnet-rdma and k8s-multus-net1 on running lab guests that have Kubernetes, the addons and
 # the RDMA test image. Each break runs its scenario, which must fail with the named checks failed, then
 # repairs the break and runs the scenario again, which must pass. Steps land in
-# .lab/breaks-m3/<UTC time>/ with steps.tsv, and each break with its two run ids in pairs.tsv.
+# .lab/breaks-k8s-rdma/<UTC time>/ with steps.tsv, and each break with its two run ids in pairs.tsv.
 # LAB_DIR moves the guests' files, as for lab.sh.
 #
-#   breaks-m3.sh [break name...]     only the named breaks, every one without a name
+#   breaks-k8s-rdma.sh [break name...]     only the named breaks, every one without a name
 set -euo pipefail
 
 here=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 repo=$(cd "$here/../../.." && pwd)
-out=$repo/.lab/breaks-m3/$(date -u +%Y%m%dT%H%M%SZ)
+out=$repo/.lab/breaks-k8s-rdma/$(date -u +%Y%m%dT%H%M%SZ)
 mkdir -p "$out/configs"
 cd "$repo"
 export LAB_PROFILE=lab PATH=$repo/.venv/bin:$PATH
@@ -91,7 +91,7 @@ breaks() {
   [[ $# -gt 0 ]] && shift
   opts=("$@")
   if [[ ${#brk[@]} -gt 0 ]]; then step "break-$name" 0 "${brk[@]}"; fi
-  step "run-$name-broken" nonzero broken_run "$name" "breaks-m3.sh break $name: ${brk[*]:-the options ${opts[*]}}" "$scenario" "${opts[@]}"
+  step "run-$name-broken" nonzero broken_run "$name" "breaks-k8s-rdma.sh break $name: ${brk[*]:-the options ${opts[*]}}" "$scenario" "${opts[@]}"
   # shellcheck disable=SC2086 # checks is a space-separated list of check ids
   step "failed-$name" 0 failed_with "run-$name-broken" $checks
   if [[ ${#fix[@]} -gt 0 ]]; then step "repair-$name" 0 "${fix[@]}"; fi

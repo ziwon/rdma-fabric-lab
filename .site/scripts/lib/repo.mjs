@@ -6,7 +6,7 @@ import { parse } from 'yaml';
 
 export const siteDir = fileURLToPath(new URL('../..', import.meta.url));
 export const repoRoot = process.env.RFL_REPO_ROOT ?? path.resolve(siteDir, '..');
-export const evidenceDir = process.env.RFL_EVIDENCE_DIR ?? path.join(repoRoot, 'docs/milestones/evidence');
+export const evidenceDir = process.env.RFL_EVIDENCE_DIR ?? path.join(repoRoot, '.lab/evidence');
 
 // The account that owns the repository on GitHub. CI names it in GITHUB_REPOSITORY, and a local build reads it
 // from the origin remote, so no tracked file has to spell it.

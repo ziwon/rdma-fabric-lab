@@ -36,7 +36,23 @@ Show that the model applies every declared parameter, that the flow completes wi
 make track-c
 ```
 
-`scripts/ns3/network.py` maps each human unit to the integer the model applies. Rates use SI units, so `100Gbps` is $10^{11}$ bit/s. Times become nanoseconds. Sizes are bytes only, so KB and KiB never mix. `config-applied` then reads every value back from the model objects ([M5](/docs/milestones/m5/) section 7).
+`scripts/ns3/network.py` maps each human unit to the integer the model applies. Rates use SI units, so `100Gbps` is $10^{11}$ bit/s. Times become nanoseconds. Sizes are bytes only, so KB and KiB never mix. `config-applied` then reads every value back from the model objects. `.lab/evidence/m5/code-references.txt` names the line of ns-3-alibabacloud `3e0c7c1` that consumes each value.
+
+| Parameter | Scenario value | Simulator input | Where the model consumes it | Read back in run `20261116T141351Z` |
+|---|---|---|---|---|
+| Link rate | `100Gbps` per link | `DataRate` of both `QbbNetDevice`s of the link | `QbbNetDevice::TransmitStart` times each packet with `CalculateBytesTxTime`, an integer division (`qbb-net-device.cc:608`, `data-rate.cc:278`). RdmaHw starts and paces the QP at the NIC rate (`rdma-hw.cc:298-299`, `736`) | 100000000000 bit/s on both ends. Each 1052 B packet takes 84 ns |
+| Propagation delay | `1us` per link | `Delay` of the `QbbChannel`, 1000 ns | A packet arrives at `txTime + m_delay` (`qbb-channel.cc:106`). Queueing happens in the device queues | 1000 ns on both channels |
+| Packet size | `mtu_bytes: 1000` | RdmaHw `Mtu` | Each data packet carries up to `Mtu` of payload plus 52 B of headers, and an ACK is 60 B (`rdma-hw.cc:689`, `442`, `ppp-header.cc:88`). The device attribute `Mtu` 1500 plays no part | 1000 data packets and 1052000 B at the sender, 1000 ACKs of 60 B |
+| Flow size | `payload_bytes: 1000000` | RdmaClient `WriteSize` | `AddQueuePair` stores it as `m_size`, and the QP ends when `snd_una >= m_size` (`rdma-hw.cc:278`, `rdma-queue-pair.cc:196`) | 1000000 B in order at the receiver |
+| Seed and run | `seed: 1`, `run: 1` | `RngSeedManager::SetSeed`, `SetRun` and `srand(1)` | The ECN marking draw and the IP id of PFC frames (`switch-mmu.cc:106`, `qbb-net-device.cc:547`). CC mode 1 takes no `rand()` path | `RngSeed` 1, `RngRun` 1. With one flow and no queue between kmin and kmax, no draw changes an outcome. Another seed was not tried |
+| Priority | `priority: 3` | RdmaClient `PriorityGroup` | The switch queues data by priority (`switch-node.cc:117`). Queue 0 holds control frames and skips admission, so the renderer refuses priority 0 | 1 to 7 only |
+| PFC | `pfc: true`, pause time 5 us, headroom 3 x BDP, alpha shift 3, buffer 33554432 B | `QbbEnabled`, `PauseTime`, `SwitchMmu::ConfigHdrm` (37500 B per port), `pfc_a_shift`, `ConfigBufferSize` | A host acts on a PAUSE only when `QbbEnabled` holds (`qbb-net-device.cc:492`). The switch pauses above `(buffer - headroom - reserve - shared) >> pfc_a_shift` (`switch-mmu.cc:93`) | Read back. No pause |
+| ECN | `ecn: true`, kmin 400000 B, kmax 1600000 B, pmax 0.2 | switch `EcnEnabled`, `ConfigEcn(port, 400, 1600, 0.2)` | `ConfigEcn` multiplies kmin and kmax by 1000 (`switch-mmu.cc:112`), so the renderer refuses a byte count that is not a multiple of 1000. Marking happens at dequeue (`switch-node.cc:207-214`) | kmin 400000 B and kmax 1600000 B |
+| Congestion control | `cc: dcqcn` | RdmaHw `CcMode` 1 | A CNP-flagged ACK reaches `cnp_received_mlx` (`rdma-hw.cc:549`) | The DCQCN parameters keep the model defaults here. No CNP arrived |
+| L2 ACKs | `l2_chunk_bytes: 4000`, `l2_ack_interval: 1` | RdmaHw `L2ChunkSize`, `L2AckInterval` | An interval of 1 ACKs every data packet (`rdma-hw.cc:429`, `592-593`) | 1000 ACKs for 1000 packets |
+| Window | `window_bytes: 0` | RdmaClient `Window` | 0 means no window (`rdma-queue-pair.cc:164`) | The sender never waited for an ACK |
+
+Two configuration names reach no decision at this commit. `QbbNetDevice` `DynamicThreshold` is stored and never read, so SimAI's `USE_DYNAMIC_PFC_THRESHOLD` changes nothing, and `QcnEnabled` is read only behind a node type test that never holds (`.lab/evidence/m5/unused-attributes.txt`).
 
 ## What every check proves
 
@@ -44,7 +60,7 @@ make track-c
 
 ## Real output
 
-The run of record of M6, on the patched image. The figures equal M5's.
+The run of record, on the patched image. The figures equal those of the unpatched image in run `20261116T141351Z`.
 
 <Excerpt id="c02-checks" />
 
@@ -60,7 +76,7 @@ $$
 \frac{8 \times 1000000}{10^{11}}\ \text{s} + 2 \times 1000\ \text{ns} = 80000\ \text{ns} + 2000\ \text{ns} = 82000\ \text{ns}
 $$
 
-The model's FCT is 88092 ns, 6092 ns or 7.43% above it. M5 derived every part of the difference from the model's code ([M5](/docs/milestones/m5/) section 8).
+The model's FCT is 88092 ns, 6092 ns or 7.43% above it. `network.fct_bound` in `scripts/ns3/network.py` derives every part of the difference from the model's code and gives exactly 88092 ns.
 
 | Part | ns | Why |
 |---|---:|---|
@@ -71,7 +87,7 @@ The model's FCT is 88092 ns, 6092 ns or 7.43% above it. M5 derived every part of
 | The last ACK returns | 2008 | The QP completes when the ACK reaches the sender: two 4 ns transmissions of 60 B and 2000 ns of propagation |
 | Total | 88092 | equal to the measured FCT |
 
-The 52 B are 10 B of SimpleSeqTsHeader, 8 B of UDP, 20 B of IPv4 and 14 B of this fork's PPP header. The first c-02 run failed `config-applied`, with 52 B per data packet and 60 B per ACK against the 40 B and 48 B first derived from the headers. The constants now follow the code ([M5](/docs/milestones/m5/) section 11).
+The 52 B are 10 B of SimpleSeqTsHeader, 8 B of UDP, 20 B of IPv4 and 14 B of this fork's PPP header. The first c-02 run failed `config-applied`, with 52 B per data packet and 60 B per ACK against the 40 B and 48 B first derived from the headers. The constants now follow the code (run `20261116T135412Z`, `ppp-header.cc:85-90`).
 
 ## Break it yourself
 
@@ -85,7 +101,7 @@ The 52 B are 10 B of SimpleSeqTsHeader, 8 B of UDP, 20 B of IPv4 and 14 B of thi
 | `ecn-bottleneck` | The receiver link at 25 Gbps | CE marks, CNP-flagged ACKs and CNPs in RdmaHw |
 | `pfc-bottleneck` | The receiver link at 25 Gbps, a 1 MB buffer, ECN off, one QP | 50 PFC frames sent, 25 PAUSE and 25 RESUME received |
 
-A break may fail more checks than it targets. `flow-cut-short` also fails `config-applied`, `fct-lower-bound` and `zero-drops`, because packets were still in flight. The unpatched model crashed on `pfc-bottleneck` with one QP, which led to the patch of M6 ([c-03](/labs/track-c/c-03-incast-simultaneous/)).
+A break may fail more checks than it targets. `flow-cut-short` also fails `config-applied`, `fct-lower-bound` and `zero-drops`, because packets were still in flight. The unpatched model crashed on `pfc-bottleneck` with one QP, which led to the patch ([ADR 0006](/docs/adr/0006-track-c-packet-model/) section 1.3, [c-03](/labs/track-c/c-03-incast-simultaneous/)).
 
 ## Questions to think about
 

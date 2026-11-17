@@ -1,7 +1,7 @@
 {
   "id": "c03-breaks",
   "run": "track-c-breaks 20261116T151446Z to 20261116T152133Z",
-  "source": "docs/milestones/evidence/m6/break-details.tsv",
+  "source": ".lab/evidence/m6/break-details.tsv",
   "lines": "1,20-31",
   "columns": [
     "run_id",

@@ -1,7 +1,7 @@
 {
   "id": "a-ha-checks",
   "run": "20261115T060557Z",
-  "source": "docs/milestones/evidence/m2/20261115T060557Z/a-soft-roce/k8s-ha-vip/summary.md",
+  "source": ".lab/evidence/m2/20261115T060557Z/a-soft-roce/k8s-ha-vip/summary.md",
   "lines": "5-13",
   "format": "md-table",
   "text": "| check | status | failure class | detail |\n|---|---|---|---|\n| control-planes-joined | passed |  | control planes ha-cp1, ha-cp2, ha-cp3 Ready with kube-apiserver and etcd, members ha-cp1, ha-cp2, ha-cp3, endpoint 192.168.140.20:6443 |\n| api-on-vip | passed |  | ha-w1 /livez on 192.168.140.20 ok; /readyz ok from ha-cp1, ha-cp2, ha-cp3 through admin.conf on the VIP |\n| vip-holder-identified | passed |  | lease plndr-cp-lock held by ha-cp1, VIP 192.168.140.20 on ha-cp1 only |\n| api-survives-holder-loss | passed |  | ha-cp1 powered off; 4 of 10 probes failed, API back on 192.168.140.20 after 6.031 s; lease and VIP now on ha-cp2 |\n| cluster-works-after-loss | passed |  | from ha-cp2 through the VIP: nodes listed, ConfigMap written, read and deleted; etcd healthy 2 of 3 |\n| holder-rejoins | passed |  | ha-cp1 Ready again, etcd healthy 3 of 3 |\n| no-process-left | passed |  | ha-cp1: 0 stopped by the runner, 0 remaining; ha-cp2: 0 stopped by the runner, 0 remaining; ha-cp3: 0 stopped by the runner, 0 remaining; ha-w1: 0 stopped by the runner, 0 remaining |"

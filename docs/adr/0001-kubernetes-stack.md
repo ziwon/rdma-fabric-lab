@@ -1,6 +1,6 @@
 # ADR 0001: The Kubernetes stack the lab and the fleet share
 
-> Status: accepted, 2026-11-15
+> Status: accepted, 2026-11-15. Sections 7 to 10 record how the stack converges, accepted between 2026-11-15 and 2026-11-16.
 
 ## 1. Decision
 
@@ -65,3 +65,49 @@ The lab follows its initial Kubernetes design, which keeps kube-proxy. It starts
 - Moving a cluster that already runs onto this code.
 - Cluster upgrade procedures. This ADR covers only installation and convergence.
 - Network Operator and IPoIB. A later hardware profile for physical NVIDIA InfiniBand hardware covers them.
+
+## 7. The node runtime comes from release files
+
+**Decision.** The `containerd` role installs containerd, runc and the CNI plugins from their upstream release files, not from distribution packages. `get_url` checks each file against its sha256 in the lock (`k8s.containerd_archive`, `k8s.runc_binary`, `k8s.cni_plugins_archive`) and rejects any other bytes. The role writes a containerd configuration of version 4 with the systemd cgroup driver and imports `/etc/containerd/conf.d/*.toml`. With `k8s_container_runtime_default: nvidia` it adds the nvidia runtime and makes it the default. Before the kubelet package arrives, it writes the dpkg rule `path-exclude=/opt/cni/bin/*`. On a host with a package containerd such as `containerd.io` it stops and changes nothing.
+
+**Reasons.**
+
+- Every version comes only from the lock (section 1), and a release file is the only source that carries exactly the locked containerd, runc and plugin releases.
+- The kubelet package depends on `kubernetes-cni`. Its 1.9.1-1.1 from pkgs.k8s.io unpacks plugins of another release into `/opt/cni/bin`. The dpkg rule keeps the locked v1.10.0 there.
+- containerd 2.4 reads configuration version 4. A version 3 file leaves the warning `Configuration migrated from version 3`.
+- A package containerd and this one would fight over `/run/containerd/containerd.sock`. Which one stays is the operator's choice.
+
+**Evidence.** Step 10 of `tests/integration/qemu-lab/acceptance-k8s.sh` in `.lab/acceptance-m2/20261115T060116Z`: on all three nodes the sha256 of the cached archives and of runc equals the lock, and `tar -d` finds no difference between the archives and the unpacked files (`.lab/evidence/m2/acceptance-m2-installed-bytes.log`). After installation `/opt/cni/bin/loopback` reports v1.10.0. With the nvidia default, `containerd config dump` shows `default_runtime_name = 'nvidia'` (`.lab/evidence/m2/nvidia-probe/dump-nvidia.txt`), and `dgx-containerd-defaults-to-nvidia` passed in cel1 run `20261115T164615Z`. The role check for a package containerd has not run on a host that has one.
+
+## 8. A second run changes nothing
+
+**Decision.**
+
+- The `kubeadm` role runs `kubeadm init` and `kubeadm join` only on a node without `/etc/kubernetes/admin.conf` and `kubelet.conf`. On a rerun it stops when the stored kubeadm-config differs from the inventory. It neither reconfigures nor upgrades (section 6). A join uses a fresh 15-minute token and the certificate key from `upload-certs`, and the join configuration that holds them is deleted right after the join. `kubeadm init phase upload-certs` gets the rendered init configuration with `--config`.
+- No role task and no playbook runs `systemctl daemon-reload`. A handler does, and only when a unit file changed.
+- `make addons` skips a release whose deployed status, chart version and user values equal the lock and the values file. For a repo-local `./` chart it also requires the objects of `helm get manifest` to equal what `helm template --no-hooks` renders now with the same values. `make addons FORCE=1` upgrades anyway.
+
+**Reasons.**
+
+- A drifted cluster is a question for the operator. A role that silently reconfigures or upgrades would hide it.
+- `upload-certs` without `--config` looked up the Kubernetes version online and failed after 60 s while it created the admin ClusterRoleBinding (`.lab/m2/ha-k8s-1.log`). With the configuration it finished in 0.06 s. `kubeadm token create` cannot mix `--config` with other flags, so it still looks the version up and takes about 12 s.
+- On systemd 255.4-1ubuntu8.18 one `daemon-reload` empties `Conflicts=shutdown.target` and `Before=shutdown.target` on the kubelet's slices. The next shutdown then stops no pod, and Multus never removes its file. Before the fix the `rxe` and `containerd` roles reloaded on every run, changed or not, so every `make rxe-up` and `make k8s` did it.
+- `helm upgrade --install` writes a new revision even when nothing changed. A skip leaves drifted objects alone, which is why `FORCE=1` exists. A repo-local chart can change without a new chart version, so for it the version does not prove the content. The user values are compared as Helm v4.3.2 merges them: maps merge key by key, a later list or scalar replaces the earlier one, and a null in a later file stays in the stored values and removes the chart default at render time (`.lab/evidence/m2/helm-null-probe.txt`).
+
+**Evidence.** The second `make k8s` reported `3 hosts, 0 with changes` on the lab profile and `4 hosts, 0 with changes` on the ha profile, and the second `make fleet-k8s` `13 hosts, 0 with changes` (`.lab/acceptance-m3/20261116T071100Z` steps 37 to 43, `.lab/acceptance-ha/20261115T060117Z/08-k8s-again-unchanged.log`, `.lab/acceptance-cel1/20261115T163759Z` steps 20 and 21). Every release stayed at revision 1 with history `[1]` in the same runs. A template-only change of the Multus chart upgraded it to revision 2, and the next run reported it unchanged (`.lab/evidence/m3-cni-dir/addons-local-chart/`). The reload defect failed `pod-at-boot-waits-for-multus` in run `20261116T165752Z`, and the fixed roles kept the slice dependencies through `make rxe-up` and `make k8s` (`.lab/evidence/m7/multus-window/step3-fixed-roles.txt`, `step4-reboot-after-fixed-roles.txt`). `tests/unit/test_ansible_daemon_reload.py` fails on a reload outside a handler.
+
+## 9. Cilium reaches the API without the ClusterIP
+
+**Decision.** The Cilium agent connects to the API address itself. In the lab the `kubeadm` role writes `k8s_api_endpoint` and `k8s_api_port` to the ConfigMap `kube-system/rfl-api-endpoint`, and `k8sServiceHostRef` in `helm/cilium/values-lab.yaml` reads it. In cel1, `values-cel1.yaml` sets `k8sServiceHost` to the VIP, with kube-proxy replacement.
+
+**Reasons.** A restarted agent could not reach the API through `10.96.0.1:443`. Three conditions met. The harness default route sits on the QEMU user NIC, so a connection to a ClusterIP took `10.0.2.15` as its source. The agent's socket carried `fwmark:0x10b00`, and Cilium's `CILIUM_POST_nat` accepts the `0xa00/0xe00` mark before kube-proxy can masquerade it. So the SYN left through the management NIC with the wrong source, and the reply was lost. At first installation `CILIUM_POST_nat` did not exist yet, which is why the first install worked. `k8sServiceHost: auto` was rejected because it uses Helm `lookup`, which breaks the offline `make addons-template`. An address written into the values file was rejected because the ha profile uses the same `lab` environment with another endpoint. Fleet nodes whose default route and node IP sit on different NICs meet the same condition.
+
+**Evidence.** The first Kubernetes acceptance, `.lab/acceptance-m2/20261115T053321Z`, failed on the restarted agent. The ha profile reproduced the cause with `ss -tnpei`, `tcpdump` and the `KUBE-POSTROUTING` MASQUERADE counter at 0 (`.lab/evidence/m2/cilium-rootcause/`). After the fix `k8s-baseline` run `20261115T055930Z` passed on the running cluster. In cel1 run `20261115T164615Z`, `cilium-api-direct` deleted an agent on a guest with the same split route, and its replacement became Ready with 0 restarts and connected to `https://10.140.0.10:6443`.
+
+## 10. The API VIP
+
+**Decision.** With `k8s_api_vip` set, every control plane runs kube-vip v1.3.1 as a static pod, pinned by tag and OCI index digest, in ARP mode with the lease `plndr-cp-lock`. The first control plane runs it with `super-admin.conf` until `kubeadm init` finishes and then with `admin.conf`. An inventory without a VIP gets the static pod file deleted. Control planes join one at a time.
+
+**Reasons.** The lease lets only one node hold the VIP. Since Kubernetes 1.29 the group permissions of `admin.conf` appear only partway through init, so kube-vip on the first node needs `super-admin.conf` until then. A deleted static pod must come back with the next `make k8s`.
+
+**Evidence.** In `k8s-ha-vip` the API answered on the VIP again 6.031 s after SIGKILL to the holder's QEMU (run `20261115T060557Z`). Other runs measured 7.538, 9.04, 9.045 and 9.041 s on the ha profile and 7.534 s on cel1 (run `20261115T164615Z`). With the kube-vip manifests removed from both surviving control planes, run `20261115T052346Z` failed with no lease holder and no VIP for 120 s, and `make k8s LAB_PROFILE=ha` rewrote them with `changed=1` on those two nodes only. The latest `k8s-ha-vip`, run `20261116T193852Z`, passed. The probes run at 0.5 s intervals, so a gap can read short by one interval.

@@ -195,7 +195,7 @@ hosts:
 fabrics:
   # The InfiniBand compute fabric. Rail r of every DGX lands on the leaf of rail r, on the leaf
   # port that matches the DGX number. Each leaf has 8 down ports and 8 uplinks from port 33, 2 to each
-  # spine, so no leaf is oversubscribed. Milestone M4 renders its ibsim topology from this section.
+  # spine, so no leaf is oversubscribed. make track-b-render renders tracks/b-ibsim/topologies/cel1-compute.net from this section.
   compute:
     kind: infiniband
     topology: rail-optimized

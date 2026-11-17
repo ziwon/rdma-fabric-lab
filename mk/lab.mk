@@ -33,7 +33,7 @@ lab-wipe: ## QEMU harness: delete guest disks and seeds so the next lab-up start
 	$(LAB_HARNESS) wipe
 
 lab-lock: venv
-	$(RFL) versions --scope m1
+	$(RFL) versions --scope lab
 
 preflight: lab-lock ## Read-only checks on the workers
 	$(LAB_PLAYBOOK) ansible/playbooks/preflight.yml
@@ -46,7 +46,7 @@ rxe-up: lab-lock ## Preflight checks, then rxe0 on the RDMA NIC through rfl-rxe.
 
 .PHONY: k8s-lock k8s
 k8s-lock: venv
-	$(RFL) versions --scope m2
+	$(RFL) versions --scope k8s
 
 k8s: k8s-lock ## kubeadm cluster of ansible/playbooks/kubernetes.yml, admin kubeconfig to .lab/kubeconfig. Cilium, Multus and Whereabouts follow with make addons ENV=lab
 	$(LAB_PLAYBOOK) ansible/playbooks/kubernetes.yml $(if $(LAB_API_URL),-e rfl_kubeconfig_server=$(LAB_API_URL))
@@ -77,12 +77,12 @@ k8s-ha-test: k8s-lock ## LAB_PROFILE=ha: cut the power of the VIP holder and sho
 
 .PHONY: k8s-hostnet-test
 k8s-hostnet-test: k8s-lock ## Run k8s-hostnet-rdma: the vm-rxe-baseline tests between hostNetwork pods on the two workers
-	$(RFL) versions --scope m3
+	$(RFL) versions --scope k8s-rdma
 	$(LAB_RUN) run.hostnet $(foreach i,$(LAB_INVENTORIES),-i $(i)) $(if $(RUN),--run-id $(RUN))
 
 .PHONY: k8s-multus-test
 k8s-multus-test: k8s-lock ## Run k8s-multus-net1: Multus net1 with Whereabouts beside Cilium, pod recreation and a worker reboot
-	$(RFL) versions --scope m3
+	$(RFL) versions --scope k8s-rdma
 	$(LAB_RUN) run.multus test $(foreach i,$(LAB_INVENTORIES),-i $(i)) $(if $(RUN),--run-id $(RUN))
 
 # Every required Track A scenario, target:scenario, in the order they run. vm-rxe-reboot runs last because
@@ -125,5 +125,5 @@ rdma-tools-image: venv ## Build images/rdma-tools inside the Track B guest into 
 	$(LAB_RUN) run.image $(foreach i,$(shell $(BUILDER_ENV) $(LAB_HARNESS) inventories),-i $(i)) --out $(RDMA_TOOLS_ARCHIVE)
 
 rdma-tools-load: lab-lock ## Import RDMA_TOOLS_ARCHIVE into containerd on every worker without a registry, by its locked digest
-	$(RFL) versions --scope m3
+	$(RFL) versions --scope k8s-rdma
 	$(LAB_PLAYBOOK) ansible/playbooks/rdma-tools.yml -e rdma_tools_archive=$(abspath $(RDMA_TOOLS_ARCHIVE))

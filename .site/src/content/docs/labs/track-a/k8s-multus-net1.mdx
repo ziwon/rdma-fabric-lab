@@ -27,7 +27,7 @@ Show that `net1` works across nodes on the lab NIC without moving the default ro
 | Profile | `lab`: `cp1` 2 vCPU, 4 GiB, and `worker1`, `worker2` 4 vCPU, 6 GiB each |
 | Versions | Multus v4.3.2 thick plugin from a repo-local chart, Whereabouts v0.9.4, Cilium chart 1.20.4 |
 | Inventory | `lab_rdma_nic` must be the same on every worker. The harness renames both lab NICs `lab0` at first boot |
-| Version lock | `make versions SCOPE=m3` must return 0 |
+| Version lock | `make versions SCOPE=k8s-rdma` must return 0 |
 
 **Time taken.** <Duration id="a-multus-time" />. Most of it is the worker reboot, about 97 s, because the Whereabouts daemon container does not stop on SIGTERM and systemd kills it after 90 s. Multus wrote its file 18.5 to 19.0 s after the boot in the runs after the layout change.
 
@@ -53,7 +53,7 @@ spec:
     "range_start": "10.77.0.100", "range_end": "10.77.0.199"}}'
 ```
 
-That render is quoted from [M3](/docs/milestones/m3/) section 6. With a worker whose `lab_rdma_nic` differed, render refused with exit 2, because one attachment names one macvlan master for every node. The test pods are busybox at the PodSecurity `restricted` level.
+That render is what `python -m run.multus render` printed for the lab inventory on 2026-11-16. With a worker whose `lab_rdma_nic` differed, render refused with exit 2, because one attachment names one macvlan master for every node. The test pods are busybox at the PodSecurity `restricted` level.
 
 ## What every check proves
 
@@ -88,7 +88,7 @@ The CNI directory of worker1 and the file in it, from an earlier run of the same
 | Config `delete_timeout_s: 1` | `test-namespace-removed` | `20261116T000756Z` | `20261116T001031Z` |
 | A process with the run id that systemd restarts | `no-process-left` | `20261116T001322Z` | `20261116T001604Z` |
 
-The CRD deletion was repaired with `make addons ... RELEASE=multus FORCE=1`, as M3 records it. The breaks from `20261115T230536Z` to `20261116T001322Z` ran before the CNI layout change, under a spec whose `multus-config-first` and `reboot-keeps-cni-order` later became `cni-dir-holds-only-multus` and `pod-at-boot-waits-for-multus` ([M3](/docs/milestones/m3/) section 16.5). The table names only checks that exist in both.
+The CRD deletion was repaired with `make addons ... RELEASE=multus FORCE=1` before run `20261115T230550Z`. The breaks from `20261115T230536Z` to `20261116T001322Z` ran before the CNI layout change, under a spec whose `multus-config-first` and `reboot-keeps-cni-order` later became `cni-dir-holds-only-multus` and `pod-at-boot-waits-for-multus` ([ADR 0004](/docs/adr/0004-track-a-pods-and-net1/) section 2.4). The table names only checks that exist in both.
 
 The first break, Cilium's file put back, shows the failure the layout prevents. The pod started with `eth0` only.
 
@@ -98,7 +98,7 @@ The first break, Cilium's file put back, shows the failure the layout prevents. 
 
 - The Multus daemon deletes `00-multus.conf` when it stops. With Cilium's file still in `/etc/cni/net.d`, what does containerd do for a pod created in the 18 seconds after a boot, and why is there no error?
 - Why must the boot-time pod tolerate every NoSchedule taint for the check to mean anything? What would hold it otherwise?
-- macvlan children carry their own MAC addresses. What must the virtual NIC and the cable do for them to work, and how did the M3 probe show it?
+- macvlan children carry their own MAC addresses. What must the virtual NIC and the cable do for them to work, and how did the extra-MAC probe show it?
 - A pod that asked Multus for `default-route` through the lab network kept its default route on `eth0`. How does the break for `default-route-on-eth0` move it instead?
 
 ## What the result means and does not mean
@@ -106,4 +106,4 @@ The first break, Cilium's file put back, shows the failure the layout prevents. 
 The run shows that Multus adds `net1` beside Cilium without moving the default route or breaking `eth0` across nodes, that Whereabouts hands out cluster-wide addresses without duplicates and releases them, and that a pod created at boot waits for Multus.
 
 > [!NOTE]
-> `net1` carries IP only. RXE lists the `net1` addresses as GIDs, but no pod got an RDMA device on `net1`, and nothing here shows an RDMA endpoint for a `net1` address. The spec's result kind is `software-cluster-test`.
+> `net1` carries IP only. RXE lists the `net1` addresses as GIDs, but no pod got an RDMA device on `net1`, and nothing here shows an RDMA endpoint for a `net1` address. Hubble and Cilium NetworkPolicy were not tested on `net1` or on hostNetwork pods. The spec's result kind is `software-cluster-test`.

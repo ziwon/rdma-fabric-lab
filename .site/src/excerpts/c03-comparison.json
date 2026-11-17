@@ -1,7 +1,7 @@
 {
   "id": "c03-comparison",
   "run": "20261116T151213Z",
-  "source": "docs/milestones/evidence/m6/20261116T151213Z/c-ns3/c-03-incast-simultaneous/raw/comparison.tsv",
+  "source": ".lab/evidence/m6/20261116T151213Z/c-ns3/c-03-incast-simultaneous/raw/comparison.tsv",
   "lines": "1-13",
   "columns": [
     "group",

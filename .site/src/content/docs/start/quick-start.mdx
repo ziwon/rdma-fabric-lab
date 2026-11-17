@@ -20,7 +20,7 @@ make tools             # pinned helm and kubeconform in .tools/bin
 
 ## Track A from nothing
 
-This is the sequence `tests/integration/qemu-lab/acceptance-m2.sh` runs.
+This is the sequence `tests/integration/qemu-lab/acceptance-k8s.sh` runs.
 
 ```bash
 make lab-wipe lab-up                 # boot cp1, worker1 and worker2
@@ -39,11 +39,11 @@ The hostNetwork RDMA pods need the RDMA test image. It is built inside the Track
 make rdma-tools-image               # build in the Track B guest, fails unless the digest is lab.rdma_tools_image
 make lab-down LAB_PROFILE=ibsim     # free the builder before measuring
 make rdma-tools-load                # import the image on both workers
-make k8s-hostnet-test               # the M1 RDMA tests between hostNetwork pods
+make k8s-hostnet-test               # the RXE tests between hostNetwork pods
 make k8s-multus-test                # net1 from Whereabouts beside Cilium, recreation, worker reboot
 ```
 
-A cluster built before Cilium got its own CNI directory needs `make cni-migrate` once after `make addons ENV=lab`. `tests/integration/qemu-lab/acceptance-m3.sh` runs all of M1, M2 and M3 from wiped guests. The three-control-plane profile runs with `LAB_PROFILE=ha`.
+A cluster built before Cilium got its own CNI directory needs `make cni-migrate` once after `make addons ENV=lab`. `tests/integration/qemu-lab/acceptance-track-a.sh` runs all of Track A from wiped guests. The three-control-plane profile runs with `LAB_PROFILE=ha`.
 
 ## Track B
 
