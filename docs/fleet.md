@@ -189,10 +189,12 @@ The site model's `services.syslog` is the central syslog address `10.140.0.5:514
 | `make fleet-addons CONFIRM=cel1 FLEET_CONNECT=<simulation inventory>` | `make versions SCOPE=fleet`, then `make addons ENV=cel1` with the cel1 kubeconfig | Simulation guests only |
 | `make fleet-rsyslog CONFIRM=cel1 FLEET_CONNECT=<simulation inventory>` | `ansible/playbooks/fleet/rsyslog-client.yml` | Simulation guests only |
 | `make fleet-sim-test FLEET_CONNECT=<simulation inventory>` | The `cel1-sim-baseline` scenario through rfl, VIP holder power cut included | Simulation guests only |
+| `make fleet-rails-test FLEET_CONNECT=<simulation inventory>` | The `cel1-rail-networks` scenario of section 14 through rfl, a clean power cycle of a rail host included | Simulation guests only |
+| `make fleet-cni-migrate CONFIRM=cel1 FLEET_CONNECT=<simulation inventory>` | `ansible/playbooks/cni-migrate.yml`, which removes Cilium's old conflist from `/etc/cni/net.d` on a cluster built before Cilium got its own directory, one node at a time | Simulation guests only |
 
 Without `CONFIRM=cel1`, the targets that change hosts run no prerequisite and stop with exit code 2. After it, `fleet sim-gate` reads the merged `ansible-inventory --list` output and, for `fleet-addons`, the kubeconfig. Every host whose `rfl_inventory` names a site model under `sites/` must have `ansible_host` 127.0.0.1 and an `ansible_port`, the first control plane must have an `rfl_kubeconfig_server` on 127.0.0.1, and every cluster server of the kubeconfig must be on 127.0.0.1. Otherwise the gate stops with exit code 2. It reads only local files. `fleet-addons` also stops when the kubeconfig (`${XDG_STATE_HOME:-~/.local/state}/rdma-fabric-lab/cel1/kubeconfig`) is missing. `ARGS=` adds arguments such as `--limit`.
 
-The simulation inventory is the `inventory.yml` that `LAB_PROFILE=cel1 make lab-up` writes into the harness state directory. Its hosts point at 127.0.0.1 forwards, the first control plane names the forward of its API port as `rfl_kubeconfig_server`, and the group `simulation_syslog` holds the stand-in syslog server. `make fleet-sim-stand-ins` gives the hosts with `k8s_container_runtime_default: nvidia` a stand-in `/usr/bin/nvidia-container-runtime` that logs each call and execs runc, and configures the stand-in syslog server to receive on the site syslog address. Neither stand-in is part of the inventory or the fleet roles.
+The simulation inventory is the `inventory.yml` that `LAB_PROFILE=cel1 make lab-up` writes into the harness state directory. Its hosts point at 127.0.0.1 forwards, the first control plane names the forward of its API port as `rfl_kubeconfig_server`, and the group `simulation_syslog` holds the stand-in syslog server. `make fleet-sim-stand-ins` gives the hosts with `k8s_container_runtime_default: nvidia` a stand-in `/usr/bin/nvidia-container-runtime` that logs each call and execs runc, labels the registered Nodes of the rail hosts with `feature.node.kubernetes.io/pci-15b3.present=true` as NFD labels a node with a Mellanox NIC (section 14), and configures the stand-in syslog server to receive on the site syslog address. It labels only Nodes that exist, so it runs again after `make fleet-k8s`. No stand-in is part of the inventory or the fleet roles.
 
 ## 9. Offline check results
 
@@ -239,7 +241,8 @@ The cel1 simulation ran the three fleet targets on 13 guests (section 13). That 
 | The toolkit drop-in on PCIe GPU servers | `not_run` | Section 6. Only a server with a GPU can confirm it |
 | InfiniBand on the rails | `not_run` | The simulation rails carry Ethernet. Track B simulates the fabric's management plane in B-04. `docs/adr/0007-cel1-ipoib-pod-networks.md` decides the pod networks on them |
 | Schema validation of the CRD objects themselves | `not_run` | kubeconform's default location gave no schema for CustomResourceDefinition. The custom resources are validated (section 9) |
-| Multus, the Network Operator and the rail networks on the simulation guests | `not_run` | Phase 2 of `docs/adr/0007-cel1-ipoib-pod-networks.md`. Section 14 lists what it has to cover |
+| An RDMA device in a pod through the device plugin, and a pod on the rails without `privileged` | `not_run` | The plugin finds RDMA devices only on PCI functions, and a guest has none (section 14) |
+| The NFD label `pci-15b3.present` from a real ConnectX port | `not_run` | A stand-in sets it on the simulation's rail hosts (section 14) |
 
 ## 11. Applying this to another site
 
@@ -287,6 +290,7 @@ Another site gives the same code only its own files. All those files live outsid
 | One L2 segment per network | `switch.py`, one per network, 11 in total, AF_UNIX datagrams only. Every QEMU and switch process runs AppArmor `unconfined` with `CapEff: 0000000000000000` |
 | Interfaces renamed by `.link` files from provisioning | cloud-init netplan matches each MAC, renames the NIC and sets its model address at first boot |
 | Each host has only its model interfaces | Each guest also has a QEMU user NIC `enp0s3` (`10.0.2.15`) with the default route, for SSH and package downloads. The node IP sits on `mgmt0`. This is the condition of the Cilium API defect of `docs/adr/0001-kubernetes-stack.md` section 9 |
+| NFD labels a DGX node with its ConnectX ports, `feature.node.kubernetes.io/pci-15b3.present=true` | `make fleet-sim-stand-ins` sets that label on the 8 rail hosts once their Nodes exist. NFD left it alone |
 | The central syslog server is outside the model, known only by `10.140.0.5:514` | The guest `cel1-sim-syslog` holds `10.140.0.5` on the management network and receives TCP syslog with rsyslog `imtcp`, one file per sending host. It is in the override group `simulation_syslog`, not in the site inventory |
 | The control node reaches the API on the VIP | Port 6443 of `cel1-cp-01` is forwarded to `127.0.0.1:22340`. The kubeconfig names that forward with `tls-server-name: kubernetes` |
 | Power failure | `lab.sh kill` sends SIGKILL to QEMU |
@@ -298,7 +302,7 @@ Run `20261115T164615Z` passed all 20 checks from wiped guests in `.lab/acceptanc
 
 ## 14. Rail networks
 
-`docs/adr/0007-cel1-ipoib-pod-networks.md` decides how a pod on a DGX node gets the eight rails: Cilium stays primary on `mgmt0`, Multus adds one IPoIB interface per rail, and the NVIDIA Network Operator supplies the RDMA shared device plugin, nv-ipam and ipoib-cni. Phase 1 of that ADR is the offline part below. Nothing of it has run on a cluster.
+`docs/adr/0007-cel1-ipoib-pod-networks.md` decides how a pod on a DGX node gets the eight rails: Cilium stays primary on `mgmt0`, Multus adds one IPoIB interface per rail, and the NVIDIA Network Operator supplies the RDMA shared device plugin, nv-ipam and ipoib-cni. Phase 1 of that ADR is the offline part below, and section 14.1 is phase 2 on the simulation guests.
 
 | Piece | Where | What it holds |
 |---|---|---|
@@ -318,10 +322,38 @@ Each choice and its source follows.
 - **`upgradeCRDs: false`.** The hook Job would apply every CRD of the operator image, the NetworkAttachmentDefinition CRD that the multus release owns among them. Helm's own `crds/` handling skips that one because it exists. Upgrades stay out of scope (ADR 0001 section 6).
 - **Strict schemas from CRDs.** `scripts/addons/schemas.py` converts each served version of each CRD that the environment's releases render. An object that lists its properties allows no other key unless the CRD preserves unknown fields there, `nullable` becomes a null type, and `x-kubernetes-int-or-string` a string or integer type.
 
-Phase 2, on the simulation guests, has to cover these before it can pass.
+### 14.1 Phase 2 on the simulation
 
-- A `fleet` variant of `make cni-migrate`. The playbook runs on the lab inventory only today, and a cel1 cluster built before this change keeps Cilium's file in `/etc/cni/net.d`. A cluster built from wiped guests does not need it.
-- The nv-ipam node agent mounts `/etc/cni/net.d/nv-ipam.d` (`040-nv-ipam-node.yaml` at v26.7.1). containerd reads only files from `/etc/cni/net.d`, so the directory changes no network, but a check that the directory holds only `00-multus.conf`, as `k8s-multus-net1` has in the lab, has to allow it.
-- `tests/integration/qemu-lab/acceptance-cel1.sh` checks only the cilium and gpu-operator releases. It needs the new three.
-- ipoib-cni must fail on the simulation's virtio rails, and that failure is the expected result there.
+The scenario `cel1-rail-networks` (`tracks/cel1/scenarios/cel1-rail-networks.yaml`, `scripts/run/cel1_rails.py`) checks the rail networks on the simulation guests that the fleet targets built, and `tests/integration/qemu-lab/acceptance-cel1.sh` runs it after `cel1-sim-baseline`. Run `20261118T014617Z` passed all 10 checks in `.lab/acceptance-cel1/20261118T012729Z`, 52 steps from wiped guests with no unexpected exit code, the run of record below. In the same acceptance `cel1-sim-baseline` run `20261118T014243Z` passed with Multus and the Network Operator installed, a second `make fleet-addons` left all five releases unchanged at revision 1, and `make fleet-cni-migrate` changed nothing (`.lab/evidence/cel1-rails/acceptance/`). It takes every expectation from the rendered values and the site model. Two of its checks pass on a failure by design, because the rails are Ethernet NICs without RDMA devices: the device plugin exposes no device, and ipoib-cni refuses every rail master.
 
+| Check | What the run of record showed |
+|---|---|
+| `cni-layout-on-every-node` | On 13 nodes `/etc/cni/net.d` holds `00-multus.conf` alone, with `/etc/cni/multus/net.d/05-cilium.conflist` as its delegate. `nv-ipam.d` is a directory and no CNI file, so containerd ignores it |
+| `operator-runs-three-components-on-rail-hosts` | Policy `ready`. `rdma-shared-dp-ds`, `nv-ipam-node` and `kube-ipoib-cni-ds` 8 of 8, on the 8 DGX nodes only. The nv-ipam controller Available. No driver, Multus or CNI plugin DaemonSet |
+| `pools-give-each-rail-host-a-block` | Each of the 8 pools gives each DGX node one block of 16, `.1`–`.16` up to `.113`–`.128` |
+| `rail-attachments-name-ipoib-on-each-rail` | 8 NetworkAttachmentDefinitions in `rdma-jobs`, each `ipoib` on its `rail<r>` with nv-ipam from `cel1-rail<r>` |
+| `rdma-resource-registered-without-a-device` | Each plugin loaded `cel1_rails` with `rdmaHcaMax` 16 and ifNames `rail0` to `rail7`, and exposes 0 devices. The 8 DGX kubelets register `rdma/cel1_rails` at 0, no other node registers it |
+| `rdma-pod-waits-without-a-device` | A pod that asks for one unit, privileged false with IPC_LOCK, stays Pending with `Insufficient rdma/cel1_rails` |
+| `ipoib-refuses-the-ethernet-rails` | A pod with the 8 rail networks never starts: `master device is (device) not of type ipoib` |
+| `pod-at-boot-waits-for-multus` | After `lab.sh stop` and `start` of `cel1-dgx-06`, the pod created at boot+7.4 s waited with no network in all 88 samples until `00-multus.conf` at boot+53.3 s, and started with `eth0` from Cilium through Multus |
+
+What the plan did not foresee follows. `docs/adr/0007-cel1-ipoib-pod-networks.md` section 5.1 has the sources.
+
+- **The device plugin cannot see a software RDMA device.** It reads a NIC's RDMA devices from `/sys/bus/pci/devices/<address>/infiniband`. Soft-RoCE devices on kernel 6.8 sit under `/sys/devices/virtual/infiniband`. A probe with Soft-RoCE on e1000e rails exposed 0 devices too (`.lab/evidence/cel1-rails/probe/`), so the simulation keeps its virtio rails and no RDMA stand-in.
+- **The plugin's DaemonSet needs NFD's Mellanox label.** The operator adds the node selector `feature.node.kubernetes.io/pci-15b3.present=true` and `network.nvidia.com/operator.mofed.wait=false`, and sets the wait label to `false` on every node with the PCI label when the policy has no `ofedDriver`. Without the label the DaemonSet scheduled 0 pods and the policy stayed `notReady`. On hardware the GPU Operator's NFD sets it for the ConnectX ports.
+- **A forced Helm 4 apply needs `--force-conflicts`.** `make addons FORCE=1` failed on a field that `kubectl patch` had changed, until the forced apply passed the flag.
+- **`make fleet-cni-migrate`** runs `ansible/playbooks/cni-migrate.yml`, which now refuses an inventory whose Helm environment installs no Multus instead of every inventory but the lab. On the cluster built from wiped guests it changed nothing.
+
+Every check failed on a deliberate break of `tests/integration/qemu-lab/breaks-cel1-rails.sh` and passed after the repair.
+
+| Break | Checks that failed | Repair | Broken and repaired run |
+|---|---|---|---|
+| Cilium's conflist copied into `/etc/cni/net.d` on `cel1-dgx-06` | `cni-layout-on-every-node`, `pod-at-boot-waits-for-multus` | `make fleet-cni-migrate`, which removed the file on that node only | `20261118T023102Z`, `20261118T023313Z` |
+| The class label `rfl.example/node-class` removed from `cel1-dgx-08` | `operator-runs-three-components-on-rail-hosts`, `pools-give-each-rail-host-a-block`, `rdma-resource-registered-without-a-device` | `make fleet-k8s`, which sets the class labels of the inventory again | `20261118T020900Z`, `20261118T021123Z` |
+| `kubectl patch` sets the master of `cel1-rail3` to `stor0` | `rail-attachments-name-ipoib-on-each-rail` | `make fleet-addons RELEASE=rail-networks FORCE=1` | `20261118T021306Z`, `20261118T021449Z` |
+| A config whose RDMA pod asks for no unit of the resource | `rdma-pod-waits-without-a-device` | The tracked config | `20261118T021633Z`, `20261118T021817Z` |
+| `/opt/cni/bin/ipoib` removed on `cel1-dgx-05` | `ipoib-refuses-the-ethernet-rails` | Delete the node's ipoib-cni pod, whose DaemonSet copies the binary again | `20261118T021957Z`, `20261118T022138Z` |
+| A stray pod with the rail test label in `rdma-jobs` | `rail-test-pods-removed` | Delete the pod | `20261118T022323Z`, `20261118T022537Z` |
+| A process that carries the run id and restarts on `cel1-dgx-04` | `no-process-left` | Stop its unit | `20261118T022722Z`, `20261118T022910Z` |
+
+The series ran in `.lab/breaks-cel1-rails/20261118T020501Z` on the cluster of the acceptance run, booted again with `make lab-up`, and every step had its expected exit code. Its first broken run, `20261118T020503Z`, also failed `operator-runs-three-components-on-rail-hosts`, because the nv-ipam controller was not yet Available after that boot. On the settled cluster the same break failed only its two checks (`.lab/breaks-cel1-rails/20261118T023100Z`). Both series are in `.lab/evidence/cel1-rails/breaks/`.

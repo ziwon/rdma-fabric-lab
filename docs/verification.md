@@ -58,6 +58,8 @@ The unit tests break their own verdicts too. A mutation check changed one line i
 | `make validate` | 0 | 2 | 363 run directories, 0 invalid |
 | `make report STRICT=1` | 0 | 2 | 15 of 15 required and 4 of 4 optional scenarios passed. Not counted: 44 deliberate break runs, 19 unfinished runs, 281 older runs |
 
+After this reproduction, phase 2 of `docs/adr/0007-cel1-ipoib-pod-networks.md` added the optional scenario `cel1-rail-networks`. `acceptance-cel1.sh` run `.lab/acceptance-cel1/20261118T012729Z` passed it as run `20261118T014617Z`, with `cel1-sim-baseline` run `20261118T014243Z`, and `docs/fleet.md` section 14.1 lists its breaks. On 2026-11-18, after it and its break series, `make report` counted 15 of 15 required and 5 of 5 optional scenarios passed, with 400 valid run directories.
+
 The cleanup proofs ran on the same day before the full run (`.lab/cleanup-check/`).
 
 | Track | Proof | Result |

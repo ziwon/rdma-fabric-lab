@@ -232,10 +232,14 @@ def _common(release: Release, env: str, lock: dict, helm_dir: Path) -> list[str]
     return argv
 
 
-def apply_argv(helm: str, release: Release, env: str, lock: dict, helm_dir: Path, kubeconfig: Path) -> list[str]:
+def apply_argv(helm: str, release: Release, env: str, lock: dict, helm_dir: Path, kubeconfig: Path,
+               force_conflicts: bool = False) -> list[str]:
+    """helm upgrade --install. Helm 4 applies server-side, so a field another manager changed, such as kubectl patch,
+    conflicts with the chart's value. force_conflicts takes such fields back, which a repair needs."""
     return [
         helm, "upgrade", "--install", *_common(release, env, lock, helm_dir),
         "--create-namespace", "--wait", "--timeout", TIMEOUT, "--kubeconfig", str(kubeconfig),
+        *(["--force-conflicts"] if force_conflicts else []),
     ]
 
 

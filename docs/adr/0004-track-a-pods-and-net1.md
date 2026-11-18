@@ -2,7 +2,7 @@
 
 > Status: accepted, 2026-11-16. The Cilium CNI directory of section 1.4, accepted 2026-11-16 after the boot window of section 2.4.
 
-These decisions sit on the shared stack of `docs/adr/0001-kubernetes-stack.md`. They hold for the lab only. cel1 runs no Multus and no RDMA test pods. `docs/adr/0007-cel1-ipoib-pod-networks.md` decides both for cel1, on the CNI layout of section 1.4. Its offline phase is implemented, and nothing of it has run on a cluster.
+These decisions sit on the shared stack of `docs/adr/0001-kubernetes-stack.md`. They hold for the lab only. cel1 runs no Multus and no RDMA test pods. `docs/adr/0007-cel1-ipoib-pod-networks.md` decides both for cel1, on the CNI layout of section 1.4, and the cel1 simulation runs the boot window check of section 2.4 in `cel1-rail-networks`.
 
 ## 1. Decision
 

@@ -99,6 +99,7 @@ Smaller scripts cover one part each. Every acceptance script starts from wiped g
 | `tests/integration/qemu-lab/acceptance.sh` | 41 steps on the two workers: `make doctor` with the host plan and an overlapping plan, `make versions SCOPE=lab`, preflight before and after bootstrap, `make rxe-up`, the three RXE scenarios, a disabled `rfl-rxe.service`, a link down and `netem loss 100%` with their repairs, cleanup of a run killed with SIGKILL beside a decoy run, `make reset-lab` refused without `CONFIRM=lab`, `make collect`, `make validate` and `make report` |
 | `tests/integration/qemu-lab/acceptance-k8s.sh` | 29 steps: RXE and the kubeadm cluster, the installed bytes against the lock, the Helm releases, `k8s-baseline`, the reruns that must change nothing, `vm-rxe-baseline` on the cluster, a deleted Cilium agent and dropped VXLAN with their repairs |
 | `tests/integration/qemu-lab/breaks-k8s-rdma.sh [break...]` | On a running lab with the addons and the RDMA test image: each break of `k8s-hostnet-rdma` and `k8s-multus-net1`, the run that must fail its named checks, the repair, and the run that must pass. It writes `pairs.tsv` with both run ids. A full series takes more than 30 minutes, because several breaks reboot a worker |
+| `tests/integration/qemu-lab/breaks-cel1-rails.sh [break...]` | On a running cel1 simulation that the fleet targets built: each break of `cel1-rail-networks`, the run that must fail its named checks, the repair, and the run that must pass. It writes `pairs.tsv` with both run ids |
 | `tests/integration/qemu-lab/probe-extra-mac.sh macvlan\|ipvlan` | Whether frames from extra MAC addresses cross the lab link: one child of the type per worker in a throwaway namespace, 5 pings each way, the source MACs on the wire and the GIDs of `rxe0` before, during and after |
 | `tests/integration/qemu-lab/probe.sh` | Whether the guest kernel has `rdma_rxe`, whether the lab NIC carries frames between the guests, and whether `rping` completes over a hand-made `rxe0` |
 | `tests/integration/qemu-lab/cleanup-check.sh a\|b\|c\|reset` | The proof of `make cleanup` per track and of `make reset-lab`, section 8 |
@@ -131,7 +132,7 @@ make lab-down LAB_PROFILE=ns3
 LAB_DIR=/data/rfl-lab/cel1 tests/integration/qemu-lab/acceptance-cel1.sh
 ```
 
-It boots 14 guests from wiped disks, proves that every fleet target refuses without `CONFIRM=cel1` and the simulation inventory, builds the cluster with `make fleet-k8s`, `fleet-addons` and `fleet-rsyslog`, checks that a second run changes nothing, and runs `cel1-sim-baseline` before, during and after a deliberate break. `docs/fleet.md` explains each fleet target.
+It boots 14 guests from wiped disks, proves that every fleet target refuses without `CONFIRM=cel1` and the simulation inventory, builds the cluster with `make fleet-k8s`, `fleet-addons` and `fleet-rsyslog`, checks that a second run changes nothing, and runs `cel1-sim-baseline` before, during and after a deliberate break. It then runs `make fleet-cni-migrate`, which must change nothing on the new layout, and `cel1-rail-networks`, the rail networks of `docs/adr/0007-cel1-ipoib-pod-networks.md`. On the cluster it leaves, after `make lab-up` boots it again, `tests/integration/qemu-lab/breaks-cel1-rails.sh` runs each break of `cel1-rail-networks` with its repair. `docs/fleet.md` explains each fleet target.
 
 ### The command interface
 
@@ -249,7 +250,7 @@ The tracks stay manual. They need `/dev/kvm`, a host with tens of GiB of memory 
 | RDMA in pods and the secondary network | `docs/adr/0004-track-a-pods-and-net1.md` |
 | The InfiniBand management simulation | `docs/adr/0005-track-b-fabric-simulation.md` |
 | The packet model | `docs/adr/0006-track-c-packet-model.md` |
-| Pod networks on the cel1 InfiniBand rails, accepted, offline phase implemented | `docs/adr/0007-cel1-ipoib-pod-networks.md` |
+| Pod networks on the cel1 InfiniBand rails, accepted, offline and simulation phases done | `docs/adr/0007-cel1-ipoib-pod-networks.md` |
 | Failures and their causes | `docs/troubleshooting.md` |
 | The cel1 region and its fleet targets | `docs/fleet.md` |
 | VMware Workstation variant, not verified on this host | `docs/setup-vmware.md` |

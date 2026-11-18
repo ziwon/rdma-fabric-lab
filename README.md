@@ -32,6 +32,7 @@ What the latest runs showed:
 - **B. InfiniBand management.** OpenSM discovers each fabric, assigns unique LIDs, drops and restores an endpoint, and routes around a failed leaf-to-spine link on the cel1 rail fabric. Run `20261116T194712Z`.
 - **C. RoCE congestion control.** One 1 MB flow completes in 88092 ns, 7.43% above its payload bound, with the gap explained to the nanosecond. Under an 8-to-1 incast, PFC alone kept every packet and reached 94.7 Gb/s of goodput. Run `20261116T200409Z`.
 - **cel1.** The fleet code builds an invented GPU region as 13 guests: 3 control planes, 8 DGX B200 and 2 PCIe GPU servers. Run `20261116T203232Z`.
+- **cel1 rail networks.** Multus beside Cilium, and the NVIDIA Network Operator's RDMA device plugin, nv-ipam and ipoib-cni on the 8 DGX guests, all rendered from the site model. The rails carry Ethernet, so the plugin exposes no device and ipoib-cni refuses every rail, as designed (ADR 0007). Run `20261118T014617Z`.
 
 ## How a result is proved
 
@@ -51,7 +52,7 @@ A run's status comes only from its recorded checks, and a passed check must cite
 ## What it does not claim
 
 - **HCA or switch performance.** RXE figures are software results of one host and guest pair. They say nothing about offload or 200, 400 or 800 Gb/s hardware.
-- **IPoIB.** RXE runs over Ethernet and ibsim simulates management datagrams, so nothing here exercises an IPoIB data path.
+- **IPoIB.** RXE runs over Ethernet and ibsim simulates management datagrams, so nothing here exercises an IPoIB data path. The cel1 rail networks are checked up to ipoib-cni refusing an Ethernet rail.
 - **Lossless switching.** Track C results are what one packet model computes. In that model, PFC off means hosts ignore PAUSE while the switch still sends it.
 - **GPU or NCCL behavior.** Nothing in this repository has run against GPU hardware.
 

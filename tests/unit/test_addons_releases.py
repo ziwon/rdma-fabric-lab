@@ -54,6 +54,13 @@ def test_apply_installs_the_locked_chart_with_the_environment_values(tmp_path, h
     values = [argv[i + 1] for i, a in enumerate(argv) if a == "--values"]
     assert values == [str(helm_dir / "cilium/values.yaml"), str(helm_dir / "cilium/values-lab.yaml")]
     assert "--wait" in argv and argv[argv.index("--kubeconfig") + 1] == "kc"
+    assert "--force-conflicts" not in argv
+
+
+def test_a_forced_apply_takes_back_fields_another_manager_changed(tmp_path, helm_dir):
+    cilium = releases.load(table(tmp_path, TABLE))[0]
+    argv = releases.apply_argv("helm", cilium, "lab", LOCK, helm_dir, Path("kc"), force_conflicts=True)
+    assert argv[-1] == "--force-conflicts"
 
 
 def test_template_renders_for_the_given_kubernetes_version(tmp_path, helm_dir):

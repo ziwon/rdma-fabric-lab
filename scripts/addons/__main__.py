@@ -58,7 +58,7 @@ def _cmd_apply(args: argparse.Namespace) -> int:
         if not args.force and releases.unchanged(chart, version, desired, metadata, deployed, manifests):
             print(f"{release.name}: unchanged, chart {version} at revision {metadata['revision']}", flush=True)
             continue
-        argv = releases.apply_argv(helm, release, args.env, lock, HELM_DIR, args.kubeconfig)
+        argv = releases.apply_argv(helm, release, args.env, lock, HELM_DIR, args.kubeconfig, force_conflicts=args.force)
         print("+", " ".join(argv), flush=True)
         subprocess.run(argv, check=True)
         after = _helm_json(releases.get_argv(helm, "metadata", release, args.kubeconfig)) or {}
@@ -125,7 +125,8 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--kubeconfig", type=Path, required=True)
     p.add_argument("--release")
     p.add_argument("--force", action="store_true",
-                   help="upgrade even when chart version and values are unchanged, so Helm repairs drifted objects")
+                   help="upgrade even when chart version and values are unchanged, and take back fields another manager changed, "
+                        "so Helm repairs drifted objects")
     p.set_defaults(func=_cmd_apply)
     p = sub.add_parser("template", help="render and validate every release of the environment offline")
     p.add_argument("--env", required=True)

@@ -1,19 +1,50 @@
 # ADR 0007: Pod networks on the cel1 InfiniBand rails
 
-> Status: accepted, 2026-11-18, with the decisions of section 6. Phase 1, the offline part, is implemented (`docs/fleet.md` section 14). Nothing has run on a cluster. Section 5 lists what each phase proves and what only hardware can prove.
+> Status: accepted, 2026-11-18, with the decisions of section 6. Phase 1, the offline part, and phase 2, the control plane on the cel1 simulation, are done (`docs/fleet.md` section 14). Section 5 lists what each phase proves and what only hardware can prove, and section 5.1 what phase 2 found.
 
 cel1 runs Cilium on the management port and gives pods no path to the eight InfiniBand rails of the DGX B200 nodes (`docs/fleet.md` section 5). This ADR decides how a pod on a DGX node gets those rails: Cilium stays the primary network, Multus adds one IPoIB interface per rail, and the NVIDIA Network Operator supplies the RDMA device plugin, the IPoIB CNI and the address pools. It sits on the shared stack of `docs/adr/0001-kubernetes-stack.md`, which left the Network Operator and IPoIB out of scope (section 6), and reuses the CNI layout that `docs/adr/0004-track-a-pods-and-net1.md` proved in the lab.
 
 The cel1 simulation cannot run any of the data path. Its rails are virtio Ethernet, and IPoIB attaches only to a port whose link layer is InfiniBand, so no guest of this repository can create an IPoIB interface, with or without RXE.
 
+![One DGX node of cel1: a pod in rdma-jobs gets eth0 from Cilium through Multus on mgmt0, and rail0 to rail7 as IPoIB children that ipoib-cni makes of the host rails and nv-ipam addresses from 10.143.r.0/24. The RDMA shared device plugin mounts the uverbs devices of mlx5_0 to mlx5_7 and rdma_cm into the pod. Each host rail goes to the InfiniBand leaf of its rail.](../../.site/src/assets/diagrams/cel1-rail-pod-networks.svg)
+
+The settings reach a pod this way. Every name, interface and range starts in the site model.
+
+```mermaid
+%%{init: {"theme": "base", "themeVariables": {"background": "#1b1f23", "primaryColor": "#22272c", "primaryTextColor": "#e6e9ed", "primaryBorderColor": "#616c78", "lineColor": "#8f9aa7", "edgeLabelBackground": "#1b1f23", "fontFamily": "DM Sans, Inter, Arial, sans-serif"}}}%%
+flowchart TB
+    S["sites/cel1.yaml<br/>pod_cidr of each rail<br/>kubernetes.rail_networks"] -->|make fleet-render| V["helm/rail-networks/<br/>values-cel1.yaml"]
+    V -->|make fleet-addons| R["release rail-networks<br/>NicClusterPolicy<br/>IPoIBNetwork ×8<br/>IPPool ×8"]
+    N["release network-operator<br/>operator and CRDs"] --> O(["Network Operator"])
+    R --> O
+    O --> D["DaemonSets<br/>RDMA device plugin<br/>nv-ipam node, ipoib-cni<br/>on the DGX nodes only"]
+    O --> A["NetworkAttachmentDefinition<br/>×8 in rdma-jobs"]
+    P["pod in rdma-jobs<br/>networks cel1-rail0 … 7<br/>rdma/cel1_rails: 1"] --> M["Multus"]
+    A --> M
+    M -->|eth0| C["Cilium on mgmt0"]
+    M -->|rail0 … rail7| I["ipoib-cni and nv-ipam"]
+    D -.->|mounts /dev/infiniband| P
+
+    classDef primary fill:#22272c,stroke:#616c78,color:#e6e9ed,stroke-width:1.5px;
+    classDef secondary fill:#21393e,stroke:#70c5d0,color:#e6e9ed,stroke-width:1.5px;
+    classDef note fill:#2b3138,stroke:#616c78,color:#b6bfc9,stroke-width:1.5px;
+    classDef accent fill:#243027,stroke:#b2e879,color:#e6e9ed,stroke-width:1.5px;
+    class S,V note
+    class R,N,O,D,A,P,M primary
+    class C secondary
+    class I accent
+```
+
 ## 1. Decision
 
 1. **Cilium stays the only primary CNI, on `mgmt0`.** Every pod keeps `eth0` from Cilium, and Services, NetworkPolicy, DNS and the NCCL bootstrap stay on it. `devices: mgmt0` does not change, so the eBPF datapath never attaches to a rail. `helm/cilium/values-cel1.yaml` gains the two keys of ADR 0004 section 1.4, `cni.confPath: /etc/cni/multus/net.d` and `cni.exclusive: false`. cel1 sets neither today, and the chart's default `cni.exclusive: true` would rename every other CNI file the agent can see.
-2. **Multus comes from the repository's chart, and nothing else installs it.** The `multus` release in `helm/releases.yaml` adds `cel1` to its environments, with a `helm/multus/values-cel1.yaml` that sets `daemonConfig.multusAutoconfigDir: /etc/cni/multus/net.d` as the lab does. The NicClusterPolicy carries no `secondaryNetwork.multus`. A cel1 cluster built before this change needs the migration of ADR 0004 section 2.4 once. `make cni-migrate` runs it on the lab only, so phase 2 brings it to cel1. Whereabouts stays lab only.
+2. **Multus comes from the repository's chart, and nothing else installs it.** The `multus` release in `helm/releases.yaml` adds `cel1` to its environments, with a `helm/multus/values-cel1.yaml` that sets `daemonConfig.multusAutoconfigDir: /etc/cni/multus/net.d` as the lab does. The NicClusterPolicy carries no `secondaryNetwork.multus`. A cel1 cluster built before this change needs the migration of ADR 0004 section 2.4 once, `make fleet-cni-migrate`. Whereabouts stays lab only.
 3. **The Network Operator installs only three components.** Chart `network-operator` 26.7.1 from `https://helm.ngc.nvidia.com/nvidia` becomes a cel1 release, with `nfd.enabled: false`. The chart creates no NicClusterPolicy by default, so the repository renders one from `sites/cel1.yaml` and applies it as a custom resource. It holds `rdmaSharedDevicePlugin`, `nvIpam` and `secondaryNetwork.ipoib`, each at version `network-operator-v26.7.1` of its image in `nvcr.io/nvidia/mellanox` as in the operator's example policy, pinned by digest in the lock, and a `nodeAffinity` on `rfl.example/node-class In [dgx-b200]`. It leaves out the following.
    - `ofedDriver`. The host driver comes with DGX OS (section 6, decision 1).
    - `secondaryNetwork.multus`. Item 2 explains why.
    - `secondaryNetwork.cniPlugins`. The `containerd` role already installs the locked CNI plugins v1.10.0 into `/opt/cni/bin` (ADR 0001 section 7). A second copier into the same directory would break that lock.
+
+   The operator schedules the device plugin only on nodes that NFD labels with a Mellanox PCI device (section 5.1).
 
    The operator chart runs with `upgradeCRDs: false`, so no hook rewrites the NetworkAttachmentDefinition CRD that the multus release owns, and the chart of item 5 carries the IPPool CRD, which the operator would create only after it reconciles the policy (`docs/fleet.md` section 14).
 4. **One RDMA resource covers all eight rails.** The device plugin publishes `rdma/cel1_rails` with `"selectors": {"ifNames": ["rail0", …, "rail7"]}` and `"rdmaHcaMax": 16`. The selector matches the netdev names that the site's `.link` files assign (`docs/fleet.md` section 2.2), so the model's interface names are also the selector. A pod that asks for one unit gets the character devices of `mlx5_0` to `mlx5_7`. `rdmaHcaMax` equals the per-node address block of item 6, so a pod that is granted the resource always finds a free address on every rail.
@@ -108,9 +139,18 @@ Each phase lists its proof. Nothing past phase 1 runs without hardware or a late
 | Phase | Deliverable | Proof | Where |
 |---|---|---|---|
 | 1. Render offline, done 2026-11-18 | `pod_cidr` and `kubernetes.rail_networks` in the model, the repo-local chart `helm/rail-networks/chart` and its rendered values, Cilium and Multus values for cel1, the Network Operator release and its lock entries | `make fleet-site-check`, `make fleet-render-check`, `make values-check ENV=cel1`, `make addons-template ENV=cel1` with kubeconform validating the custom resources against JSON schemas converted from the chart's CRDs. Each new check fails once on a deliberate break: a misspelled key of the policy or a pool, a pool too small for its nodes, a pod range that overlaps a network, edited rendered values. All passed and every break failed (`docs/fleet.md` section 9) | This repository and CI |
-| 2. Control plane in the simulation | The three components on 13 guests | Multus on cel1 with the boot window checks of `k8s-multus-net1`, the operator reconciling the policy, nv-ipam giving each DGX node a block of every pool, and a NetworkAttachmentDefinition per rail. With RXE bound to the virtio rails as a stand-in, the device plugin is expected to publish `rdma/cel1_rails`, and a pod to be admitted without `privileged`. ipoib-cni must fail there, because the rails are Ethernet, and that failure is the expected result | The cel1 simulation |
+| 2. Control plane in the simulation, done 2026-11-18 | The three components on 13 guests, the scenario `cel1-rail-networks` | Multus in the lab's CNI layout on every node and the boot window of `k8s-multus-net1` on a rail host, the policy ready with exactly the three components on the 8 rail hosts, a block of 16 for each of them in every pool, one NetworkAttachmentDefinition per rail, the device plugin registering `rdma/cel1_rails` with no device, a pod that asks for it held Pending, and ipoib-cni refusing every Ethernet rail. Run `20261118T014617Z` passed all 10 checks from wiped guests, and every check failed on a deliberate break and passed after its repair (`.lab/breaks-cel1-rails/20261118T020501Z` and `20261118T023100Z`). Section 5.1 lists what changed from the plan | The cel1 simulation |
 | 3. Data path on hardware | IPoIB children in pods on DGX nodes | `ip -d link` in a pod shows an IPoIB child of `rail<r>`. Ping between pods on two nodes on every rail. `ib_write_bw -R` between pods on every rail. `ibv_devinfo` in a pod lists `mlx5_0` to `mlx5_7` with no privileged container. `all_reduce_perf` on 8 nodes with `NCCL_DEBUG=INFO` shows `NET/IB` on all eight HCAs, with the bus bandwidth recorded and no target claimed | DGX B200 nodes, not run |
 | 4. Partitions | P_Keys from the subnet manager, P_Key children as masters | A pod in one partition cannot reach a pod in another on the same rail, and can reach a pod in its own | DGX B200 nodes and the site's SM or UFM, not run |
+
+### 5.1 What phase 2 found
+
+- **No software RDMA device can reach a pod through the shared device plugin.** The plugin enumerates PCI network functions and takes each one's RDMA devices from `/sys/bus/pci/devices/<address>/infiniband` (`GetRdmaDevicesForPcidev` of github.com/Mellanox/rdmamap). Soft-RoCE on kernel 6.8 registers its devices under `/sys/devices/virtual/infiniband`, with no PCI parent, so the plugin rejects every NIC with `missing RDMA device spec`, virtio or e1000e alike. A probe with RXE on e1000e rails showed it (`.lab/evidence/cel1-rails/probe/`). The plan of a Soft-RoCE stand-in was dropped, the rails stay virtio, and a pod admitted to the rail devices without `privileged` moves to phase 3.
+- **The device plugin needs NFD's Mellanox label.** The operator gives the plugin's DaemonSet the fixed node selector `feature.node.kubernetes.io/pci-15b3.present=true` and `network.nvidia.com/operator.mofed.wait=false`, in addition to the policy's node affinity. Without `ofedDriver` it sets the wait label to `false` on every node that carries the PCI label (`handleWaitLabelsNoConfig` in `controllers/nicclusterpolicy_controller.go` at v26.7.1). On a DGX node the GPU Operator's NFD sets that label for the ConnectX ports, because its whitelist holds classes `0200` and `0207`, so `nfd.enabled: false` of section 2.3 depends on it. In the simulation `make fleet-sim-stand-ins` labels the rail hosts as NFD would, and NFD left the label alone.
+- **ipoib-cni refuses an Ethernet master by its own check:** `error adding container to network "cel1-rail0": master device is (device) not of type ipoib`. A missing plugin binary gives `failed to find plugin "ipoib"` instead, which the scenario does not count as the refusal.
+- **Helm 4 applies server-side.** A field that another manager changed, such as `kubectl patch` on an IPoIBNetwork, made `make addons FORCE=1` fail with an apply conflict. A forced apply now passes `--force-conflicts`, and the repair restored the master.
+- **The pools hand out blocks in node order from the first address.** Each pool gave the 8 DGX nodes `.1`–`.16` up to `.113`–`.128`, as section 2.5 assumed.
+- **The boot window holds on cel1.** After a clean power cycle of `cel1-dgx-06`, containerd reported no network in all 88 samples until `00-multus.conf` appeared at boot+53.3 s, and the pod's sandbox began after it (run `20261118T014617Z`).
 
 Until phase 3 runs on hardware, `README.md` keeps IPoIB among the non-claims, and `docs/fleet.md` section 10 keeps "InfiniBand on the rails" at `not_run`.
 

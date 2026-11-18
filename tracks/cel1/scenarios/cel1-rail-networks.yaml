@@ -1,0 +1,59 @@
+track: cel1
+scenario: cel1-rail-networks
+description: >-
+  Phase 2 of ADR 0007 on the cel1 simulation: Multus beside Cilium in the CNI layout of the lab, and the NVIDIA Network
+  Operator with only the RDMA shared device plugin, nv-ipam and ipoib-cni on the DGX nodes. The rails are Ethernet NICs
+  without RDMA devices, so the device plugin exposes no device and ipoib-cni refuses every rail master. Both are the
+  expected results of the simulation. No IPoIB interface and no RDMA device reaches a pod here.
+required: false
+result_kind: software-cluster-test
+security:
+  privileged: false
+  device_exposure: >-
+    No device is exposed. The test pods run as user 65534 with every capability dropped, and the pod that asks for the
+    rail resource adds IPC_LOCK alone and never starts. kubectl and the guest commands run over SSH through 127.0.0.1
+    forwards, and no kubeconfig or key leaves a guest.
+checks:
+  - id: cni-layout-on-every-node
+    description: >-
+      On every node /etc/cni/net.d holds Multus's 00-multus.conf as its only CNI file, and that file takes Cilium's
+      conflist in /etc/cni/multus/net.d as its default delegate.
+  - id: operator-runs-three-components-on-rail-hosts
+    description: >-
+      The Nodes that carry the rail selector are the rail hosts of the site model, the NicClusterPolicy is ready, the
+      DaemonSets of the RDMA shared device plugin, the nv-ipam node agent and ipoib-cni run one ready pod on each rail
+      host and on no other node, the nv-ipam controller is available, and
+      the operator runs no driver, Multus or CNI plugin DaemonSet.
+  - id: pools-give-each-rail-host-a-block
+    description: >-
+      Each rail's IPPool gives every rail host exactly one block of perNodeBlockSize addresses inside the rail's pod
+      range, and no two blocks of a pool overlap.
+  - id: rail-attachments-name-ipoib-on-each-rail
+    description: >-
+      The operator wrote one NetworkAttachmentDefinition per rail in the rail namespace, of type ipoib on that rail's host
+      interface, with nv-ipam IPAM from the rail's pool.
+  - id: rdma-resource-registered-without-a-device
+    description: >-
+      The device plugin runs on every rail host of the site model with the rendered resource name, perNodeBlockSize as
+      rdmaHcaMax and the rail netdevs as its selector, and its kubelet registers the resource with no device, because the
+      plugin finds RDMA devices only on PCI functions and a guest has none. No other node registers it. This is the
+      expected result of the simulation.
+  - id: rdma-pod-waits-without-a-device
+    description: >-
+      A pod that asks for one unit of the rail resource, with privileged false and IPC_LOCK as its only added capability,
+      stays Pending, and the scheduler names Insufficient for the resource, so no pod gets the rails without their
+      devices. This is the expected result of the simulation.
+  - id: ipoib-refuses-the-ethernet-rails
+    description: >-
+      A pod that names the eight rail networks never starts, and its sandbox errors come from ipoib-cni refusing a rail
+      master, which is an Ethernet NIC here. This is the expected result of the simulation.
+  - id: pod-at-boot-waits-for-multus
+    description: >-
+      After a clean power cycle of a rail host, a pod created there as soon as the new boot answers waits while
+      00-multus.conf is absent: containerd reports no network in any sample of that window, and the pod's sandbox begins
+      only after the file exists. The pod runs with eth0 from Cilium through Multus, and the node's CNI layout holds.
+  - id: rail-test-pods-removed
+    description: >-
+      The run deletes its own pods, and afterwards no pod of a rail test of any run remains in the rail namespace.
+  - id: no-process-left
+    description: After the run no process carrying this run id remains on any guest.

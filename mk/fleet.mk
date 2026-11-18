@@ -24,7 +24,7 @@ CEL1_GATE = test "$(CONFIRM)" = cel1 || { echo "make $@ changes every cel1 host.
 SIM_GATE = $(MAKE) -s --no-print-directory venv && $(FLEET_PY) sim-gate --target $@ $(foreach s,$(wildcard sites/*.yaml),--site $(s)) $(FLEET_INVENTORIES)
 INVENTORY_DIR = $(if $(wildcard ansible/inventories/$(INVENTORY)/hosts.yml),ansible/inventories/$(INVENTORY),$(INVENTORY))
 
-.PHONY: fleet-site-check fleet-render fleet-render-check fleet-sim-profile fleet-sim-profile-check inventory-check values-check fleet-check
+.PHONY: fleet-cni-migrate fleet-site-check fleet-render fleet-render-check fleet-sim-profile fleet-sim-profile-check inventory-check values-check fleet-check
 fleet-site-check: venv ## Offline: validate sites/cel1.yaml, its names, address plan and fabric cabling
 	$(FLEET_PY) site-check $(CEL1_SITE) --lab-plan ansible/inventories/lab/group_vars/all
 
@@ -54,7 +54,7 @@ fleet-check: venv ## Offline: site model, rendered inventory, simulation profile
 	$(MAKE) --no-print-directory inventory-check INVENTORY=cel1
 	$(MAKE) --no-print-directory values-check addons-template ENV=cel1
 
-.PHONY: fleet-sim-stand-ins fleet-sim-test fleet-k8s fleet-addons fleet-rsyslog
+.PHONY: fleet-sim-stand-ins fleet-sim-test fleet-rails-test fleet-k8s fleet-addons fleet-rsyslog
 # The power commands of the simulation. LAB_DIR, when set, moves the guests' files as for lab.sh.
 CEL1_SIM_HARNESS = env LAB_PROFILE=cel1 $(LAB_HARNESS)
 
@@ -62,6 +62,11 @@ fleet-sim-test: venv ## Run the cel1-sim-baseline scenario through rfl, VIP hold
 	@$(SIM_GATE)
 	PYTHONPATH=scripts $(BIN)/python -m run.cel1 $(FLEET_INVENTORIES) $(if $(RUN),--run-id $(RUN)) \
 		--power-off '$(CEL1_SIM_HARNESS) kill {guest}' --power-on '$(CEL1_SIM_HARNESS) start {guest}'
+
+fleet-rails-test: venv ## Run the cel1-rail-networks scenario of ADR 0007 through rfl, a clean power cycle of a rail host included. Refuses without FLEET_CONNECT=<simulation inventory>
+	@$(SIM_GATE)
+	PYTHONPATH=scripts $(BIN)/python -m run.cel1_rails $(FLEET_INVENTORIES) $(if $(RUN),--run-id $(RUN)) $(if $(CONFIG),--config $(CONFIG)) \
+		--power-stop '$(CEL1_SIM_HARNESS) stop {guest}' --power-on '$(CEL1_SIM_HARNESS) start {guest}'
 
 fleet-sim-stand-ins: ## Simulation only: the NVIDIA runtime stand-in on nvidia nodes and the syslog server stand-in. Refuses without CONFIRM=cel1 and FLEET_CONNECT=<simulation inventory>
 	@$(CEL1_GATE)
@@ -80,6 +85,11 @@ fleet-addons: ## helm upgrade --install the cel1 releases with the cel1 kubeconf
 	@$(SIM_GATE) --kubeconfig $(CEL1_KUBECONFIG)
 	$(MAKE) --no-print-directory versions SCOPE=fleet
 	$(MAKE) --no-print-directory addons ENV=cel1 KUBECONFIG_FILE=$(CEL1_KUBECONFIG)
+
+fleet-cni-migrate: ## After make fleet-addons on a cel1 cluster built before Cilium got its own CNI directory: remove its old conflist on every node. Refuses without CONFIRM=cel1 and FLEET_CONNECT=<simulation inventory>
+	@$(CEL1_GATE)
+	@$(SIM_GATE)
+	$(FLEET_PLAYBOOK) ansible/playbooks/cni-migrate.yml $(ARGS)
 
 fleet-rsyslog: ## Forward syslog of every cel1 node to the site syslog server. Refuses without CONFIRM=cel1 and FLEET_CONNECT=<simulation inventory>
 	@$(CEL1_GATE)

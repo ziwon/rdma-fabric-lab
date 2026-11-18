@@ -4,8 +4,11 @@
   serial: 1
   pre_tasks:
     - name: Refuse an inventory whose Helm environment installs no Multus
+      vars:
+        cni_migrate_multus: "{{ (lookup('ansible.builtin.file', playbook_dir ~ '/../../helm/releases.yaml') | from_yaml).releases
+          | selectattr('name', 'equalto', 'multus') | first }}"
       ansible.builtin.assert:
-        that: rfl_inventory | default('') == 'lab'
+        that: rfl_inventory | default('') in cni_migrate_multus.environments
         fail_msg: "{{ inventory_hostname }} belongs to Helm environment {{ rfl_inventory | default('none') }}, which has no Multus."
         quiet: true
   roles:
