@@ -300,6 +300,18 @@ cel1-rails-checks:
   run: 20261118T014617Z
   source: .lab/evidence/cel1-rails/20261118T014617Z/cel1/cel1-rail-networks/summary.md
   block: '| check |'
+cel1-rails-plugin:
+  run: 20261118T014617Z
+  source: .lab/evidence/cel1-rails/20261118T014617Z/cel1/cel1-rail-networks/raw/rdma-resource-registered-without-a-device/cel1-dgx-01-plugin.log
+  lines: 23-48
+cel1-rails-rxe-sysfs:
+  run: ADR 0007 phase 2 probe, rails on e1000e with Soft-RoCE
+  source: .lab/evidence/cel1-rails/probe/dgx-01-rxe-sysfs.txt
+  lines: 16-20
+cel1-rails-rxe-no-pci:
+  run: ADR 0007 phase 2 probe, rails on e1000e with Soft-RoCE
+  source: .lab/evidence/cel1-rails/probe/dgx-01-rxe-sysfs.txt
+  lines: 42-43
 
 repo-validate:
   run: acceptance-m3 20261116T001921Z, step 39

@@ -1,0 +1,8 @@
+{
+  "id": "cel1-rails-rxe-no-pci",
+  "run": "ADR 0007 phase 2 probe, rails on e1000e with Soft-RoCE",
+  "source": ".lab/evidence/cel1-rails/probe/dgx-01-rxe-sysfs.txt",
+  "lines": "42-43",
+  "format": "text",
+  "text": "+ ls -d '/sys/bus/pci/devices/*/infiniband'\nls: cannot access '/sys/bus/pci/devices/*/infiniband': No such file or directory"
+}
