@@ -1,0 +1,45 @@
+2026/11/18 01:43:07 Starting K8s RDMA Shared Device Plugin version= master
+2026/11/18 01:43:07 resource manager reading configs
+2026/11/18 01:43:07 Reading /k8s-rdma-shared-dev-plugin/config.json
+2026/11/18 01:43:07 loaded config: [{ResourceName:cel1_rails ResourcePrefix: RdmaHcaMax:16 Devices:[] Selectors:{Vendors:[] DeviceIDs:[] Drivers:[] IfNames:[rail0 rail1 rail2 rail3 rail4 rail5 rail6 rail7] LinkTypes:[]}}] 
+2026/11/18 01:43:07 no periodic update interval is set, use default interval 60 seconds
+2026/11/18 01:43:07 Discovering host devices
+2026/11/18 01:43:07 discovering host network devices
+2026/11/18 01:43:07 DiscoverHostDevices(): device found: 0000:00:03.0	02          	Red Hat, Inc.       	Virtio network device                   
+2026/11/18 01:43:07 DiscoverHostDevices(): device found: 0000:00:04.0	02          	Red Hat, Inc.       	Virtio network device                   
+2026/11/18 01:43:07 DiscoverHostDevices(): device found: 0000:00:05.0	02          	Red Hat, Inc.       	Virtio network device                   
+2026/11/18 01:43:07 DiscoverHostDevices(): device found: 0000:00:06.0	02          	Red Hat, Inc.       	Virtio network device                   
+2026/11/18 01:43:07 DiscoverHostDevices(): device found: 0000:00:07.0	02          	Red Hat, Inc.       	Virtio network device                   
+2026/11/18 01:43:07 DiscoverHostDevices(): device found: 0000:00:08.0	02          	Red Hat, Inc.       	Virtio network device                   
+2026/11/18 01:43:07 DiscoverHostDevices(): device found: 0000:00:09.0	02          	Red Hat, Inc.       	Virtio network device                   
+2026/11/18 01:43:07 DiscoverHostDevices(): device found: 0000:00:0a.0	02          	Red Hat, Inc.       	Virtio network device                   
+2026/11/18 01:43:07 DiscoverHostDevices(): device found: 0000:00:0b.0	02          	Red Hat, Inc.       	Virtio network device                   
+2026/11/18 01:43:07 DiscoverHostDevices(): device found: 0000:00:0c.0	02          	Red Hat, Inc.       	Virtio network device                   
+2026/11/18 01:43:07 DiscoverHostDevices(): device found: 0000:00:0d.0	02          	Red Hat, Inc.       	Virtio network device                   
+2026/11/18 01:43:07 DiscoverHostDevices(): device found: 0000:00:0e.0	02          	Red Hat, Inc.       	Virtio network device                   
+2026/11/18 01:43:07 Initializing resource servers
+2026/11/18 01:43:07 Resource: &{ResourceName:cel1_rails ResourcePrefix:rdma RdmaHcaMax:16 Devices:[] Selectors:{Vendors:[] DeviceIDs:[] Drivers:[] IfNames:[rail0 rail1 rail2 rail3 rail4 rail5 rail6 rail7] LinkTypes:[]}}
+2026/11/18 01:43:07 error creating new device: "missing RDMA device spec for device 0000:00:03.0, RDMA device \"rdma_cm\" not found"
+2026/11/18 01:43:07 error creating new device: "missing RDMA device spec for device 0000:00:04.0, RDMA device \"rdma_cm\" not found"
+2026/11/18 01:43:07 error creating new device: "missing RDMA device spec for device 0000:00:05.0, RDMA device \"rdma_cm\" not found"
+2026/11/18 01:43:07 error creating new device: "missing RDMA device spec for device 0000:00:06.0, RDMA device \"rdma_cm\" not found"
+2026/11/18 01:43:07 error creating new device: "missing RDMA device spec for device 0000:00:07.0, RDMA device \"rdma_cm\" not found"
+2026/11/18 01:43:07 error creating new device: "missing RDMA device spec for device 0000:00:08.0, RDMA device \"rdma_cm\" not found"
+2026/11/18 01:43:07 error creating new device: "missing RDMA device spec for device 0000:00:09.0, RDMA device \"rdma_cm\" not found"
+2026/11/18 01:43:07 error creating new device: "missing RDMA device spec for device 0000:00:0a.0, RDMA device \"rdma_cm\" not found"
+2026/11/18 01:43:07 error creating new device: "missing RDMA device spec for device 0000:00:0b.0, RDMA device \"rdma_cm\" not found"
+2026/11/18 01:43:07 error creating new device: "missing RDMA device spec for device 0000:00:0c.0, RDMA device \"rdma_cm\" not found"
+2026/11/18 01:43:07 error creating new device: "missing RDMA device spec for device 0000:00:0d.0, RDMA device \"rdma_cm\" not found"
+2026/11/18 01:43:07 error creating new device: "missing RDMA device spec for device 0000:00:0e.0, RDMA device \"rdma_cm\" not found"
+2026/11/18 01:43:07 Warning: no devices in device pool, creating empty resource server for cel1_rails
+2026/11/18 01:43:07 Using watch mode with socket directory: /var/lib/kubelet/plugins_registry
+2026/11/18 01:43:07 Warning: no Rdma Devices were found for resource cel1_rails
+2026/11/18 01:43:07 Starting all servers...
+2026/11/18 01:43:07 starting rdma/cel1_rails device plugin endpoint at: cel1_rails.sock
+2026/11/18 01:43:07 rdma/cel1_rails device plugin endpoint started serving
+2026/11/18 01:43:07 All servers started.
+2026/11/18 01:43:07 Listening for term signals
+2026/11/18 01:43:07 Starting OS watcher.
+2026/11/18 01:43:08 ListAndWatch called by kubelet for: rdma/cel1_rails
+2026/11/18 01:43:08 Updating "rdma/cel1_rails" devices
+2026/11/18 01:43:08 exposing "0" devices

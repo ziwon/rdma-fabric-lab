@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # The cel1 simulation from wiped guests: the fleet targets refuse without CONFIRM=cel1 and the
 # simulation inventory and contact nothing, build the cluster, change nothing on a second run, and
-# cel1-sim-baseline passes, fails on a deliberate break and passes after the repair.
+# cel1-sim-baseline passes, fails on a deliberate break and passes after the repair. cel1-rail-networks
+# (ADR 0007) runs on the same cluster, and its breaks are tests/integration/qemu-lab/breaks-cel1-rails.sh.
 # Logs land in .lab/acceptance-cel1/<UTC time>/NN-<step>.log with steps.tsv and runs.tsv.
 # LAB_DIR moves the guests' disks, as for lab.sh. The guests are stopped at the end.
 set -euo pipefail
@@ -77,14 +78,18 @@ opt_out_labels() {
 
 dgx_opted_out() { opt_out_labels | awk '/^cel1-dgx-/ { n++; if ($6 == "false" && $7 == "false") ok++ } END { print ok + 0 " of " n " DGX Nodes carry both opt-outs"; exit (ok != 8) }'; }
 
+releases=(cilium:kube-system multus:kube-system gpu-operator:gpu-operator network-operator:nvidia-network-operator
+  rail-networks:nvidia-network-operator)
+release_names=$(printf '%s\n' "${releases[@]%%:*}" | paste -sd'|')
+
 releases_unchanged() {
-  grep -E '^(cilium|gpu-operator): ' "$(last_log "$1")"
-  [[ $(grep -cE '^(cilium|gpu-operator): unchanged' "$(last_log "$1")") == 2 ]]
+  grep -E "^($release_names): " "$(last_log "$1")"
+  [[ $(grep -cE "^($release_names): unchanged" "$(last_log "$1")") == "${#releases[@]}" ]]
 }
 
 one_revision() {
   local release
-  for release in cilium:kube-system gpu-operator:gpu-operator; do
+  for release in "${releases[@]}"; do
     .tools/bin/helm history "${release%%:*}" -n "${release#*:}" --kubeconfig "$kubeconfig" -o json \
       | .venv/bin/python -c 'import json, sys; h = json.load(sys.stdin); print(sys.argv[1], [r["revision"] for r in h]); sys.exit([r["revision"] for r in h] != [1])' "${release%%:*}"
   done
@@ -116,8 +121,12 @@ step refuse-rsyslog-without-confirm 0 refused fleet-rsyslog
 step refuse-rsyslog-without-connect 0 refused fleet-rsyslog CONFIRM=cel1
 step refuse-rsyslog-invented-addresses 0 refused fleet-rsyslog CONFIRM=cel1 "FLEET_CONNECT=$out/invented-connect.yml"
 step refuse-stand-ins-without-connect 0 refused fleet-sim-stand-ins CONFIRM=cel1
+step refuse-cni-migrate-without-confirm 0 refused fleet-cni-migrate
+step refuse-rails-test-without-connect 0 refused fleet-rails-test
 step stand-ins 0 make fleet-sim-stand-ins "${fleet[@]}"
 step fleet-k8s 0 make fleet-k8s "${fleet[@]}"
+# The NFD label stand-in of the rail hosts needs their Nodes, so it runs again once they exist.
+step stand-ins-after-k8s 0 make fleet-sim-stand-ins "${fleet[@]}"
 step kubeconfig-mode 0 stat -c '%a %n' "$kubeconfig"
 step opt-outs-before-operator 0 dgx_opted_out
 step fleet-k8s-again 0 make fleet-k8s "${fleet[@]}"
@@ -130,6 +139,9 @@ step fleet-addons 0 make fleet-addons "${fleet[@]}"
 step fleet-rsyslog 0 make fleet-rsyslog "${fleet[@]}"
 step opt-outs-after-operator 0 opt_out_labels
 step cel1-sim-baseline 0 make fleet-sim-test "FLEET_CONNECT=$connect"
+step fleet-cni-migrate-on-new-layout 0 make fleet-cni-migrate "${fleet[@]}"
+step fleet-cni-migrate-on-new-layout-unchanged 0 unchanged fleet-cni-migrate-on-new-layout
+step cel1-rail-networks 0 make fleet-rails-test "FLEET_CONNECT=$connect"
 step fleet-k8s-after-operator 0 make fleet-k8s "${fleet[@]}"
 step fleet-k8s-after-operator-changes 0 only_label_changes fleet-k8s-after-operator
 step fleet-k8s-converged 0 make fleet-k8s "${fleet[@]}"
@@ -153,6 +165,7 @@ step lab-down-end 0 make lab-down
   printf 'cel1-sim-baseline\t%s\n' "$(run_id_of cel1-sim-baseline)"
   printf 'rsyslog-stopped\t%s\n' "$(run_id_of cel1-sim-baseline-rsyslog-stopped)"
   printf 'repaired\t%s\n' "$(run_id_of cel1-sim-baseline-repaired)"
+  printf 'cel1-rail-networks\t%s\n' "$(run_id_of cel1-rail-networks)"
 } > "$out/runs.tsv"
 printf '\nsteps: %s\nruns:  %s\n' "$out/steps.tsv" "$out/runs.tsv"
 awk -F'\t' 'NR > 1 && (($2 == "0" && $3 != 0) || ($2 == "nonzero" && $3 == 0)) { bad++ } END { print (bad ? bad : 0) " unexpected exit codes"; exit (bad ? 1 : 0) }' "$out/steps.tsv"

@@ -1,0 +1,17 @@
+# Parameters of the cel1-rail-networks scenario. Every run records this file's sha256.
+site: sites/cel1.yaml
+rail_values: helm/rail-networks/values-cel1.yaml
+operator_namespace: nvidia-network-operator
+policy: nic-cluster-policy
+image: lab.k8s_test_image
+rdma_pod_node: cel1-dgx-04
+# Units of the rail resource the RDMA test pod asks for.
+rdma_pod_units: 1
+attach_pod_node: cel1-dgx-05
+boot_node: cel1-dgx-06
+ready_timeout_s: 240
+attach_wait_s: 90
+delete_timeout_s: 120
+reboot_timeout_s: 300
+multus_conf_timeout_s: 240
+node_ready_timeout_s: 420

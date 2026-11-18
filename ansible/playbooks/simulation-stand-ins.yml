@@ -1,7 +1,8 @@
 ---
-# Simulation only. Guests of an invented site stand in for two things the site model names but a
-# guest lacks: the NVIDIA container runtime that DGX OS ships, and the central syslog server that
-# the model names only by address. Neither belongs in the fleet inventory or the fleet roles.
+# Simulation only. Guests of an invented site stand in for three things the site model names but a
+# guest lacks: the NVIDIA container runtime that DGX OS ships, the PCI label that Node Feature
+# Discovery gives a node with rail HCAs, and the central syslog server that the model names only by
+# address. None belongs in the fleet inventory or the fleet roles.
 - name: Refuse every host that is not a simulation guest
   hosts: all
   gather_facts: false
@@ -31,6 +32,44 @@
           printf '%s %s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$*" >> /var/log/rfl-nvidia-container-runtime.log
           exec /usr/local/sbin/runc "$@"
       when: k8s_container_runtime_default | default('runc') == 'nvidia'
+
+# The operator schedules the RDMA shared device plugin only on nodes that Node Feature Discovery labels with a Mellanox
+# PCI device, feature.node.kubernetes.io/pci-15b3.present=true, which NFD gives a DGX node for its ConnectX ports
+# (ADR 0007, docs/fleet.md section 14). A guest has no such device, so the rail hosts get the label NFD would give them.
+# The hosts are the ones the rendered rail network values select. The play labels only registered Nodes, so it runs
+# again after make fleet-k8s.
+- name: Stand in for the Node Feature Discovery label of the rail HCAs
+  hosts: k8s_cluster
+  gather_facts: false
+  vars:
+    rfl_sim_kubectl: kubectl --kubeconfig /etc/kubernetes/admin.conf
+    rfl_sim_first_cp: "{{ groups['kube_control_plane'][0] }}"
+    rfl_sim_mellanox_label: feature.node.kubernetes.io/pci-15b3.present
+    rfl_sim_rail_values_file: "{{ playbook_dir }}/../../helm/rail-networks/values-{{ rfl_inventory }}.yaml"
+    rfl_sim_rail_values: "{{ lookup('ansible.builtin.file', rfl_sim_rail_values_file, errors='ignore') | default('', true) | from_yaml }}"
+    # A host carries every label of the node selector with its value.
+    rfl_sim_rail_host: >-
+      {{ (rfl_sim_rail_values or {}).get('rails', []) | length > 0
+         and rfl_sim_rail_values.nodeSelector.items() | list
+             | difference((k8s_node_labels | default({})).items() | list) | length == 0 }}
+  tasks:
+    - name: Read the Mellanox PCI label of the Node
+      ansible.builtin.command: >-
+        {{ rfl_sim_kubectl }} get node {{ inventory_hostname }} --ignore-not-found
+        -o 'jsonpath={.metadata.labels.feature\.node\.kubernetes\.io/pci-15b3\.present}'
+      delegate_to: "{{ rfl_sim_first_cp }}"
+      become: true
+      register: rfl_sim_label
+      changed_when: false
+      failed_when: false
+      when: rfl_sim_rail_host | bool
+
+    - name: Label the Node as NFD labels a node with a Mellanox NIC
+      ansible.builtin.command: "{{ rfl_sim_kubectl }} label node {{ inventory_hostname }} {{ rfl_sim_mellanox_label }}=true --overwrite"
+      delegate_to: "{{ rfl_sim_first_cp }}"
+      become: true
+      changed_when: true
+      when: rfl_sim_rail_host | bool and rfl_sim_label.rc == 0 and rfl_sim_label.stdout != 'true'
 
 - name: Stand in for the central syslog server
   hosts: simulation_syslog

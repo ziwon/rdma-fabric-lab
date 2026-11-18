@@ -1,0 +1,86 @@
+---
+title: cel1-rail-networks
+description: Multus beside Cilium and the NVIDIA Network Operator with the RDMA shared device plugin, nv-ipam and ipoib-cni on the eight rails of the cel1 DGX nodes, checked on the simulation, where the rails carry Ethernet.
+sidebar:
+  order: 2
+---
+
+import Excerpt from '../../../../components/Excerpt.astro';
+import ScenarioChecks from '../../../../components/ScenarioChecks.astro';
+
+[ADR 0007](/docs/adr/0007-cel1-ipoib-pod-networks/) decides how a pod on a cel1 DGX node reaches the eight InfiniBand rails. Cilium stays the primary network on `mgmt0`. Multus adds one IPoIB interface per rail. The NVIDIA Network Operator runs three components only: the RDMA shared device plugin, which admits a pod to the rail HCAs, nv-ipam, which hands each node a block of every rail's pod range, and ipoib-cni, which makes an IPoIB child of the rail for the pod. This scenario is phase 2 of that ADR. It checks everything the simulation can hold, and it shows the two places where an Ethernet rail must fail.
+
+## Goal
+
+Show that the fleet targets install Multus, the Network Operator and the rail networks from the site model onto the cel1 guests, that the operator runs exactly its three components on exactly the DGX nodes, that the pools and attachments match the model, that a pod created right after a rail host boots waits for Multus, and that nothing gives a pod a rail it cannot have.
+
+## Concepts it uses
+
+- [Kubernetes networking](/concepts/kubernetes-networking/), Multus and the CNI layout of [k8s-multus-net1](/labs/track-a/k8s-multus-net1/).
+- [The cel1 site model](/repository/cel1-site-model/), whose `kubernetes.rail_networks` section and rail `pod_cidr` give every expectation.
+- [cel1-sim-baseline](/labs/cel1/cel1-sim-baseline/), which builds the cluster this scenario runs on.
+
+## Run it
+
+`tests/integration/qemu-lab/acceptance-cel1.sh` runs it from wiped guests after `cel1-sim-baseline`. On a cluster that is up:
+
+```bash
+make fleet-sim-stand-ins CONFIRM=cel1 FLEET_CONNECT=<simulation inventory>   # after fleet-k8s, for the NFD label
+make fleet-addons        CONFIRM=cel1 FLEET_CONNECT=<simulation inventory>
+make fleet-rails-test    FLEET_CONNECT=<simulation inventory>                # this scenario
+tests/integration/qemu-lab/breaks-cel1-rails.sh                             # every break and its repair
+```
+
+## How the simulation differs from the site model
+
+| Site model | Simulation |
+|---|---|
+| `rail0` to `rail7` are IPoIB interfaces on ConnectX HCAs `mlx5_0` to `mlx5_7` | virtio Ethernet NICs without an RDMA device |
+| NFD labels a DGX node `feature.node.kubernetes.io/pci-15b3.present=true` for its ConnectX ports | `make fleet-sim-stand-ins` sets that label on the 8 rail hosts |
+| The device plugin finds one RDMA device per rail and admits up to 16 pods per node | The plugin registers `rdma/cel1_rails` with no device |
+| ipoib-cni makes an IPoIB child of the rail for each pod | ipoib-cni refuses the rail, which is no IPoIB interface |
+
+## What every check proves
+
+<ScenarioChecks spec="cel1/cel1-rail-networks" />
+
+## Real output
+
+The run of record, from wiped guests.
+
+<Excerpt id="cel1-rails-checks" />
+
+## Break it yourself
+
+Each break changes one thing, the run fails with the named checks, and the repair makes the next run pass.
+
+| Break | Checks that failed | Repair | Broken run | Repaired run |
+|---|---|---|---|---|
+| Cilium's conflist copied into `/etc/cni/net.d` on `cel1-dgx-06` | `cni-layout-on-every-node`, `pod-at-boot-waits-for-multus` | `make fleet-cni-migrate`, which removed the file on that node only | `20261118T023102Z` | `20261118T023313Z` |
+| The class label `rfl.example/node-class` removed from `cel1-dgx-08` | `operator-runs-three-components-on-rail-hosts`, `pools-give-each-rail-host-a-block`, `rdma-resource-registered-without-a-device` | `make fleet-k8s`, which sets the class labels of the inventory again | `20261118T020900Z` | `20261118T021123Z` |
+| `kubectl patch` sets the master of `cel1-rail3` to `stor0` | `rail-attachments-name-ipoib-on-each-rail` | `make fleet-addons RELEASE=rail-networks FORCE=1` | `20261118T021306Z` | `20261118T021449Z` |
+| A config whose RDMA pod asks for no unit of the resource | `rdma-pod-waits-without-a-device` | The tracked config | `20261118T021633Z` | `20261118T021817Z` |
+| `/opt/cni/bin/ipoib` removed on `cel1-dgx-05` | `ipoib-refuses-the-ethernet-rails` | Delete the node's ipoib-cni pod, whose DaemonSet copies the binary again | `20261118T021957Z` | `20261118T022138Z` |
+| A stray pod with the rail test label in `rdma-jobs` | `rail-test-pods-removed` | Delete the pod | `20261118T022323Z` | `20261118T022537Z` |
+| A process that carries the run id and restarts on `cel1-dgx-04` | `no-process-left` | Stop its unit | `20261118T022722Z` | `20261118T022910Z` |
+
+The series ran on the cluster of the acceptance run. Its first broken run also failed the operator check, because the nv-ipam controller was not yet Available after the guests booted again, so that break ran once more on the settled cluster, whose pair is the one above.
+
+## Findings worth knowing
+
+- **The device plugin cannot see a software RDMA device.** It takes a NIC's RDMA devices from `/sys/bus/pci/devices/<address>/infiniband`. Soft-RoCE on kernel 6.8 registers its devices under `/sys/devices/virtual/infiniband`, so a probe with Soft-RoCE on e1000e rails still exposed no device. A pod with rail devices and no `privileged` needs a real HCA.
+- **The device plugin's DaemonSet needs NFD's Mellanox label.** The operator adds the node selector `feature.node.kubernetes.io/pci-15b3.present=true` and `network.nvidia.com/operator.mofed.wait=false`. Without the label it scheduled no plugin pod and the policy stayed `notReady`. On a DGX node the GPU Operator's NFD sets it.
+- **A forced Helm 4 apply needs `--force-conflicts`.** Helm 4 applies server-side, so a repair of a field that `kubectl patch` changed failed with a conflict until the forced apply took the field back.
+
+## Questions to think about
+
+- The attach pod asks for no rail resource. What would it show if it did, and why?
+- Why does the pool give `cel1-dgx-01` the block `.1`–`.16`, and why does the pod range not share the host rail subnet?
+- Which checks would change on real DGX nodes, and which ones would still pass unchanged?
+
+## What the result means and does not mean
+
+The run shows the control plane of ADR 0007 on the cel1 simulation: the CNI layout, the operator's components and their placement, the pools, the attachments and the boot window.
+
+> [!WARNING]
+> No IPoIB interface, RDMA device, RDMA traffic or NCCL ran. The rails are Ethernet, the device plugin exposes no device, and ipoib-cni refuses every rail by design. The Mellanox PCI label is a stand-in. Phase 3 of ADR 0007 needs DGX hardware.

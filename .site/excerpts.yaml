@@ -296,6 +296,10 @@ cel1-fleet-check:
   run: cel1 simulation gates
   source: .lab/evidence/cel1-sim/gates/fleet-check.log
   lines: 1-9
+cel1-rails-checks:
+  run: 20261118T014617Z
+  source: .lab/evidence/cel1-rails/20261118T014617Z/cel1/cel1-rail-networks/summary.md
+  block: '| check |'
 
 repo-validate:
   run: acceptance-m3 20261116T001921Z, step 39
