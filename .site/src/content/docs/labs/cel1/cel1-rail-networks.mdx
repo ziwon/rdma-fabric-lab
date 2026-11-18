@@ -20,6 +20,39 @@ Show that the fleet targets install Multus, the Network Operator and the rail ne
 - [The cel1 site model](/repository/cel1-site-model/), whose `kubernetes.rail_networks` section and rail `pod_cidr` give every expectation.
 - [cel1-sim-baseline](/labs/cel1/cel1-sim-baseline/), which builds the cluster this scenario runs on.
 
+## The architecture it checks
+
+![One DGX node of cel1: a pod in rdma-jobs gets eth0 from Cilium through Multus on mgmt0, and rail0 to rail7 as IPoIB children that ipoib-cni makes of the host rails and nv-ipam addresses from 10.143.r.0/24. The RDMA shared device plugin mounts the uverbs devices of mlx5_0 to mlx5_7 and rdma_cm into the pod. Each host rail goes to the InfiniBand leaf of its rail.](../../../../assets/diagrams/cel1-rail-pod-networks.svg)
+
+The settings reach a pod this way. Every name, interface and range starts in the site model.
+
+```mermaid
+%%{init: {"theme": "base", "themeVariables": {"background": "#1b1f23", "primaryColor": "#22272c", "primaryTextColor": "#e6e9ed", "primaryBorderColor": "#616c78", "lineColor": "#8f9aa7", "edgeLabelBackground": "#1b1f23", "fontFamily": "DM Sans, Inter, Arial, sans-serif"}}}%%
+flowchart TB
+    S["sites/cel1.yaml<br/>pod_cidr of each rail<br/>kubernetes.rail_networks"] -->|make fleet-render| V["helm/rail-networks/<br/>values-cel1.yaml"]
+    V -->|make fleet-addons| R["release rail-networks<br/>NicClusterPolicy<br/>IPoIBNetwork ×8<br/>IPPool ×8"]
+    N["release network-operator<br/>operator and CRDs"] --> O(["Network Operator"])
+    R --> O
+    O --> D["DaemonSets<br/>RDMA device plugin<br/>nv-ipam node, ipoib-cni<br/>on the DGX nodes only"]
+    O --> A["NetworkAttachmentDefinition<br/>×8 in rdma-jobs"]
+    P["pod in rdma-jobs<br/>networks cel1-rail0 … 7<br/>rdma/cel1_rails: 1"] --> M["Multus"]
+    A --> M
+    M -->|eth0| C["Cilium on mgmt0"]
+    M -->|rail0 … rail7| I["ipoib-cni and nv-ipam"]
+    D -.->|mounts /dev/infiniband| P
+
+    classDef primary fill:#22272c,stroke:#616c78,color:#e6e9ed,stroke-width:1.5px;
+    classDef secondary fill:#21393e,stroke:#70c5d0,color:#e6e9ed,stroke-width:1.5px;
+    classDef note fill:#2b3138,stroke:#616c78,color:#b6bfc9,stroke-width:1.5px;
+    classDef accent fill:#243027,stroke:#b2e879,color:#e6e9ed,stroke-width:1.5px;
+    class S,V note
+    class R,N,O,D,A,P,M primary
+    class C secondary
+    class I accent
+```
+
+On the simulation the path stops at two places by design: the device plugin finds no RDMA device to mount, and ipoib-cni refuses each rail because it is Ethernet, not IPoIB.
+
 ## Run it
 
 `tests/integration/qemu-lab/acceptance-cel1.sh` runs it from wiped guests after `cel1-sim-baseline`. On a cluster that is up:

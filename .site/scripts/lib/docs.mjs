@@ -4,6 +4,8 @@ import path from 'node:path';
 export const DOC_DIRS = ['docs', 'docs/adr'];
 // The ignored copies of run evidence that documents cite by path. They stay on the machine that ran the lab.
 export const EVIDENCE_PREFIX = '.lab/evidence/';
+// The site's own assets. A document may show an image from there, as GitHub shows it from the repository.
+export const SITE_ASSETS = '.site/src/assets/';
 
 // docs/adr/0002-execution-environments.md is served at /docs/adr/0002-execution-environments/, so a route
 // mirrors the repository path.
@@ -39,6 +41,11 @@ function rewriteLink(text, target, fromDir, docRoutes, repoUrl) {
   }
   const route = docRoutes.get(resolved);
   if (route) return `[${text}](${route}${hash ? `#${hash}` : ''})`;
+  // An image the site keeps among its assets: the same path from where the copied page lands, so the site shows the file
+  // GitHub shows. A link anywhere else into the repository would name a page on GitHub, which no image can be.
+  if (resolved.startsWith(SITE_ASSETS)) {
+    return `[${text}](${path.posix.relative(path.posix.join('src/content/docs', fromDir.toLowerCase()), resolved.slice('.site/'.length))})`;
+  }
   return `[${text}](${repoUrl}/blob/main/${resolved}${hash ? `#${hash}` : ''})`;
 }
 

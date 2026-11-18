@@ -43,6 +43,12 @@ test('a link to another repository file points at the repository', () => {
   assert.match(body('[lab.sh](../tests/integration/qemu-lab/lab.sh)'), /\(https:\/\/github.com\/example\/repo\/blob\/main\/tests\/integration\/qemu-lab\/lab.sh\)/);
 });
 
+test('an image among the site assets keeps working where the copied page lands', () => {
+  const out = transformDoc('docs/adr/0007-x.md', '# X\n\n![A node](../../.site/src/assets/diagrams/node.svg)\n', routes, repoUrl);
+  assert.match(out, /!\[A node\]\(\.\.\/\.\.\/\.\.\/\.\.\/assets\/diagrams\/node\.svg\)/);
+  assert.match(body('![Top](../.site/src/assets/diagrams/top.svg)'), /!\[Top\]\(\.\.\/\.\.\/\.\.\/assets\/diagrams\/top\.svg\)/);
+});
+
 test('a code span naming a copied document links to it, other code stays code', () => {
   const out = body('`docs/adr/0002-execution-environments.md` and `results/<run-id>/`');
   assert.match(out, /\[`docs\/adr\/0002-execution-environments.md`\]\(\/docs\/adr\/0002-execution-environments\/\)/);

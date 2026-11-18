@@ -6,6 +6,35 @@ cel1 runs Cilium on the management port and gives pods no path to the eight Infi
 
 The cel1 simulation cannot run any of the data path. Its rails are virtio Ethernet, and IPoIB attaches only to a port whose link layer is InfiniBand, so no guest of this repository can create an IPoIB interface, with or without RXE.
 
+![One DGX node of cel1: a pod in rdma-jobs gets eth0 from Cilium through Multus on mgmt0, and rail0 to rail7 as IPoIB children that ipoib-cni makes of the host rails and nv-ipam addresses from 10.143.r.0/24. The RDMA shared device plugin mounts the uverbs devices of mlx5_0 to mlx5_7 and rdma_cm into the pod. Each host rail goes to the InfiniBand leaf of its rail.](../../.site/src/assets/diagrams/cel1-rail-pod-networks.svg)
+
+The settings reach a pod this way. Every name, interface and range starts in the site model.
+
+```mermaid
+%%{init: {"theme": "base", "themeVariables": {"background": "#1b1f23", "primaryColor": "#22272c", "primaryTextColor": "#e6e9ed", "primaryBorderColor": "#616c78", "lineColor": "#8f9aa7", "edgeLabelBackground": "#1b1f23", "fontFamily": "DM Sans, Inter, Arial, sans-serif"}}}%%
+flowchart TB
+    S["sites/cel1.yaml<br/>pod_cidr of each rail<br/>kubernetes.rail_networks"] -->|make fleet-render| V["helm/rail-networks/<br/>values-cel1.yaml"]
+    V -->|make fleet-addons| R["release rail-networks<br/>NicClusterPolicy<br/>IPoIBNetwork ×8<br/>IPPool ×8"]
+    N["release network-operator<br/>operator and CRDs"] --> O(["Network Operator"])
+    R --> O
+    O --> D["DaemonSets<br/>RDMA device plugin<br/>nv-ipam node, ipoib-cni<br/>on the DGX nodes only"]
+    O --> A["NetworkAttachmentDefinition<br/>×8 in rdma-jobs"]
+    P["pod in rdma-jobs<br/>networks cel1-rail0 … 7<br/>rdma/cel1_rails: 1"] --> M["Multus"]
+    A --> M
+    M -->|eth0| C["Cilium on mgmt0"]
+    M -->|rail0 … rail7| I["ipoib-cni and nv-ipam"]
+    D -.->|mounts /dev/infiniband| P
+
+    classDef primary fill:#22272c,stroke:#616c78,color:#e6e9ed,stroke-width:1.5px;
+    classDef secondary fill:#21393e,stroke:#70c5d0,color:#e6e9ed,stroke-width:1.5px;
+    classDef note fill:#2b3138,stroke:#616c78,color:#b6bfc9,stroke-width:1.5px;
+    classDef accent fill:#243027,stroke:#b2e879,color:#e6e9ed,stroke-width:1.5px;
+    class S,V note
+    class R,N,O,D,A,P,M primary
+    class C secondary
+    class I accent
+```
+
 ## 1. Decision
 
 1. **Cilium stays the only primary CNI, on `mgmt0`.** Every pod keeps `eth0` from Cilium, and Services, NetworkPolicy, DNS and the NCCL bootstrap stay on it. `devices: mgmt0` does not change, so the eBPF datapath never attaches to a rail. `helm/cilium/values-cel1.yaml` gains the two keys of ADR 0004 section 1.4, `cni.confPath: /etc/cni/multus/net.d` and `cni.exclusive: false`. cel1 sets neither today, and the chart's default `cni.exclusive: true` would rename every other CNI file the agent can see.

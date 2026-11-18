@@ -1,0 +1,178 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 616" width="960" height="616" role="img" aria-labelledby="t d">
+  <title id="t">Pod networks on the rails of a cel1 DGX node</title>
+  <desc id="d">One DGX B200 node of cel1 as ADR 0007 decides it. A pod in the namespace rdma-jobs gets eth0 from Cilium through Multus on the management port mgmt0, and rail0 to rail7, one IPoIB child of each host rail that ipoib-cni creates and nv-ipam addresses from the rail pool 10.143.r.0/24. The RDMA shared device plugin finds the ConnectX HCAs mlx5_0 to mlx5_7 by their rail netdev names and mounts their uverbs devices and rdma_cm into the pod, so NCCL uses verbs on all eight HCAs. Each host rail connects to the InfiniBand leaf of its rail. The NicClusterPolicy, eight IPoIBNetworks and eight IPPools come from the rail-networks chart, rendered from sites/cel1.yaml.</desc>
+  <defs>
+    <marker id="lime" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#b2e879"/></marker>
+    <marker id="cyan" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#70c5d0"/></marker>
+    <marker id="orange" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#e1ad7d"/></marker>
+  </defs>
+  <style>
+    .bg { fill: #1b1f23; }
+    .frame { fill: none; stroke: #363e47; stroke-width: 1.4; stroke-dasharray: 5 4; }
+    .api { fill: #22272c; stroke: #616c78; stroke-width: 1.2; }
+    .pod { fill: #1f2328; stroke: #8f9aa7; stroke-width: 1.4; }
+    .chip { fill: #22272c; stroke: #616c78; stroke-width: 1.2; }
+    .cyanbox { fill: #21393e; stroke: #70c5d0; stroke-width: 1.4; }
+    .limebox { fill: #243027; stroke: #b2e879; stroke-width: 1.4; }
+    .orangebox { fill: #2b2620; stroke: #e1ad7d; stroke-width: 1.4; }
+    .cyanline { stroke: #70c5d0; stroke-width: 2; }
+    .limeline { stroke: #b2e879; stroke-width: 1.8; }
+    .orangeline { stroke: #e1ad7d; stroke-width: 1.6; stroke-dasharray: 5 3; fill: none; }
+    .name { font: 700 12.5px 'DM Sans', Inter, Arial, sans-serif; fill: #e6e9ed; }
+    .small { font: 11px 'DM Sans', Inter, Arial, sans-serif; fill: #b6bfc9; }
+    .mono { font: 11px 'IBM Plex Mono', ui-monospace, Menlo, monospace; fill: #b6bfc9; }
+    .tier { font: 700 11.5px 'DM Sans', Inter, Arial, sans-serif; fill: #a0aab6; }
+    .halo { paint-order: stroke; stroke: #1b1f23; stroke-width: 6px; stroke-linejoin: round; }
+  </style>
+<rect class="bg" x="0.0" y="0.0" width="960.0" height="616.0" rx="0"/>
+<text class="tier" x="40.0" y="20.0" text-anchor="start">Kubernetes objects of the rail-networks chart, rendered from sites/cel1.yaml</text>
+<rect class="api" x="40.0" y="30.0" width="210.0" height="52.0" rx="6"/>
+<text class="name" x="145.0" y="51.0" text-anchor="middle">NicClusterPolicy</text>
+<text class="small" x="145.0" y="69.0" text-anchor="middle">device plugin, nv-ipam, ipoib-cni</text>
+<rect class="api" x="270.0" y="30.0" width="239.0" height="52.0" rx="6"/>
+<text class="name" x="389.5" y="51.0" text-anchor="middle">IPoIBNetwork ×8</text>
+<text class="small" x="389.5" y="69.0" text-anchor="middle">→ NetworkAttachmentDefinition, rdma-jobs</text>
+<rect class="api" x="521.0" y="30.0" width="239.0" height="52.0" rx="6"/>
+<text class="name" x="640.5" y="51.0" text-anchor="middle">IPPool ×8</text>
+<text class="small" x="640.5" y="69.0" text-anchor="middle">10.143.&lt;r&gt;.0/24, 16 per node</text>
+<rect class="api" x="780.0" y="30.0" width="140.0" height="52.0" rx="6"/>
+<text class="name" x="850.0" y="51.0" text-anchor="middle">Network Operator</text>
+<text class="small" x="850.0" y="69.0" text-anchor="middle">26.7.1, no driver, no NFD</text>
+<rect class="frame" x="28.0" y="100.0" width="904.0" height="370.0" rx="10"/>
+<text class="tier" x="40.0" y="120.0" text-anchor="start">DGX B200 node, cel1-dgx-01 … 08</text>
+<line class="cyanline" x1="151.0" y1="226.0" x2="151.0" y2="372.0"/>
+<line class="cyanline" x1="151.0" y1="428.0" x2="151.0" y2="484.0" marker-end="url(#cyan)"/>
+<line class="limeline" x1="300.6" y1="226.0" x2="300.6" y2="372.0"/>
+<line class="limeline" x1="300.6" y1="428.0" x2="300.6" y2="484.0" marker-end="url(#lime)"/>
+<line class="limeline" x1="361.9" y1="226.0" x2="361.9" y2="372.0"/>
+<line class="limeline" x1="361.9" y1="428.0" x2="361.9" y2="484.0" marker-end="url(#lime)"/>
+<line class="limeline" x1="423.1" y1="226.0" x2="423.1" y2="372.0"/>
+<line class="limeline" x1="423.1" y1="428.0" x2="423.1" y2="484.0" marker-end="url(#lime)"/>
+<line class="limeline" x1="484.4" y1="226.0" x2="484.4" y2="372.0"/>
+<line class="limeline" x1="484.4" y1="428.0" x2="484.4" y2="484.0" marker-end="url(#lime)"/>
+<line class="limeline" x1="545.6" y1="226.0" x2="545.6" y2="372.0"/>
+<line class="limeline" x1="545.6" y1="428.0" x2="545.6" y2="484.0" marker-end="url(#lime)"/>
+<line class="limeline" x1="606.9" y1="226.0" x2="606.9" y2="372.0"/>
+<line class="limeline" x1="606.9" y1="428.0" x2="606.9" y2="484.0" marker-end="url(#lime)"/>
+<line class="limeline" x1="668.1" y1="226.0" x2="668.1" y2="372.0"/>
+<line class="limeline" x1="668.1" y1="428.0" x2="668.1" y2="484.0" marker-end="url(#lime)"/>
+<line class="limeline" x1="729.4" y1="226.0" x2="729.4" y2="372.0"/>
+<line class="limeline" x1="729.4" y1="428.0" x2="729.4" y2="484.0" marker-end="url(#lime)"/>
+<path class="orangeline" d="M906.0 262 L906.0 400 L766.0 400" marker-end="url(#orange)"/>
+<path class="orangeline" d="M780.0 157 L758.0 157" marker-end="url(#orange)"/>
+<rect class="pod" x="40.0" y="132.0" width="720.0" height="130.0" rx="8"/>
+<text class="name" x="52.0" y="150.0" text-anchor="start">pod in rdma-jobs</text>
+<rect class="orangebox" x="274.0" y="145.0" width="482.0" height="24.0" rx="4"/>
+<text class="mono" x="515.0" y="161.0" text-anchor="middle">/dev/infiniband: uverbs0 … uverbs7, rdma_cm</text>
+<rect class="cyanbox" x="56.0" y="178.0" width="190.0" height="48.0" rx="6"/>
+<text class="name" x="151.0" y="197.0" text-anchor="middle">eth0</text>
+<text class="small" x="151.0" y="215.0" text-anchor="middle">10.160.x.x from Cilium</text>
+<rect class="limebox" x="275.6" y="178.0" width="50.0" height="48.0" rx="6"/>
+<text class="name" x="300.6" y="197.0" text-anchor="middle">rail0</text>
+<text class="small" x="300.6" y="215.0" text-anchor="middle">IPoIB</text>
+<rect class="limebox" x="336.9" y="178.0" width="50.0" height="48.0" rx="6"/>
+<text class="name" x="361.9" y="197.0" text-anchor="middle">rail1</text>
+<text class="small" x="361.9" y="215.0" text-anchor="middle">IPoIB</text>
+<rect class="limebox" x="398.1" y="178.0" width="50.0" height="48.0" rx="6"/>
+<text class="name" x="423.1" y="197.0" text-anchor="middle">rail2</text>
+<text class="small" x="423.1" y="215.0" text-anchor="middle">IPoIB</text>
+<rect class="limebox" x="459.4" y="178.0" width="50.0" height="48.0" rx="6"/>
+<text class="name" x="484.4" y="197.0" text-anchor="middle">rail3</text>
+<text class="small" x="484.4" y="215.0" text-anchor="middle">IPoIB</text>
+<rect class="limebox" x="520.6" y="178.0" width="50.0" height="48.0" rx="6"/>
+<text class="name" x="545.6" y="197.0" text-anchor="middle">rail4</text>
+<text class="small" x="545.6" y="215.0" text-anchor="middle">IPoIB</text>
+<rect class="limebox" x="581.9" y="178.0" width="50.0" height="48.0" rx="6"/>
+<text class="name" x="606.9" y="197.0" text-anchor="middle">rail5</text>
+<text class="small" x="606.9" y="215.0" text-anchor="middle">IPoIB</text>
+<rect class="limebox" x="643.1" y="178.0" width="50.0" height="48.0" rx="6"/>
+<text class="name" x="668.1" y="197.0" text-anchor="middle">rail6</text>
+<text class="small" x="668.1" y="215.0" text-anchor="middle">IPoIB</text>
+<rect class="limebox" x="704.4" y="178.0" width="50.0" height="48.0" rx="6"/>
+<text class="name" x="729.4" y="197.0" text-anchor="middle">rail7</text>
+<text class="small" x="729.4" y="215.0" text-anchor="middle">IPoIB</text>
+<text class="small" x="151.0" y="247.0" text-anchor="middle">Services, DNS, NCCL bootstrap</text>
+<text class="small" x="515.0" y="247.0" text-anchor="middle">NCCL: verbs on mlx5_0 … 7 through /dev/infiniband · IPoIB for RDMA CM and IP</text>
+<rect class="orangebox" x="780.0" y="132.0" width="140.0" height="130.0" rx="8"/>
+<text class="name" x="850.0" y="156.0" text-anchor="middle">RDMA shared</text>
+<text class="name" x="850.0" y="172.0" text-anchor="middle">device plugin</text>
+<text class="mono" x="850.0" y="196.0" text-anchor="middle">rdma/cel1_rails</text>
+<text class="small" x="850.0" y="214.0" text-anchor="middle">16 pods per node</text>
+<text class="small" x="850.0" y="232.0" text-anchor="middle">IPC_LOCK, not</text>
+<text class="small" x="850.0" y="247.0" text-anchor="middle">privileged</text>
+<rect class="cyanbox" x="56.0" y="290.0" width="190.0" height="54.0" rx="6"/>
+<text class="name" x="151.0" y="312.0" text-anchor="middle">Multus (thick)</text>
+<text class="small" x="151.0" y="330.0" text-anchor="middle">delegates eth0 to Cilium</text>
+<rect class="limebox" x="274.0" y="290.0" width="482.0" height="54.0" rx="6"/>
+<text class="name" x="515.0" y="312.0" text-anchor="middle">ipoib-cni and nv-ipam, for each network the pod names</text>
+<text class="small" x="515.0" y="330.0" text-anchor="middle">an IPoIB child of host rail&lt;r&gt; with an address from this node's block of 16</text>
+<text class="small" x="839.0" y="318.0" text-anchor="middle">finds the HCAs</text>
+<text class="small" x="839.0" y="333.0" text-anchor="middle">by rail netdev name</text>
+<rect class="cyanbox" x="56.0" y="372.0" width="190.0" height="56.0" rx="6"/>
+<text class="name" x="151.0" y="394.0" text-anchor="middle">mgmt0</text>
+<text class="small" x="151.0" y="412.0" text-anchor="middle">10.140.0.2x · Cilium eBPF</text>
+<rect class="limebox" x="275.6" y="372.0" width="50.0" height="56.0" rx="6"/>
+<text class="name" x="300.6" y="394.0" text-anchor="middle">rail0</text>
+<text class="mono" x="300.6" y="412.0" text-anchor="middle">mlx5_0</text>
+<rect class="limebox" x="336.9" y="372.0" width="50.0" height="56.0" rx="6"/>
+<text class="name" x="361.9" y="394.0" text-anchor="middle">rail1</text>
+<text class="mono" x="361.9" y="412.0" text-anchor="middle">mlx5_1</text>
+<rect class="limebox" x="398.1" y="372.0" width="50.0" height="56.0" rx="6"/>
+<text class="name" x="423.1" y="394.0" text-anchor="middle">rail2</text>
+<text class="mono" x="423.1" y="412.0" text-anchor="middle">mlx5_2</text>
+<rect class="limebox" x="459.4" y="372.0" width="50.0" height="56.0" rx="6"/>
+<text class="name" x="484.4" y="394.0" text-anchor="middle">rail3</text>
+<text class="mono" x="484.4" y="412.0" text-anchor="middle">mlx5_3</text>
+<rect class="limebox" x="520.6" y="372.0" width="50.0" height="56.0" rx="6"/>
+<text class="name" x="545.6" y="394.0" text-anchor="middle">rail4</text>
+<text class="mono" x="545.6" y="412.0" text-anchor="middle">mlx5_4</text>
+<rect class="limebox" x="581.9" y="372.0" width="50.0" height="56.0" rx="6"/>
+<text class="name" x="606.9" y="394.0" text-anchor="middle">rail5</text>
+<text class="mono" x="606.9" y="412.0" text-anchor="middle">mlx5_5</text>
+<rect class="limebox" x="643.1" y="372.0" width="50.0" height="56.0" rx="6"/>
+<text class="name" x="668.1" y="394.0" text-anchor="middle">rail6</text>
+<text class="mono" x="668.1" y="412.0" text-anchor="middle">mlx5_6</text>
+<rect class="limebox" x="704.4" y="372.0" width="50.0" height="56.0" rx="6"/>
+<text class="name" x="729.4" y="394.0" text-anchor="middle">rail7</text>
+<text class="mono" x="729.4" y="412.0" text-anchor="middle">mlx5_7</text>
+<text class="small" x="850.0" y="428.0" text-anchor="middle">IPoIB parents on</text>
+<text class="small" x="850.0" y="443.0" text-anchor="middle">ConnectX HCAs,</text>
+<text class="small" x="850.0" y="458.0" text-anchor="middle">10.142.&lt;r&gt;.21–28</text>
+<rect class="chip" x="40.0" y="484.0" width="210.0" height="46.0" rx="6"/>
+<text class="name" x="145.0" y="503.0" text-anchor="middle">management Ethernet</text>
+<text class="small" x="145.0" y="520.0" text-anchor="middle">10.140.0.0/24</text>
+<rect class="chip" x="275.6" y="484.0" width="50.0" height="46.0" rx="6"/>
+<text class="small" x="300.6" y="503.0" text-anchor="middle">leaf</text>
+<text class="name" x="300.6" y="520.0" text-anchor="middle">r0</text>
+<rect class="chip" x="336.9" y="484.0" width="50.0" height="46.0" rx="6"/>
+<text class="small" x="361.9" y="503.0" text-anchor="middle">leaf</text>
+<text class="name" x="361.9" y="520.0" text-anchor="middle">r1</text>
+<rect class="chip" x="398.1" y="484.0" width="50.0" height="46.0" rx="6"/>
+<text class="small" x="423.1" y="503.0" text-anchor="middle">leaf</text>
+<text class="name" x="423.1" y="520.0" text-anchor="middle">r2</text>
+<rect class="chip" x="459.4" y="484.0" width="50.0" height="46.0" rx="6"/>
+<text class="small" x="484.4" y="503.0" text-anchor="middle">leaf</text>
+<text class="name" x="484.4" y="520.0" text-anchor="middle">r3</text>
+<rect class="chip" x="520.6" y="484.0" width="50.0" height="46.0" rx="6"/>
+<text class="small" x="545.6" y="503.0" text-anchor="middle">leaf</text>
+<text class="name" x="545.6" y="520.0" text-anchor="middle">r4</text>
+<rect class="chip" x="581.9" y="484.0" width="50.0" height="46.0" rx="6"/>
+<text class="small" x="606.9" y="503.0" text-anchor="middle">leaf</text>
+<text class="name" x="606.9" y="520.0" text-anchor="middle">r5</text>
+<rect class="chip" x="643.1" y="484.0" width="50.0" height="46.0" rx="6"/>
+<text class="small" x="668.1" y="503.0" text-anchor="middle">leaf</text>
+<text class="name" x="668.1" y="520.0" text-anchor="middle">r6</text>
+<rect class="chip" x="704.4" y="484.0" width="50.0" height="46.0" rx="6"/>
+<text class="small" x="729.4" y="503.0" text-anchor="middle">leaf</text>
+<text class="name" x="729.4" y="520.0" text-anchor="middle">r7</text>
+<text class="small" x="515.0" y="550.0" text-anchor="middle">the InfiniBand leaf of each rail, 2 links to each of 4 spines</text>
+<text class="name" x="850.0" y="503.0" text-anchor="middle">compute fabric</text>
+<text class="small" x="850.0" y="520.0" text-anchor="middle">rail-optimized</text>
+<line class="cyanline" x1="40.0" y1="584.0" x2="68.0" y2="584.0"/>
+<text class="small" x="76.0" y="588.0" text-anchor="start">pod network: Cilium on mgmt0</text>
+<line class="limeline" x1="280.8" y1="584.0" x2="308.8" y2="584.0"/>
+<text class="small" x="316.8" y="588.0" text-anchor="start">rail networks: IPoIB through Multus</text>
+<line class="orangeline" x1="564.3" y1="584.0" x2="592.3" y2="584.0"/>
+<text class="small" x="600.3" y="588.0" text-anchor="start">RDMA devices for verbs</text>
+<text class="small" x="920.0" y="588.0" text-anchor="end">ADR 0007 · not run on hardware</text>
+</svg>
