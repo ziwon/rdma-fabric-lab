@@ -1,0 +1,2 @@
+# Upstream files carried byte for byte, whose sha256 the lock pins. Their layout is upstream's.
+/helm/rail-networks/chart/crds/

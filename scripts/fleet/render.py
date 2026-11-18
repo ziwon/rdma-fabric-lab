@@ -5,6 +5,9 @@
     group_vars/<class>.yml    k8s_node_labels and k8s_container_runtime_default of the class
     host_vars/<host>.yml      k8s_node_ip
 
+rail_values() renders the values of the repo-local chart helm/rail-networks/chart from the rail
+networks of the model (ADR 0007): one IPoIB network and one nv-ipam pool per rail.
+
 The inventory sets no ansible_host. A second inventory passed after it says how to reach each
 host, so a command without one cannot reach an invented address.
 """
@@ -21,8 +24,15 @@ HEADER = "# Rendered by `make fleet-render` from the {name} site model. Edit the
 MARKER = "# Rendered by `make fleet-render`"
 
 
+class _Dumper(yaml.SafeDumper):
+    """Indents a list under its key, as yamllint's default indentation rule wants."""
+
+    def increase_indent(self, flow: bool = False, indentless: bool = False):
+        return super().increase_indent(flow, False)
+
+
 def _dump(data: dict) -> str:
-    return yaml.safe_dump(data, sort_keys=False, default_flow_style=False, width=1000)
+    return yaml.dump(data, Dumper=_Dumper, sort_keys=False, default_flow_style=False, width=1000)
 
 
 def _file(site: Site, data: dict) -> str:
@@ -101,3 +111,25 @@ def write(files: dict[str, str], out: Path) -> list[str]:
             else:
                 foreign.append(str(out / path))
     return foreign
+
+
+def rail_values(site: Site) -> str | None:
+    """The values file of helm/rail-networks/chart, or None for a site without rail networks."""
+    rails = site.rail_networks
+    if rails is None:
+        return None
+    selected = site.rail_classes()
+    masters = {i.network: i.name for c in selected for i in c.interfaces}
+    return _file(
+        site,
+        {
+            "namespace": rails.namespace,
+            "resourceName": f"{site.name}_rails",
+            "nodeSelector": dict(rails.node_selector),
+            "perNodeBlockSize": rails.per_node_block,
+            "rails": [
+                {"name": f"{site.name}-{n.name}", "master": masters[n.name], "subnet": str(n.pod_cidr)}
+                for n in site.pod_rails()
+            ],
+        },
+    )

@@ -115,4 +115,4 @@ The [learning site](https://ziwon.github.io/rdma-fabric-lab/) teaches the concep
 
 ## License
 
-MIT (`LICENSE`), except `tracks/c-ns3/driver/rfl-star.cc` and `images/ns3/qbb-resume-qp-lookup.patch`, which link to or patch ns-3 and are GPL-2.0-only, as their SPDX lines say. The `rfl-ns3` image built from them holds GPL-2.0 ns-3. Building it locally creates no obligation; distributing the built image carries the GPL-2.0 terms.
+MIT (`LICENSE`), except `tracks/c-ns3/driver/rfl-star.cc` and `images/ns3/qbb-resume-qp-lookup.patch`, which link to or patch ns-3 and are GPL-2.0-only, as their SPDX lines say. The `rfl-ns3` image built from them holds GPL-2.0 ns-3. Building it locally creates no obligation; distributing the built image carries the GPL-2.0 terms. Two upstream files are carried byte for byte under their Apache-2.0 license: `helm/multus/chart/files/multus-daemonset-thick.yml.upstream` from Multus and `helm/rail-networks/chart/crds/nv-ipam.nvidia.com_ippools.yaml` from the NVIDIA Network Operator.

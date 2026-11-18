@@ -1,0 +1,19 @@
+# NVIDIA Network Operator 26.7.1 for the cel1 GPU cluster (ADR 0007). Every key exists in that chart's values.yaml,
+# which `make values-check ENV=cel1` proves. The chart installs the operator and its CRDs and creates no NicClusterPolicy.
+# The release rail-networks, rendered from sites/cel1.yaml, holds the policy and the rail networks.
+
+nfd:
+  # The GPU Operator already runs Node Feature Discovery 0.19.0, whose PCI whitelist has classes 0200 and 0207. The
+  # chart README allows nfd.enabled=false with an NFD of v0.13.2 or newer that has the NodeFeature API.
+  enabled: false
+  # The policy places the operator's DaemonSets by the class label of the model, so no NFD rule is needed. The rule's
+  # CRD belongs to the GPU Operator's NFD.
+  deployNodeFeatureRules: false
+
+# The hook Job would apply every CRD of the operator image before each install and upgrade, among them the
+# NetworkAttachmentDefinition CRD that the multus release owns. With false, Helm installs the CRDs of crds/ that are absent
+# and skips the one that exists. Upgrades are out of scope (ADR 0001 section 6).
+upgradeCRDs: false
+
+# The hook keeps a NicClusterPolicy that an older chart created. This cluster never had one.
+keepNCP: false

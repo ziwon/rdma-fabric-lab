@@ -1,4 +1,5 @@
-"""The repository is MIT, except the files that link to or patch ns-3, which keep GPL-2.0-only."""
+"""The repository is MIT, except the files that link to or patch ns-3, which keep GPL-2.0-only, and the upstream files
+carried byte for byte, which keep Apache-2.0."""
 
 from pathlib import Path
 
@@ -23,4 +24,12 @@ def test_readme_names_the_gpl_exception():
     readme = (ROOT / "README.md").read_text()
     assert "## License" in readme
     for path in ("tracks/c-ns3/driver/rfl-star.cc", "images/ns3/qbb-resume-qp-lookup.patch"):
+        assert path in readme
+
+
+def test_readme_names_the_apache_files_carried_from_upstream():
+    readme = (ROOT / "README.md").read_text()
+    for path in ("helm/multus/chart/files/multus-daemonset-thick.yml.upstream",
+                 "helm/rail-networks/chart/crds/nv-ipam.nvidia.com_ippools.yaml"):
+        assert (ROOT / path).is_file()
         assert path in readme

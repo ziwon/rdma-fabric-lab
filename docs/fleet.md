@@ -18,7 +18,7 @@ There are 8 DGX nodes, not 64. The user decided that this host cannot simulate m
 
 ## 2. Site model
 
-The single file `sites/cel1.yaml` is the single source of truth for the region. It holds the hosts and classes, the address plan, the API address, the syslog address and the InfiniBand compute fabric. The docstring of `scripts/fleet/site.py` defines the format.
+The single file `sites/cel1.yaml` is the single source of truth for the region. It holds the hosts and classes, the address plan, the API address, the syslog address, the InfiniBand compute fabric and the pod networks on its rails. The docstring of `scripts/fleet/site.py` defines the format.
 
 ### 2.1 Address plan
 
@@ -27,6 +27,7 @@ The single file `sites/cel1.yaml` is the single source of truth for the region. 
 | In-band management network `management` | `10.140.0.0/24` | API VIP `.10`, syslog `.5`, control planes `.11`–`.13`, DGX `.21`–`.28`, PCIe GPU servers `.31`–`.32` |
 | Storage `storage-a`, `storage-b` | `10.141.0.0/24`, `10.141.1.0/24` | DGX `.21`–`.28` |
 | Compute rails `rail0`–`rail7` | `10.142.0.0/24`–`10.142.7.0/24` | DGX `.21`–`.28` |
+| Pod ranges on the rails, `pod_cidr` of `rail0`–`rail7` | `10.143.0.0/24`–`10.143.7.0/24` | nv-ipam hands each DGX node a block of 16 per rail (section 14) |
 | Pod | `10.160.0.0/16` | kube-controller-manager hands each node a `/24` |
 | Service | `10.170.0.0/16` | |
 
@@ -69,8 +70,9 @@ Each leaf has 8 downlinks and 8 uplinks, an equal number, so the leaves have no 
 - A leaf without a rail or a spine with a rail, ports outside the port range (`1`–radix), switch ports that are not numbers
 - A rail port cabled to the leaf of another rail, a management port cabled to the fabric, rail–spine and leaf–leaf links
 - A port used twice, a rail port without a cable, a leaf that lacks an uplink to a spine
+- For the rail networks of section 14: a `pod_cidr` on a network that is no InfiniBand rail, some rails without one, `kubernetes.rail_networks` without any `pod_cidr` or the reverse, a namespace that is no RFC 1123 label, a block below 1, an empty selector or one that selects no class, a selected class that lacks a rail, a class with a rail that the selector misses, two interface names for one rail among the selected classes, and a pod range too small for the selected nodes in blocks
 
-`tests/unit/test_fleet_site.py` has one test for each violation. Each test fails if the validator misses its violation.
+`tests/unit/test_fleet_site.py` has one test for each violation, and `tests/unit/test_fleet_rail_networks.py` one for each rail network rule. Each test fails if the validator misses its violation.
 
 ## 3. Generator
 
@@ -82,6 +84,8 @@ Each leaf has 8 downlinks and 8 uplinks, an equal number, so the leaves have no 
 | `group_vars/all.yml` | `rfl_inventory`, the API address, port, VIP and VIP interface, the Pod and Service CIDRs, `k8s_kube_proxy`, `k8s_control_plane_schedulable`, `k8s_admin_kubeconfig`, the syslog address and port |
 | `group_vars/<class>.yml` | The `k8s_node_labels` and `k8s_container_runtime_default` of that class |
 | `host_vars/<host>.yml` | `k8s_node_ip` |
+
+The same command writes `helm/rail-networks/values-cel1.yaml`, the values of the chart of section 14, from `kubernetes.rail_networks` and the `pod_cidr` of each rail. `make fleet-render-check` compares it too.
 
 The contract groups list their hosts directly. `groups['kube_control_plane'][0]` runs `kubeadm init`, so that order must not depend on the traversal order of child groups. The class groups list the same hosts again. The sha256 of the `ansible-inventory --list` output was the same with `PYTHONHASHSEED` 0, 1, 7, 42 and 999. The host order of `ansible-playbook --list-hosts` differs between runs, but that is because the CLI uses a `set` for its output (`ansible/cli/playbook.py`). `groups['k8s_cluster']` was the same over 6 runs.
 
@@ -130,6 +134,7 @@ The lab may rely on the defaults the ADR sets (`k8s_api_port` 6443, no VIP, `k8s
 | `ipv4NativeRoutingCIDR` | `10.160.0.0/16` | The Pod range. Packets to this range are not SNATed |
 | `ipam.mode` | `kubernetes` | Node Pod CIDRs come from the kubeadm `podSubnet`. The chart default cluster-pool uses `10.0.0.0/8` |
 | `devices` | `mgmt0` | Attaches the eBPF datapath to the management port only |
+| `cni.confPath`, `cni.exclusive` | `/etc/cni/multus/net.d`, `false` | Cilium's conflist goes where only Multus reads it, as in the lab (`docs/adr/0004-track-a-pods-and-net1.md` section 1.4, section 14) |
 
 **The routing mode is native.** All nodes sit on one management L2 segment. So `autoDirectNodeRoutes` gives each node a route to every other node's Pod CIDR via that node's management address. Routers do not need to know the Pod CIDRs. The Cilium 1.20 documentation states that this option suffices when all nodes share one L2 network (https://docs.cilium.io/en/v1.20/network/concepts/routing/). There is no encapsulation, so the Pod MTU stays 1500. VXLAN costs 50 bytes. Packets on the wire show the real Pod addresses, so tcpdump tracing is easy. The trade-off is that this mode does not work when the management network splits into several L3 segments. In that case, switch to tunnel mode or BGP. The lab uses a VXLAN tunnel in its initial Cilium setup. So the lab does not prove native routing. The cel1 simulation proves it.
 
@@ -172,11 +177,11 @@ The site model's `services.syslog` is the central syslog address `10.140.0.5:514
 | Target | Action | Host access |
 |---|---|---|
 | `make fleet-site-check` | Validates the site model | None |
-| `make fleet-render` | Generates the inventory | None |
-| `make fleet-render-check` | Compares the generated output with the committed inventory | None |
+| `make fleet-render` | Generates the inventory and the rail network values | None |
+| `make fleet-render-check` | Compares the generated output with the committed inventory and values | None |
 | `make inventory-check INVENTORY=<lab\|cel1\|dir>` | Contract check | None |
 | `make values-check ENV=<env>` | Checks that every key of the values file exists in the `values.yaml` of the chart at its locked version | None. It downloads the chart from the public chart repository |
-| `make addons-template ENV=cel1` | Renders both releases and validates them with kubeconform against v1.36.6 | None. It downloads the charts and schemas |
+| `make addons-template ENV=cel1` | Renders the five releases, converts the CRDs they render into strict JSON schemas, and validates every object with kubeconform against v1.36.6. A custom resource whose kind a CRD of the environment defines fails when it finds no schema | None. It downloads the charts and schemas |
 | `make fleet-sim-profile`, `make fleet-sim-profile-check` | Writes or compares `tests/integration/qemu-lab/profiles/cel1.tsv` | None |
 | `make fleet-check` | All the checks above | None |
 | `make fleet-sim-stand-ins CONFIRM=cel1 FLEET_CONNECT=<simulation inventory>` | `ansible/playbooks/simulation-stand-ins.yml` | Simulation guests only |
@@ -191,19 +196,19 @@ The simulation inventory is the `inventory.yml` that `LAB_PROFILE=cel1 make lab-
 
 ## 9. Offline check results
 
-These ran in this repository on 2026-11-15.
+These ran in this repository on 2026-11-18, after the rail networks of section 14. `make fleet-check` ran them in this order and exited 0.
 
 | Command | Exit code | Result |
 |---|---:|---|
-| `make fleet-site-check` | 0 | 13 hosts, 11 networks, 128 links, valid against the lab plan |
-| `make fleet-render-check` | 0 | 18 rendered files, 0 differences |
+| `make fleet-site-check` | 0 | 13 hosts, 11 networks, 128 links, 8 pod rail ranges, valid against the lab plan |
+| `make fleet-render-check` | 0 | 18 inventory files and the rail network values, 0 differences |
 | `make inventory-check INVENTORY=cel1` | 0 | 13 hosts, 0 violations, every variable explicit |
-| `make inventory-check INVENTORY=lab` | 0 | 3 hosts, 0 violations. This is the result after the lab worker added the contract variables and `values-lab.yaml` |
-| `make values-check ENV=cel1` | 0 | 2 values files, 0 unknown keys |
-| `make addons-template ENV=cel1` | 0 | 25 Cilium resources valid. Of 36 GPU Operator resources, 27 valid and 9 skipped |
-| `make fleet-k8s`, `make fleet-addons`, `make fleet-rsyslog` (no CONFIRM, `CONFIRM=lab`) | 2 | The checksums of the repository and the state directory were the same before and after the run |
+| `make values-check ENV=cel1` | 0 | 5 values files, 0 unknown keys |
+| `make addons-template ENV=cel1` | 0 | 16 schemas from 16 CRDs. cilium 25 of 25 valid. multus 5 valid, 1 CRD skipped. gpu-operator 28 valid, 8 CRDs skipped. network-operator 4 valid, 6 CRDs skipped. rail-networks 18 valid, 1 CRD skipped |
+| `make addons-template ENV=lab` | 0 | 4 schemas from 4 CRDs. cilium 25 of 25, multus 5 and whereabouts 6 valid, 1 and 3 CRDs skipped |
+| `make fleet-k8s`, `make fleet-addons`, `make fleet-rsyslog` (no CONFIRM, `CONFIRM=lab`) | 2 | The checksums of the repository and the state directory were the same before and after the run. This row is from 2026-11-15 |
 
-The 9 skipped GPU Operator resources are 8 CRDs and 1 `ClusterPolicy`. The default schema location of kubeconform has no schema for them. Those 9 were not validated.
+Only CustomResourceDefinition objects are skipped now, because kubeconform's default schema location gave none for them. Every custom resource is checked against a schema converted from its CRD, the GPU Operator's `ClusterPolicy`, the `NicClusterPolicy`, the 8 `IPoIBNetwork` and the 8 `IPPool` among them. Before 2026-11-18 the `ClusterPolicy` was skipped too.
 
 Each check was broken once to confirm that it fails.
 
@@ -211,9 +216,16 @@ Each check was broken once to confirm that it fails.
 |---|---|
 | `kubeProxyReplacment` in the Cilium values | `values-check` exit code 2, `kubeProxyReplacment is not a key of the chart` |
 | `devicePlugn` in the GPU Operator values | `values-check` exit code 2, `devicePlugn is not a key of the chart` |
+| `upgradeCRD` in the Network Operator values | `values-check` exit code 2, 1 unknown key |
 | Cilium `priorityClassName` as a list | `addons-template` exit code 2. helm rejects it with `at '/priorityClassName': got array, want string` |
 | GPU Operator `operator.priorityClassName` as a list | `addons-template` exit code 2. kubeconform rejects Deployment `gpu-operator` with `got array, want null or string` |
+| `enableWebhok` in the `nvIpam` block of the policy template | `addons-template` exit code 2. `NicClusterPolicy nic-cluster-policy`: `at '/spec/nvIpam': additional properties 'enableWebhok' not allowed` |
+| `perNodeBlocksize` in the pool template | `addons-template` exit code 2. All 8 `IPPool` invalid with `missing property 'perNodeBlockSize'` |
+| `per_node_block: 32` in the model | `fleet-site-check` exit code 2. `networks.rail0.pod_cidr: 10.143.0.0/24 holds 254 pod addresses, and 8 nodes in blocks of 32 need 256`, once per rail |
+| `perNodeBlockSize: 8` edited into the rendered values | `fleet-render-check` exit code 2, `helm/rail-networks/values-cel1.yaml: differs from the site model` |
 | The duplicate port, radix and rail cabling checks of the validator, each turned off | `test_fleet_site.py` fails each time |
+| The rail network rules, the pod range overlap, the pool capacity rule and the values drift check, each turned off | `test_fleet_rail_networks.py` fails each time |
+| The strict conversion, the check for a skipped custom resource, the chart's digest check, a different Multus directory, one byte of the vendored CRD | `test_addons_schemas.py` or `test_rail_networks_chart.py` fails each time |
 | The reserved prefix, VIP rule and duplicate node IP checks of the contract check, each turned off | `test_inventory_contract.py` fails each time |
 
 ## 10. Not run
@@ -226,7 +238,8 @@ The cel1 simulation ran the three fleet targets on 13 guests (section 13). That 
 | The real NVIDIA container toolkit on DGX nodes | `not_run` | The simulation uses a stand-in runtime that execs runc |
 | The toolkit drop-in on PCIe GPU servers | `not_run` | Section 6. Only a server with a GPU can confirm it |
 | InfiniBand on the rails | `not_run` | The simulation rails carry Ethernet. Track B simulates the fabric's management plane in B-04. `docs/adr/0007-cel1-ipoib-pod-networks.md` decides the pod networks on them |
-| Schema validation of the 9 GPU Operator CRDs and ClusterPolicy | `not_run` | No kubeconform schema exists |
+| Schema validation of the CRD objects themselves | `not_run` | kubeconform's default location gave no schema for CustomResourceDefinition. The custom resources are validated (section 9) |
+| Multus, the Network Operator and the rail networks on the simulation guests | `not_run` | Phase 2 of `docs/adr/0007-cel1-ipoib-pod-networks.md`. Section 14 lists what it has to cover |
 
 ## 11. Applying this to another site
 
@@ -279,4 +292,36 @@ Another site gives the same code only its own files. All those files live outsid
 | Power failure | `lab.sh kill` sends SIGKILL to QEMU |
 | A panic leaves a crash dump or a reboot | `-no-reboot` ends the QEMU process and keeps the console in `serial.log` |
 
+The run below predates section 14. Multus, the Network Operator and the rail networks have not run in the simulation.
+
 Run `20261115T164615Z` passed all 20 checks from wiped guests in `.lab/acceptance-cel1/20261115T163759Z`, 46 steps with no unexpected exit code. The second `make fleet-k8s` before the GPU Operator and a converged run after it reported `changed=0` on every host, and the second `make fleet-addons` left both releases at revision 1. The first `make fleet-k8s` after the Operator started changed only the opt-out labels of section 6 on the 8 DGX hosts. Every refusal of the gate exited 2, and strace saw no IPv4 or IPv6 call in any of them (`.lab/evidence/cel1-sim/acceptance/strace-summary.txt`, `.lab/evidence/cel1-sim/refusals-final.log`). The site's cel1 lab page holds the measured figures.
+
+## 14. Rail networks
+
+`docs/adr/0007-cel1-ipoib-pod-networks.md` decides how a pod on a DGX node gets the eight rails: Cilium stays primary on `mgmt0`, Multus adds one IPoIB interface per rail, and the NVIDIA Network Operator supplies the RDMA shared device plugin, nv-ipam and ipoib-cni. Phase 1 of that ADR is the offline part below. Nothing of it has run on a cluster.
+
+| Piece | Where | What it holds |
+|---|---|---|
+| Model | `kubernetes.rail_networks` and the `pod_cidr` of each rail in `sites/cel1.yaml` | Namespace `rdma-jobs`, the selector `rfl.example/node-class: dgx-b200`, 16 addresses per node per rail, `10.143.<r>.0/24` per rail |
+| Values | `helm/rail-networks/values-cel1.yaml`, rendered by `make fleet-render` | The namespace, the resource name `cel1_rails`, the selector, the block size, and per rail its name `cel1-rail<r>`, its master `rail<r>` and its subnet |
+| Chart | `helm/rail-networks/chart`, version 26.7.1, the locked Network Operator version | The namespace `rdma-jobs` at PodSecurity `privileged`, kept on uninstall. The `NicClusterPolicy` `nic-cluster-policy` with only `rdmaSharedDevicePlugin`, `nvIpam` and `secondaryNetwork.ipoib`, placed by the selector. One `IPoIBNetwork` and one `IPPool` per rail. `crds/` carries the operator's IPPool CRD |
+| Operator | `helm/network-operator/values-cel1.yaml`, chart 26.7.1 | `nfd.enabled: false`, `nfd.deployNodeFeatureRules: false`, `upgradeCRDs: false`, `keepNCP: false` |
+| Multus | `helm/multus/values-cel1.yaml`, the lab's chart | `multusAutoconfigDir: /etc/cni/multus/net.d`, Cilium's `cni.confPath` of section 5 |
+| Lock | `versions.lock.yaml` | `addons.network_operator_chart`, the three component images by digest, the sha256 of the vendored CRD. Scope `fleet` holds them and the Multus components |
+
+Each choice and its source follows.
+
+- **The release order is cilium, multus, gpu-operator, network-operator, rail-networks.** Cilium's conflist sits in Multus's directory, so no pod that needs the pod network starts until Multus writes `00-multus.conf`. Multus therefore comes right after Cilium, before any release whose `--wait` needs such a pod. The lab order stays cilium, multus, whereabouts.
+- **The chart carries the IPPool CRD.** The operator creates it only when it reconciles the nvIpam part of the policy (`manifests/state-nv-ipam-cni/005-nv-ipam.nvidia.com_ippools.yaml` at tag v26.7.1), so pools in the same release as the policy would find no CRD at install. Helm installs a CRD from `crds/` only when it is absent, skips it otherwise, and does not touch it on an upgrade (`pkg/action/install.go` and `upgrade.go` at Helm v4.3.2), so the operator's own copy of the same file takes over afterwards. A unit test checks the sha256 of the file against the lock.
+- **The pools live in the operator's namespace.** The nv-ipam controller runs with `--ippools-namespace=$(POD_NAMESPACE)` (`040-nv-ipam-controller.yaml` at v26.7.1), and `rail-networks` installs into `nvidia-network-operator` with the operator.
+- **Images by digest.** The operator turns a component `version` that starts with `sha256:` into `<repository>/<image>@<digest>` (`imagePath` in `pkg/render/render.go` at v26.7.1). The chart takes repository and tag with digest from the lock, as `make addons` sets them for every image, and refuses a tag without a digest.
+- **`upgradeCRDs: false`.** The hook Job would apply every CRD of the operator image, the NetworkAttachmentDefinition CRD that the multus release owns among them. Helm's own `crds/` handling skips that one because it exists. Upgrades stay out of scope (ADR 0001 section 6).
+- **Strict schemas from CRDs.** `scripts/addons/schemas.py` converts each served version of each CRD that the environment's releases render. An object that lists its properties allows no other key unless the CRD preserves unknown fields there, `nullable` becomes a null type, and `x-kubernetes-int-or-string` a string or integer type.
+
+Phase 2, on the simulation guests, has to cover these before it can pass.
+
+- A `fleet` variant of `make cni-migrate`. The playbook runs on the lab inventory only today, and a cel1 cluster built before this change keeps Cilium's file in `/etc/cni/net.d`. A cluster built from wiped guests does not need it.
+- The nv-ipam node agent mounts `/etc/cni/net.d/nv-ipam.d` (`040-nv-ipam-node.yaml` at v26.7.1). containerd reads only files from `/etc/cni/net.d`, so the directory changes no network, but a check that the directory holds only `00-multus.conf`, as `k8s-multus-net1` has in the lab, has to allow it.
+- `tests/integration/qemu-lab/acceptance-cel1.sh` checks only the cilium and gpu-operator releases. It needs the new three.
+- ipoib-cni must fail on the simulation's virtio rails, and that failure is the expected result there.
+

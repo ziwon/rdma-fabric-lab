@@ -10,6 +10,8 @@ CEL1_SITE := sites/cel1.yaml
 CEL1_INVENTORY := ansible/inventories/cel1
 CEL1_KUBECONFIG ?= $(or $(XDG_STATE_HOME),$(HOME)/.local/state)/rdma-fabric-lab/cel1/kubeconfig
 CEL1_SIM_PROFILE := tests/integration/qemu-lab/profiles/cel1.tsv
+# The values of the repo-local chart that holds the rail networks of cel1 (ADR 0007).
+CEL1_RAIL_VALUES := helm/rail-networks/values-cel1.yaml
 # FLEET_INVENTORY may name a private site's inventory outside the repository instead.
 # cel1 sets no ansible_host, so FLEET_CONNECT names a second inventory that says how to reach
 # each host, such as the port forwards of the simulation guests.
@@ -26,11 +28,11 @@ INVENTORY_DIR = $(if $(wildcard ansible/inventories/$(INVENTORY)/hosts.yml),ansi
 fleet-site-check: venv ## Offline: validate sites/cel1.yaml, its names, address plan and fabric cabling
 	$(FLEET_PY) site-check $(CEL1_SITE) --lab-plan ansible/inventories/lab/group_vars/all
 
-fleet-render: venv ## Write ansible/inventories/cel1 from sites/cel1.yaml
-	$(FLEET_PY) render $(CEL1_SITE) --out $(CEL1_INVENTORY)
+fleet-render: venv ## Write ansible/inventories/cel1 and the rail network values from sites/cel1.yaml
+	$(FLEET_PY) render $(CEL1_SITE) --out $(CEL1_INVENTORY) --rail-values $(CEL1_RAIL_VALUES)
 
-fleet-render-check: venv ## Offline: fail when ansible/inventories/cel1 differs from what sites/cel1.yaml renders
-	$(FLEET_PY) render $(CEL1_SITE) --out $(CEL1_INVENTORY) --check
+fleet-render-check: venv ## Offline: fail when ansible/inventories/cel1 or the rail network values differ from what sites/cel1.yaml renders
+	$(FLEET_PY) render $(CEL1_SITE) --out $(CEL1_INVENTORY) --rail-values $(CEL1_RAIL_VALUES) --check
 
 fleet-sim-profile: venv ## Write the QEMU harness profile of the cel1 simulation from sites/cel1.yaml
 	$(FLEET_PY) sim-profile $(CEL1_SITE) --inventory $(CEL1_INVENTORY) --out $(CEL1_SIM_PROFILE)

@@ -4,7 +4,8 @@ apply runs helm upgrade --install for each release in table order, unless the de
 release already has the locked chart version and the same user values, and for a repo-local
 chart also the objects its chart renders now. template renders
 each release for the locked Kubernetes version and validates the result with kubeconform,
-without a cluster.
+without a cluster. Custom resources are checked against strict schemas converted from the CRDs
+that the environment's releases render, and one that finds no schema fails.
 """
 
 from __future__ import annotations
@@ -17,7 +18,7 @@ from pathlib import Path
 
 import yaml
 
-from . import releases
+from . import releases, schemas
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 HELM_DIR = REPO_ROOT / "helm"
@@ -70,8 +71,8 @@ def _cmd_template(args: argparse.Namespace) -> int:
     lock = _lock()
     kube_version = lock["components"]["k8s.kubernetes"]["value"]
     args.out.mkdir(parents=True, exist_ok=True)
-    for release in releases.select(releases.load(HELM_DIR / "releases.yaml"), args.env, args.release):
-        rendered = args.out / f"{args.env}-{release.name}.yaml"
+    rendered: dict[str, Path] = {}
+    for release in releases.select(releases.load(HELM_DIR / "releases.yaml"), args.env):
         argv = releases.template_argv(str(TOOLS / "helm"), release, args.env, lock, HELM_DIR, kube_version)
         print("+", " ".join(argv), flush=True)
         out = subprocess.run(argv, capture_output=True, text=True)
@@ -79,14 +80,41 @@ def _cmd_template(args: argparse.Namespace) -> int:
             print(out.stderr, end="", file=sys.stderr)
             print(f"{release.name}: helm template exited {out.returncode}", file=sys.stderr)
             return out.returncode
-        rendered.write_text(out.stdout)
+        rendered[release.name] = args.out / f"{args.env}-{release.name}.yaml"
+        rendered[release.name].write_text(out.stdout)
+
+    # Every release of the environment contributes its CRDs, so a release is checked against the CRDs that another installs.
+    definitions = [crd for path in rendered.values() for crd in schemas.crds(path.read_text())]
+    schema_dir = args.out / "schemas" / args.env
+    written = schemas.write(definitions, schema_dir)
+    print(f"{args.env}: {len(written)} schemas from {len(definitions)} CRDs in {schema_dir}", flush=True)
+    custom = schemas.kinds(definitions)
+    failed = False
+    for name, path in rendered.items():
+        if args.release and name != args.release:
+            continue
         check = [
-            str(TOOLS / "kubeconform"), "-strict", "-summary", "-ignore-missing-schemas",
-            "-kubernetes-version", kube_version.lstrip("v"), str(rendered),
+            str(TOOLS / "kubeconform"), "-strict", "-output", "json", "-verbose", "-ignore-missing-schemas",
+            "-kubernetes-version", kube_version.lstrip("v"),
+            "-schema-location", "default", "-schema-location", str(schema_dir / schemas.LOCATION), str(path),
         ]
         print("+", " ".join(check), flush=True)
-        subprocess.run(check, check=True)
-    return 0
+        out = subprocess.run(check, capture_output=True, text=True)
+        try:
+            results = [r for r in json.loads(out.stdout or "{}").get("resources", []) if r.get("kind")]
+        except json.JSONDecodeError:
+            print(out.stdout + out.stderr, file=sys.stderr)
+            print(f"{name}: kubeconform exited {out.returncode} without a JSON report", file=sys.stderr)
+            return 2
+        # A document holding only comments or nothing comes back with no kind and no status. It is no resource.
+        counts, problems = schemas.summary(results, custom)
+        skipped = sorted({r["kind"] for r in results if r["status"] == "statusSkipped"})
+        print(f"{name}: {len(results)} resources, {counts['valid']} valid, {counts['invalid']} invalid, {counts['error']} errors, "
+              f"{counts['skipped']} skipped{' (' + ', '.join(skipped) + ')' if skipped else ''}", flush=True)
+        for problem in problems:
+            print(f"{name}: {problem}", file=sys.stderr)
+        failed = failed or bool(problems) or out.returncode not in (0, 1)
+    return 1 if failed else 0
 
 
 def main(argv: list[str] | None = None) -> int:

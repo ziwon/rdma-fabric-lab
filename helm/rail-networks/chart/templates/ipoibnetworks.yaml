@@ -1,0 +1,16 @@
+# yamllint disable-file
+{{- include "rail-networks.check" . }}
+{{- range .Values.rails }}
+---
+# The operator writes a NetworkAttachmentDefinition of this name in networkNamespace. ipoib-cni makes an IPoIB child of
+# the master, the rail's host interface, and moves it into the pod, so the pod shares the rail's partition.
+apiVersion: mellanox.com/v1alpha1
+kind: IPoIBNetwork
+metadata:
+  name: {{ required "every rail has a name" .name }}
+spec:
+  networkNamespace: {{ $.Values.namespace }}
+  master: {{ required "every rail names its master" .master }}
+  ipam: |
+    {{- dict "type" "nv-ipam" "poolName" .name | toPrettyJson | nindent 4 }}
+{{- end }}

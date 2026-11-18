@@ -6,6 +6,10 @@
 # file must exist for every environment the release names. `images` sets chart values from
 # image-digest lock components: `repository` gets the ref's repository, `tag` its tag with the
 # digest. `make addons ENV=<env>` installs them.
+#
+# Multus comes right after Cilium: Cilium's file sits in Multus's directory, so no pod that needs the pod network starts
+# until Multus writes 00-multus.conf. The CRDs of network-operator come before the policy and networks of rail-networks,
+# whose crds/ carries the IPPool CRD that the operator would otherwise create only after it reconciles the policy.
 releases:
   - name: cilium
     namespace: kube-system
@@ -14,18 +18,11 @@ releases:
     version: cni.cilium_chart
     environments: [lab, cel1]
     values: ["cilium/values-{env}.yaml"]
-  - name: gpu-operator
-    namespace: gpu-operator
-    chart: gpu-operator
-    repo: https://helm.ngc.nvidia.com/nvidia
-    version: addons.gpu_operator_chart
-    environments: [cel1]
-    values: ["gpu-operator/values-{env}.yaml"]
   - name: multus
     namespace: kube-system
     chart: ./helm/multus/chart
     version: cni.multus
-    environments: [lab]
+    environments: [lab, cel1]
     values: ["multus/values-{env}.yaml"]
     images:
       - {lock: cni.multus_image, repository: image.repository, tag: image.tag}
@@ -37,3 +34,29 @@ releases:
     values: ["whereabouts/values-{env}.yaml"]
     images:
       - {lock: cni.whereabouts_image, repository: image.repository, tag: image.tag}
+  - name: gpu-operator
+    namespace: gpu-operator
+    chart: gpu-operator
+    repo: https://helm.ngc.nvidia.com/nvidia
+    version: addons.gpu_operator_chart
+    environments: [cel1]
+    values: ["gpu-operator/values-{env}.yaml"]
+  - name: network-operator
+    namespace: nvidia-network-operator
+    chart: network-operator
+    repo: https://helm.ngc.nvidia.com/nvidia
+    version: addons.network_operator_chart
+    environments: [cel1]
+    values: ["network-operator/values-{env}.yaml"]
+  - name: rail-networks
+    namespace: nvidia-network-operator
+    chart: ./helm/rail-networks/chart
+    version: addons.network_operator_chart
+    environments: [cel1]
+    values: ["rail-networks/values-{env}.yaml"]
+    images:
+      - lock: addons.network_operator_rdma_shared_dev_plugin_image
+        repository: images.rdmaSharedDevicePlugin.repository
+        tag: images.rdmaSharedDevicePlugin.tag
+      - {lock: addons.network_operator_nv_ipam_image, repository: images.nvIpam.repository, tag: images.nvIpam.tag}
+      - {lock: addons.network_operator_ipoib_cni_image, repository: images.ipoibCni.repository, tag: images.ipoibCni.tag}

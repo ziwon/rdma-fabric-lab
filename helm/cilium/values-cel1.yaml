@@ -19,6 +19,14 @@ ipv4NativeRoutingCIDR: 10.160.0.0/16
 ipam:
   mode: kubernetes
 
+# containerd reads only /etc/cni/net.d, where Multus's 00-multus.conf is the one file. Cilium writes its conflist to this
+# directory, which only the Multus daemon reads, as its default delegate, so a pod created while Multus is down after a
+# boot waits instead of starting without its rail networks (ADR 0004 section 2.4, ADR 0007 section 1 item 1).
+cni:
+  confPath: /etc/cni/multus/net.d
+  # With true, Cilium would rename every other file in its directory, which is also where Multus looks up networks by file.
+  exclusive: false
+
 # The eBPF datapath attaches only to the management port. The InfiniBand rails and the storage
 # ports stay out of pod traffic and keep their bandwidth for RDMA and storage.
 devices: mgmt0

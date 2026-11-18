@@ -1,0 +1,31 @@
+# Rendered by `make fleet-render` from the cel1 site model. Edit the model, not this file.
+namespace: rdma-jobs
+resourceName: cel1_rails
+nodeSelector:
+  rfl.example/node-class: dgx-b200
+perNodeBlockSize: 16
+rails:
+  - name: cel1-rail0
+    master: rail0
+    subnet: 10.143.0.0/24
+  - name: cel1-rail1
+    master: rail1
+    subnet: 10.143.1.0/24
+  - name: cel1-rail2
+    master: rail2
+    subnet: 10.143.2.0/24
+  - name: cel1-rail3
+    master: rail3
+    subnet: 10.143.3.0/24
+  - name: cel1-rail4
+    master: rail4
+    subnet: 10.143.4.0/24
+  - name: cel1-rail5
+    master: rail5
+    subnet: 10.143.5.0/24
+  - name: cel1-rail6
+    master: rail6
+    subnet: 10.143.6.0/24
+  - name: cel1-rail7
+    master: rail7
+    subnet: 10.143.7.0/24

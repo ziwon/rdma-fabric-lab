@@ -64,7 +64,7 @@ The lab follows its initial Kubernetes design, which keeps kube-proxy. It starts
 
 - Moving a cluster that already runs onto this code.
 - Cluster upgrade procedures. This ADR covers only installation and convergence.
-- Network Operator and IPoIB. A later hardware profile for physical NVIDIA InfiniBand hardware covers them. `docs/adr/0007-cel1-ipoib-pod-networks.md` decides them for cel1, not implemented yet.
+- Network Operator and IPoIB. A later hardware profile for physical NVIDIA InfiniBand hardware covers them. `docs/adr/0007-cel1-ipoib-pod-networks.md` decides them for cel1. Its offline phase is implemented, and nothing of it has run on a cluster.
 
 ## 7. The node runtime comes from release files
 
