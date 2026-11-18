@@ -1,0 +1,8 @@
+{
+  "id": "cel1-rails-rxe-sysfs",
+  "run": "ADR 0007 phase 2 probe, rails on e1000e with Soft-RoCE",
+  "source": ".lab/evidence/cel1-rails/probe/dgx-01-rxe-sysfs.txt",
+  "lines": "16-20",
+  "format": "text",
+  "text": "+ readlink -f /sys/class/net/rail0/device\n/sys/devices/pci0000:00/0000:00:07.0\n+ for d in /sys/class/infiniband/*\n+ readlink -f /sys/class/infiniband/rxe_rail0\n/sys/devices/virtual/infiniband/rxe_rail0"
+}

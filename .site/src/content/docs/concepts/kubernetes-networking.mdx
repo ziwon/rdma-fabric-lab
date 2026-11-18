@@ -123,7 +123,7 @@ To open the device, the container needs the character files under `/dev/infiniba
 | The same with `/dev/infiniband` as a hostPath | The files appear, but the device cgroup refuses `uverbs0` and `rdma_cm` with `Operation not permitted` |
 | `privileged: true`, uid 65534, no capability, no host PID, IPC or volume | `rxe0` is `PORT_ACTIVE` and the RDMA tests pass |
 
-Kubernetes has no field that admits one character device to a container without a device plugin, and capabilities do not change the device cgroup. So the lab RDMA pods run `privileged` ([ADR 0004](/docs/adr/0004-track-a-pods-and-net1/) section 2.1). A device plugin that would remove it is an open experiment.
+Kubernetes has no field that admits one character device to a container without a device plugin, and capabilities do not change the device cgroup. So the lab RDMA pods run `privileged` ([ADR 0004](/docs/adr/0004-track-a-pods-and-net1/) section 2.1). A device plugin removes that need, and cel1's rail networks use one ([IPoIB and pod networks on the rails](/concepts/rail-networks/#rdma-devices-in-a-pod)).
 
 > [!NOTE]
 > `net1` is an IP network only. RXE lists the `net1` addresses as GIDs, but no pod got an RDMA device on `net1`. A hostNetwork pod proves that a container can use the node's device, not that a pod has its own RDMA interface.

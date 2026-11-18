@@ -46,7 +46,7 @@ The result kind is a field of every scenario spec and every `metrics.json`, so a
 
 These lines come from the repository README and hold for every page of this site.
 
-- **IPoIB.** RXE runs over Ethernet and ibsim simulates management datagrams. Neither creates the IPoIB data path, so nothing here validates IPoIB or an IPoIB CNI.
+- **IPoIB.** RXE runs over Ethernet and ibsim simulates management datagrams. Neither creates the IPoIB data path, so nothing here validates IPoIB. The cel1 rail networks are checked only up to ipoib-cni refusing an Ethernet rail.
 - **HCA performance.** RXE numbers are software results of one host, kernel and guest combination. They say nothing about offload, InfiniBand or RoCE hardware latency, or 200, 400 or 800 Gb/s throughput.
 - **Lossless switching.** PFC, ECN and DCQCN results in Track C are the behavior of the simulation model, not of a real switch or of the hypervisor's virtual switch.
 - **GPU and NCCL performance.** GPUDirect RDMA, NVLink and NCCL are out of scope. Nothing in this repository has run against GPU hardware.
@@ -68,5 +68,6 @@ The MVP is complete. One run of `tests/integration/qemu-lab/acceptance-all.sh`, 
 | hostNetwork RDMA and Multus | The RXE tests between hostNetwork pods, and `net1` from Whereabouts beside Cilium through pod recreation and a worker reboot | [k8s-hostnet-rdma](/labs/track-a/k8s-hostnet-rdma/), [k8s-multus-net1](/labs/track-a/k8s-multus-net1/) |
 | ibsim and OpenSM | B-01 to B-04 inside the Track B guest, each failing on its deliberate break | [B-01](/labs/track-b/b-01/) to [B-04](/labs/track-b/b-04/) |
 | cel1 simulation | The cel1 cluster on 13 guests from wiped disks with the fleet targets | [cel1-sim-baseline](/labs/cel1/cel1-sim-baseline/) |
+| cel1 rail networks, after the MVP run | Multus beside Cilium and the Network Operator's device plugin, nv-ipam and ipoib-cni on the 8 DGX guests, all from the site model, in acceptance run `20261118T012729Z` | [cel1-rail-networks](/labs/cel1/cel1-rail-networks/) |
 | ns-3 baseline | The model builds in a pinned image, its smoke test repeats byte for byte, and one flow completes 7.43% above its payload bound with the gap explained | [c-01-example](/labs/track-c/c-01-example/), [c-02-single-flow](/labs/track-c/c-02-single-flow/) |
 | Congestion profiles | Incast under four profiles, three workloads and five seeds, with each feature's activation read from the model's counters | [c-03](/labs/track-c/c-03-incast-simultaneous/) to [c-06](/labs/track-c/c-06-sensitivity-kmin/) |
