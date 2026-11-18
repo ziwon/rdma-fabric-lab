@@ -9,10 +9,15 @@
       kube_proxy: <bool>
       control_plane_schedulable: <bool>
       admin_kubeconfig: <path>         control node path of the admin kubeconfig, as ADR 0001 section 5 names it
+      rail_networks:                   optional, pod networks on the compute rails (ADR 0007)
+        namespace: <name>              holds the NetworkAttachmentDefinitions and the RDMA pods
+        node_selector: {<key>: <string>}   selects exactly the hosts with an interface on every rail
+        per_node_block: <int>          pod addresses per node per rail, also the pods per node that hold the rails
     services:
       syslog: {address: <ipv4>, port: <int>}
     networks:                          one L2 segment each
-      <network>: {cidr: <cidr>, kind: ethernet|infiniband, rail: <int>}   rail only on compute rails
+      <network>: {cidr: <cidr>, kind: ethernet|infiniband, rail: <int>, pod_cidr: <cidr>}
+                                       rail only on compute rails, pod_cidr only on InfiniBand rails
     classes:                           one inventory group each
       <class>:
         kube_role: control_plane|node
@@ -75,6 +80,14 @@ class Network:
     cidr: ipaddress.IPv4Network
     kind: str
     rail: int | None
+    pod_cidr: ipaddress.IPv4Network | None = None
+
+
+@dataclass(frozen=True)
+class RailNetworks:
+    namespace: str
+    node_selector: dict[str, str]
+    per_node_block: int
 
 
 @dataclass(frozen=True)
@@ -147,6 +160,7 @@ class Site:
     classes: dict[str, NodeClass]
     hosts: dict[str, Host]
     fabrics: dict[str, Fabric]
+    rail_networks: RailNetworks | None = None
 
     def node_ip(self, host: Host) -> ipaddress.IPv4Address:
         return host.addresses[self.node_interface(self.classes[host.node_class]).name]
@@ -156,6 +170,17 @@ class Site:
 
     def members(self, kube_role: str) -> list[Host]:
         return [h for h in self.hosts.values() if h.node_class in self.classes and self.classes[h.node_class].kube_role == kube_role]
+
+    def pod_rails(self) -> list[Network]:
+        """The networks that carry pod addresses, in rail order."""
+        return sorted((n for n in self.networks.values() if n.pod_cidr is not None), key=lambda n: (n.rail is None, n.rail, n.name))
+
+    def rail_classes(self) -> list[NodeClass]:
+        """The classes whose labels hold every label of kubernetes.rail_networks.node_selector."""
+        if self.rail_networks is None:
+            return []
+        wanted = self.rail_networks.node_selector.items()
+        return [c for c in self.classes.values() if wanted <= c.labels.items()]
 
 
 class _UniqueKeyLoader(yaml.SafeLoader):
@@ -298,7 +323,7 @@ def parse(raw) -> Site:
     _keys(raw, "site model", ("site", "kubernetes", "services", "networks", "classes", "hosts", "fabrics"))
     kube = _map(raw["kubernetes"], "kubernetes")
     _keys(kube, "kubernetes", ("node_network", "api", "pod_cidr", "service_cidr", "kube_proxy", "control_plane_schedulable",
-                               "admin_kubeconfig"))
+                               "admin_kubeconfig"), ("rail_networks",))
     api = _map(kube["api"], "kubernetes.api")
     _keys(api, "kubernetes.api", ("vip", "port"))
     services = _map(raw["services"], "services")
@@ -309,12 +334,13 @@ def parse(raw) -> Site:
     networks = {}
     for name, spec in _map(raw["networks"], "networks").items():
         spec = _map(spec, f"networks.{name}")
-        _keys(spec, f"networks.{name}", ("cidr", "kind"), ("rail",))
+        _keys(spec, f"networks.{name}", ("cidr", "kind"), ("rail", "pod_cidr"))
         networks[name] = Network(
             name=name,
             cidr=_network(spec["cidr"], f"networks.{name}.cidr"),
             kind=_choice(spec["kind"], NETWORK_KINDS, f"networks.{name}.kind"),
             rail=_int(spec["rail"], f"networks.{name}.rail") if "rail" in spec else None,
+            pod_cidr=_network(spec["pod_cidr"], f"networks.{name}.pod_cidr") if "pod_cidr" in spec else None,
         )
 
     classes = {}
@@ -362,6 +388,18 @@ def parse(raw) -> Site:
         classes=classes,
         hosts=hosts,
         fabrics={name: _fabric(name, spec) for name, spec in _map(raw["fabrics"], "fabrics").items()},
+        rail_networks=_rail_networks(kube["rail_networks"]) if "rail_networks" in kube else None,
+    )
+
+
+def _rail_networks(raw) -> RailNetworks:
+    where = "kubernetes.rail_networks"
+    raw = _map(raw, where)
+    _keys(raw, where, ("namespace", "node_selector", "per_node_block"))
+    return RailNetworks(
+        namespace=str(raw["namespace"]),
+        node_selector=_labels(raw["node_selector"], f"{where}.node_selector"),
+        per_node_block=_int(raw["per_node_block"], f"{where}.per_node_block"),
     )
 
 
@@ -437,6 +475,7 @@ def _reference_problems(site: Site) -> list[str]:
 def _address_problems(site: Site, lab: dict[str, list[ipaddress.IPv4Network]]) -> list[str]:
     found = []
     ranges = [(f"networks.{n.name}", n.cidr) for n in site.networks.values()]
+    ranges += [(f"networks.{n.name}.pod_cidr", n.pod_cidr) for n in site.networks.values() if n.pod_cidr is not None]
     ranges += [("kubernetes.pod_cidr", site.pod_cidr), ("kubernetes.service_cidr", site.service_cidr)]
     for i, (where_a, a) in enumerate(ranges):
         for where_b, b in ranges[i + 1:]:
@@ -552,6 +591,58 @@ def _fabric_problems(site: Site, fabric: Fabric) -> list[str]:
     return found
 
 
+def _rail_network_problems(site: Site) -> list[str]:
+    """Pods on a DGX node get one IPoIB child of each rail, so every rail carries a pod range, one selector picks the
+    hosts with all rails, and one interface name per rail serves as the IPoIBNetwork master (ADR 0007)."""
+    found = []
+    where = "kubernetes.rail_networks"
+    pod_rails = site.pod_rails()
+    for network in pod_rails:
+        if network.kind != "infiniband" or network.rail is None:
+            found.append(f"networks.{network.name}.pod_cidr: only an InfiniBand rail network carries pod addresses")
+    rails = site.rail_networks
+    if rails is None:
+        if pod_rails:
+            found.append(f"networks {', '.join(n.name for n in pod_rails)} have a pod_cidr, which needs {where}")
+        return found
+    if not pod_rails:
+        return found + [f"{where}: no network has a pod_cidr"]
+    lacking = sorted(n.name for n in site.networks.values() if n.rail is not None and n.pod_cidr is None)
+    if lacking:
+        found.append(f"rail networks {', '.join(lacking)} have no pod_cidr. A pod gets every rail or none")
+    if not HOST_NAME.match(rails.namespace):
+        found.append(f"{where}.namespace: {rails.namespace!r} is not a namespace name, which is an RFC 1123 label")
+    if rails.per_node_block < 1:
+        found.append(f"{where}.per_node_block: {rails.per_node_block} is not a positive number of addresses")
+    if not rails.node_selector:
+        found.append(f"{where}.node_selector: selects every node. Name the label of the rail hosts")
+
+    selected = site.rail_classes()
+    if not selected:
+        found.append(f"{where}.node_selector: selects no class")
+    selected_names = {c.name for c in selected}
+    for node_class in site.classes.values():
+        on = {i.network for i in node_class.interfaces}
+        missing = [n.name for n in pod_rails if n.name not in on]
+        if node_class.name in selected_names and missing:
+            found.append(f"classes.{node_class.name}: selected by {where}.node_selector, but has no interface on {', '.join(missing)}")
+        elif node_class.name not in selected_names and len(missing) < len(pod_rails):
+            found.append(f"classes.{node_class.name}: has an interface on a pod rail, but {where}.node_selector does not select it")
+    for network in pod_rails:
+        names = sorted({i.name for c in selected for i in c.interfaces if i.network == network.name})
+        if len(names) > 1:
+            found.append(f"networks.{network.name}: the selected classes name its interface {', '.join(names)}. "
+                         "The IPoIBNetwork master is one name")
+    nodes = sum(1 for h in site.hosts.values() if h.node_class in selected_names)
+    if rails.per_node_block >= 1:
+        for network in pod_rails:
+            room = network.pod_cidr.num_addresses - 2
+            if nodes * rails.per_node_block > room:
+                found.append(f"networks.{network.name}.pod_cidr: {network.pod_cidr} holds {room} pod addresses, and {nodes} nodes "
+                             f"in blocks of {rails.per_node_block} need {nodes * rails.per_node_block}")
+    return found
+
+
 def problems(site: Site, lab_plan: dict | None = None) -> list[str]:
     """Every way the model breaks its own rules. An empty list means it is valid.
 
@@ -560,6 +651,7 @@ def problems(site: Site, lab_plan: dict | None = None) -> list[str]:
     found = _interface_name_problems(site) + _reference_problems(site)
     found += _address_problems(site, lab_ranges(lab_plan or {}))
     found += _kubernetes_problems(site)
+    found += _rail_network_problems(site)
     for fabric in site.fabrics.values():
         found += _fabric_problems(site, fabric)
     return found

@@ -1,7 +1,7 @@
 ---
 extends: default
 
-ignore-from-file: .gitignore
+ignore-from-file: [.gitignore, .yamllint-ignore]
 
 rules:
   document-start: disable

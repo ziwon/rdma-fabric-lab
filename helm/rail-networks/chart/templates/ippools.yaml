@@ -1,0 +1,17 @@
+# yamllint disable-file
+{{- include "rail-networks.check" . }}
+{{- range .Values.rails }}
+---
+# nv-ipam reads pools in its own namespace, the operator's, and hands each selected node a block of the subnet. No
+# gateway: pods reach only the other pods of the rail.
+apiVersion: nv-ipam.nvidia.com/v1alpha1
+kind: IPPool
+metadata:
+  name: {{ .name }}
+  namespace: {{ $.Release.Namespace }}
+spec:
+  subnet: {{ required "every rail has a pod subnet" .subnet }}
+  perNodeBlockSize: {{ int $.Values.perNodeBlockSize }}
+  nodeSelector:
+    {{- include "rail-networks.nodeSelectorTerms" $.Values.nodeSelector | nindent 4 }}
+{{- end }}

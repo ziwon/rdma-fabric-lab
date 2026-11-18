@@ -14,23 +14,31 @@ kubernetes:
   control_plane_schedulable: false
   # Control node path of the admin kubeconfig, outside every path git tracks (ADR 0001 section 5).
   admin_kubeconfig: ${XDG_STATE_HOME:-~/.local/state}/rdma-fabric-lab/cel1/kubeconfig
+  # Pod networks on the compute rails (ADR 0007). Each rail's pod_cidr becomes an nv-ipam pool that hands each selected
+  # node a block of per_node_block addresses, and the RDMA device plugin admits that many pods per node to the rails.
+  # make fleet-render writes helm/rail-networks/values-cel1.yaml from this section and the pod_cidr of each rail.
+  rail_networks:
+    namespace: rdma-jobs
+    node_selector: { rfl.example/node-class: dgx-b200 }
+    per_node_block: 16
 
 services:
   syslog: { address: 10.140.0.5, port: 514 }
 
 # One L2 segment each. The QEMU simulation gives each its own unprivileged guest network.
+# pod_cidr is the pod range on a rail. Pods share the rail's partition with the hosts but not its subnet (ADR 0007).
 networks:
   management: { cidr: 10.140.0.0/24, kind: ethernet }
   storage-a: { cidr: 10.141.0.0/24, kind: ethernet }
   storage-b: { cidr: 10.141.1.0/24, kind: ethernet }
-  rail0: { cidr: 10.142.0.0/24, kind: infiniband, rail: 0 }
-  rail1: { cidr: 10.142.1.0/24, kind: infiniband, rail: 1 }
-  rail2: { cidr: 10.142.2.0/24, kind: infiniband, rail: 2 }
-  rail3: { cidr: 10.142.3.0/24, kind: infiniband, rail: 3 }
-  rail4: { cidr: 10.142.4.0/24, kind: infiniband, rail: 4 }
-  rail5: { cidr: 10.142.5.0/24, kind: infiniband, rail: 5 }
-  rail6: { cidr: 10.142.6.0/24, kind: infiniband, rail: 6 }
-  rail7: { cidr: 10.142.7.0/24, kind: infiniband, rail: 7 }
+  rail0: { cidr: 10.142.0.0/24, kind: infiniband, rail: 0, pod_cidr: 10.143.0.0/24 }
+  rail1: { cidr: 10.142.1.0/24, kind: infiniband, rail: 1, pod_cidr: 10.143.1.0/24 }
+  rail2: { cidr: 10.142.2.0/24, kind: infiniband, rail: 2, pod_cidr: 10.143.2.0/24 }
+  rail3: { cidr: 10.142.3.0/24, kind: infiniband, rail: 3, pod_cidr: 10.143.3.0/24 }
+  rail4: { cidr: 10.142.4.0/24, kind: infiniband, rail: 4, pod_cidr: 10.143.4.0/24 }
+  rail5: { cidr: 10.142.5.0/24, kind: infiniband, rail: 5, pod_cidr: 10.143.5.0/24 }
+  rail6: { cidr: 10.142.6.0/24, kind: infiniband, rail: 6, pod_cidr: 10.143.6.0/24 }
+  rail7: { cidr: 10.142.7.0/24, kind: infiniband, rail: 7, pod_cidr: 10.143.7.0/24 }
 
 # Interface names are what a systemd .link file renames each port to, on hardware and in a guest.
 classes:

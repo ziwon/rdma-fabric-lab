@@ -1,0 +1,27 @@
+# yamllint disable-file
+{{- include "rail-networks.check" . }}
+{{- $masters := list }}
+{{- range .Values.rails }}{{ $masters = append $masters (required "every rail names its master" .master) }}{{ end }}
+{{- $plugin := dict "resourceName" .Values.resourceName "rdmaHcaMax" (int .Values.perNodeBlockSize) "selectors" (dict "ifNames" $masters) }}
+# The operator reconciles only the policy of this name. It runs three components on the rail hosts. The host driver
+# comes with DGX OS, the repository's chart installs Multus and the containerd role the CNI plugins, so ofedDriver,
+# secondaryNetwork.multus and secondaryNetwork.cniPlugins stay out, and the operator removes what they would deploy.
+apiVersion: mellanox.com/v1alpha1
+kind: NicClusterPolicy
+metadata:
+  name: nic-cluster-policy
+spec:
+  nodeAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      {{- include "rail-networks.nodeSelectorTerms" .Values.nodeSelector | nindent 6 }}
+  # One resource selects the HCA of every rail by its netdev name, so one unit gives a pod all of them.
+  rdmaSharedDevicePlugin:
+    {{- include "rail-networks.image" (dict "name" "rdmaSharedDevicePlugin" "image" .Values.images.rdmaSharedDevicePlugin) | nindent 4 }}
+    config: |
+      {{- dict "configList" (list $plugin) | toPrettyJson | nindent 6 }}
+  nvIpam:
+    {{- include "rail-networks.image" (dict "name" "nvIpam" "image" .Values.images.nvIpam) | nindent 4 }}
+    enableWebhook: false
+  secondaryNetwork:
+    ipoib:
+      {{- include "rail-networks.image" (dict "name" "ipoibCni" "image" .Values.images.ipoibCni) | nindent 6 }}

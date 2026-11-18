@@ -41,7 +41,7 @@ def _cmd_site_check(args: argparse.Namespace) -> int:
     links = sum(len(f.links) for f in model.fabrics.values())
     print(
         f"{args.site}: {'invalid' if found else 'valid'}, {len(model.hosts)} hosts, {len(model.networks)} networks, {links} fabric links, "
-        f"checked against {'the lab plan' if lab_plan else 'no lab plan'}"
+        f"{len(model.pod_rails())} pod rail ranges, checked against {'the lab plan' if lab_plan else 'no lab plan'}"
     )
     return 1 if found else 0
 
@@ -57,17 +57,40 @@ def _cmd_render(args: argparse.Namespace) -> int:
         print(f"{args.site}: invalid, nothing rendered", file=sys.stderr)
         return 1
     files = render.render(model)
+    rail_values = render.rail_values(model)
+    if args.rail_values is None and rail_values is not None:
+        print(f"{args.site}: has rail networks, so render needs --rail-values <values file of helm/rail-networks/chart>",
+              file=sys.stderr)
+        return 1
     if args.check:
         differences = render.drift(files, args.out)
+        if args.rail_values is not None:
+            differences += _rail_values_drift(rail_values, args.rail_values)
         for difference in differences:
             print(difference, file=sys.stderr)
-        print(f"{args.out}: {len(differences)} differences from {args.site} over {len(files)} rendered files")
+        where = f"{args.out}" + (f" and {args.rail_values}" if rail_values is not None else "")
+        count = len(files) + (rail_values is not None)
+        print(f"{where}: {len(differences)} differences from {args.site} over {count} rendered files")
         return 1 if differences else 0
     foreign = render.write(files, args.out)
     for path in foreign:
         print(f"{path}: not rendered from the site model, left in place", file=sys.stderr)
-    print(f"{args.out}: wrote {len(files)} files from {args.site}")
+    if args.rail_values is not None:
+        if rail_values is None:
+            if args.rail_values.is_file():
+                args.rail_values.unlink()
+        elif not args.rail_values.is_file() or args.rail_values.read_text() != rail_values:
+            args.rail_values.write_text(rail_values)
+    print(f"{args.out}: wrote {len(files)} files from {args.site}" + (f", and {args.rail_values}" if rail_values is not None else ""))
     return 1 if foreign else 0
+
+
+def _rail_values_drift(text: str | None, path: Path) -> list[str]:
+    if text is None:
+        return [f"{path}: the site model has no rail networks"] if path.is_file() else []
+    if not path.is_file():
+        return [f"{path}: missing"]
+    return [] if path.read_text() == text else [f"{path}: differs from the site model"]
 
 
 def _cmd_sim_profile(args: argparse.Namespace) -> int:
@@ -158,6 +181,7 @@ def main(argv: list[str] | None = None) -> int:
     p = sub.add_parser("render", help="Write the Ansible inventory of a site model, or with --check compare it")
     p.add_argument("site", type=Path)
     p.add_argument("--out", type=Path, required=True)
+    p.add_argument("--rail-values", type=Path, help="the values file of helm/rail-networks/chart this site renders")
     p.add_argument("--check", action="store_true", help="Change nothing, exit 1 when the directory differs")
     p.set_defaults(func=_cmd_render)
 

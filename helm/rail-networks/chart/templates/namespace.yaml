@@ -1,0 +1,13 @@
+# yamllint disable-file
+{{- include "rail-networks.check" . }}
+# The namespace of the rail networks and the RDMA pods. A pod there holds IPC_LOCK, which PodSecurity baseline does not
+# allow, so it enforces privileged, while the containers stay unprivileged (ADR 0007 section 1 item 7). Helm keeps it on
+# uninstall, so removing the release never deletes running jobs.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ .Values.namespace }}
+  labels:
+    pod-security.kubernetes.io/enforce: privileged
+  annotations:
+    helm.sh/resource-policy: keep

@@ -1,0 +1,5 @@
+# The daemon takes its default delegate from the directory Cilium writes to, cni.confPath of helm/cilium/values-cel1.yaml,
+# as in the lab (ADR 0004 section 1.4, ADR 0007 section 1 item 2). The upstream manifest mounts that host directory at
+# the same path in the daemon's container, so the clusterNetwork path in 00-multus.conf names the same file on the node.
+daemonConfig:
+  multusAutoconfigDir: /etc/cni/multus/net.d

@@ -14,7 +14,8 @@ cel1 is a region that does not exist. Its hosts, addresses, interface names and 
 ```mermaid
 %%{init: {"theme": "base", "themeVariables": {"background": "#1b1f23", "primaryColor": "#22272c", "primaryTextColor": "#e6e9ed", "primaryBorderColor": "#616c78", "lineColor": "#8f9aa7", "edgeLabelBackground": "#1b1f23", "fontFamily": "DM Sans, Inter, Arial, sans-serif"}}}%%
 flowchart LR
-    S[sites/cel1.yaml<br/>hosts, classes, address plan<br/>API VIP, syslog, fabric] --> I[ansible/inventories/cel1/<br/>make fleet-render]
+    S[sites/cel1.yaml<br/>hosts, classes, address plan<br/>API VIP, syslog, fabric, rail pods] --> I[ansible/inventories/cel1/<br/>make fleet-render]
+    S --> R[helm/rail-networks/<br/>values-cel1.yaml<br/>make fleet-render]
     S --> N[tracks/b-ibsim/topologies/<br/>cel1-compute.net<br/>make track-b-render]
     S --> P[tests/integration/qemu-lab/<br/>profiles/cel1.tsv<br/>make fleet-sim-profile]
     I --> K[ansible/playbooks/kubernetes.yml<br/>the same playbook as the lab]
@@ -25,7 +26,7 @@ flowchart LR
     classDef note fill:#2b3138,stroke:#616c78,color:#b6bfc9,stroke-width:1.5px;
     classDef accent fill:#243027,stroke:#b2e879,color:#e6e9ed,stroke-width:1.5px;
     class S primary
-    class I,N,P secondary
+    class I,N,P,R secondary
     class K accent
     class C note
 ```
@@ -36,7 +37,7 @@ flowchart LR
 | `dgx_b200` | `cel1-dgx-01` to `08` | 8 | `mgmt0`, `stor0`, `stor1`, `rail0` to `rail7` |
 | `pcie_gpu` | `cel1-pcie-01`, `02` | 2 | `mgmt0` |
 
-The address plan gives each network one range: management `10.140.0.0/24` with the API VIP at `.10` and syslog at `.5`, two storage networks, eight compute rails `10.142.0.0/24` to `10.142.7.0/24`, pods `10.160.0.0/16` and Services `10.170.0.0/16`. None of them overlaps another or the lab address plan. Every host lists all its addresses, and no rule computes an address from a host number, so the duplicate and range checks do real work. The [rail-optimized compute fabric](/concepts/infiniband-management/) is an explicit cable list of 128 links ([fleet runbook](/docs/fleet/) section 2).
+The address plan gives each network one range: management `10.140.0.0/24` with the API VIP at `.10` and syslog at `.5`, two storage networks, eight compute rails `10.142.0.0/24` to `10.142.7.0/24`, a pod range on each rail `10.143.0.0/24` to `10.143.7.0/24`, pods `10.160.0.0/16` and Services `10.170.0.0/16`. None of them overlaps another or the lab address plan. Every host lists all its addresses, and no rule computes an address from a host number, so the duplicate and range checks do real work. The [rail-optimized compute fabric](/concepts/infiniband-management/) is an explicit cable list of 128 links ([fleet runbook](/docs/fleet/) section 2).
 
 ## The inventory contract
 
@@ -65,6 +66,12 @@ The lab and cel1 run the same playbook `ansible/playbooks/kubernetes.yml` and th
 <Excerpt id="cel1-fleet-check" />
 
 `make track-b-render-check` adds the ibsim net file. Each generator also has a `--check` mode that fails when the committed file differs from what the model renders, so a hand edit of a generated file fails the gate.
+
+## Pod networks on the rails
+
+[ADR 0007](/docs/adr/0007-cel1-ipoib-pod-networks/) decides how a pod on a DGX node reaches the eight InfiniBand rails. Cilium stays the primary network on `mgmt0`. Multus adds one IPoIB interface per rail, `rail0` to `rail7` in the pod as on the host. The NVIDIA Network Operator runs only the RDMA shared device plugin, nv-ipam and ipoib-cni. NCCL keeps using verbs on `mlx5_0` to `mlx5_7`, and the IPoIB interfaces carry RDMA CM and IP.
+
+The model holds the pod range of each rail and a `kubernetes.rail_networks` section: the namespace `rdma-jobs`, the selector of the DGX class and 16 addresses per node per rail. `make fleet-render` writes the values of the repo-local chart `helm/rail-networks/chart`, which renders the policy, one `IPoIBNetwork` and one nv-ipam `IPPool` per rail. `make addons-template` validates them against schemas converted from the operator's CRDs. That is phase 1, and all of it is offline. The simulation's rails are virtio Ethernet, so no IPoIB interface can exist there, and the data path needs DGX hardware ([fleet runbook](/docs/fleet/) section 14).
 
 ## The gates in front of cel1
 

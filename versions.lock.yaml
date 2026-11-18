@@ -234,6 +234,45 @@ components:
     value: v26.7.2
     reason: Newest NVIDIA GPU Operator chart on 2026-11-15. Installed by Helm on the GPU fleet only.
     source: https://helm.ngc.nvidia.com/nvidia/index.yaml
+  addons.network_operator_chart:
+    kind: version
+    value: 26.7.1
+    reason: Newest NVIDIA Network Operator chart on 2026-11-18. Installed by Helm on the GPU fleet only, and the version of the
+      repo-local chart helm/rail-networks/chart, whose objects use this operator's API (ADR 0007).
+    source: https://helm.ngc.nvidia.com/nvidia/index.yaml
+  addons.network_operator_rdma_shared_dev_plugin_image:
+    kind: image-digest
+    value: sha256:842b3816c66623cef061daf9d904c411085c525898e8b95777e531d77b3a7b4e
+    ref: nvcr.io/nvidia/mellanox/k8s-rdma-shared-dev-plugin:network-operator-v26.7.1
+    reason: OCI image index of the k8s-rdma-shared-dev-plugin tag that Network Operator v26.7.1 names in its example policies. On 2026-11-18 the
+      registry returned it as Docker-Content-Digest and sha256 of the index body equals it. The rail-networks chart names it by
+      digest in the NicClusterPolicy.
+    source: https://nvcr.io/v2/nvidia/mellanox/k8s-rdma-shared-dev-plugin/manifests/network-operator-v26.7.1
+  addons.network_operator_nv_ipam_image:
+    kind: image-digest
+    value: sha256:f4012b9c5ee18603def8e842c58861b2524c8da5a946ec9c3e5957de7395a22c
+    ref: nvcr.io/nvidia/mellanox/nvidia-k8s-ipam:network-operator-v26.7.1
+    reason: OCI image index of the nvidia-k8s-ipam tag that Network Operator v26.7.1 names in its example policies. On 2026-11-18 the
+      registry returned it as Docker-Content-Digest and sha256 of the index body equals it. The rail-networks chart names it by
+      digest in the NicClusterPolicy.
+    source: https://nvcr.io/v2/nvidia/mellanox/nvidia-k8s-ipam/manifests/network-operator-v26.7.1
+  addons.network_operator_ipoib_cni_image:
+    kind: image-digest
+    value: sha256:fe3a0d5253e3c953fa627b5e585118ab2f649f0dbc5cae9eab13b80b7a78400c
+    ref: nvcr.io/nvidia/mellanox/ipoib-cni:network-operator-v26.7.1
+    reason: OCI image index of the ipoib-cni tag that Network Operator v26.7.1 names in its example policies. On 2026-11-18 the
+      registry returned it as Docker-Content-Digest and sha256 of the index body equals it. The rail-networks chart names it by
+      digest in the NicClusterPolicy.
+    source: https://nvcr.io/v2/nvidia/mellanox/ipoib-cni/manifests/network-operator-v26.7.1
+  addons.network_operator_ippool_crd:
+    kind: checksum
+    value: sha256:d9b459c15b7d57edc8cbb6d406c1952a2120c2ab1126ce1c017cb4c1cfb0dc5a
+    ref: v26.7.1
+    reason: manifests/state-nv-ipam-cni/005-nv-ipam.nvidia.com_ippools.yaml at tag v26.7.1, commit
+      abdca12f3fe9cbd5492b10320c3a54dc63d80b12. The operator creates this CRD only when it reconciles the policy, so
+      helm/rail-networks/chart/crds carries it byte for byte and Helm installs it with the pools. A unit test checks the sha256.
+    source:
+      https://raw.githubusercontent.com/Mellanox/network-operator/abdca12f3fe9cbd5492b10320c3a54dc63d80b12/manifests/state-nv-ipam-cni/005-nv-ipam.nvidia.com_ippools.yaml
   ibsim.guest_kernel:
     kind: observed
     value: 6.8.0-147-generic
@@ -438,6 +477,14 @@ scopes:
     - k8s.kube_vip
     - k8s.kube_vip_image
     - addons.gpu_operator_chart
+    - cni.multus
+    - cni.multus_manifest
+    - cni.multus_image
+    - addons.network_operator_chart
+    - addons.network_operator_rdma_shared_dev_plugin_image
+    - addons.network_operator_nv_ipam_image
+    - addons.network_operator_ipoib_cni_image
+    - addons.network_operator_ippool_crd
   ibsim:
     - ibsim.guest_kernel
     - ibsim.guest_docker

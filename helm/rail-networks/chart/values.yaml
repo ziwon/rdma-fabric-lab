@@ -1,0 +1,27 @@
+# make fleet-render writes the values of a site to helm/rail-networks/values-<site>.yaml from its site model. Every key
+# below is required, and the defaults render nothing.
+
+# The namespace of the NetworkAttachmentDefinitions and the RDMA pods, created at PodSecurity privileged.
+namespace: ""
+# The device plugin resource that admits a pod to every rail: rdma/<resourceName>.
+resourceName: ""
+# The label that selects the rail hosts, for the operator's DaemonSets and the pools.
+nodeSelector: {}
+# Pod addresses per node per rail, and so the pods per node that the device plugin admits to the rails.
+perNodeBlockSize: 0
+# One entry per rail: name of the IPoIBNetwork, its NetworkAttachmentDefinition and its pool, the host interface that is
+# the IPoIB parent, and the pod range.
+rails: []
+
+# make addons sets each from the lock: the image's repository, and its tag with the digest. The operator takes a digest
+# as the version, so the policy names each image by digest only.
+images:
+  rdmaSharedDevicePlugin:
+    repository: ""
+    tag: ""
+  nvIpam:
+    repository: ""
+    tag: ""
+  ipoibCni:
+    repository: ""
+    tag: ""

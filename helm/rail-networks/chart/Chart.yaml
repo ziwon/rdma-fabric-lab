@@ -1,0 +1,14 @@
+apiVersion: v2
+name: rail-networks
+description: >-
+  The pod networks on the InfiniBand rails of a GPU site (ADR 0007): the NicClusterPolicy that has the NVIDIA Network
+  Operator run the RDMA shared device plugin, nv-ipam and ipoib-cni, and one IPoIBNetwork and one nv-ipam IPPool per rail.
+  make fleet-render writes its values from the site model.
+type: application
+# Must equal addons.network_operator_chart in versions.lock.yaml, the operator whose API these objects use. make addons
+# refuses the chart otherwise. crds/ carries the IPPool CRD of that operator tag.
+version: 26.7.1
+appVersion: v26.7.1
+home: https://github.com/Mellanox/network-operator
+sources:
+  - https://github.com/Mellanox/network-operator/blob/v26.7.1/manifests/state-nv-ipam-cni/005-nv-ipam.nvidia.com_ippools.yaml
