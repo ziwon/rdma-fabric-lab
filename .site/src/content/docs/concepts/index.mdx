@@ -13,5 +13,6 @@ Each concept page teaches the ideas a set of labs relies on, shows them in a rea
 | [Kubernetes networking](/concepts/kubernetes-networking/) | CNI, Cilium in tunnel mode and with kube-proxy replacement, kube-vip, Multus, Whereabouts, macvlan, hostNetwork pods with RDMA devices | Track A, cel1 |
 | [InfiniBand management](/concepts/infiniband-management/) | The subnet manager, GUIDs and LIDs, SMPs and MADs, port states, minhop and updn, rail-optimized fabrics, ibsim | Track B |
 | [RoCE congestion control](/concepts/roce-congestion-control/) | Lossless Ethernet, PFC and headroom, ECN with kmin, kmax and pmax, CNPs and DCQCN, incast, FCT and its bounds | Track C |
+| [IPoIB and pod networks on the rails](/concepts/rail-networks/) | Verbs and IP on one rail, the IPoIB packet, partitions and child interfaces, Multus with ipoib-cni, RDMA device plugins, nv-ipam, the NVIDIA Network Operator | cel1 |
 
 The concept pages describe the mechanisms in general and then say how the lab's tools implement them. Where the two differ, the lab's behavior is what its runs measured. For example, the ns-3 model's switch sends PFC PAUSE frames even when PFC is "off", and the RXE device reports placeholder firmware fields because no hardware exists.

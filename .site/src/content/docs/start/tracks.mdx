@@ -37,7 +37,7 @@ Track C asks how PFC, ECN and DCQCN change queues, rates and flow completion ins
 
 `cel1` is a data center that does not exist. It has 3 control planes, 8 DGX B200 nodes and 2 previous-generation PCIe GPU servers, an address plan and a rail-optimized InfiniBand fabric. Every name and address in it is invented. `sites/cel1.yaml` is its single source, and `make fleet-render` writes its Ansible inventory from it.
 
-The lab and cel1 use the same playbook `ansible/playbooks/kubernetes.yml` and the same roles. They differ only in inventory variables. cel1 has no GPU hardware, so running the lab is the only path that confirms the fleet code by running it. The [cel1 simulation](/labs/cel1/cel1-sim-baseline/) goes one step further and builds the whole region as 13 guests. Track B renders the cel1 compute fabric into a net file and fails a link in it in [B-04](/labs/track-b/b-04/).
+The lab and cel1 use the same playbook `ansible/playbooks/kubernetes.yml` and the same roles. They differ only in inventory variables. cel1 has no GPU hardware, so running the lab is the only path that confirms the fleet code by running it. The [cel1 simulation](/labs/cel1/cel1-sim-baseline/) goes one step further and builds the whole region as 13 guests. Track B renders the cel1 compute fabric into a net file and fails a link in it in [B-04](/labs/track-b/b-04/). [cel1-rail-networks](/labs/cel1/cel1-rail-networks/) adds the pod networks on the eight rails of the DGX nodes that [ADR 0007](/docs/adr/0007-cel1-ipoib-pod-networks/) decides, and [IPoIB and pod networks on the rails](/concepts/rail-networks/) explains them.
 
 See [the cel1 site model](/repository/cel1-site-model/) for how the model, the inventory and the contract fit together.
 
