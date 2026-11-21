@@ -5,6 +5,7 @@ import path from 'node:path';
 import { DOC_DIRS, routeOf } from './lib/docs.mjs';
 import { parseMakeTargets, readMakefiles } from './lib/make.mjs';
 import { listFiles, loadScenarios, repoRoot, siteDir } from './lib/repo.mjs';
+import { base } from './lib/site.mjs';
 import { brokenLinks, verifySite } from './lib/verify.mjs';
 
 const dist = path.join(siteDir, 'dist');
@@ -21,7 +22,6 @@ function htmlPages(dir, route = '/') {
   return pages;
 }
 
-const base = '/rdma-fabric-lab';
 const pages = htmlPages(dist);
 const docs = DOC_DIRS.flatMap((dir) => listFiles(path.join(repoRoot, dir), /\.md$/)).map((file) => path.relative(repoRoot, file));
 const problems = verifySite({

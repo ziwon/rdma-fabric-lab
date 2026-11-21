@@ -1,12 +1,12 @@
 # The learning site
 
-This directory builds the site that explains the lab: its concepts, one page per experiment with the commands to run it, the repository's structure, and the repository's own documents. It uses Astro with Starlight and is published as a GitHub Pages project site at `https://<owner>.github.io/rdma-fabric-lab/`, where `<owner>` is the GitHub account that owns the repository. The build reads the owner from `GITHUB_REPOSITORY` in CI and from the `origin` remote locally.
+This directory builds the site that explains the lab: its concepts, one page per experiment with the commands to run it, the repository's structure, and the repository's own documents. It uses Astro with Starlight and is published on GitHub Pages at `https://rdma-fabric.restack.tech/`. Repository links read the owner from `GITHUB_REPOSITORY` in CI and from the `origin` remote locally.
 
 ## Build and preview
 
 ```bash
 make site              # npm ci when the lock changed, unit tests, then the build into .site/dist
-make site-dev          # live reload at http://localhost:4321/rdma-fabric-lab/
+make site-dev          # live reload at http://localhost:4321/
 cd .site && npm run preview   # serve the built .site/dist
 ```
 
@@ -39,10 +39,12 @@ A source under `tests/fixtures/` is tracked, and `npm test` checks those excerpt
 | Path | Contents |
 |---|---|
 | `astro.config.mjs` | Starlight, the five sidebar topics, Mermaid, KaTeX, the plugins, `site` and `base` |
+| `scripts/lib/site.mjs` | Reads the deployment URL from `SITE_URL` and shares its origin and base path with the build and verification |
 | `src/content/docs/` | The pages: `start/`, `concepts/`, `labs/`, `repository/`, `reference/` |
 | `src/components/` | `ScenarioChecks`, `MakeTargets`, `LockScopes`, `LabIndex`, `Excerpt`, `Duration`, `RepoFile` |
 | `src/assets/diagrams/` | Hand-written SVG figures. Validate each with `xmllint --noout` |
-| `src/plugins/remark-base-links.mjs` | Gives page links such as `/labs/` the `/rdma-fabric-lab` base path |
+| `src/plugins/remark-base-links.mjs` | Gives page links such as `/labs/` the deployment's base path |
+| `src/route-data.ts` | Adds the same base path to hero action links before rendering |
 | `scripts/` | The sync, the post-build verification and the excerpt tool, with their logic in `scripts/lib/` |
 | `tests/` | `node --test` unit tests of that logic |
 
@@ -50,6 +52,15 @@ A source under `tests/fixtures/` is tracked, and `npm test` checks those excerpt
 
 The workflow `.github/workflows/pages.yml` builds the site on every pull request and every push to `main`, and deploys it from `main` only. It uses no secret. Every action is pinned by commit.
 
-The site is published at https://ziwon.github.io/rdma-fabric-lab/. Pages takes its build and deployment from GitHub Actions, and the repository variable `PAGES_ENABLED` is `true`, so every push to `main` runs `.github/workflows/pages.yml`: the `build` job proves the site builds, and the `deploy` job publishes `.site/dist`. Pull requests run only the `build` job.
+The site is published at https://rdma-fabric.restack.tech/. With that custom domain configured in Pages, GitHub redirects `https://ziwon.github.io/rdma-fabric-lab/` to it. Pages takes its build and deployment from GitHub Actions, and the repository variable `PAGES_ENABLED` is `true`, so every push to `main` runs `.github/workflows/pages.yml`: the `build` job proves the site builds, and the `deploy` job publishes `.site/dist`. Pull requests run only the `build` job.
 
-To stop publishing, delete the variable `PAGES_ENABLED` under Settings, Secrets and variables, Actions, Variables. A push to `main` then runs only the `build` job. A fork that wants its own copy enables Pages with GitHub Actions as the source, allows `main` in the `github-pages` environment if it has branch rules, and sets the same variable.
+The default deployment URL is `https://rdma-fabric.restack.tech/`. To target another domain or a GitHub project path, set the Actions repository variable `SITE_URL` to the full deployment URL. The same variable works locally:
+
+```bash
+SITE_URL=https://ziwon.github.io/rdma-fabric-lab/ npm run build
+SITE_URL=https://ziwon.github.io/rdma-fabric-lab/ npm run preview
+```
+
+The URL selects the origin and base path at build time; changing it requires rebuilding. It does not configure DNS or the Pages custom domain. To keep both domains in the address bar, use separate deployments with their corresponding `SITE_URL` values and remove the custom domain from the GitHub deployment; one GitHub Pages site redirects its default address to its custom domain.
+
+To stop publishing, delete the variable `PAGES_ENABLED` under Settings, Secrets and variables, Actions, Variables. A push to `main` then runs only the `build` job. A fork that wants its own copy enables Pages with GitHub Actions as the source, allows `main` in the `github-pages` environment if it has branch rules, sets `PAGES_ENABLED`, and sets `SITE_URL` to its own deployment URL.

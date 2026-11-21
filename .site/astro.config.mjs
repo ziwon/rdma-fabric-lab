@@ -11,16 +11,15 @@ import starlightLinksValidator from 'starlight-links-validator';
 import starlightSidebarTopics from 'starlight-sidebar-topics';
 import rehypeCodeBreaks from './src/plugins/rehype-code-breaks.mjs';
 import remarkBaseLinks from './src/plugins/remark-base-links.mjs';
-import { repoUrl, repositoryOwner } from './scripts/lib/repo.mjs';
-
-const base = '/rdma-fabric-lab';
+import { repoUrl } from './scripts/lib/repo.mjs';
+import { base, site } from './scripts/lib/site.mjs';
 
 // Components that show a repository file read it from here at build time.
 process.env.RFL_REPO_ROOT ??= fileURLToPath(new URL('..', import.meta.url));
 
 export default defineConfig({
-  site: `https://${repositoryOwner()}.github.io`,
-  base,
+  site,
+  base: base || '/',
   trailingSlash: 'always',
   markdown: {
     remarkPlugins: [remarkMath, [remarkBaseLinks, { base }]],
@@ -36,6 +35,7 @@ export default defineConfig({
       favicon: '/favicon.svg',
       logo: { dark: './src/assets/logo.svg', light: './src/assets/logo-light.svg', alt: '' },
       customCss: ['./src/styles/custom.css'],
+      routeMiddleware: './src/route-data.ts',
       components: {
         ThemeProvider: './src/components/ThemeProvider.astro',
         ThemeSelect: './src/components/ThemeSelect.astro',
