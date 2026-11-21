@@ -4,7 +4,7 @@
 NETBOX_PY := PYTHONPATH=scripts $(BIN)/python -m netbox
 NETBOX_INVENTORIES = $(foreach i,$(shell env LAB_PROFILE=netbox $(if $(LAB_DIR),LAB_DIR=$(LAB_DIR)) $(LAB_HARNESS) inventories),-i $(i))
 
-.PHONY: netbox-lock netbox-guest netbox-render netbox-sync netbox-diff netbox-test netbox-screenshots
+.PHONY: netbox-lock netbox-guest netbox-render netbox-sync netbox-diff netbox-topology netbox-test netbox-screenshots
 
 netbox-lock: venv
 	$(RFL) versions --scope netbox
@@ -21,6 +21,9 @@ netbox-sync: venv ## Make NetBox in the guest hold exactly the objects of sites/
 
 netbox-diff: venv ## Read-only: list how NetBox in the guest differs from sites/cel1.yaml. Exit 1 on a difference
 	$(NETBOX_PY) diff $(CEL1_SITE) $(NETBOX_INVENTORIES)
+
+netbox-topology: venv ## Lay out the topology drawing of sites/cel1.yaml in the NetBox guest, after netbox-sync
+	$(NETBOX_PY) topology $(CEL1_SITE) $(NETBOX_INVENTORIES)
 
 netbox-test: venv ## Run the cel1-netbox scenario through rfl against the NetBox guest
 	PYTHONPATH=scripts $(BIN)/python -m run.netbox $(NETBOX_INVENTORIES) $(if $(RUN),--run-id $(RUN)) $(if $(CONFIG),--config $(CONFIG))

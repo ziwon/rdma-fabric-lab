@@ -1,6 +1,6 @@
 ---
 title: cel1-netbox
-description: The cel1 site model exported to NetBox v4.7.5 in its own guest, with a sync that owns only its tagged objects, finds drift made by hand exactly and undoes it.
+description: The cel1 site model exported to NetBox v4.7.5 in its own guest, with a sync that owns only its tagged objects, finds drift made by hand exactly and undoes it, and a topology drawing laid out from the model.
 sidebar:
   order: 3
 ---
@@ -12,7 +12,7 @@ A site that runs [NetBox](https://github.com/netbox-community/netbox) keeps its 
 
 ## Goal
 
-Show that `make netbox-sync` makes NetBox hold exactly the 1142 objects the model asks for, that a second sync changes nothing, that drift made by hand in NetBox is named exactly and undone, and that an object a person adds without the managed tag survives every sync.
+Show that `make netbox-sync` makes NetBox hold exactly the 1142 objects the model asks for, that a second sync changes nothing, that drift made by hand in NetBox is named exactly and undone, that the topology NetBox draws is the fabric of the model, and that an object a person adds without the managed tag survives every sync.
 
 ## Concepts it uses
 
@@ -26,6 +26,7 @@ Show that `make netbox-sync` makes NetBox hold exactly the 1142 objects the mode
 |---|---|
 | Profile | `netbox`, one guest `netbox1` with 4 vCPUs, 4096 MiB and a 20 GiB disk |
 | NetBox | netbox-docker 5.1.2, NetBox v4.7.5, PostgreSQL 18 and Valkey 9.1, every image pinned by digest in the lock |
+| Plugin | [netbox-topology-views](https://github.com/netbox-community/netbox-topology-views) 5.0.3, built into the NetBox image in the guest from a wheel whose sha256 the lock pins |
 | Host | No container. NetBox's port 8080 reaches the host only as `127.0.0.1:22352` |
 | Secrets | Made once in the guest, `/etc/rfl/netbox/secrets.json`, mode 0600. Read over SSH for one command at a time |
 | Required | No. The spec marks it optional |
@@ -43,6 +44,7 @@ make netbox-render        # offline: the objects of sites/cel1.yaml as JSON
 make netbox-guest         # boot netbox1, start NetBox in it
 make netbox-diff          # read only, exit 1 on a difference
 make netbox-sync          # make NetBox equal the model
+make netbox-topology      # lay out the topology drawing from the model
 make netbox-test          # this scenario
 tests/integration/qemu-lab/breaks-cel1-netbox.sh   # every break and its repair
 ```
@@ -50,6 +52,10 @@ tests/integration/qemu-lab/breaks-cel1-netbox.sh   # every break and its repair
 ## What NetBox shows
 
 These screenshots come from the NetBox guest after the run of record, taken by `make netbox-screenshots`.
+
+![The topology of cel1 drawn by the netbox-topology-views plugin: 4 spines in the top row, the 8 rail leaves r0 to r7 below them, each joined to every spine by 2 cables, the 8 DGX nodes below the leaves, each joined to every leaf by 1 cable, and the 3 control planes and 2 PCIe nodes, which have no fabric cable, in the bottom row.](../../../../assets/screenshots/netbox/netbox-topology.png)
+
+The topology of the whole site, drawn by the plugin from NetBox's devices and cables. `make netbox-topology` stores the position of every device: the spines on top, the leaves in rail order, the DGX nodes under them, and the hosts without a fabric cable at the bottom. Each DGX node reaches every leaf because rail r of every node goes to the leaf of rail r. Without the stored positions the plugin lays the same 25 devices out by a physics simulation, as a tangle that changes on every load.
 
 ![The site cel1 in NetBox: active, described as the invented GPU region of sites/cel1.yaml, with 25 devices and 21 prefixes and the tag rfl-site-model.](../../../../assets/screenshots/netbox/netbox-site.png)
 
@@ -91,24 +97,27 @@ The rail0 addresses of the eight DGX nodes, each on its interface.
 
 | Break | Checks that failed | Repair | Broken run | Repaired run |
 |---|---|---|---|---|
-| The lock names NetBox v4.7.4 | `netbox-is-the-locked-version` | The lock as it was | `20261121T160013Z` | `20261121T160027Z` |
-| The sync skips the cables, so it deletes all 128 | `sync-makes-netbox-hold-the-model`, `netbox-equals-the-model`, `drift-is-found-exactly`, `sync-undoes-the-drift`, `run-objects-removed` | The next run's sync | `20261121T160040Z` | `20261121T160059Z` |
-| A second writer in the guest edits the description of `10.142.6.25/24` every half second | `netbox-equals-the-model`, `second-sync-changes-nothing`, `drift-is-found-exactly`, `sync-undoes-the-drift`, `run-objects-removed` | Stop the writer, `make netbox-sync` | `20261121T160332Z` | `20261121T160348Z` |
-| Prune off: the sync deletes nothing | `sync-undoes-the-drift`, `run-objects-removed` | `make netbox-sync` | `20261121T160150Z` | `20261121T160206Z` |
-| The hand-made address carries the managed tag | `hand-made-objects-stay` | None | `20261121T160220Z` | `20261121T160233Z` |
-| The run keeps its hand-made address | `run-objects-removed` | Delete the address | `20261121T160247Z` | `20261121T160300Z` |
+| The lock names NetBox v4.7.4 | `netbox-is-the-locked-version` | The lock as it was | `20261121T164229Z` | `20261121T164244Z` |
+| The sync skips the cables, so it deletes all 128 | `sync-makes-netbox-hold-the-model`, `netbox-equals-the-model`, `drift-is-found-exactly`, `sync-undoes-the-drift`, `topology-draws-the-model`, `run-objects-removed` | The next run's sync | `20261121T164257Z` | `20261121T164317Z` |
+| A second writer in the guest edits the description of `10.142.6.25/24` every half second | `netbox-equals-the-model`, `second-sync-changes-nothing`, `drift-is-found-exactly`, `sync-undoes-the-drift`, `run-objects-removed` | Stop the writer, `make netbox-sync` | `20261121T164339Z` | `20261121T164356Z` |
+| Prune off: the sync deletes nothing | `sync-undoes-the-drift`, `run-objects-removed` | `make netbox-sync` | `20261121T164410Z` | `20261121T164427Z` |
+| The lock names netbox-topology-views 5.0.2 | `topology-draws-the-model` | The lock as it was | `20261121T164441Z` | `20261121T164455Z` |
+| The coordinate group is deleted and the run lays out nothing | `topology-draws-the-model` | `make netbox-topology` | `20261121T164511Z` | `20261121T164526Z` |
+| The hand-made address carries the managed tag | `hand-made-objects-stay` | None | `20261121T164540Z` | `20261121T164555Z` |
+| The run keeps its hand-made address | `run-objects-removed` | Delete the address | `20261121T164610Z` | `20261121T164625Z` |
 
-The second writer first edited the run's own drift address, so the drift comparison still named exactly one update there and passed. Moved to another address, it failed that check too (`.lab/breaks-cel1-netbox/20261121T160331Z`).
+The second writer first edited the run's own drift address, so the drift comparison still named exactly one update there and passed. Moved to another address, it failed that check too (`.lab/breaks-cel1-netbox/20261121T160331Z`). Without its coordinate group the check names exactly that: `no coordinate group rfl-site-model`. With the cables gone it names each of the 96 device pairs drawn without their cables.
 
 ## Questions to think about
 
 - The sync deletes a tagged object the model lacks. What would go wrong without the tag, on a NetBox that people also edit?
 - A cable moved to another leaf port is a delete and a create, not an update. Why does the natural key of a cable make that so?
 - What would change if NetBox became the source and `sites/cel1.yaml` were rendered from it?
+- The drawing puts each leaf above the DGX node with the same index, but every node reaches every leaf. What layout would make a two-tier fabric with 32 nodes still readable?
 
 ## What the result means and does not mean
 
-The run shows the export of the invented cel1 to a NetBox in a guest: the objects, the drift detection and the undo, and the boundary of the managed tag.
+The run shows the export of the invented cel1 to a NetBox in a guest: the objects, the drift detection and the undo, the boundary of the managed tag, and a drawing of the fabric that follows the model.
 
 > [!WARNING]
-> No real site's NetBox was touched. The sync writes sites, device types and roles, devices, interfaces, prefixes, addresses and cables only: no racks, platforms, VLANs, VRFs, tenants or custom fields.
+> No real site's NetBox was touched. The sync writes sites, device types and roles, devices, interfaces, prefixes, addresses and cables only: no racks, platforms, VLANs, VRFs, tenants or custom fields. The drawing's icons are the plugin's generic ones.

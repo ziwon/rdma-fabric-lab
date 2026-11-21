@@ -1,7 +1,8 @@
 ---
 # The NetBox guest of the netbox harness profile (ADR 0008): Docker and its compose plugin from the
 # Ubuntu archive at the locked versions, secrets made once inside the guest, and NetBox with
-# PostgreSQL and Valkey from images pinned by digest. Nothing of it runs on the host.
+# PostgreSQL and Valkey from images pinned by digest. NetBox runs from its locked image with the
+# locked topology views plugin built in. Nothing of it runs on the host.
 - name: Prepare the NetBox guest
   hosts: netbox_guest
   become: true
@@ -13,6 +14,10 @@
       - { name: runc, lock: ibsim.guest_runc }
       - { name: docker-compose-v2, lock: netbox.guest_compose }
     netbox_dir: /opt/rfl-netbox
+    netbox_build_dir: /opt/rfl-netbox/build
+    netbox_topology_wheel: "{{ netbox_lock['netbox.topology_views'].source | basename }}"
+    netbox_plugin_image: >-
+      rfl/netbox:{{ netbox_lock['netbox.image'].ref.split(':')[-1] }}-topology-{{ netbox_lock['netbox.topology_views'].ref }}
     netbox_secrets_dir: /etc/rfl/netbox
     netbox_apt_lock_timeout: 600
     netbox_ready_retries: 60
@@ -74,6 +79,7 @@
       loop:
         - "{{ netbox_secrets_dir }}"
         - "{{ netbox_dir }}"
+        - "{{ netbox_build_dir }}"
 
     # Made once in the guest and never copied out. The API key is 12 characters and the token 40, the lengths of a v2
     # token of NetBox 4.7 (users/constants.py).
@@ -139,6 +145,46 @@
       loop_control:
         label: "{{ item.file }}"
       no_log: true
+
+    - name: Download the topology views plugin and check it against the lock
+      ansible.builtin.get_url:
+        url: "{{ netbox_lock['netbox.topology_views'].source }}"
+        dest: "{{ netbox_build_dir }}/{{ netbox_topology_wheel }}"
+        checksum: "{{ netbox_lock['netbox.topology_views'].value }}"
+        owner: root
+        group: root
+        mode: "0644"
+
+    - name: Write the build context of the NetBox image with the plugin
+      ansible.builtin.copy:
+        dest: "{{ netbox_build_dir }}/{{ item.file }}"
+        content: "{{ item.content }}"
+        owner: root
+        group: root
+        mode: "0644"
+      loop:
+        - file: Dockerfile
+          content: "{{ lookup('ansible.builtin.template', 'templates/netbox-plugins.Dockerfile.j2') }}"
+        - file: plugins.py
+          content: |
+            # Written by ansible/playbooks/netbox-guest.yml. Coordinates are never saved, so the layout follows the data.
+            PLUGINS = ["netbox_topology_views"]
+            PLUGINS_CONFIG = {"netbox_topology_views": {"allow_coordinates_saving": False}}
+      loop_control:
+        label: "{{ item.file }}"
+
+    # docker build reuses its cache when nothing changed, so the image ID tells whether the build made a new image.
+    - name: Build the NetBox image with the plugin
+      ansible.builtin.shell:
+        cmd: >-
+          set -o pipefail;
+          before=$(docker image inspect -f '{{ '{{' }}.Id{{ '}}' }}' {{ netbox_plugin_image }} 2>/dev/null || true);
+          docker build -q -t {{ netbox_plugin_image }} {{ netbox_build_dir }} > /dev/null;
+          after=$(docker image inspect -f '{{ '{{' }}.Id{{ '}}' }}' {{ netbox_plugin_image }});
+          echo "$after"; [ "$before" = "$after" ] || echo built
+        executable: /bin/bash
+      register: netbox_build
+      changed_when: "'built' in netbox_build.stdout_lines"
 
     - name: Write the compose file with the images the lock pins
       ansible.builtin.template:

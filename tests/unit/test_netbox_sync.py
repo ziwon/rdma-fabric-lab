@@ -148,4 +148,4 @@ def test_the_locked_version_comes_from_the_image_tag(ref, version):
 def test_the_spec_lists_the_checks_the_runner_records():
     source = (REPO / "scripts/run/netbox.py").read_text()
     assert all(f'"{c}"' in source for c in runner.check_ids())
-    assert len(runner.check_ids()) == 8
+    assert len(runner.check_ids()) == 9

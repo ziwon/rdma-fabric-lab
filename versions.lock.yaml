@@ -293,6 +293,14 @@ components:
       On 2026-11-22 the registry returned it as Docker-Content-Digest and sha256 of the index body equals it. The NetBox guest pulls
       it by digest (ADR 0008).
     source: https://registry-1.docker.io/v2/netboxcommunity/netbox/manifests/v4.7.5-5.1.2
+  netbox.topology_views:
+    kind: checksum
+    value: sha256:210a3931cad88eb88f2ec87417c20ecdd6d3b4d36d6400e23698be5ceea7e317
+    ref: 5.0.3
+    reason: Wheel of netbox-topology-views 5.0.3, the release its README names for NetBox 4.7 (min_version 4.7.0, no
+      dependencies). sha256 from PyPI on 2026-11-22. The NetBox guest downloads it, checks this sum and builds it into the
+      locked NetBox image, which draws the topology of the site model (ADR 0008).
+    source: https://files.pythonhosted.org/packages/py3/n/netbox-topology-views/netbox_topology_views-5.0.3-py3-none-any.whl
   netbox.postgres_image:
     kind: image-digest
     value: sha256:ff64c9e3bdf8e2120107d3559de8db314e8305f7e38c5105903c6295876738ff
@@ -541,6 +549,7 @@ scopes:
     - netbox.guest_compose
     - netbox.netbox_docker
     - netbox.image
+    - netbox.topology_views
     - netbox.postgres_image
     - netbox.valkey_image
   ns3:

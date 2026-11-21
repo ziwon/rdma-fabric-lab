@@ -297,8 +297,8 @@ cel1-fleet-check:
   source: .lab/evidence/cel1-sim/gates/fleet-check.log
   lines: 1-9
 cel1-netbox-checks:
-  run: 20261121T161210Z
-  source: .lab/evidence/netbox/runs/20261121T161210Z/cel1/cel1-netbox/summary.md
+  run: 20261121T164015Z
+  source: .lab/evidence/netbox/runs/20261121T164015Z/cel1/cel1-netbox/summary.md
   block: '| check |'
 cel1-rails-checks:
   run: 20261118T014617Z

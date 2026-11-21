@@ -1,0 +1,11 @@
+# Rendered by ansible/playbooks/netbox-guest.yml. The locked NetBox image with the topology views plugin from the wheel
+# that the playbook downloaded and checked against the lock, as netbox-docker documents for plugins.
+FROM {{ netbox_lock['netbox.image'].ref }}@{{ netbox_lock['netbox.image'].value }}
+COPY {{ netbox_topology_wheel }} /tmp/{{ netbox_topology_wheel }}
+RUN /usr/local/bin/uv pip install --no-deps --python /opt/netbox/venv/bin/python /tmp/{{ netbox_topology_wheel }} \
+ && rm /tmp/{{ netbox_topology_wheel }}
+COPY plugins.py /etc/netbox/config/plugins.py
+# The plugin's README asks for its image folder. collectstatic needs a SECRET_KEY of 50 characters but no database.
+RUN mkdir -p /opt/netbox/netbox/static/netbox_topology_views/img \
+ && SECRET_KEY=collectstatic-only-collectstatic-only-collectstatic \
+    /opt/netbox/venv/bin/python /opt/netbox/netbox/manage.py collectstatic --no-input

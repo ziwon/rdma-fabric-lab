@@ -110,6 +110,17 @@ cp versions.lock.yaml "$lock_backup"
 restore_lock() { cp "$lock_backup" versions.lock.yaml; }
 trap restore_lock EXIT
 other_netbox() { sed -i 's|ref: docker.io/netboxcommunity/netbox:v4.7.5-5.1.2|ref: docker.io/netboxcommunity/netbox:v4.7.4-5.1.2|' versions.lock.yaml && grep -n 'netboxcommunity/netbox:' versions.lock.yaml; }
+other_plugin() {
+  python3 - <<'EOF2'
+import re
+p = "versions.lock.yaml"
+s = open(p).read()
+s, n = re.subn(r"(  netbox.topology_views:\n(?:    .*\n)*?    ref: )5\.0\.3", r"\g<1>5.0.2", s)
+assert n == 1, n
+open(p, "w").write(s)
+EOF2
+  grep -n -A3 'netbox.topology_views:' versions.lock.yaml
+}
 
 # A second writer inside the guest: it sets the description of one managed address every half second, so a sync is never
 # the last word. It edits another address than the run's own drift, so the drift comparison also finds it.
@@ -131,6 +142,19 @@ while True:
 '" < /dev/null
 }
 stop_writer() { lab ssh netbox1 'sudo systemctl stop rfl-break-writer; sudo systemctl reset-failed rfl-break-writer 2>/dev/null; true' < /dev/null && make --no-print-directory netbox-sync; }
+# NetBox without the layout: the coordinate group deleted, as on a NetBox where make netbox-topology never ran.
+drop_layout() {
+  PYTHONPATH=scripts python - <<'EOF2'
+from pathlib import Path
+from netbox import client, topology
+inv = [Path(p) for p in __import__("shlex").split(__import__("os").environ["NETBOX_INV"])]
+c = client.Client(client.DEFAULT_URL, client.token(client.secrets(inv)))
+g = topology.group(c)
+if g:
+    c.delete(f"{topology.API}/coordinate-groups", [{"id": g["id"]}])
+print(f"deleted coordinate group {g and g['id']}")
+EOF2
+}
 # The address a break run left behind, removed as a person would.
 remove_hand_made() {
   PYTHONPATH=scripts python - "$(value "$config" hand_made_address)" <<'EOF2'
@@ -158,6 +182,12 @@ breaks second-writer "second-sync-changes-nothing drift-is-found-exactly" \
   -- stop_writer
 breaks prune-off "sync-undoes-the-drift" \
   -- -- make --no-print-directory netbox-sync -- "$(config_with prune-off.yaml 'c["prune"] = False')"
+breaks lock-names-another-topology-plugin "topology-draws-the-model" \
+  -- other_plugin \
+  -- restore_lock
+breaks topology-not-laid-out "topology-draws-the-model" \
+  -- drop_layout \
+  -- make --no-print-directory netbox-topology -- "$(config_with no-topology.yaml 'c["skip_topology"] = True')"
 breaks hand-made-carries-the-tag "hand-made-objects-stay" \
   -- -- -- "$(config_with tagged.yaml 'c["hand_made_tagged"] = True')"
 breaks hand-made-kept "run-objects-removed" \

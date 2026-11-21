@@ -3,6 +3,7 @@
     python -m netbox render sites/cel1.yaml                      offline, the objects as JSON
     python -m netbox sync sites/cel1.yaml -i <inventory> ...     make NetBox hold them
     python -m netbox diff sites/cel1.yaml -i <inventory> ...     read only, exit 1 on a difference
+    python -m netbox topology sites/cel1.yaml -i <inventory> ... lay out the topology drawing, exit 1 if it differs after
 """
 
 from __future__ import annotations
@@ -15,7 +16,7 @@ from pathlib import Path
 from fleet import site as site_model
 
 from . import client as nb
-from . import model, reconcile
+from . import model, reconcile, topology
 
 
 def _load(path: Path):
@@ -37,7 +38,7 @@ def _jsonable(objects):
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="netbox", description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = parser.add_subparsers(dest="command", required=True)
-    for name in ("render", "sync", "diff"):
+    for name in ("render", "sync", "diff", "topology"):
         p = sub.add_parser(name)
         p.add_argument("site", type=Path)
         if name != "render":
@@ -51,6 +52,15 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     try:
         client = nb.Client(args.url, nb.token(nb.secrets(args.inventory)))
+        if args.command == "topology":
+            s = _load(args.site)
+            done = topology.apply(client, s)
+            site_id = client.list("dcim/sites", {"slug": s.name})[0]["id"]
+            left = topology.problems(client, s, site_id)
+            for p in left:
+                print(p, file=sys.stderr)
+            print(f"{args.site}: layout {done}, {len(left)} differences left")
+            return 1 if left else 0
         plan = reconcile.plan(client, wanted)
         if args.command == "diff":
             for change in plan.changes:

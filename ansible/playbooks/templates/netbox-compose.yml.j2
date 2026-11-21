@@ -1,10 +1,12 @@
 # Rendered by ansible/playbooks/netbox-guest.yml. The docker-compose.yml of netbox-docker {{ netbox_lock['netbox.netbox_docker'].value }}
-# with every image pinned by digest from versions.lock.yaml, restart after a reboot, and NetBox published on port 8080 of
-# this guest only. The harness forwards that port to 127.0.0.1 on the host.
+# with every image pinned by digest from versions.lock.yaml, NetBox built on its locked image with the topology views
+# plugin, restart after a reboot, and NetBox published on port 8080 of this guest only. The harness forwards that port to
+# 127.0.0.1 on the host.
 name: rfl-netbox
 services:
   netbox: &netbox
-    image: {{ netbox_lock['netbox.image'].ref }}@{{ netbox_lock['netbox.image'].value }}
+    image: {{ netbox_plugin_image }}
+    pull_policy: never
     depends_on:
       - postgres
       - redis

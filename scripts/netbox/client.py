@@ -37,7 +37,7 @@ class Client:
         self.headers = {"Authorization": f"Bearer {token}", "Accept": "application/json", "Content-Type": "application/json"}
         self.timeout_s = timeout_s
 
-    def request(self, method: str, path: str, body=None, query: dict | None = None):
+    def request(self, method: str, path: str, body=None, query: dict | None = None, text: bool = False):
         url = path if path.startswith("http") else self.base + path.strip("/") + "/"
         if query:
             url += "?" + urllib.parse.urlencode(query)
@@ -57,6 +57,8 @@ class Client:
             if self.on_request:
                 rows = f" ({len(body)} rows)" if isinstance(body, list) else ""
                 self.on_request(method, url.split("/api/", 1)[-1] + rows, status, time.monotonic() - start)
+        if text:
+            return raw.decode()
         return json.loads(raw) if raw else None
 
     def status(self) -> dict:

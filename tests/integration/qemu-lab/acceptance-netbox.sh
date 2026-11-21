@@ -48,10 +48,12 @@ step diff-before-sync nonzero make netbox-diff
 step cel1-netbox 0 make netbox-test
 step first-sync-created-all 0 first_sync_created_all cel1-netbox
 step diff-after-run 0 make netbox-diff
+step topology-after-run 0 make netbox-topology
 step power-cycle 0 power_cycle
 step netbox-guest-after-boot 0 make netbox-guest
 step netbox-guest-after-boot-unchanged 0 unchanged netbox-guest-after-boot
 step diff-after-boot 0 make netbox-diff
+step topology-after-boot 0 make netbox-topology
 step validate 0 make validate
 step lab-down-end 0 make lab-down
 
