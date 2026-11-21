@@ -15,7 +15,7 @@
 
   <g id="title-block" class="sans">
     <text x="56" y="92" class="mono lime" font-size="18" letter-spacing="1.5">RDMA · INFINIBAND · ROCE CONGESTION</text>
-    <text x="56" y="164" class="ink" font-size="66" font-weight="700" letter-spacing="-1">RDMA Fabric <tspan class="lime">Lab</tspan></text>
+    <text x="56" y="164" class="ink" font-size="66" font-weight="700" letter-spacing="-1"><tspan class="lime">RDMA</tspan> Fabric Lab</text>
     <text x="56" y="214" class="ink" font-size="25">RDMA, subnet management and congestion</text>
     <text x="56" y="248" class="ink" font-size="25">control you can run and break on one host.</text>
     <text x="56" y="282" class="muted" font-size="22">No HCA, no InfiniBand switch, no GPU.</text>
