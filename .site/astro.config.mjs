@@ -37,6 +37,7 @@ export default defineConfig({
       customCss: ['./src/styles/custom.css'],
       routeMiddleware: './src/route-data.ts',
       components: {
+        Hero: './src/components/Hero.astro',
         ThemeProvider: './src/components/ThemeProvider.astro',
         ThemeSelect: './src/components/ThemeSelect.astro',
         SiteTitle: './src/components/SiteTitle.astro',

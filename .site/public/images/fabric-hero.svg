@@ -1,0 +1,90 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="480" height="440" viewBox="0 0 480 440" role="img" aria-labelledby="fabric-title fabric-desc">
+  <title id="fabric-title">RDMA network fabric</title>
+  <desc id="fabric-desc">An illustrative network with violet and lime packets moving between connected switches.</desc>
+  <style>
+    .rfl-fiber { fill: none; stroke: var(--sl-color-purple, #b7a0dc); stroke-width: 1.4; opacity: .35; }
+    .rfl-lime { color: var(--sl-color-text-accent, #b2e879); }
+    .rfl-violet { color: var(--sl-color-purple, #b7a0dc); }
+    .rfl-packet { fill: none; stroke: currentColor; stroke-width: 2.8; stroke-linecap: round; stroke-dasharray: 2 98; animation: rfl-packet-flow 5s linear infinite; }
+    .rfl-slow { animation-duration: 6.5s; animation-delay: -2s; }
+    .rfl-offset { animation-delay: -3s; }
+    .rfl-reverse { animation-direction: reverse; animation-delay: -1s; }
+    .rfl-trace { fill: none; stroke: var(--sl-color-gray-4, #616c78); stroke-width: .7; opacity: .22; }
+    .rfl-device { fill: var(--rfl-surface, #1b1f23); stroke: var(--sl-color-purple, #b7a0dc); stroke-width: 1.4; }
+    .rfl-core { stroke: var(--sl-color-text-accent, #b2e879); }
+    .rfl-port { fill: var(--sl-color-gray-4, #616c78); opacity: .6; }
+    .rfl-led { fill: currentColor; }
+    .rfl-fabric[data-motion="paused"] .rfl-packet { animation-play-state: paused; }
+    @keyframes rfl-packet-flow { to { stroke-dashoffset: -100; } }
+    @media (prefers-reduced-motion: reduce) { .rfl-packet { animation: none; stroke-dashoffset: -36; } }
+  </style>
+  <defs>
+    <path id="rfl-link-a" pathLength="100" d="M160 74 168 202"/>
+    <path id="rfl-link-b" pathLength="100" d="M160 74 300 108"/>
+    <path id="rfl-link-c" pathLength="100" d="M300 108 168 202"/>
+    <path id="rfl-link-d" pathLength="100" d="M300 108 408 178"/>
+    <path id="rfl-link-e" pathLength="100" d="M168 202 408 178"/>
+    <path id="rfl-link-f" pathLength="100" d="M408 178 365 286"/>
+    <path id="rfl-link-g" pathLength="100" d="M168 202 365 286"/>
+    <path id="rfl-link-h" pathLength="100" d="M168 202 78 356"/>
+    <path id="rfl-link-i" pathLength="100" d="M168 202 225 308"/>
+    <path id="rfl-link-j" pathLength="100" d="M78 356 225 308 365 286"/>
+    <path id="rfl-link-k" pathLength="100" d="M78 356 322 376 365 286"/>
+    <path id="rfl-link-l" pathLength="100" d="M225 308 322 376"/>
+    <g id="rfl-edge-device">
+      <rect class="rfl-device" x="-29" y="-20" width="58" height="40" rx="7"/>
+      <path class="rfl-port" d="M-17 4h8v3h-8zM-5 4h8v3h-8zM7 4h8v3h-8z"/>
+      <circle class="rfl-led" cx="10" cy="-7" r="1.7"/>
+      <circle class="rfl-port" cx="17" cy="-7" r="1.7"/>
+    </g>
+  </defs>
+
+  <g class="rfl-trace">
+    <path d="M33 154h44l24-24V44h38M201 29h42v31l24 24h93V45h37M12 267h54l25-25h29M386 232h41l23 23v69h-29M131 390v22h68l22-22M281 419h107v-41l37-37h40"/>
+    <circle cx="33" cy="154" r="2"/><circle cx="397" cy="45" r="2"/>
+    <circle cx="12" cy="267" r="2"/><circle cx="465" cy="341" r="2"/>
+    <circle cx="201" cy="29" r="2"/><circle cx="281" cy="419" r="2"/>
+  </g>
+
+  <g class="rfl-fiber">
+    <use href="#rfl-link-a"/><use href="#rfl-link-b"/><use href="#rfl-link-c"/>
+    <use href="#rfl-link-d"/><use href="#rfl-link-e"/><use href="#rfl-link-f"/>
+    <use href="#rfl-link-g"/><use href="#rfl-link-h"/><use href="#rfl-link-i"/>
+    <use href="#rfl-link-j"/><use href="#rfl-link-k"/><use href="#rfl-link-l"/>
+  </g>
+  <g class="rfl-violet">
+    <use class="rfl-packet" href="#rfl-link-a"/>
+    <use class="rfl-packet rfl-slow" href="#rfl-link-b"/>
+    <use class="rfl-packet rfl-offset" href="#rfl-link-e"/>
+    <use class="rfl-packet rfl-reverse" href="#rfl-link-h"/>
+    <use class="rfl-packet rfl-slow" href="#rfl-link-i"/>
+    <use class="rfl-packet rfl-offset" href="#rfl-link-k"/>
+  </g>
+  <g class="rfl-lime">
+    <use class="rfl-packet rfl-reverse" href="#rfl-link-c"/>
+    <use class="rfl-packet rfl-offset" href="#rfl-link-d"/>
+    <use class="rfl-packet rfl-slow" href="#rfl-link-f"/>
+    <use class="rfl-packet" href="#rfl-link-g"/>
+    <use class="rfl-packet rfl-slow" href="#rfl-link-j"/>
+    <use class="rfl-packet rfl-reverse" href="#rfl-link-l"/>
+  </g>
+
+  <g class="rfl-violet">
+    <use href="#rfl-edge-device" transform="translate(160 74)"/>
+    <use href="#rfl-edge-device" transform="translate(300 108)"/>
+    <use href="#rfl-edge-device" transform="translate(408 178)"/>
+    <use href="#rfl-edge-device" transform="translate(225 308)"/>
+    <use href="#rfl-edge-device" transform="translate(78 356)"/>
+  </g>
+  <g class="rfl-lime">
+    <use href="#rfl-edge-device" transform="translate(365 286)"/>
+    <use href="#rfl-edge-device" transform="translate(322 376)"/>
+    <g transform="translate(168 202)">
+      <rect class="rfl-device rfl-core" x="-47" y="-29" width="94" height="58" rx="9"/>
+      <path class="rfl-port" d="M-32 9h9v4h-9zM-18 9h9v4h-9zM-4 9h9v4h-9zM10 9h9v4h-9zM24 9h9v4h-9z"/>
+      <circle class="rfl-led" cx="13" cy="-10" r="2"/>
+      <circle class="rfl-led" cx="23" cy="-10" r="2"/>
+      <circle class="rfl-port" cx="33" cy="-10" r="2"/>
+    </g>
+  </g>
+</svg>

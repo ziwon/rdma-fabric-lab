@@ -433,28 +433,6 @@ a {
   line-height: 1.6;
 }
 
-.hero > .hero-html {
-  order: 2;
-  width: min(100%, 28rem);
-  min-width: 0;
-  background: var(--sl-color-bg);
-  isolation: isolate;
-}
-
-.hero > .hero-html img {
-  display: block;
-  width: 100%;
-  height: clamp(14rem, 30vw, 24rem);
-  object-fit: cover;
-  object-position: right center;
-  mix-blend-mode: screen;
-}
-
-:root[data-theme="light"] .hero > .hero-html img {
-  filter: invert(1) hue-rotate(180deg);
-  mix-blend-mode: multiply;
-}
-
 .rfl-home-kicker {
   display: flex;
   align-items: center;
