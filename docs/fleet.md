@@ -365,25 +365,28 @@ The series ran in `.lab/breaks-cel1-rails/20261118T020501Z` on the cluster of th
 | Target | Action | Host access |
 |---|---|---|
 | `make netbox-render` | Prints the 1142 NetBox objects of `sites/cel1.yaml` as JSON | None |
-| `make netbox-guest` | Boots or reuses `netbox1` and runs `ansible/playbooks/netbox-guest.yml`: Docker and compose at the locked versions, the secrets made once in the guest, NetBox v4.7.5 with PostgreSQL and Valkey by digest | The NetBox guest only |
+| `make netbox-guest` | Boots or reuses `netbox1` and runs `ansible/playbooks/netbox-guest.yml`: Docker and compose at the locked versions, the secrets made once in the guest, NetBox v4.7.5 with PostgreSQL and Valkey by digest, and the NetBox image built with the locked netbox-topology-views wheel | The NetBox guest only |
 | `make netbox-sync` | Makes NetBox hold exactly the managed objects of the model, then compares again | NetBox on `127.0.0.1:22352` |
 | `make netbox-diff` | The same comparison without writing. Exit 1 on a difference | NetBox on `127.0.0.1:22352` |
+| `make netbox-topology` | Lays out the topology drawing of the model in the coordinate group `rfl-site-model`, then compares what the plugin draws with the model. Exit 1 on a difference | NetBox on `127.0.0.1:22352` |
 | `make netbox-test` | The scenario `cel1-netbox` | NetBox on `127.0.0.1:22352` |
 | `make netbox-screenshots` | Screenshots of the model in NetBox for the learning site. `NODE_PATH` must reach `playwright-core`, and `CHROMIUM` may name a browser | NetBox on `127.0.0.1:22352` |
 
 Every target that talks to NetBox reads the API token, or for the screenshots the superuser's password, from `/etc/rfl/netbox/secrets.json` in the guest over SSH and keeps it in memory. The guest's port 8080 reaches the host only on 127.0.0.1.
 
-`tests/integration/qemu-lab/acceptance-netbox.sh` ran 16 steps from a wiped guest with no unexpected exit code in `.lab/acceptance-netbox/20261121T160813Z`. The second run of the playbook reported `changed=0`. Before the first sync `make netbox-diff` found 1142 differences, all creates. Run `20261121T161210Z` of `cel1-netbox` passed all 8 checks, and its first sync created the 1142 objects in less than 30 s. After the guest powered off and booted again, the containers came back on their own, the playbook changed nothing and the comparison found no difference (`.lab/evidence/netbox/acceptance/`).
+`tests/integration/qemu-lab/acceptance-netbox.sh` ran 18 steps from a wiped guest with no unexpected exit code in `.lab/acceptance-netbox/20261121T163547Z`. The second run of the playbook, which also builds the NetBox image with the topology views plugin, reported `changed=0`. Before the first sync `make netbox-diff` found 1142 differences, all creates. Run `20261121T164015Z` of `cel1-netbox` passed all 9 checks: its first sync created the 1142 objects, and the plugin 5.0.3 drew the 25 devices at their layout coordinates and the 128 cables in 96 device pairs as the model has them. `make netbox-topology` then changed nothing. After the guest powered off and booted again, the containers came back on their own, the playbook changed nothing, the comparison found no difference and the layout was unchanged (`.lab/evidence/netbox/acceptance-20261121T163547Z/`). An earlier acceptance run of the same scenario without the plugin, 16 steps in `.lab/acceptance-netbox/20261121T160813Z`, is kept in `.lab/evidence/netbox/acceptance/`.
 
-Every check failed on a deliberate break of `tests/integration/qemu-lab/breaks-cel1-netbox.sh` and passed after the repair (`.lab/breaks-cel1-netbox/20261121T160012Z` and `20261121T160331Z`, copied to `.lab/evidence/netbox/`).
+Every check failed on a deliberate break of `tests/integration/qemu-lab/breaks-cel1-netbox.sh` and passed after the repair (`.lab/breaks-cel1-netbox/20261121T164228Z`, copied to `.lab/evidence/netbox/`). The series ran on the guest of that acceptance run after it booted again.
 
 | Break | Checks that failed |
 |---|---|
 | The lock names NetBox v4.7.4 | `netbox-is-the-locked-version` |
-| The sync skips the cables | `sync-makes-netbox-hold-the-model`, `netbox-equals-the-model`, `drift-is-found-exactly`, `sync-undoes-the-drift`, `run-objects-removed` |
+| The sync skips the cables | `sync-makes-netbox-hold-the-model`, `netbox-equals-the-model`, `drift-is-found-exactly`, `sync-undoes-the-drift`, `topology-draws-the-model`, `run-objects-removed` |
 | A second writer in the guest edits another address every half second | `netbox-equals-the-model`, `second-sync-changes-nothing`, `drift-is-found-exactly`, `sync-undoes-the-drift`, `run-objects-removed` |
 | Prune off | `sync-undoes-the-drift`, `run-objects-removed` |
+| The lock names netbox-topology-views 5.0.2 | `topology-draws-the-model` |
+| The coordinate group deleted and the run lays out nothing | `topology-draws-the-model` |
 | The hand-made address carries the managed tag | `hand-made-objects-stay` |
 | The run keeps its hand-made address | `run-objects-removed` |
 
-The breaks ran on the guest of an earlier acceptance run of the same code, `.lab/acceptance-netbox/20261121T155427Z`, before one unused line, the superuser's e-mail address, left the playbook. Two development runs before the runner recorded its API calls broke the result contract, which requires a non-empty `commands.log` for a passed run. They were moved out of `results/` to `.lab/evidence/netbox/invalid-runs/`, and the runner now logs every API call by method, path and status, without the token or a body.
+The earlier series without the plugin, `.lab/breaks-cel1-netbox/20261121T160012Z` and `20261121T160331Z`, is kept in `.lab/evidence/netbox/`. Two development runs before the runner recorded its API calls broke the result contract, which requires a non-empty `commands.log` for a passed run. They were moved out of `results/` to `.lab/evidence/netbox/invalid-runs/`, and the runner now logs every API call by method, path and status, without the token or a body.

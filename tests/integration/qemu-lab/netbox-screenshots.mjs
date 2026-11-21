@@ -12,7 +12,7 @@ import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
 const { chromium } = require(require.resolve('playwright-core', { paths: (process.env.NODE_PATH || '').split(':').filter(Boolean) }));
 
-const [out, base = 'http://127.0.0.1:22352'] = process.argv.slice(2);
+const [out, base = 'http://127.0.0.1:22352', only] = process.argv.slice(2);
 const password = process.env.NETBOX_PASSWORD;
 if (!out || !password) {
   console.error('usage: NETBOX_PASSWORD=... node netbox-screenshots.mjs <out dir> [base url]');
@@ -36,6 +36,8 @@ async function api(path) {
 const site = (await api('dcim/sites/?slug=cel1'))[0];
 const dgx = (await api('dcim/devices/?name=cel1-dgx-01'))[0];
 const rail0 = (await api(`dcim/interfaces/?device_id=${dgx.id}&name=rail0`))[0];
+// The coordinate group that make netbox-topology fills, and the query of scripts/netbox/topology.py.
+const group = (await api('plugins/netbox_topology_views/coordinate-groups/?name=rfl-site-model'))[0];
 
 const shots = [
   ['site', `/dcim/sites/${site.id}/`],
@@ -45,11 +47,14 @@ const shots = [
   ['prefixes', `/ipam/prefixes/?tag=rfl-site-model&per_page=50&ordering=prefix`],
   ['ip-addresses', `/ipam/ip-addresses/?q=10.142.0.&per_page=50`],
   ['connections', `/dcim/interface-connections/?device_id=${dgx.id}&per_page=50`],
+  ['topology', `/plugins/netbox_topology_views/topology/?site_id=${site.id}&group=${group.id}&show_cables=True` +
+    '&show_unconnected=True&node_label_items=devicename&straight_cables=True', '#visgraph'],
 ];
-for (const [name, path] of shots) {
+// A shot with a selector takes that element only.
+for (const [name, path, selector] of shots.filter(([n]) => !only || n === only)) {
   await page.goto(base + path, { waitUntil: 'networkidle' });
   await page.waitForTimeout(800);
-  await page.screenshot({ path: `${out}/netbox-${name}.png` });
+  await (selector ? page.locator(selector) : page).screenshot({ path: `${out}/netbox-${name}.png` });
   console.log(`${name}: ${path} -> ${out}/netbox-${name}.png`);
 }
 await browser.close();

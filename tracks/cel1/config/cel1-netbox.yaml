@@ -12,3 +12,4 @@ sync_skips: []
 prune: true
 hand_made_tagged: false
 keep_hand_made: false
+skip_topology: false

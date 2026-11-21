@@ -4,7 +4,7 @@ description: >-
   ADR 0008: the cel1 site model exported to NetBox v4.7.5, which runs with PostgreSQL and Valkey from pinned images inside
   the guest of the netbox harness profile. make netbox-sync makes NetBox hold exactly the objects of sites/cel1.yaml that
   carry the managed tag, a second sync changes nothing, drift made by hand is named exactly and undone, and an object a
-  person adds without the tag survives every sync.
+  person adds without the tag survives every sync. The topology views plugin draws the fabric in the layout of the model.
 required: false
 result_kind: software-cluster-test
 security:
@@ -29,6 +29,11 @@ checks:
       managed tag, the comparison names exactly these three objects, as a create, an update and a delete.
   - id: sync-undoes-the-drift
     description: The next sync creates one object, updates one and deletes one, and NetBox equals the model again.
+  - id: topology-draws-the-model
+    description: >-
+      NetBox runs the netbox-topology-views plugin that versions.lock.yaml pins. After make netbox-topology every device
+      of the model stands at its layout coordinates, and the plugin's draw.io export draws exactly the devices of the
+      model and as many cables between each pair of devices as the model has.
   - id: hand-made-objects-stay
     description: >-
       An address the run adds without the managed tag, as a person would, survives every sync of the run untouched.

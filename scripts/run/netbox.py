@@ -4,7 +4,8 @@
 
 The run reads the superuser's API token from the guest over SSH and keeps it in memory. It syncs, compares, syncs again,
 makes three changes by hand and checks that the comparison names exactly them and the next sync undoes them, and it
-keeps one address of its own without the managed tag, which every sync must leave alone.
+keeps one address of its own without the managed tag, which every sync must leave alone. Then it lays out the topology
+drawing of the model and reads back what the topology views plugin draws.
 """
 
 from __future__ import annotations
@@ -21,7 +22,7 @@ import yaml
 
 from fleet import site as site_model
 from netbox import client as nb
-from netbox import model, reconcile
+from netbox import model, reconcile, topology
 
 from . import rfl
 from .base import Outcome, RunBase, failed, passed, write_summary
@@ -41,6 +42,10 @@ def check_ids() -> tuple[str, ...]:
 def locked_version(lock: dict) -> str:
     """The NetBox version in the tag of netbox.image, v4.7.5-5.1.2 -> 4.7.5."""
     return lock["netbox.image"]["ref"].rsplit(":", 1)[1].split("-")[0].removeprefix("v")
+
+
+def locked_plugin(lock: dict) -> str:
+    return str(lock["netbox.topology_views"]["ref"])
 
 
 def expected_drift(config: dict) -> list[tuple[str, str, str]]:
@@ -102,6 +107,8 @@ def describe(run: Run) -> None:
                                              "tools": {"netbox": status.get("netbox-version"),
                                                        "python": status.get("python-version"),
                                                        "netbox image": f"{run.lock['netbox.image']['ref']}@{run.lock['netbox.image']['value']}",
+                                                       "netbox-topology-views": (status.get("plugins") or {}).get(
+                                                           "netbox_topology_views"),
                                                        "postgres image": run.lock["netbox.postgres_image"]["ref"],
                                                        "valkey image": run.lock["netbox.valkey_image"]["ref"]}})
     (run.dir / "resolved-config.yaml").write_text(yaml.safe_dump(
@@ -110,7 +117,8 @@ def describe(run: Run) -> None:
     rfl.add_inputs(run.dir, [run.config_path, LOCK, REPO_ROOT / run.config["site"]])
     rfl.set_section(run.dir, "inputs", {"parameters": {"url": run.config["url"], "objects": sum(model.counts(run.wanted).values()),
                                                         "prune": run.config.get("prune", True),
-                                                        "sync_skips": run.config.get("sync_skips") or []}})
+                                                        "sync_skips": run.config.get("sync_skips") or [],
+                                                        "skip_topology": run.config.get("skip_topology", False)}})
 
 
 def check_version(run: Run) -> Outcome:
@@ -195,6 +203,29 @@ def check_undo(run: Run) -> Outcome:
         [path, dpath], f"the sync applied {done}; 0 differences left")
 
 
+def check_topology(run: Run) -> Outcome:
+    status = run.client.status()
+    got, want = (status.get("plugins") or {}).get("netbox_topology_views"), locked_plugin(run.lock)
+    evidence = [run.save("topology-draws-the-model/plugins.json", status.get("plugins"))]
+    if got != want:
+        return failed("assertion-failed", evidence, f"netbox_topology_views is {got}, the lock pins {want}")
+    if not run.config.get("skip_topology"):
+        done = topology.apply(run.client, run.site)
+        evidence.append(run.save("topology-draws-the-model/layout.json", {"applied": str(done)}))
+    site_id = run.client.list("dcim/sites", {"slug": run.site.name})[0]["id"]
+    problems = topology.problems(run.client, run.site, site_id)
+    g = topology.group(run.client)
+    if g is not None:
+        nodes, pairs = topology.drawn(run.client, site_id, g["id"])
+        evidence.append(run.save("topology-draws-the-model/drawn.json", {
+            "devices": sorted(nodes), "cables": {f"{a} - {b}": n for (a, b), n in sorted(pairs.items())}}))
+    evidence.append(run.save("topology-draws-the-model/problems.json", problems))
+    if problems:
+        return failed("assertion-failed", evidence, f"{len(problems)} problems, first: {'; '.join(problems[:3])}")
+    return passed(evidence, f"plugin {got}; {len(nodes)} devices at their layout coordinates and {sum(pairs.values())} "
+                            f"cables in {len(pairs)} device pairs drawn, as the model has them")
+
+
 def check_hand_made(run: Run, created: list[str]) -> Outcome:
     found = run.client.list("ipam/ip-addresses", {"address": run.config["hand_made_address"]})
     evidence = created + [run.save("hand-made-objects-stay/after.json", found)]
@@ -230,6 +261,7 @@ def suite(run: Run) -> None:
         run.record("second-sync-changes-nothing", check_second(run))
         run.record("drift-is-found-exactly", check_drift(run))
         run.record("sync-undoes-the-drift", check_undo(run))
+        run.record("topology-draws-the-model", check_topology(run))
         run.record("hand-made-objects-stay", check_hand_made(run, created))
     finally:
         run.record("run-objects-removed", check_removed(run))
