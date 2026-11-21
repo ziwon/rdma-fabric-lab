@@ -296,6 +296,10 @@ cel1-fleet-check:
   run: cel1 simulation gates
   source: .lab/evidence/cel1-sim/gates/fleet-check.log
   lines: 1-9
+cel1-netbox-checks:
+  run: 20261121T161210Z
+  source: .lab/evidence/netbox/runs/20261121T161210Z/cel1/cel1-netbox/summary.md
+  block: '| check |'
 cel1-rails-checks:
   run: 20261118T014617Z
   source: .lab/evidence/cel1-rails/20261118T014617Z/cel1/cel1-rail-networks/summary.md

@@ -1,0 +1,176 @@
+---
+# The NetBox guest of the netbox harness profile (ADR 0008): Docker and its compose plugin from the
+# Ubuntu archive at the locked versions, secrets made once inside the guest, and NetBox with
+# PostgreSQL and Valkey from images pinned by digest. Nothing of it runs on the host.
+- name: Prepare the NetBox guest
+  hosts: netbox_guest
+  become: true
+  vars:
+    netbox_lock: "{{ (lookup('ansible.builtin.file', playbook_dir ~ '/../../versions.lock.yaml') | from_yaml).components }}"
+    netbox_packages:
+      - { name: docker.io, lock: ibsim.guest_docker }
+      - { name: containerd, lock: ibsim.guest_containerd }
+      - { name: runc, lock: ibsim.guest_runc }
+      - { name: docker-compose-v2, lock: netbox.guest_compose }
+    netbox_dir: /opt/rfl-netbox
+    netbox_secrets_dir: /etc/rfl/netbox
+    netbox_apt_lock_timeout: 600
+    netbox_ready_retries: 60
+  tasks:
+    - name: Refuse hosts other than the NetBox guest
+      ansible.builtin.assert:
+        that:
+          - rfl_netbox_guest | default(false) | bool
+          - ansible_facts.virtualization_role == 'guest'
+        fail_msg: >-
+          {{ inventory_hostname }} is not the NetBox guest of tests/integration/qemu-lab/profiles/netbox.tsv.
+          NetBox runs only inside that guest, never on the host.
+        quiet: true
+
+    - name: Read the installed packages
+      ansible.builtin.package_facts:
+        manager: apt
+
+    - name: Work out which locked packages are missing
+      ansible.builtin.set_fact:
+        netbox_missing: >-
+          {%- set out = [] -%}
+          {%- for p in netbox_packages -%}
+          {%- if netbox_lock[p.lock].value not in (ansible_facts.packages.get(p.name, []) | map(attribute='version')) -%}
+          {%- set _ = out.append(p.name ~ '=' ~ netbox_lock[p.lock].value) -%}
+          {%- endif -%}
+          {%- endfor -%}
+          {{ out }}
+
+    - name: Install the container runtime at the locked versions
+      ansible.builtin.apt:
+        name: "{{ netbox_missing }}"
+        update_cache: true
+        install_recommends: false
+        lock_timeout: "{{ netbox_apt_lock_timeout }}"
+      when: netbox_missing | length > 0
+
+    - name: Hold the container runtime on the locked versions
+      ansible.builtin.dpkg_selections:
+        name: "{{ item.name }}"
+        selection: hold
+      loop: "{{ netbox_packages }}"
+      loop_control:
+        label: "{{ item.name }}"
+
+    - name: Start Docker now and at boot
+      ansible.builtin.systemd_service:
+        name: docker.service
+        state: started
+        enabled: true
+
+    - name: Create the directories of the secrets and the compose project
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        owner: root
+        group: root
+        mode: "0700"
+      loop:
+        - "{{ netbox_secrets_dir }}"
+        - "{{ netbox_dir }}"
+
+    # Made once in the guest and never copied out. The API key is 12 characters and the token 40, the lengths of a v2
+    # token of NetBox 4.7 (users/constants.py).
+    - name: Make the secrets once, readable by root alone
+      ansible.builtin.shell:
+        cmd: >-
+          umask 077 && python3 -c 'import json, secrets, string;
+          a = string.ascii_letters + string.digits;
+          r = lambda n: "".join(secrets.choice(a) for _ in range(n));
+          print(json.dumps({"db": r(32), "redis": r(32), "redis_cache": r(32), "secret_key": r(64), "pepper": r(64),
+          "admin_password": r(24), "api_key": r(12), "api_token": r(40)}))' > {{ netbox_secrets_dir }}/secrets.json
+        creates: "{{ netbox_secrets_dir }}/secrets.json"
+      no_log: true
+
+    - name: Read the secrets
+      ansible.builtin.slurp:
+        src: "{{ netbox_secrets_dir }}/secrets.json"
+      register: netbox_secrets_raw
+      no_log: true
+
+    - name: Write the environment files of the services
+      vars:
+        s: "{{ netbox_secrets_raw.content | b64decode | from_json }}"
+      ansible.builtin.copy:
+        dest: "{{ netbox_dir }}/{{ item.file }}"
+        content: "{{ item.content }}"
+        owner: root
+        group: root
+        mode: "0600"
+      loop:
+        - file: postgres.env
+          content: "POSTGRES_DB=netbox\nPOSTGRES_USER=netbox\nPOSTGRES_PASSWORD={{ s.db }}\n"
+        - file: redis.env
+          content: "REDIS_PASSWORD={{ s.redis }}\n"
+        - file: redis-cache.env
+          content: "REDIS_PASSWORD={{ s.redis_cache }}\n"
+        - file: netbox.env
+          content: |
+            DB_HOST=postgres
+            DB_NAME=netbox
+            DB_USER=netbox
+            DB_PASSWORD={{ s.db }}
+            REDIS_HOST=redis
+            REDIS_DATABASE=0
+            REDIS_PASSWORD={{ s.redis }}
+            REDIS_SSL=false
+            REDIS_CACHE_HOST=redis-cache
+            REDIS_CACHE_DATABASE=1
+            REDIS_CACHE_PASSWORD={{ s.redis_cache }}
+            REDIS_CACHE_SSL=false
+            SECRET_KEY={{ s.secret_key }}
+            API_TOKEN_PEPPER_1={{ s.pepper }}
+            MEDIA_ROOT=/opt/netbox/netbox/media
+            METRICS_ENABLED=false
+            GRAPHQL_ENABLED=true
+            WEBHOOKS_ENABLED=true
+            RELEASE_CHECK_URL=
+            SKIP_SUPERUSER=false
+            SUPERUSER_NAME=admin
+            SUPERUSER_PASSWORD={{ s.admin_password }}
+            SUPERUSER_API_KEY={{ s.api_key }}
+            SUPERUSER_API_TOKEN={{ s.api_token }}
+      loop_control:
+        label: "{{ item.file }}"
+      no_log: true
+
+    - name: Write the compose file with the images the lock pins
+      ansible.builtin.template:
+        src: templates/netbox-compose.yml.j2
+        dest: "{{ netbox_dir }}/compose.yml"
+        owner: root
+        group: root
+        mode: "0644"
+
+    # compose reports each container it creates or starts on stderr, and only Running for one that already runs.
+    - name: Start NetBox and wait until every service is healthy
+      ansible.builtin.command:
+        cmd: docker compose --project-directory {{ netbox_dir }} -f {{ netbox_dir }}/compose.yml up -d --wait --quiet-pull
+      register: netbox_up
+      changed_when: netbox_up.stderr is search('Creat|Start|Recreat')
+
+    - name: Wait for the API to answer with the superuser's token
+      vars:
+        s: "{{ netbox_secrets_raw.content | b64decode | from_json }}"
+      ansible.builtin.uri:
+        url: http://127.0.0.1:8080/api/status/
+        headers:
+          Authorization: "Bearer nbt_{{ s.api_key }}.{{ s.api_token }}"
+        return_content: true
+      register: netbox_status
+      until: netbox_status.status == 200
+      retries: "{{ netbox_ready_retries }}"
+      delay: 5
+      no_log: true
+
+    - name: Check the running NetBox is the locked one
+      ansible.builtin.assert:
+        that: (netbox_status.json['netbox-version'] | default('')) == netbox_lock['netbox.image'].ref.split(':')[-1].split('-')[0] | regex_replace('^v', '')
+        fail_msg: "NetBox reports {{ netbox_status.json['netbox-version'] | default('nothing') }}, the lock pins {{ netbox_lock['netbox.image'].ref }}"
+        quiet: true

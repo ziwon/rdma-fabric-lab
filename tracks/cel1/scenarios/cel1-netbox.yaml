@@ -1,0 +1,36 @@
+track: cel1
+scenario: cel1-netbox
+description: >-
+  ADR 0008: the cel1 site model exported to NetBox v4.7.5, which runs with PostgreSQL and Valkey from pinned images inside
+  the guest of the netbox harness profile. make netbox-sync makes NetBox hold exactly the objects of sites/cel1.yaml that
+  carry the managed tag, a second sync changes nothing, drift made by hand is named exactly and undone, and an object a
+  person adds without the tag survives every sync.
+required: false
+result_kind: software-cluster-test
+security:
+  privileged: false
+  device_exposure: >-
+    No device is exposed. NetBox runs in containers inside its own guest. The run reaches it through a 127.0.0.1 forward
+    with the superuser's API token, which it reads from the guest over SSH and keeps in memory only.
+checks:
+  - id: netbox-is-the-locked-version
+    description: The NetBox API answers with the superuser's token and reports the version that versions.lock.yaml pins.
+  - id: sync-makes-netbox-hold-the-model
+    description: >-
+      After make netbox-sync, NetBox holds as many managed objects of every kind as the site model asks for: the site,
+      the device types and roles, 25 devices, 861 interfaces, 21 prefixes, 95 addresses and 128 cables.
+  - id: netbox-equals-the-model
+    description: A read-only comparison finds no difference between NetBox and the site model.
+  - id: second-sync-changes-nothing
+    description: A second sync creates, updates and deletes nothing.
+  - id: drift-is-found-exactly
+    description: >-
+      After the run deletes one rail cable, edits the description of one address and adds a stray address with the
+      managed tag, the comparison names exactly these three objects, as a create, an update and a delete.
+  - id: sync-undoes-the-drift
+    description: The next sync creates one object, updates one and deletes one, and NetBox equals the model again.
+  - id: hand-made-objects-stay
+    description: >-
+      An address the run adds without the managed tag, as a person would, survives every sync of the run untouched.
+  - id: run-objects-removed
+    description: The address the run added by hand is gone at the end, and NetBox still equals the model.
