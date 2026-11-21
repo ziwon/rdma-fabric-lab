@@ -1,6 +1,6 @@
 # The learning site
 
-This directory builds the site that explains the lab: its concepts, one page per experiment with the commands to run it, the repository's structure, and the repository's own documents. It uses Astro with Starlight and is published on GitHub Pages at `https://rdma-fabric.restack.tech/`. Repository links read the owner from `GITHUB_REPOSITORY` in CI and from the `origin` remote locally.
+This directory builds the site that explains the lab: its concepts, one page per experiment with the commands to run it, the repository's structure, and the repository's own documents. It uses Astro with Starlight and is published on GitHub Pages at `https://rdma.restack.tech/`. Repository links read the owner from `GITHUB_REPOSITORY` in CI and from the `origin` remote locally.
 
 ## Build and preview
 
@@ -52,9 +52,9 @@ A source under `tests/fixtures/` is tracked, and `npm test` checks those excerpt
 
 The workflow `.github/workflows/pages.yml` builds the site on every pull request and every push to `main`, and deploys it from `main` only. It uses no secret. Every action is pinned by commit.
 
-The site is published at https://rdma-fabric.restack.tech/. With that custom domain configured in Pages, GitHub redirects `https://ziwon.github.io/rdma-fabric-lab/` to it. Pages takes its build and deployment from GitHub Actions, and the repository variable `PAGES_ENABLED` is `true`, so every push to `main` runs `.github/workflows/pages.yml`: the `build` job proves the site builds, and the `deploy` job publishes `.site/dist`. Pull requests run only the `build` job.
+The site is published at https://rdma.restack.tech/. With that custom domain configured in Pages, GitHub redirects `https://ziwon.github.io/rdma-fabric-lab/` to it. Pages takes its build and deployment from GitHub Actions, and the repository variable `PAGES_ENABLED` is `true`, so every push to `main` runs `.github/workflows/pages.yml`: the `build` job proves the site builds, and the `deploy` job publishes `.site/dist`. Pull requests run only the `build` job.
 
-The default deployment URL is `https://rdma-fabric.restack.tech/`. To target another domain or a GitHub project path, set the Actions repository variable `SITE_URL` to the full deployment URL. The same variable works locally:
+The default deployment URL is `https://rdma.restack.tech/`. To target another domain or a GitHub project path, set the Actions repository variable `SITE_URL` to the full deployment URL. The same variable works locally:
 
 ```bash
 SITE_URL=https://ziwon.github.io/rdma-fabric-lab/ npm run build
