@@ -1,0 +1,8 @@
+{
+  "id": "cel1-netbox-checks",
+  "run": "20261121T161210Z",
+  "source": ".lab/evidence/netbox/runs/20261121T161210Z/cel1/cel1-netbox/summary.md",
+  "lines": "5-14",
+  "format": "md-table",
+  "text": "| check | status | failure class | detail |\n|---|---|---|---|\n| netbox-is-the-locked-version | passed |  | NetBox 4.7.5 answers with the superuser's token, as netbox.image pins |\n| sync-makes-netbox-hold-the-model | passed |  | applied {'create': 1142, 'update': 0, 'delete': 0}; NetBox holds 1142 managed objects {'tag': 1, 'manufacturer': 1, 'device-type': 4, 'role': 5, 'site': 1, 'device': 25, 'interface': 861, 'prefix': 21, 'ip': 95, 'cable': 128} |\n| netbox-equals-the-model | passed |  | 0 differences between NetBox and the site model |\n| second-sync-changes-nothing | passed |  | the second sync applied {'create': 0, 'update': 0, 'delete': 0} |\n| drift-is-found-exactly | passed |  | create cable cel1-dgx-01/rail3 = cel1-ib-leaf-r3/1; delete ip 10.142.0.99/24; update ip 10.142.5.24/24: description 'edited by hand, run 20261121T161210Z' -> 'cel1-dgx-04 rail5' |\n| sync-undoes-the-drift | passed |  | the sync applied {'create': 1, 'update': 1, 'delete': 1}; 0 differences left |\n| hand-made-objects-stay | passed |  | 10.142.0.98/24 #1 without the managed tag survived 3 syncs |\n| run-objects-removed | passed |  | 10.142.0.98/24 removed, 0 differences from the model |"
+}

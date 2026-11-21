@@ -273,6 +273,42 @@ components:
       helm/rail-networks/chart/crds carries it byte for byte and Helm installs it with the pools. A unit test checks the sha256.
     source:
       https://raw.githubusercontent.com/Mellanox/network-operator/abdca12f3fe9cbd5492b10320c3a54dc63d80b12/manifests/state-nv-ipam-cni/005-nv-ipam.nvidia.com_ippools.yaml
+  netbox.netbox_docker:
+    kind: version
+    value: 5.1.2
+    reason: Newest netbox-docker release on 2026-11-22, NetBox v4.7.5. ansible/playbooks/templates/netbox-compose.yml.j2 follows its
+      docker-compose.yml with the images pinned by digest, the superuser and API token created at the first start, and port 8080 published.
+    source: https://github.com/netbox-community/netbox-docker/releases/tag/5.1.2
+  netbox.guest_compose:
+    kind: version
+    value: 2.40.3+ds1-0ubuntu1~24.04.1
+    reason: Candidate of docker-compose-v2 in noble-updates on 2026-11-22, the compose plugin of the NetBox guest. Its docker.io, containerd
+      and runc are the Track B pins of the same Ubuntu image.
+    source: apt-cache policy docker-compose-v2 inside netbox1
+  netbox.image:
+    kind: image-digest
+    value: sha256:a521748a89c8966565bbf7832fd01caef2a122f46a21ccf7a7b7682dd3428839
+    ref: docker.io/netboxcommunity/netbox:v4.7.5-5.1.2
+    reason: OCI image index of NetBox v4.7.5 in netbox-docker 5.1.2.
+      On 2026-11-22 the registry returned it as Docker-Content-Digest and sha256 of the index body equals it. The NetBox guest pulls
+      it by digest (ADR 0008).
+    source: https://registry-1.docker.io/v2/netboxcommunity/netbox/manifests/v4.7.5-5.1.2
+  netbox.postgres_image:
+    kind: image-digest
+    value: sha256:ff64c9e3bdf8e2120107d3559de8db314e8305f7e38c5105903c6295876738ff
+    ref: docker.io/library/postgres:18-alpine
+    reason: OCI image index of the PostgreSQL that netbox-docker 5.1.2 names.
+      On 2026-11-22 the registry returned it as Docker-Content-Digest and sha256 of the index body equals it. The NetBox guest pulls
+      it by digest (ADR 0008).
+    source: https://registry-1.docker.io/v2/library/postgres/manifests/18-alpine
+  netbox.valkey_image:
+    kind: image-digest
+    value: sha256:56729e68bdda139cbd3f6a2538683dc3523325fc5711ea1a379938f1b37893f0
+    ref: docker.io/valkey/valkey:9.1-alpine
+    reason: OCI image index of the Valkey that netbox-docker 5.1.2 names for its queue and cache.
+      On 2026-11-22 the registry returned it as Docker-Content-Digest and sha256 of the index body equals it. The NetBox guest pulls
+      it by digest (ADR 0008).
+    source: https://registry-1.docker.io/v2/valkey/valkey/manifests/9.1-alpine
   ibsim.guest_kernel:
     kind: observed
     value: 6.8.0-147-generic
@@ -497,6 +533,16 @@ scopes:
     - ibsim.opensm
     - ibsim.infiniband_diags
     - ibsim.image
+  netbox:
+    - ibsim.guest_kernel
+    - ibsim.guest_docker
+    - ibsim.guest_containerd
+    - ibsim.guest_runc
+    - netbox.guest_compose
+    - netbox.netbox_docker
+    - netbox.image
+    - netbox.postgres_image
+    - netbox.valkey_image
   ns3:
     - ns3.guest_kernel
     - ibsim.guest_docker

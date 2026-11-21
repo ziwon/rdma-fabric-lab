@@ -1,0 +1,14 @@
+# Parameters of the cel1-netbox scenario. Every run records this file's sha256.
+site: sites/cel1.yaml
+url: http://127.0.0.1:22352
+# The drift the run makes by hand: one rail cable deleted, one address edited, one stray managed address added.
+drift_cable: cel1-dgx-01/rail3 = cel1-ib-leaf-r3/1
+drift_address: 10.142.5.24/24
+stray_address: 10.142.0.99/24
+# An address a person adds without the managed tag. The run removes it at the end.
+hand_made_address: 10.142.0.98/24
+# Break switches, off in an ordinary run.
+sync_skips: []
+prune: true
+hand_made_tagged: false
+keep_hand_made: false

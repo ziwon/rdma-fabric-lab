@@ -1,0 +1,7 @@
+# NetBox: one guest whose container runtime runs the pinned NetBox images, so NetBox, PostgreSQL and
+# Valkey run on this guest's kernel and never on the host's (ADR 0008). Its web port is forwarded to
+# 127.0.0.1:22352 on the host for the sync, the checks and the screenshots. It has no switched network.
+#inventory tests/integration/qemu-lab/profiles/netbox/inventory
+#qemu -no-reboot
+# name	ssh_port	vcpus	mem_mib	disk_gib	nics
+netbox1	22251	4	4096	20	mac=52:54:00:8c:02:51,net=user,fwd=22352:8080
