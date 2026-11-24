@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 278" width="760" height="278" role="img" aria-labelledby="t d">
+  <title id="t">IPoIB packet in datagram mode</title>
+  <desc id="d">An InfiniBand unreliable datagram packet: the local route header, an optional global route header, the base transport header, the datagram extended header with the Q_Key and source QP, the 4-byte IPoIB encapsulation header that names IPv4, ARP or IPv6, the IP datagram, the invariant CRC and the variant CRC.</desc>
+  <style>
+    .bg { fill: #1b1f23; }
+    .box { fill: none; stroke: #b6bfc9; stroke-width: 1.4; }
+    .opt { fill: none; stroke: #b6bfc9; stroke-width: 1.2; stroke-dasharray: 5 4; }
+    .hot { fill: none; stroke: #b2e879; stroke-width: 2; }
+    .name { font: 700 14px 'DM Sans', Inter, Arial, sans-serif; fill: #e6e9ed; text-anchor: middle; }
+    .size { font: 12px 'DM Sans', Inter, Arial, sans-serif; fill: #a0aab6; text-anchor: middle; }
+    .red { font: 700 12px 'DM Sans', Inter, Arial, sans-serif; fill: #b2e879; text-anchor: middle; }
+    .redl { font: 700 12px 'DM Sans', Inter, Arial, sans-serif; fill: #b2e879; text-anchor: start; }
+    .note { font: 12px 'DM Sans', Inter, Arial, sans-serif; fill: #a0aab6; }
+    .brace { fill: none; stroke: #a0aab6; stroke-width: 1.2; }
+    .label { font: 12px 'DM Sans', Inter, Arial, sans-serif; fill: #e6e9ed; text-anchor: middle; }
+  </style>
+  <rect class="bg" x="0" y="0" width="760" height="278"/>
+  <rect class="box" x="20" y="52" width="62" height="60"/>
+  <text class="name" x="51" y="78">LRH</text>
+  <text class="size" x="51" y="98">8 B</text>
+  <rect class="opt" x="82" y="52" width="72" height="60"/>
+  <text class="name" x="118" y="78">GRH</text>
+  <text class="size" x="118" y="98">40 B</text>
+  <rect class="box" x="154" y="52" width="62" height="60"/>
+  <text class="name" x="185" y="78">BTH</text>
+  <text class="size" x="185" y="98">12 B</text>
+  <rect class="box" x="216" y="52" width="66" height="60"/>
+  <text class="name" x="249" y="78">DETH</text>
+  <text class="size" x="249" y="98">8 B</text>
+  <rect class="hot" x="282" y="52" width="70" height="60"/>
+  <text class="name" x="317" y="78">IPoIB</text>
+  <text class="size" x="317" y="98">4 B</text>
+  <rect class="box" x="352" y="52" width="270" height="60"/>
+  <text class="name" x="487" y="78">IP datagram</text>
+  <text class="size" x="487" y="98">up to IB MTU − 4</text>
+  <rect class="box" x="622" y="52" width="54" height="60"/>
+  <text class="name" x="649" y="78">ICRC</text>
+  <text class="size" x="649" y="98">4 B</text>
+  <rect class="box" x="676" y="52" width="54" height="60"/>
+  <text class="name" x="703" y="78">VCRC</text>
+  <text class="size" x="703" y="98">2 B</text>
+  <path class="brace" d="M20 44 V36 H282 V44"/>
+  <text class="label" x="151" y="28">InfiniBand UD headers</text>
+  <path class="brace" d="M282 44 V36 H622 V44"/>
+  <text class="label" x="452" y="28">payload of the UD packet</text>
+  <text class="red" x="51" y="132">LIDs</text>
+  <text class="red" x="249" y="132">Q_Key, source QPN</text>
+  <text class="redl" x="286" y="150">type: 0x0800 IPv4, 0x0806 ARP, 0x86DD IPv6</text>
+  <text class="note" x="20" y="186">GRH, dashed, is required for multicast, such as an ARP request to the broadcast group. A unicast in one subnet may omit it.</text>
+  <text class="note" x="20" y="208">The IPoIB link-layer address is 20 bytes: flags, the 24-bit QPN that receives, and the 128-bit GID of the port.</text>
+  <text class="note" x="20" y="230">Datagram mode rides UD QPs, so the IP MTU is the IB MTU minus these 4 bytes: 4092 B with a 4096 B IB MTU.</text>
+  <text class="note" x="20" y="252">Connected mode uses RC QPs and allows up to 64 KiB, but enhanced IPoIB on ConnectX-4 and later is datagram only.</text>
+</svg>
