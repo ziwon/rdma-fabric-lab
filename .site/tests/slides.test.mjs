@@ -7,6 +7,7 @@ import path from 'node:path';
 import { test } from 'node:test';
 import { parse } from 'yaml';
 import { repoRoot, siteDir } from '../scripts/lib/repo.mjs';
+import { loadDecks, proposalStatus } from '../scripts/lib/slides.mjs';
 
 const DECK = 'docs/slides/multus-boot-race.html';
 const SPEC = 'tracks/a-soft-roce/scenarios/k8s-multus-net1.yaml';
@@ -17,9 +18,7 @@ const read = (rel) => readFileSync(path.join(repoRoot, rel), 'utf8');
 const slidesOf = (html) => html.split(/<section id="slide-\d+"/).slice(1);
 const deck = read(DECK);
 // The decks of the README table: title, slide count, minutes, the name in the site URL and the file.
-const readme = read('docs/slides/README.md');
-const decks = [...readme.matchAll(/^\| (.+?) \| (\d+) slides, (\d+) minutes \| \[Browser slides\]\(https:\/\/[^/]+\/slides\/([a-z0-9-]+)\/\) \| \[Standalone HTML\]\(([a-z0-9-]+\.html)\) \|$/gm)]
-  .map(([, title, count, minutes, slug, file]) => ({ title, count: Number(count), minutes: Number(minutes), slug, file, html: read(`docs/slides/${file}`) }));
+const decks = loadDecks().map((deck) => ({ ...deck, html: read(`docs/slides/${deck.file}`) }));
 const parts = (html, prefix) => [...html.matchAll(new RegExp(`data-part="(${prefix}[^"]*)"[^>]*>([^<]*)<`, 'g'))].map((m) => [m[1], m[2]]);
 const seconds = (clock) => clock.split(':').reduce((minutes, s) => minutes * 60 + Number(s), 0);
 
@@ -84,6 +83,13 @@ test('each proposal names a deck of the README table under the same title', () =
   const titles = [...proposals.matchAll(/^## \d+\. (.+)$/gm)].map((m) => m[1]);
   assert.deepEqual(titles, decks.map((d) => d.title));
   for (const d of decks) assert.ok(proposals.includes(`](${d.file})`), `proposals.md does not link ${d.file}`);
+});
+
+test('the Talks status matches the proposal drafts and their submission status', () => {
+  const proposals = read('docs/slides/proposals.md');
+  assert.match(proposals, /Drafts for .*NeoCloudCon Europe 2027/);
+  assert.match(proposals, /Neither proposal has been submitted or accepted\./);
+  assert.equal(proposalStatus, 'Proposal draft for NeoCloudCon Europe 2027, not submitted or accepted');
 });
 
 test('a link to the break script points at the lines of the break the deck shows', () => {
