@@ -1,21 +1,25 @@
-// The talk deck in docs/slides is a standalone HTML file, so nothing renders its claims from the repository. These
-// tests tie what it names (checks, files, runs, source lines) to the scenario spec, the break script and the stored
-// excerpts, so the deck fails here when the repository moves under it.
+// The talk decks in docs/slides are standalone HTML files, so nothing renders their claims from the repository. These
+// tests tie what they name (checks, files, runs, source lines) to the README table, the scenario spec, the break
+// script and the stored excerpts, so a deck fails here when the repository moves under it.
 import assert from 'node:assert/strict';
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import path from 'node:path';
 import { test } from 'node:test';
 import { parse } from 'yaml';
 import { repoRoot, siteDir } from '../scripts/lib/repo.mjs';
 
-const DECK = 'docs/slides/kubernetes-rdma-wiring.html';
+const DECK = 'docs/slides/multus-boot-race.html';
 const SPEC = 'tracks/a-soft-roce/scenarios/k8s-multus-net1.yaml';
 const BREAKS = 'tests/integration/qemu-lab/breaks-k8s-rdma.sh';
 const BREAK = 'cilium-file-back-in-cni-dir-on-worker2';
 
 const read = (rel) => readFileSync(path.join(repoRoot, rel), 'utf8');
+const slidesOf = (html) => html.split(/<section id="slide-\d+"/).slice(1);
 const deck = read(DECK);
-const slides = deck.split(/<section id="slide-\d+"/).slice(1);
+// The decks of the README table: title, slide count, minutes, the name in the site URL and the file.
+const readme = read('docs/slides/README.md');
+const decks = [...readme.matchAll(/^\| (.+?) \| (\d+) slides, (\d+) minutes \| \[Browser slides\]\(https:\/\/[^/]+\/slides\/([a-z0-9-]+)\/\) \| \[Standalone HTML\]\(([a-z0-9-]+\.html)\) \|$/gm)]
+  .map(([, title, count, minutes, slug, file]) => ({ title, count: Number(count), minutes: Number(minutes), slug, file, html: read(`docs/slides/${file}`) }));
 const parts = (html, prefix) => [...html.matchAll(new RegExp(`data-part="(${prefix}[^"]*)"[^>]*>([^<]*)<`, 'g'))].map((m) => [m[1], m[2]]);
 const seconds = (clock) => clock.split(':').reduce((minutes, s) => minutes * 60 + Number(s), 0);
 
@@ -29,34 +33,57 @@ function breakLines(name) {
   return { first: first + 1, last: last + 1, text: lines.slice(first, last + 1).join('\n') };
 }
 
-test('the slides are numbered in order and each has a heading', () => {
-  assert.ok(slides.length > 0);
-  slides.forEach((html, i) => {
-    const number = parts(html, 'slide-number')[0][1];
-    assert.equal(number, `${String(i + 1).padStart(2, '0')} / ${String(slides.length).padStart(2, '0')}`);
-    assert.match(html, new RegExp(`aria-labelledby="title-${i + 1}"`));
-    assert.match(html, new RegExp(`<h2 id="title-${i + 1}" class="sr-only">[^<]+</h2>`));
-  });
+test('the README table lists every deck in docs/slides under its title and the name the site serves', () => {
+  const files = readdirSync(path.join(repoRoot, 'docs/slides')).filter((name) => name.endsWith('.html')).sort();
+  assert.deepEqual(decks.map((d) => d.file).sort(), files);
+  for (const d of decks) {
+    assert.equal(`${d.slug}.html`, d.file);
+    assert.equal(/<title>(.*?)<\/title>/.exec(d.html)[1], d.title);
+    assert.equal(/<h1 class="sr-only">(.*?)<\/h1>/.exec(d.html)[1], d.title);
+  }
 });
 
-test('the speaker notes run without a gap to the length the README states', () => {
-  const notes = [...deck.matchAll(/<summary>Speaker notes · (\d+:\d\d)–(\d+:\d\d) \((\d+:\d\d)\)<\/summary>/g)];
-  assert.equal(notes.length, slides.length);
-  let clock = 0;
-  for (const [, start, end, length] of notes) {
-    assert.equal(seconds(start), clock, `a note starts at ${start}, the one before ended at ${clock} s`);
-    assert.equal(seconds(end) - seconds(start), seconds(length), `${start}–${end} is not ${length}`);
-    clock = seconds(end);
+test('the slides of every deck are numbered in order, each with a heading, as many as the README states', () => {
+  for (const d of decks) {
+    const slides = slidesOf(d.html);
+    assert.equal(slides.length, d.count, d.file);
+    slides.forEach((html, i) => {
+      const number = parts(html, 'slide-number')[0][1];
+      assert.equal(number, `${String(i + 1).padStart(2, '0')} / ${String(slides.length).padStart(2, '0')}`, d.file);
+      assert.match(html, new RegExp(`aria-labelledby="title-${i + 1}"`));
+      assert.match(html, new RegExp(`<h2 id="title-${i + 1}" class="sr-only">[^<]+</h2>`));
+    });
   }
-  const readme = read('docs/slides/README.md');
-  const words = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve'];
-  assert.match(readme, new RegExp(`${words[slides.length]}-slide, ${words[clock / 60]}-minute`));
+});
+
+test('the speaker notes of every deck run without a gap to the length the README states', () => {
+  for (const d of decks) {
+    const notes = [...d.html.matchAll(/<summary>Speaker notes · (\d+:\d\d)–(\d+:\d\d) \((\d+:\d\d)\)<\/summary>/g)];
+    assert.equal(notes.length, d.count, d.file);
+    let clock = 0;
+    for (const [, start, end, length] of notes) {
+      assert.equal(seconds(start), clock, `${d.file}: a note starts at ${start}, the one before ended at ${clock} s`);
+      assert.equal(seconds(end) - seconds(start), seconds(length), `${d.file}: ${start}–${end} is not ${length}`);
+      clock = seconds(end);
+    }
+    assert.equal(clock, d.minutes * 60, d.file);
+  }
 });
 
 test('every source link into this repository names a file that exists', () => {
-  const links = [...deck.matchAll(/href="https:\/\/github\.com\/[^/]+\/rdma-fabric-lab\/(?:blob|tree)\/main\/([^"#]+)/g)].map((m) => m[1]);
-  assert.ok(links.length > 0);
-  for (const rel of new Set(links)) assert.ok(existsSync(path.join(repoRoot, rel)), `${rel} is linked from the deck and missing`);
+  for (const d of decks) {
+    const links = [...d.html.matchAll(/href="https:\/\/github\.com\/[^/]+\/rdma-fabric-lab\/(?:blob|tree)\/main\/([^"#]+)/g)].map((m) => m[1]);
+    assert.ok(links.length > 0, d.file);
+    for (const rel of new Set(links)) assert.ok(existsSync(path.join(repoRoot, rel)), `${rel} is linked from ${d.file} and missing`);
+  }
+});
+
+test('each proposal names a deck of the README table under the same title', () => {
+  const proposals = read('docs/slides/proposals.md');
+  assert.doesNotMatch(proposals, /PROPOSAL_\d+_|PROVISIONAL/);
+  const titles = [...proposals.matchAll(/^## \d+\. (.+)$/gm)].map((m) => m[1]);
+  assert.deepEqual(titles, decks.map((d) => d.title));
+  for (const d of decks) assert.ok(proposals.includes(`](${d.file})`), `proposals.md does not link ${d.file}`);
 });
 
 test('a link to the break script points at the lines of the break the deck shows', () => {
@@ -107,4 +134,71 @@ test('every boot time and count the deck quotes comes from the stored excerpts o
   const spec = parse(read(SPEC)).checks.length;
   const shown = parts(deck, 'check-').length;
   assert.equal(Number(/The (\d+) other checks passed/.exec(parts(deck, 'other-checks')[0][1])[1]), spec - shown);
+});
+
+// The scope slide counts the pod starts on the rebooted worker that came without net1, per layout, from the summary of
+// tests/integration/qemu-lab/probe-boot-window.sh: one row per label and kind of pod, keepers and waiters.
+const bootWindow = () => {
+  const excerpt = JSON.parse(readFileSync(path.join(siteDir, 'src/excerpts/slides-boot-window.json'), 'utf8'));
+  const [header, ...rows] = excerpt.text.split('\n').map((line) => line.split('\t'));
+  const cell = (row, name) => {
+    assert.ok(header.includes(name), `slides-boot-window has no column ${name}`);
+    return row[header.indexOf(name)];
+  };
+  const of = (label) => rows.filter((row) => cell(row, 'label') === label);
+  const lost = (label) => {
+    assert.deepEqual(of(label).map((row) => cell(row, 'kind')).sort(), ['keepers', 'waiters'], label);
+    const sum = (name) => of(label).reduce((n, row) => n + Number(cell(row, name)), 0);
+    return `${sum('without_net1')} of ${sum('pod_starts')}`;
+  };
+  const ends = (labels, name) => labels.flatMap((label) => of(label).flatMap((row) => cell(row, name).split('-').map(Number)));
+  return { rows, cell, lost, ends };
+};
+const scopeSlide = () => slidesOf(deck).find((html) => html.includes('data-part="td-'));
+
+test('the counts on the scope slide are the stored summary of the boot-window probe', () => {
+  const { lost, ends } = bootWindow();
+  const cells = Object.fromEntries(parts(scopeSlide(), 't[hd]-'));
+  assert.deepEqual([cells['th-1'], cells['th-2']], ['STOCK PATHS', 'LAB LAYOUT']);
+  assert.deepEqual([cells['td-1-1'], cells['td-1-2'], cells['td-2-1'], cells['td-2-2']],
+    [lost('stock'), lost('lab-layout'), lost('stock-slow'), lost('lab-layout-slow')].map((count) => `${count} lost it`));
+  const note = parts(scopeSlide(), 'scope-note').map(([, text]) => text).find((text) => text.startsWith('Multus wrote its file'));
+  const [, low, high, cel1] = /(\d+) to (\d+) s after boot here, and (\d+) s after boot on a 13-guest simulation/.exec(note);
+  const born = ends(['stock', 'lab-layout'], 'multus_file_s');
+  assert.deepEqual([Number(low), Number(high)], [Math.round(Math.min(...born)), Math.round(Math.max(...born))]);
+  const fleet = /`00-multus\.conf` at boot\+(\d+\.\d) s/.exec(read('docs/fleet.md'));
+  assert.ok(fleet, 'docs/fleet.md no longer records when Multus wrote its file on the cel1 simulation');
+  assert.equal(Number(cel1), Math.round(Number(fleet[1])));
+});
+
+test('every count and time in the notes of the scope slide is in the stored summary or docs/fleet.md', () => {
+  const { rows, cell, lost } = bootWindow();
+  const notes = /<details class="notes">([\s\S]*?)<p>Sources<\/p>/.exec(scopeSlide())[1];
+  const counts = new Set(['stock', 'lab-layout', 'stock-slow', 'lab-layout-slow'].map(lost));
+  const quoted = [...notes.matchAll(/\b\d+ of \d+\b/g)].map((m) => m[0]);
+  assert.ok(quoted.length >= 2);
+  for (const count of quoted) assert.ok(counts.has(count), `the notes quote "${count}", which no layout of the probe counted`);
+  const slow = rows.filter((row) => cell(row, 'label') === 'stock-slow');
+  const slowLost = (kind) => Number(cell(slow.find((row) => cell(row, 'kind') === kind), 'without_net1'));
+  assert.equal(Number(/all (\d+) pods came back Ready without net1/.exec(notes)[1]), slowLost('keepers') + slowLost('waiters'));
+  assert.equal(Number(/The (\d+) restarted pods kept the network-status/.exec(notes)[1]), slowLost('keepers'));
+  assert.equal(Number(/The (\d+) waiting pods had no annotation/.exec(notes)[1]), slowLost('waiters'));
+  const recorded = new Set(rows.flatMap((row) => ['sandbox_first_s', 'multus_file_s'].flatMap((name) => cell(row, name).split('-'))));
+  recorded.add(/`00-multus\.conf` at boot\+(\d+\.\d) s/.exec(read('docs/fleet.md'))[1]);
+  const times = [...notes.matchAll(/\b\d+\.\d\b/g)].map((m) => m[0]);
+  assert.ok(times.length >= 6);
+  for (const time of times) assert.ok(recorded.has(time), `the notes quote ${time} s, which neither the probe nor docs/fleet.md recorded`);
+});
+
+test('the reboot abstract uses the pod counts recorded by the boot-window probe', () => {
+  const { rows, cell, lost } = bootWindow();
+  const abstract = read('docs/slides/proposals.md').split('## 1. ')[1].split('## 2. ')[0];
+  const description = abstract.split('**Description**\n\n')[1].split('\n\n**')[0];
+  const [without, total] = lost('stock').split(' of ').map(Number);
+  const kept = /kept net1 in (\d+) of (\d+) starts/.exec(description);
+  assert.deepEqual([Number(kept[1]), Number(kept[2])], [total - without, total]);
+  assert.equal(/(\d+ of \d+) pods came up Ready without net1/.exec(description)[1], lost('stock-slow'));
+  const lab = rows.filter((row) => ['lab-layout', 'lab-layout-slow'].includes(cell(row, 'label')));
+  const sum = (name) => lab.reduce((n, row) => n + Number(cell(row, name)), 0);
+  assert.equal(/(\d+ of \d+) pod starts lost net1/.exec(description)[1], `${sum('without_net1')} of ${sum('pod_starts')}`);
 });

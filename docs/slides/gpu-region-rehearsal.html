@@ -1,0 +1,723 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Rehearsing a GPU Region on One Host Before the Racks Arrive</title>
+<!-- Slide fonts: optional local copies are embedded by the learning site. -->
+<style>
+  :root { color-scheme: dark; background: #0c0d12; color: #e6e8ef; font-family: "DM Sans", system-ui, sans-serif; }
+  * { box-sizing: border-box; }
+  body { max-width: 1330px; margin: auto; padding: 16px; }
+  [hidden] { display: none !important; }
+  .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .frame { position: relative; aspect-ratio: 16 / 9; width: 100%; container-type: inline-size; overflow: hidden; border: 1px solid #303545; background: #0c0d12; }
+  .canvas-item { position: absolute; left: calc(var(--x) * 100% / 1280); top: calc(var(--y) * 100% / 720); width: calc(var(--w) * 100% / 1280); height: calc(var(--h) * 100% / 720); }
+  .shape { background: var(--fill, transparent); outline: var(--edge-width, 0px) solid var(--edge, transparent); outline-offset: -1px; }
+  .dot { border-radius: 50%; }
+  .copy { color: var(--ink); font-size: calc(var(--size) * 100cqw / 1280); line-height: 1.14; padding-top: .12em; white-space: nowrap; text-align: var(--align, left); }
+  .mono { font-family: "IBM Plex Mono", ui-monospace, "Liberation Mono", monospace; }
+  .heavy { font-weight: 700; }
+  .notes { margin: 14px 0 22px; padding: 12px 16px; background: #15171f; border: 1px solid #303545; border-radius: 5px; line-height: 1.55; overflow-wrap: anywhere; }
+  .notes summary { cursor: pointer; color: #b2e879; }
+  .notes a, .intro a { color: #b2e879; }
+  .intro { display: flex; justify-content: space-between; flex-wrap: wrap; align-items: baseline; gap: 6px 20px; margin: 0 0 12px; font-size: .84rem; color: #b5bbca; }
+  .controls { display: flex; justify-content: space-between; flex-wrap: wrap; align-items: center; gap: 8px 14px; margin-bottom: 12px; }
+  .actions { display: flex; align-items: center; gap: 7px; }
+  button { padding: 0 11px; min-height: 40px; border: 1px solid #303545; border-radius: 5px; background: #15171f; color: inherit; font: inherit; cursor: pointer; }
+  button:hover { border-color: #b2e879; }
+  button[aria-disabled="true"] { color: #9fa6b8; cursor: default; }
+  :focus-visible { outline: 2px solid #b2e879; outline-offset: 2px; }
+  #count { min-width: 6ch; color: #b2e879; text-align: center; font-variant-numeric: tabular-nums; }
+  .slide:not(:last-child) { margin-bottom: 22px; }
+  #deck:fullscreen { display: grid; place-items: center; background: #0c0d12; }
+  #deck:fullscreen .slide { margin: 0; }
+  #deck:fullscreen .frame { width: min(100vw, 177.7778vh); border: 0; }
+  #deck:fullscreen .notes { display: none; }
+  @media (max-width: 600px) {
+    body { padding: 10px; }
+    .intro { font-size: .78rem; }
+    button { min-height: 44px; }
+  }
+  @page { size: 13.333in 7.5in; margin: 0; }
+  @media print {
+    * { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+    body { padding: 0; max-width: none; }
+    .intro, .controls, .notes { display: none !important; }
+    .slide, .slide[hidden] { display: block !important; margin: 0 !important; break-inside: avoid; }
+    .slide + .slide { break-before: page; }
+    .frame { border: 0; }
+  }
+</style>
+</head>
+<body>
+<header class="intro">
+  <span>RDMA Fabric Lab / 25-minute talk draft</span>
+  <a href="https://github.com/ziwon/rdma-fabric-lab/tree/main/docs/slides">Slide source</a>
+</header>
+<h1 class="sr-only">Rehearsing a GPU Region on One Host Before the Racks Arrive</h1>
+<nav id="controls" class="controls" aria-label="Slide controls" hidden>
+  <div class="actions">
+    <button id="previous" type="button" aria-label="Previous slide">Prev</button>
+    <output id="count" aria-live="polite" aria-atomic="true"></output>
+    <button id="next" type="button" aria-label="Next slide">Next</button>
+  </div>
+  <button id="fullscreen" type="button" hidden>Fullscreen</button>
+</nav>
+<main id="deck" aria-label="Slides">
+  <section id="slide-1" class="slide" aria-labelledby="title-1">
+    <h2 id="title-1" class="sr-only">Rehearsing a GPU Region on One Host Before the Racks Arrive</h2>
+    <div class="frame">
+      <div class="canvas-item shape dot" data-part="signal-dot" style="--x:64;--y:49;--w:9;--h:9;--fill:#B2E879" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="section" style="--x:83;--y:43;--w:850;--h:24;--size:16;--ink:#9FA6B8">PROPOSAL FOR NEOCLOUDCON EUROPE 2027 / 25-MINUTE TALK DRAFT</div>
+      <div class="canvas-item shape" data-part="rule" style="--x:64;--y:75;--w:1152;--h:1;--fill:#303545" aria-hidden="true"></div>
+      <div class="canvas-item shape" data-part="rule" style="--x:64;--y:654;--w:1152;--h:1;--fill:#303545" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="project-footer" style="--x:64;--y:672;--w:720;--h:23;--size:14;--ink:#9FA6B8">restack / rdma-fabric-lab</div>
+      <div class="canvas-item copy mono" data-part="slide-number" style="--x:1094;--y:672;--w:122;--h:23;--size:14;--ink:#9FA6B8;--align:right">01 / 14</div>
+      <div class="canvas-item shape" data-part="console-figure" style="--x:862;--y:139;--w:354;--h:409;--fill:#101218;--edge:#303545;--edge-width:1px" aria-hidden="true"></div>
+      <div class="canvas-item shape" data-part="console-header" style="--x:863;--y:140;--w:352;--h:52;--fill:#1C1F3A" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="console-name" style="--x:884;--y:156;--w:312;--h:25;--size:16;--ink:#8595FA">ONE SITE MODEL</div>
+      <div class="canvas-item shape dot" data-part="signal-dot" style="--x:886;--y:229;--w:8;--h:8;--fill:#B2E879" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="fig-phase-0" style="--x:906;--y:224;--w:274;--h:23;--size:16;--ink:#9FA6B8">01 / validate</div>
+      <div class="canvas-item copy mono" data-part="fig-status-0" style="--x:906;--y:252;--w:290;--h:36;--size:23;--ink:#B2E879">128 cables</div>
+      <div class="canvas-item shape" data-part="rule" style="--x:885;--y:299;--w:304;--h:1;--fill:#303545" aria-hidden="true"></div>
+      <div class="canvas-item shape dot" data-part="signal-dot" style="--x:886;--y:330;--w:8;--h:8;--fill:#B2E879" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="fig-phase-1" style="--x:906;--y:325;--w:274;--h:23;--size:16;--ink:#9FA6B8">02 / simulate</div>
+      <div class="canvas-item copy mono" data-part="fig-status-1" style="--x:906;--y:353;--w:290;--h:36;--size:23;--ink:#B2E879">13 guests, 76 LIDs</div>
+      <div class="canvas-item shape" data-part="rule" style="--x:885;--y:400;--w:304;--h:1;--fill:#303545" aria-hidden="true"></div>
+      <div class="canvas-item shape dot" data-part="signal-dot" style="--x:886;--y:431;--w:8;--h:8;--fill:#B2E879" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="fig-phase-2" style="--x:906;--y:426;--w:274;--h:23;--size:16;--ink:#9FA6B8">03 / export</div>
+      <div class="canvas-item copy mono" data-part="fig-status-2" style="--x:906;--y:454;--w:290;--h:36;--size:23;--ink:#B2E879">1142 objects</div>
+      <div class="canvas-item copy heavy" data-part="title-line-1" style="--x:64;--y:146;--w:790;--h:80;--size:60;--ink:#F3F4F8">Rehearsing a GPU</div>
+      <div class="canvas-item copy heavy" data-part="title-line-2" style="--x:64;--y:222;--w:790;--h:80;--size:60;--ink:#F3F4F8">Region on One Host</div>
+      <div class="canvas-item copy heavy" data-part="title-line-3" style="--x:64;--y:298;--w:790;--h:80;--size:60;--ink:#B2E879">Before the Racks Arrive</div>
+      <div class="canvas-item copy" data-part="deck-premise" style="--x:67;--y:420;--w:780;--h:50;--size:25;--ink:#B5BBCA">One model, a validator, and simulations that run the real tools.</div>
+      <div class="canvas-item copy mono" data-part="speaker" style="--x:67;--y:540;--w:600;--h:30;--size:18;--ink:#E6E8EF">YEONGPIL YOON</div>
+    </div>
+    <details class="notes">
+      <summary>Speaker notes · 0:00–1:00 (1:00)</summary>
+      <p>Open with the cost: a GPU region is built from hundreds of facts that people agree on before any hardware works, and a wrong one is found on site. This talk rehearses those facts on one Linux host. The region in the talk, cel1, does not exist. Every host name, address and switch name was invented for it.</p>
+      <p>Say early what the talk is not: no GPU, no HCA, no InfiniBand data path and no performance number.</p>
+      <p>Sources</p>
+      <ul><li><a href="https://github.com/ziwon/rdma-fabric-lab/blob/main/docs/fleet.md">fleet.md</a></li><li><a href="https://github.com/ziwon/rdma-fabric-lab/blob/main/docs/verification.md">verification.md</a></li></ul>
+    </details>
+  </section>
+  <section id="slide-2" class="slide" aria-labelledby="title-2">
+    <h2 id="title-2" class="sr-only">A region is hundreds of agreed facts</h2>
+    <div class="frame">
+      <div class="canvas-item shape dot" data-part="signal-dot" style="--x:64;--y:49;--w:9;--h:9;--fill:#B2E879" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="section" style="--x:83;--y:43;--w:850;--h:24;--size:16;--ink:#9FA6B8">01 / THE PROBLEM</div>
+      <div class="canvas-item shape" data-part="rule" style="--x:64;--y:75;--w:1152;--h:1;--fill:#303545" aria-hidden="true"></div>
+      <div class="canvas-item shape" data-part="rule" style="--x:64;--y:654;--w:1152;--h:1;--fill:#303545" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="project-footer" style="--x:64;--y:672;--w:720;--h:23;--size:14;--ink:#9FA6B8">restack / rdma-fabric-lab</div>
+      <div class="canvas-item copy mono" data-part="slide-number" style="--x:1094;--y:672;--w:122;--h:23;--size:14;--ink:#9FA6B8;--align:right">02 / 14</div>
+      <div class="canvas-item copy heavy" data-part="headline" style="--x:64;--y:107;--w:1152;--h:72;--size:55;--ink:#F3F4F8">A region is hundreds of agreed facts</div>
+      <div class="canvas-item copy" data-part="subhead" style="--x:66;--y:191;--w:1130;--h:44;--size:25;--ink:#B5BBCA">A wrong one surfaces on site, with accelerators idle.</div>
+      <div class="canvas-item shape" data-part="rule" style="--x:65;--y:266;--w:1150;--h:1;--fill:#303545" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="layer-index-0" style="--x:68;--y:292;--w:58;--h:35;--size:20;--ink:#9FA6B8">01</div>
+      <div class="canvas-item copy mono" data-part="layer-name-0" style="--x:149;--y:292;--w:420;--h:30;--size:18;--ink:#9FA6B8">ADDRESSES</div>
+      <div class="canvas-item copy" data-part="layer-detail-0" style="--x:552;--y:287;--w:660;--h:54;--size:28;--ink:#E6E8EF">13 hosts, 21 ranges and 95 addresses.</div>
+      <div class="canvas-item shape" data-part="rule" style="--x:65;--y:371;--w:1150;--h:1;--fill:#303545" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="layer-index-1" style="--x:68;--y:397;--w:58;--h:35;--size:20;--ink:#9FA6B8">02</div>
+      <div class="canvas-item copy mono" data-part="layer-name-1" style="--x:149;--y:397;--w:420;--h:30;--size:18;--ink:#9FA6B8">CABLES</div>
+      <div class="canvas-item copy" data-part="layer-detail-1" style="--x:552;--y:392;--w:660;--h:54;--size:28;--ink:#E6E8EF">128 cables, each rail to its own leaf.</div>
+      <div class="canvas-item shape" data-part="rule" style="--x:65;--y:476;--w:1150;--h:1;--fill:#303545" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="layer-index-2" style="--x:68;--y:502;--w:58;--h:35;--size:20;--ink:#9FA6B8">03</div>
+      <div class="canvas-item copy mono" data-part="layer-name-2" style="--x:149;--y:502;--w:420;--h:30;--size:18;--ink:#9FA6B8">CLUSTER</div>
+      <div class="canvas-item copy" data-part="layer-detail-2" style="--x:552;--y:497;--w:660;--h:54;--size:28;--ink:#E6E8EF">kubeadm, CNI and operators per node class.</div>
+      <div class="canvas-item shape" data-part="rule" style="--x:65;--y:581;--w:1150;--h:1;--fill:#303545" aria-hidden="true"></div>
+    </div>
+    <details class="notes">
+      <summary>Speaker notes · 1:00–2:40 (1:40)</summary>
+      <p>Three kinds of facts. The address plan: 13 hosts with 95 addresses in 21 ranges, counting the pod ranges of every rail. The cabling: in a rail-optimized fabric, rail r of every node goes to the leaf of rail r, and one swapped cable breaks that silently. The cluster: what each node class gets installed.</p>
+      <p>These facts live in spreadsheets, a DCIM, an inventory and Helm values. The talk keeps them in one file and checks them before anything is built.</p>
+      <p>Sources</p>
+      <ul><li><a href="https://github.com/ziwon/rdma-fabric-lab/blob/main/docs/fleet.md">fleet.md</a></li><li><a href="https://github.com/ziwon/rdma-fabric-lab/blob/main/sites/cel1.yaml">cel1.yaml</a></li></ul>
+    </details>
+  </section>
+  <section id="slide-3" class="slide" aria-labelledby="title-3">
+    <h2 id="title-3" class="sr-only">cel1: an invented region with a real shape</h2>
+    <div class="frame">
+      <div class="canvas-item shape dot" data-part="signal-dot" style="--x:64;--y:49;--w:9;--h:9;--fill:#B2E879" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="section" style="--x:83;--y:43;--w:850;--h:24;--size:16;--ink:#9FA6B8">02 / THE REGION</div>
+      <div class="canvas-item shape" data-part="rule" style="--x:64;--y:75;--w:1152;--h:1;--fill:#303545" aria-hidden="true"></div>
+      <div class="canvas-item shape" data-part="rule" style="--x:64;--y:654;--w:1152;--h:1;--fill:#303545" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="project-footer" style="--x:64;--y:672;--w:720;--h:23;--size:14;--ink:#9FA6B8">restack / rdma-fabric-lab</div>
+      <div class="canvas-item copy mono" data-part="slide-number" style="--x:1094;--y:672;--w:122;--h:23;--size:14;--ink:#9FA6B8;--align:right">03 / 14</div>
+      <div class="canvas-item copy heavy" data-part="headline" style="--x:64;--y:107;--w:1152;--h:72;--size:55;--ink:#F3F4F8">cel1: an invented region with a real shape</div>
+      <div class="canvas-item copy" data-part="subhead" style="--x:66;--y:191;--w:1130;--h:44;--size:25;--ink:#B5BBCA">8 eight-rail GPU nodes, 8 rail leaves and 4 spines, joined by 128 cables.</div>
+      <svg class="canvas-item" data-part="fabric" style="--x:64;--y:248;--w:1152;--h:372" viewBox="0 0 1152 372" role="img" aria-label="The compute fabric of cel1: 4 spines over 8 rail leaves over 8 DGX nodes. Every leaf reaches every spine, and every node reaches every leaf.">
+<line x1="110" y1="176" x2="376" y2="44" stroke="#70C5D0" stroke-opacity=".5" stroke-width="1.6"/>
+<line x1="110" y1="176" x2="509" y2="44" stroke="#70C5D0" stroke-opacity=".5" stroke-width="1.6"/>
+<line x1="110" y1="176" x2="642" y2="44" stroke="#70C5D0" stroke-opacity=".5" stroke-width="1.6"/>
+<line x1="110" y1="176" x2="775" y2="44" stroke="#70C5D0" stroke-opacity=".5" stroke-width="1.6"/>
+<line x1="110" y1="312" x2="110" y2="176" stroke="#B2E879" stroke-opacity=".3" stroke-width="1"/>
+<line x1="243" y1="312" x2="110" y2="176" stroke="#B2E879" stroke-opacity=".3" stroke-width="1"/>
+<line x1="376" y1="312" x2="110" y2="176" stroke="#B2E879" stroke-opacity=".3" stroke-width="1"/>
+<line x1="509" y1="312" x2="110" y2="176" stroke="#B2E879" stroke-opacity=".3" stroke-width="1"/>
+<line x1="642" y1="312" x2="110" y2="176" stroke="#B2E879" stroke-opacity=".3" stroke-width="1"/>
+<line x1="775" y1="312" x2="110" y2="176" stroke="#B2E879" stroke-opacity=".3" stroke-width="1"/>
+<line x1="908" y1="312" x2="110" y2="176" stroke="#B2E879" stroke-opacity=".3" stroke-width="1"/>
+<line x1="1041" y1="312" x2="110" y2="176" stroke="#B2E879" stroke-opacity=".3" stroke-width="1"/>
+<line x1="243" y1="176" x2="376" y2="44" stroke="#70C5D0" stroke-opacity=".5" stroke-width="1.6"/>
+<line x1="243" y1="176" x2="509" y2="44" stroke="#70C5D0" stroke-opacity=".5" stroke-width="1.6"/>
+<line x1="243" y1="176" x2="642" y2="44" stroke="#70C5D0" stroke-opacity=".5" stroke-width="1.6"/>
+<line x1="243" y1="176" x2="775" y2="44" stroke="#70C5D0" stroke-opacity=".5" stroke-width="1.6"/>
+<line x1="110" y1="312" x2="243" y2="176" stroke="#B2E879" stroke-opacity=".3" stroke-width="1"/>
+<line x1="243" y1="312" x2="243" y2="176" stroke="#B2E879" stroke-opacity=".3" stroke-width="1"/>
+<line x1="376" y1="312" x2="243" y2="176" stroke="#B2E879" stroke-opacity=".3" stroke-width="1"/>
+<line x1="509" y1="312" x2="243" y2="176" stroke="#B2E879" stroke-opacity=".3" stroke-width="1"/>
+<line x1="642" y1="312" x2="243" y2="176" stroke="#B2E879" stroke-opacity=".3" stroke-width="1"/>
+<line x1="775" y1="312" x2="243" y2="176" stroke="#B2E879" stroke-opacity=".3" stroke-width="1"/>
+<line x1="908" y1="312" x2="243" y2="176" stroke="#B2E879" stroke-opacity=".3" stroke-width="1"/>
+<line x1="1041" y1="312" x2="243" y2="176" stroke="#B2E879" stroke-opacity=".3" stroke-width="1"/>
+<line x1="376" y1="176" x2="376" y2="44" stroke="#70C5D0" stroke-opacity=".5" stroke-width="1.6"/>
+<line x1="376" y1="176" x2="509" y2="44" stroke="#70C5D0" stroke-opacity=".5" stroke-width="1.6"/>
+<line x1="376" y1="176" x2="642" y2="44" stroke="#70C5D0" stroke-opacity=".5" stroke-width="1.6"/>
+<line x1="376" y1="176" x2="775" y2="44" stroke="#70C5D0" stroke-opacity=".5" stroke-width="1.6"/>
+<line x1="110" y1="312" x2="376" y2="176" stroke="#B2E879" stroke-opacity=".3" stroke-width="1"/>
+<line x1="243" y1="312" x2="376" y2="176" stroke="#B2E879" stroke-opacity=".3" stroke-width="1"/>
+<line x1="376" y1="312" x2="376" y2="176" stroke="#B2E879" stroke-opacity=".3" stroke-width="1"/>
+<line x1="509" y1="312" x2="376" y2="176" stroke="#B2E879" stroke-opacity=".3" stroke-width="1"/>
+<line x1="642" y1="312" x2="376" y2="176" stroke="#B2E879" stroke-opacity=".3" stroke-width="1"/>
+<line x1="775" y1="312" x2="376" y2="176" stroke="#B2E879" stroke-opacity=".3" stroke-width="1"/>
+<line x1="908" y1="312" x2="376" y2="176" stroke="#B2E879" stroke-opacity=".3" stroke-width="1"/>
+<line x1="1041" y1="312" x2="376" y2="176" stroke="#B2E879" stroke-opacity=".3" stroke-width="1"/>
+<line x1="509" y1="176" x2="376" y2="44" stroke="#70C5D0" stroke-opacity=".5" stroke-width="1.6"/>
+<line x1="509" y1="176" x2="509" y2="44" stroke="#70C5D0" stroke-opacity=".5" stroke-width="1.6"/>
+<line x1="509" y1="176" x2="642" y2="44" stroke="#70C5D0" stroke-opacity=".5" stroke-width="1.6"/>
+<line x1="509" y1="176" x2="775" y2="44" stroke="#70C5D0" stroke-opacity=".5" stroke-width="1.6"/>
+<line x1="110" y1="312" x2="509" y2="176" stroke="#B2E879" stroke-opacity=".3" stroke-width="1"/>
+<line x1="243" y1="312" x2="509" y2="176" stroke="#B2E879" stroke-opacity=".3" stroke-width="1"/>
+<line x1="376" y1="312" x2="509" y2="176" stroke="#B2E879" stroke-opacity=".3" stroke-width="1"/>
+<line x1="509" y1="312" x2="509" y2="176" stroke="#B2E879" stroke-opacity=".3" stroke-width="1"/>
+<line x1="642" y1="312" x2="509" y2="176" stroke="#B2E879" stroke-opacity=".3" stroke-width="1"/>
+<line x1="775" y1="312" x2="509" y2="176" stroke="#B2E879" stroke-opacity=".3" stroke-width="1"/>
+<line x1="908" y1="312" x2="509" y2="176" stroke="#B2E879" stroke-opacity=".3" stroke-width="1"/>
+<line x1="1041" y1="312" x2="509" y2="176" stroke="#B2E879" stroke-opacity=".3" stroke-width="1"/>
+<line x1="642" y1="176" x2="376" y2="44" stroke="#70C5D0" stroke-opacity=".5" stroke-width="1.6"/>
+<line x1="642" y1="176" x2="509" y2="44" stroke="#70C5D0" stroke-opacity=".5" stroke-width="1.6"/>
+<line x1="642" y1="176" x2="642" y2="44" stroke="#70C5D0" stroke-opacity=".5" stroke-width="1.6"/>
+<line x1="642" y1="176" x2="775" y2="44" stroke="#70C5D0" stroke-opacity=".5" stroke-width="1.6"/>
+<line x1="110" y1="312" x2="642" y2="176" stroke="#B2E879" stroke-opacity=".3" stroke-width="1"/>
+<line x1="243" y1="312" x2="642" y2="176" stroke="#B2E879" stroke-opacity=".3" stroke-width="1"/>
+<line x1="376" y1="312" x2="642" y2="176" stroke="#B2E879" stroke-opacity=".3" stroke-width="1"/>
+<line x1="509" y1="312" x2="642" y2="176" stroke="#B2E879" stroke-opacity=".3" stroke-width="1"/>
+<line x1="642" y1="312" x2="642" y2="176" stroke="#B2E879" stroke-opacity=".3" stroke-width="1"/>
+<line x1="775" y1="312" x2="642" y2="176" stroke="#B2E879" stroke-opacity=".3" stroke-width="1"/>
+<line x1="908" y1="312" x2="642" y2="176" stroke="#B2E879" stroke-opacity=".3" stroke-width="1"/>
+<line x1="1041" y1="312" x2="642" y2="176" stroke="#B2E879" stroke-opacity=".3" stroke-width="1"/>
+<line x1="775" y1="176" x2="376" y2="44" stroke="#70C5D0" stroke-opacity=".5" stroke-width="1.6"/>
+<line x1="775" y1="176" x2="509" y2="44" stroke="#70C5D0" stroke-opacity=".5" stroke-width="1.6"/>
+<line x1="775" y1="176" x2="642" y2="44" stroke="#70C5D0" stroke-opacity=".5" stroke-width="1.6"/>
+<line x1="775" y1="176" x2="775" y2="44" stroke="#70C5D0" stroke-opacity=".5" stroke-width="1.6"/>
+<line x1="110" y1="312" x2="775" y2="176" stroke="#B2E879" stroke-opacity=".3" stroke-width="1"/>
+<line x1="243" y1="312" x2="775" y2="176" stroke="#B2E879" stroke-opacity=".3" stroke-width="1"/>
+<line x1="376" y1="312" x2="775" y2="176" stroke="#B2E879" stroke-opacity=".3" stroke-width="1"/>
+<line x1="509" y1="312" x2="775" y2="176" stroke="#B2E879" stroke-opacity=".3" stroke-width="1"/>
+<line x1="642" y1="312" x2="775" y2="176" stroke="#B2E879" stroke-opacity=".3" stroke-width="1"/>
+<line x1="775" y1="312" x2="775" y2="176" stroke="#B2E879" stroke-opacity=".3" stroke-width="1"/>
+<line x1="908" y1="312" x2="775" y2="176" stroke="#B2E879" stroke-opacity=".3" stroke-width="1"/>
+<line x1="1041" y1="312" x2="775" y2="176" stroke="#B2E879" stroke-opacity=".3" stroke-width="1"/>
+<line x1="908" y1="176" x2="376" y2="44" stroke="#70C5D0" stroke-opacity=".5" stroke-width="1.6"/>
+<line x1="908" y1="176" x2="509" y2="44" stroke="#70C5D0" stroke-opacity=".5" stroke-width="1.6"/>
+<line x1="908" y1="176" x2="642" y2="44" stroke="#70C5D0" stroke-opacity=".5" stroke-width="1.6"/>
+<line x1="908" y1="176" x2="775" y2="44" stroke="#70C5D0" stroke-opacity=".5" stroke-width="1.6"/>
+<line x1="110" y1="312" x2="908" y2="176" stroke="#B2E879" stroke-opacity=".3" stroke-width="1"/>
+<line x1="243" y1="312" x2="908" y2="176" stroke="#B2E879" stroke-opacity=".3" stroke-width="1"/>
+<line x1="376" y1="312" x2="908" y2="176" stroke="#B2E879" stroke-opacity=".3" stroke-width="1"/>
+<line x1="509" y1="312" x2="908" y2="176" stroke="#B2E879" stroke-opacity=".3" stroke-width="1"/>
+<line x1="642" y1="312" x2="908" y2="176" stroke="#B2E879" stroke-opacity=".3" stroke-width="1"/>
+<line x1="775" y1="312" x2="908" y2="176" stroke="#B2E879" stroke-opacity=".3" stroke-width="1"/>
+<line x1="908" y1="312" x2="908" y2="176" stroke="#B2E879" stroke-opacity=".3" stroke-width="1"/>
+<line x1="1041" y1="312" x2="908" y2="176" stroke="#B2E879" stroke-opacity=".3" stroke-width="1"/>
+<line x1="1041" y1="176" x2="376" y2="44" stroke="#70C5D0" stroke-opacity=".5" stroke-width="1.6"/>
+<line x1="1041" y1="176" x2="509" y2="44" stroke="#70C5D0" stroke-opacity=".5" stroke-width="1.6"/>
+<line x1="1041" y1="176" x2="642" y2="44" stroke="#70C5D0" stroke-opacity=".5" stroke-width="1.6"/>
+<line x1="1041" y1="176" x2="775" y2="44" stroke="#70C5D0" stroke-opacity=".5" stroke-width="1.6"/>
+<line x1="110" y1="312" x2="1041" y2="176" stroke="#B2E879" stroke-opacity=".3" stroke-width="1"/>
+<line x1="243" y1="312" x2="1041" y2="176" stroke="#B2E879" stroke-opacity=".3" stroke-width="1"/>
+<line x1="376" y1="312" x2="1041" y2="176" stroke="#B2E879" stroke-opacity=".3" stroke-width="1"/>
+<line x1="509" y1="312" x2="1041" y2="176" stroke="#B2E879" stroke-opacity=".3" stroke-width="1"/>
+<line x1="642" y1="312" x2="1041" y2="176" stroke="#B2E879" stroke-opacity=".3" stroke-width="1"/>
+<line x1="775" y1="312" x2="1041" y2="176" stroke="#B2E879" stroke-opacity=".3" stroke-width="1"/>
+<line x1="908" y1="312" x2="1041" y2="176" stroke="#B2E879" stroke-opacity=".3" stroke-width="1"/>
+<line x1="1041" y1="312" x2="1041" y2="176" stroke="#B2E879" stroke-opacity=".3" stroke-width="1"/>
+<circle cx="376" cy="44" r="13" fill="#101218" stroke="#70C5D0" stroke-width="2"/>
+<text x="376" y="22" text-anchor="middle" font-size="13" fill="#9FA6B8" font-family="IBM Plex Mono, ui-monospace, Liberation Mono, monospace" paint-order="stroke" stroke="#0c0d12" stroke-width="5" stroke-linejoin="round">spine-01</text>
+<circle cx="509" cy="44" r="13" fill="#101218" stroke="#70C5D0" stroke-width="2"/>
+<text x="509" y="22" text-anchor="middle" font-size="13" fill="#9FA6B8" font-family="IBM Plex Mono, ui-monospace, Liberation Mono, monospace" paint-order="stroke" stroke="#0c0d12" stroke-width="5" stroke-linejoin="round">spine-02</text>
+<circle cx="642" cy="44" r="13" fill="#101218" stroke="#70C5D0" stroke-width="2"/>
+<text x="642" y="22" text-anchor="middle" font-size="13" fill="#9FA6B8" font-family="IBM Plex Mono, ui-monospace, Liberation Mono, monospace" paint-order="stroke" stroke="#0c0d12" stroke-width="5" stroke-linejoin="round">spine-03</text>
+<circle cx="775" cy="44" r="13" fill="#101218" stroke="#70C5D0" stroke-width="2"/>
+<text x="775" y="22" text-anchor="middle" font-size="13" fill="#9FA6B8" font-family="IBM Plex Mono, ui-monospace, Liberation Mono, monospace" paint-order="stroke" stroke="#0c0d12" stroke-width="5" stroke-linejoin="round">spine-04</text>
+<circle cx="110" cy="176" r="13" fill="#101218" stroke="#70C5D0" stroke-width="2"/>
+<text x="130" y="162" font-size="13" fill="#9FA6B8" font-family="IBM Plex Mono, ui-monospace, Liberation Mono, monospace" paint-order="stroke" stroke="#0c0d12" stroke-width="5" stroke-linejoin="round">leaf-r0</text>
+<rect x="95" y="301" width="30" height="22" fill="#101218" stroke="#B2E879" stroke-width="2"/>
+<text x="110" y="346" text-anchor="middle" font-size="13" fill="#9FA6B8" font-family="IBM Plex Mono, ui-monospace, Liberation Mono, monospace" paint-order="stroke" stroke="#0c0d12" stroke-width="5" stroke-linejoin="round">dgx-01</text>
+<circle cx="243" cy="176" r="13" fill="#101218" stroke="#70C5D0" stroke-width="2"/>
+<text x="263" y="162" font-size="13" fill="#9FA6B8" font-family="IBM Plex Mono, ui-monospace, Liberation Mono, monospace" paint-order="stroke" stroke="#0c0d12" stroke-width="5" stroke-linejoin="round">leaf-r1</text>
+<rect x="228" y="301" width="30" height="22" fill="#101218" stroke="#B2E879" stroke-width="2"/>
+<text x="243" y="346" text-anchor="middle" font-size="13" fill="#9FA6B8" font-family="IBM Plex Mono, ui-monospace, Liberation Mono, monospace" paint-order="stroke" stroke="#0c0d12" stroke-width="5" stroke-linejoin="round">dgx-02</text>
+<circle cx="376" cy="176" r="13" fill="#101218" stroke="#70C5D0" stroke-width="2"/>
+<text x="396" y="162" font-size="13" fill="#9FA6B8" font-family="IBM Plex Mono, ui-monospace, Liberation Mono, monospace" paint-order="stroke" stroke="#0c0d12" stroke-width="5" stroke-linejoin="round">leaf-r2</text>
+<rect x="361" y="301" width="30" height="22" fill="#101218" stroke="#B2E879" stroke-width="2"/>
+<text x="376" y="346" text-anchor="middle" font-size="13" fill="#9FA6B8" font-family="IBM Plex Mono, ui-monospace, Liberation Mono, monospace" paint-order="stroke" stroke="#0c0d12" stroke-width="5" stroke-linejoin="round">dgx-03</text>
+<circle cx="509" cy="176" r="13" fill="#101218" stroke="#70C5D0" stroke-width="2"/>
+<text x="529" y="162" font-size="13" fill="#9FA6B8" font-family="IBM Plex Mono, ui-monospace, Liberation Mono, monospace" paint-order="stroke" stroke="#0c0d12" stroke-width="5" stroke-linejoin="round">leaf-r3</text>
+<rect x="494" y="301" width="30" height="22" fill="#101218" stroke="#B2E879" stroke-width="2"/>
+<text x="509" y="346" text-anchor="middle" font-size="13" fill="#9FA6B8" font-family="IBM Plex Mono, ui-monospace, Liberation Mono, monospace" paint-order="stroke" stroke="#0c0d12" stroke-width="5" stroke-linejoin="round">dgx-04</text>
+<circle cx="642" cy="176" r="13" fill="#101218" stroke="#70C5D0" stroke-width="2"/>
+<text x="662" y="162" font-size="13" fill="#9FA6B8" font-family="IBM Plex Mono, ui-monospace, Liberation Mono, monospace" paint-order="stroke" stroke="#0c0d12" stroke-width="5" stroke-linejoin="round">leaf-r4</text>
+<rect x="627" y="301" width="30" height="22" fill="#101218" stroke="#B2E879" stroke-width="2"/>
+<text x="642" y="346" text-anchor="middle" font-size="13" fill="#9FA6B8" font-family="IBM Plex Mono, ui-monospace, Liberation Mono, monospace" paint-order="stroke" stroke="#0c0d12" stroke-width="5" stroke-linejoin="round">dgx-05</text>
+<circle cx="775" cy="176" r="13" fill="#101218" stroke="#70C5D0" stroke-width="2"/>
+<text x="795" y="162" font-size="13" fill="#9FA6B8" font-family="IBM Plex Mono, ui-monospace, Liberation Mono, monospace" paint-order="stroke" stroke="#0c0d12" stroke-width="5" stroke-linejoin="round">leaf-r5</text>
+<rect x="760" y="301" width="30" height="22" fill="#101218" stroke="#B2E879" stroke-width="2"/>
+<text x="775" y="346" text-anchor="middle" font-size="13" fill="#9FA6B8" font-family="IBM Plex Mono, ui-monospace, Liberation Mono, monospace" paint-order="stroke" stroke="#0c0d12" stroke-width="5" stroke-linejoin="round">dgx-06</text>
+<circle cx="908" cy="176" r="13" fill="#101218" stroke="#70C5D0" stroke-width="2"/>
+<text x="928" y="162" font-size="13" fill="#9FA6B8" font-family="IBM Plex Mono, ui-monospace, Liberation Mono, monospace" paint-order="stroke" stroke="#0c0d12" stroke-width="5" stroke-linejoin="round">leaf-r6</text>
+<rect x="893" y="301" width="30" height="22" fill="#101218" stroke="#B2E879" stroke-width="2"/>
+<text x="908" y="346" text-anchor="middle" font-size="13" fill="#9FA6B8" font-family="IBM Plex Mono, ui-monospace, Liberation Mono, monospace" paint-order="stroke" stroke="#0c0d12" stroke-width="5" stroke-linejoin="round">dgx-07</text>
+<circle cx="1041" cy="176" r="13" fill="#101218" stroke="#70C5D0" stroke-width="2"/>
+<text x="1061" y="162" font-size="13" fill="#9FA6B8" font-family="IBM Plex Mono, ui-monospace, Liberation Mono, monospace" paint-order="stroke" stroke="#0c0d12" stroke-width="5" stroke-linejoin="round">leaf-r7</text>
+<rect x="1026" y="301" width="30" height="22" fill="#101218" stroke="#B2E879" stroke-width="2"/>
+<text x="1041" y="346" text-anchor="middle" font-size="13" fill="#9FA6B8" font-family="IBM Plex Mono, ui-monospace, Liberation Mono, monospace" paint-order="stroke" stroke="#0c0d12" stroke-width="5" stroke-linejoin="round">dgx-08</text>
+</svg>
+    </div>
+    <details class="notes">
+      <summary>Speaker notes · 2:40–4:30 (1:50)</summary>
+      <p>The compute fabric is rail-optimized: one leaf per rail, 8 downlinks and 8 uplinks on each leaf, so no leaf is oversubscribed. 64 rail cables and 64 leaf to spine cables, 128 in an explicit list. No rule generates them, so the validator checks the cabling plan as written.</p>
+      <p>There are 8 DGX nodes, not 64, because one host cannot simulate more. The shape is what matters for the checks. The 3 control planes and the 2 PCIe GPU nodes have no fabric cable.</p>
+      <p>Sources</p>
+      <ul><li><a href="https://github.com/ziwon/rdma-fabric-lab/blob/main/docs/fleet.md">fleet.md</a></li><li><a href="https://github.com/ziwon/rdma-fabric-lab/blob/main/sites/cel1.yaml">cel1.yaml</a></li></ul>
+    </details>
+  </section>
+  <section id="slide-4" class="slide" aria-labelledby="title-4">
+    <h2 id="title-4" class="sr-only">One model renders everything else</h2>
+    <div class="frame">
+      <div class="canvas-item shape dot" data-part="signal-dot" style="--x:64;--y:49;--w:9;--h:9;--fill:#B2E879" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="section" style="--x:83;--y:43;--w:850;--h:24;--size:16;--ink:#9FA6B8">03 / ONE SOURCE</div>
+      <div class="canvas-item shape" data-part="rule" style="--x:64;--y:75;--w:1152;--h:1;--fill:#303545" aria-hidden="true"></div>
+      <div class="canvas-item shape" data-part="rule" style="--x:64;--y:654;--w:1152;--h:1;--fill:#303545" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="project-footer" style="--x:64;--y:672;--w:720;--h:23;--size:14;--ink:#9FA6B8">restack / rdma-fabric-lab</div>
+      <div class="canvas-item copy mono" data-part="slide-number" style="--x:1094;--y:672;--w:122;--h:23;--size:14;--ink:#9FA6B8;--align:right">04 / 14</div>
+      <div class="canvas-item copy heavy" data-part="headline" style="--x:64;--y:107;--w:1152;--h:72;--size:55;--ink:#F3F4F8">One model renders everything else</div>
+      <div class="canvas-item copy" data-part="subhead" style="--x:66;--y:191;--w:1130;--h:44;--size:25;--ink:#B5BBCA">Each output has a check that fails when it drifts from the model.</div>
+      <div class="canvas-item shape" data-part="model-panel" style="--x:64;--y:262;--w:330;--h:330;--fill:#15171F;--edge:#303545;--edge-width:1px" aria-hidden="true"></div>
+      <div class="canvas-item shape dot" data-part="signal-dot" style="--x:89;--y:290;--w:9;--h:9;--fill:#B2E879" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="model-status" style="--x:108;--y:283;--w:270;--h:27;--size:17;--ink:#B2E879">ONE SOURCE</div>
+      <div class="canvas-item copy mono" data-part="model-file" style="--x:89;--y:330;--w:290;--h:36;--size:24;--ink:#F3F4F8">sites/cel1.yaml</div>
+      <div class="canvas-item shape" data-part="rule" style="--x:89;--y:378;--w:280;--h:1;--fill:#303545" aria-hidden="true"></div>
+      <div class="canvas-item copy" data-part="model-item-0" style="--x:89;--y:398;--w:290;--h:34;--size:22;--ink:#E6E8EF">Hosts and node classes</div>
+      <div class="canvas-item copy" data-part="model-item-1" style="--x:89;--y:442;--w:290;--h:34;--size:22;--ink:#E6E8EF">Address plan</div>
+      <div class="canvas-item copy" data-part="model-item-2" style="--x:89;--y:486;--w:290;--h:34;--size:22;--ink:#E6E8EF">Fabric and cable list</div>
+      <div class="canvas-item copy" data-part="model-item-3" style="--x:89;--y:530;--w:290;--h:34;--size:22;--ink:#E6E8EF">Rail pod networks</div>
+      <div class="canvas-item copy mono" data-part="th-0" style="--x:430;--y:268;--w:284;--h:24;--size:16;--ink:#9FA6B8">RENDERED</div>
+      <div class="canvas-item copy mono" data-part="th-1" style="--x:730;--y:268;--w:470;--h:24;--size:16;--ink:#9FA6B8">USED BY</div>
+      <div class="canvas-item shape" data-part="rule" style="--x:430;--y:302;--w:786;--h:1;--fill:#303545" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="td-0-0" style="--x:430;--y:316;--w:284;--h:33;--size:21;--ink:#F3F4F8">Ansible inventory</div>
+      <div class="canvas-item copy" data-part="td-0-1" style="--x:730;--y:316;--w:470;--h:33;--size:21;--ink:#E6E8EF">kubeadm and the fleet playbooks</div>
+      <div class="canvas-item shape" data-part="rule" style="--x:430;--y:362;--w:786;--h:1;--fill:#303545" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="td-1-0" style="--x:430;--y:374;--w:284;--h:33;--size:21;--ink:#F3F4F8">Harness profile</div>
+      <div class="canvas-item copy" data-part="td-1-1" style="--x:730;--y:374;--w:470;--h:33;--size:21;--ink:#E6E8EF">One QEMU guest per host</div>
+      <div class="canvas-item shape" data-part="rule" style="--x:430;--y:420;--w:786;--h:1;--fill:#303545" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="td-2-0" style="--x:430;--y:432;--w:284;--h:33;--size:21;--ink:#F3F4F8">ibsim topology</div>
+      <div class="canvas-item copy" data-part="td-2-1" style="--x:730;--y:432;--w:470;--h:33;--size:21;--ink:#E6E8EF">OpenSM on the modeled fabric</div>
+      <div class="canvas-item shape" data-part="rule" style="--x:430;--y:478;--w:786;--h:1;--fill:#303545" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="td-3-0" style="--x:430;--y:490;--w:284;--h:33;--size:21;--ink:#F3F4F8">Rail network values</div>
+      <div class="canvas-item copy" data-part="td-3-1" style="--x:730;--y:490;--w:470;--h:33;--size:21;--ink:#E6E8EF">The Network Operator and its 8 pools</div>
+      <div class="canvas-item shape" data-part="rule" style="--x:430;--y:536;--w:786;--h:1;--fill:#303545" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="td-4-0" style="--x:430;--y:548;--w:284;--h:33;--size:21;--ink:#F3F4F8">NetBox objects</div>
+      <div class="canvas-item copy" data-part="td-4-1" style="--x:730;--y:548;--w:470;--h:33;--size:21;--ink:#E6E8EF">A NetBox kept equal to the model</div>
+      <div class="canvas-item shape" data-part="rule" style="--x:430;--y:594;--w:786;--h:1;--fill:#303545" aria-hidden="true"></div>
+    </div>
+    <details class="notes">
+      <summary>Speaker notes · 4:30–6:20 (1:50)</summary>
+      <p>The site model is the single source. From it the repository renders the Ansible inventory, the harness profile with one guest per host, the ibsim topology of the fabric, the Helm values of the rail networks, and the objects of NetBox.</p>
+      <p>Every rendered file has a check that fails when it differs from what the model renders, and the offline ones run in CI. Nothing reads the model back from a tool, so the validator keeps every guarantee it gives.</p>
+      <p>Sources</p>
+      <ul><li><a href="https://github.com/ziwon/rdma-fabric-lab/blob/main/docs/fleet.md">fleet.md</a></li><li><a href="https://github.com/ziwon/rdma-fabric-lab/blob/main/docs/adr/0008-netbox-from-the-site-model.md">0008-netbox-from-the-site-model.md</a></li><li><a href="https://github.com/ziwon/rdma-fabric-lab/blob/main/docs/adr/0005-track-b-fabric-simulation.md">0005-track-b-fabric-simulation.md</a></li></ul>
+    </details>
+  </section>
+  <section id="slide-5" class="slide" aria-labelledby="title-5">
+    <h2 id="title-5" class="sr-only">The validator rejects invalid plans</h2>
+    <div class="frame">
+      <div class="canvas-item shape dot" data-part="signal-dot" style="--x:64;--y:49;--w:9;--h:9;--fill:#B2E879" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="section" style="--x:83;--y:43;--w:850;--h:24;--size:16;--ink:#9FA6B8">04 / VALIDATE</div>
+      <div class="canvas-item shape" data-part="rule" style="--x:64;--y:75;--w:1152;--h:1;--fill:#303545" aria-hidden="true"></div>
+      <div class="canvas-item shape" data-part="rule" style="--x:64;--y:654;--w:1152;--h:1;--fill:#303545" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="project-footer" style="--x:64;--y:672;--w:720;--h:23;--size:14;--ink:#9FA6B8">restack / rdma-fabric-lab</div>
+      <div class="canvas-item copy mono" data-part="slide-number" style="--x:1094;--y:672;--w:122;--h:23;--size:14;--ink:#9FA6B8;--align:right">05 / 14</div>
+      <div class="canvas-item copy heavy" data-part="headline" style="--x:64;--y:107;--w:1152;--h:72;--size:55;--ink:#F3F4F8">The validator rejects invalid plans</div>
+      <div class="canvas-item copy" data-part="subhead" style="--x:66;--y:191;--w:1130;--h:44;--size:25;--ink:#B5BBCA">PyYAML, Ansible and NetBox would take each of these without a word.</div>
+      <div class="canvas-item shape dot" data-part="signal-dot" style="--x:66;--y:279;--w:8;--h:8;--fill:#B2E879" aria-hidden="true"></div>
+      <div class="canvas-item copy" data-part="bullet-0" style="--x:92;--y:268;--w:1114;--h:38;--size:26;--ink:#E6E8EF">A rail port cabled to the leaf of another rail.</div>
+      <div class="canvas-item shape dot" data-part="signal-dot" style="--x:66;--y:335;--w:8;--h:8;--fill:#B2E879" aria-hidden="true"></div>
+      <div class="canvas-item copy" data-part="bullet-1" style="--x:92;--y:324;--w:1114;--h:38;--size:26;--ink:#E6E8EF">Two ranges that overlap, or an address outside its network.</div>
+      <div class="canvas-item shape dot" data-part="signal-dot" style="--x:66;--y:391;--w:8;--h:8;--fill:#B2E879" aria-hidden="true"></div>
+      <div class="canvas-item copy" data-part="bullet-2" style="--x:92;--y:380;--w:1114;--h:38;--size:26;--ink:#E6E8EF">A port used twice, or a rail port without a cable.</div>
+      <div class="canvas-item shape dot" data-part="signal-dot" style="--x:66;--y:447;--w:8;--h:8;--fill:#B2E879" aria-hidden="true"></div>
+      <div class="canvas-item copy" data-part="bullet-3" style="--x:92;--y:436;--w:1114;--h:38;--size:26;--ink:#E6E8EF">A pod range too small for the nodes it must serve.</div>
+      <div class="canvas-item shape dot" data-part="signal-dot" style="--x:66;--y:503;--w:8;--h:8;--fill:#B2E879" aria-hidden="true"></div>
+      <div class="canvas-item copy" data-part="bullet-4" style="--x:92;--y:492;--w:1114;--h:38;--size:26;--ink:#E6E8EF">A key written twice in the YAML file.</div>
+      <div class="canvas-item shape" data-part="proof-strap" style="--x:65;--y:562;--w:1150;--h:58;--fill:#1C1F29;--edge:#303545;--edge-width:1px" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="proof-strap-text" style="--x:88;--y:580;--w:1100;--h:28;--size:19;--ink:#B2E879">One unit test per violation. Each fails if the validator misses it.</div>
+    </div>
+    <details class="notes">
+      <summary>Speaker notes · 6:20–8:20 (2:00)</summary>
+      <p>The validator reports each violation by name. The examples on the slide are real rules: a rail cabled to the wrong leaf, overlapping ranges, a port used twice, a rail pod range that does not fit its nodes in blocks, and a key that appears twice in the file, which PyYAML would silently resolve to the later value.</p>
+      <p>Each rule has a unit test that fails if the validator misses the violation. That is the same habit the scenarios follow later: a check counts only after it has failed once.</p>
+      <p>Sources</p>
+      <ul><li><a href="https://github.com/ziwon/rdma-fabric-lab/blob/main/docs/fleet.md">fleet.md</a></li><li><a href="https://github.com/ziwon/rdma-fabric-lab/blob/main/tests/unit/test_fleet_site.py">test_fleet_site.py</a></li><li><a href="https://github.com/ziwon/rdma-fabric-lab/blob/main/tests/unit/test_fleet_rail_networks.py">test_fleet_rail_networks.py</a></li></ul>
+    </details>
+  </section>
+  <section id="slide-6" class="slide" aria-labelledby="title-6">
+    <h2 id="title-6" class="sr-only">OpenSM on the modeled fabric</h2>
+    <div class="frame">
+      <div class="canvas-item shape dot" data-part="signal-dot" style="--x:64;--y:49;--w:9;--h:9;--fill:#B2E879" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="section" style="--x:83;--y:43;--w:850;--h:24;--size:16;--ink:#9FA6B8">05 / SIMULATE THE FABRIC</div>
+      <div class="canvas-item shape" data-part="rule" style="--x:64;--y:75;--w:1152;--h:1;--fill:#303545" aria-hidden="true"></div>
+      <div class="canvas-item shape" data-part="rule" style="--x:64;--y:654;--w:1152;--h:1;--fill:#303545" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="project-footer" style="--x:64;--y:672;--w:720;--h:23;--size:14;--ink:#9FA6B8">restack / rdma-fabric-lab</div>
+      <div class="canvas-item copy mono" data-part="slide-number" style="--x:1094;--y:672;--w:122;--h:23;--size:14;--ink:#9FA6B8;--align:right">06 / 14</div>
+      <div class="canvas-item copy heavy" data-part="headline" style="--x:64;--y:107;--w:1152;--h:72;--size:55;--ink:#F3F4F8">OpenSM on the modeled fabric</div>
+      <div class="canvas-item copy" data-part="subhead" style="--x:66;--y:191;--w:1130;--h:44;--size:25;--ink:#B5BBCA">ibsim carries the management datagrams. The real subnet manager routes with updn.</div>
+      <div class="canvas-item shape" data-part="rule" style="--x:65;--y:262;--w:1150;--h:1;--fill:#303545" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="layer-index-0" style="--x:68;--y:288;--w:58;--h:35;--size:20;--ink:#9FA6B8">01</div>
+      <div class="canvas-item copy mono" data-part="layer-name-0" style="--x:149;--y:288;--w:420;--h:30;--size:18;--ink:#9FA6B8">DISCOVER</div>
+      <div class="canvas-item copy" data-part="layer-detail-0" style="--x:552;--y:283;--w:660;--h:54;--size:28;--ink:#E6E8EF">OpenSM finds 12 switches and 64 HCA ports.</div>
+      <div class="canvas-item shape" data-part="rule" style="--x:65;--y:362;--w:1150;--h:1;--fill:#303545" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="layer-index-1" style="--x:68;--y:388;--w:58;--h:35;--size:20;--ink:#9FA6B8">02</div>
+      <div class="canvas-item copy mono" data-part="layer-name-1" style="--x:149;--y:388;--w:420;--h:30;--size:18;--ink:#9FA6B8">FAIL A LINK</div>
+      <div class="canvas-item copy" data-part="layer-detail-1" style="--x:552;--y:383;--w:660;--h:54;--size:28;--ink:#E6E8EF">13 routes used the failed link. All 13 moved.</div>
+      <div class="canvas-item shape" data-part="rule" style="--x:65;--y:462;--w:1150;--h:1;--fill:#303545" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="layer-index-2" style="--x:68;--y:488;--w:58;--h:35;--size:20;--ink:#9FA6B8">03</div>
+      <div class="canvas-item copy mono" data-part="layer-name-2" style="--x:149;--y:488;--w:420;--h:30;--size:18;--ink:#9FA6B8">RECOVER</div>
+      <div class="canvas-item copy" data-part="layer-detail-2" style="--x:552;--y:483;--w:660;--h:54;--size:28;--ink:#E6E8EF">All 76 LIDs answered. The baseline returned.</div>
+      <div class="canvas-item shape" data-part="rule" style="--x:65;--y:562;--w:1150;--h:1;--fill:#303545" aria-hidden="true"></div>
+      <div class="canvas-item copy" data-part="scope-note" style="--x:65;--y:590;--w:1145;--h:32;--size:21;--ink:#B5BBCA">A management simulation of ibsim and OpenSM, not of NDR hardware or firmware.</div>
+    </div>
+    <details class="notes">
+      <summary>Speaker notes · 8:20–10:30 (2:10)</summary>
+      <p>The ibsim topology is rendered from the cable list of the model. OpenSM, the real subnet manager, discovers it, assigns 76 LIDs and routes it with updn. The scenario then removes one leaf to spine link. 13 routes left through the two ports of that link, all 13 moved to other ports, every LID still answered, and the recovery restored the baseline.</p>
+      <p>This is the management plane only. It shows that the cabling plan gives the subnet manager a fabric it can route, and that a link failure is survivable on paper.</p>
+      <p>Sources</p>
+      <ul><li><a href="https://github.com/ziwon/rdma-fabric-lab/blob/main/docs/adr/0005-track-b-fabric-simulation.md">0005-track-b-fabric-simulation.md</a></li><li><a href="https://github.com/ziwon/rdma-fabric-lab/blob/main/tracks/b-ibsim/scenarios/b-04.yaml">b-04.yaml</a></li><li><a href="https://github.com/ziwon/rdma-fabric-lab/blob/main/docs/fleet.md">fleet.md</a></li></ul>
+    </details>
+  </section>
+  <section id="slide-7" class="slide" aria-labelledby="title-7">
+    <h2 id="title-7" class="sr-only">The real playbooks on 13 guests</h2>
+    <div class="frame">
+      <div class="canvas-item shape dot" data-part="signal-dot" style="--x:64;--y:49;--w:9;--h:9;--fill:#B2E879" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="section" style="--x:83;--y:43;--w:850;--h:24;--size:16;--ink:#9FA6B8">06 / SIMULATE THE CLUSTER</div>
+      <div class="canvas-item shape" data-part="rule" style="--x:64;--y:75;--w:1152;--h:1;--fill:#303545" aria-hidden="true"></div>
+      <div class="canvas-item shape" data-part="rule" style="--x:64;--y:654;--w:1152;--h:1;--fill:#303545" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="project-footer" style="--x:64;--y:672;--w:720;--h:23;--size:14;--ink:#9FA6B8">restack / rdma-fabric-lab</div>
+      <div class="canvas-item copy mono" data-part="slide-number" style="--x:1094;--y:672;--w:122;--h:23;--size:14;--ink:#9FA6B8;--align:right">07 / 14</div>
+      <div class="canvas-item copy heavy" data-part="headline" style="--x:64;--y:107;--w:1152;--h:72;--size:55;--ink:#F3F4F8">The real playbooks on 13 guests</div>
+      <div class="canvas-item copy" data-part="subhead" style="--x:66;--y:191;--w:1130;--h:44;--size:25;--ink:#B5BBCA">kubeadm, Cilium and the GPU Operator from the site inventory. A second run changes nothing.</div>
+      <div class="canvas-item copy mono" data-part="th-0" style="--x:64;--y:262;--w:484;--h:24;--size:16;--ink:#9FA6B8">SITE MODEL</div>
+      <div class="canvas-item copy mono" data-part="th-1" style="--x:564;--y:262;--w:636;--h:24;--size:16;--ink:#9FA6B8">SIMULATION</div>
+      <div class="canvas-item shape" data-part="rule" style="--x:64;--y:296;--w:1152;--h:1;--fill:#303545" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="td-0-0" style="--x:64;--y:310;--w:484;--h:33;--size:21;--ink:#F3F4F8">Bare-metal hosts, DGX OS 7</div>
+      <div class="canvas-item copy" data-part="td-0-1" style="--x:564;--y:310;--w:636;--h:33;--size:21;--ink:#E6E8EF">KVM guests, Ubuntu 24.04</div>
+      <div class="canvas-item shape" data-part="rule" style="--x:64;--y:356;--w:1152;--h:1;--fill:#303545" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="td-1-0" style="--x:64;--y:368;--w:484;--h:33;--size:21;--ink:#F3F4F8">8 GPUs per DGX node</div>
+      <div class="canvas-item copy" data-part="td-1-1" style="--x:564;--y:368;--w:636;--h:33;--size:21;--ink:#E6E8EF">No GPU. A stand-in runtime logs each call</div>
+      <div class="canvas-item shape" data-part="rule" style="--x:64;--y:414;--w:1152;--h:1;--fill:#303545" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="td-2-0" style="--x:64;--y:426;--w:484;--h:33;--size:21;--ink:#F3F4F8">InfiniBand rails on ConnectX</div>
+      <div class="canvas-item copy" data-part="td-2-1" style="--x:564;--y:426;--w:636;--h:33;--size:21;--ink:#E6E8EF">virtio NICs. The rails carry Ethernet</div>
+      <div class="canvas-item shape" data-part="rule" style="--x:64;--y:472;--w:1152;--h:1;--fill:#303545" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="td-3-0" style="--x:64;--y:484;--w:484;--h:33;--size:21;--ink:#F3F4F8">NICs renamed at provisioning</div>
+      <div class="canvas-item copy" data-part="td-3-1" style="--x:564;--y:484;--w:636;--h:33;--size:21;--ink:#E6E8EF">cloud-init renames each NIC by its MAC</div>
+      <div class="canvas-item shape" data-part="rule" style="--x:64;--y:530;--w:1152;--h:1;--fill:#303545" aria-hidden="true"></div>
+      <div class="canvas-item copy" data-part="scope-note" style="--x:65;--y:590;--w:1145;--h:32;--size:21;--ink:#E6E8EF">cel1-sim-baseline passed 20 of 20 checks from wiped guests.</div>
+    </div>
+    <details class="notes">
+      <summary>Speaker notes · 10:30–12:40 (2:10)</summary>
+      <p>One QEMU guest per host of the model, with one NIC per class interface under its model name. The same inventory and roles that would configure the hardware build a Kubernetes cluster on them, and a second run reports no change on any host.</p>
+      <p>The differences are listed, not hidden. There is no GPU, so a stand-in runtime logs each call and execs runc. The rails are virtio NICs that carry Ethernet. The scenario cel1-sim-baseline declares 20 checks, and run 20261115T164615Z passed all of them from wiped guests.</p>
+      <p>Sources</p>
+      <ul><li><a href="https://github.com/ziwon/rdma-fabric-lab/blob/main/docs/fleet.md">fleet.md</a></li><li><a href="https://github.com/ziwon/rdma-fabric-lab/blob/main/tracks/cel1/scenarios/cel1-sim-baseline.yaml">cel1-sim-baseline.yaml</a></li></ul>
+    </details>
+  </section>
+  <section id="slide-8" class="slide" aria-labelledby="title-8">
+    <h2 id="title-8" class="sr-only">Rail pod networks without hardware</h2>
+    <div class="frame">
+      <div class="canvas-item shape dot" data-part="signal-dot" style="--x:64;--y:49;--w:9;--h:9;--fill:#B2E879" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="section" style="--x:83;--y:43;--w:850;--h:24;--size:16;--ink:#9FA6B8">07 / RAIL NETWORKS</div>
+      <div class="canvas-item shape" data-part="rule" style="--x:64;--y:75;--w:1152;--h:1;--fill:#303545" aria-hidden="true"></div>
+      <div class="canvas-item shape" data-part="rule" style="--x:64;--y:654;--w:1152;--h:1;--fill:#303545" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="project-footer" style="--x:64;--y:672;--w:720;--h:23;--size:14;--ink:#9FA6B8">restack / rdma-fabric-lab</div>
+      <div class="canvas-item copy mono" data-part="slide-number" style="--x:1094;--y:672;--w:122;--h:23;--size:14;--ink:#9FA6B8;--align:right">08 / 14</div>
+      <div class="canvas-item copy heavy" data-part="headline" style="--x:64;--y:107;--w:1152;--h:72;--size:55;--ink:#F3F4F8">Rail pod networks without hardware</div>
+      <div class="canvas-item copy" data-part="subhead" style="--x:66;--y:191;--w:1130;--h:44;--size:25;--ink:#B5BBCA">The Network Operator’s device plugin, nv-ipam and ipoib-cni, rendered from the model.</div>
+      <div class="canvas-item shape dot" data-part="signal-dot" style="--x:66;--y:279;--w:8;--h:8;--fill:#B2E879" aria-hidden="true"></div>
+      <div class="canvas-item copy" data-part="bullet-0" style="--x:92;--y:268;--w:1114;--h:38;--size:26;--ink:#E6E8EF">8 IPoIB networks and 8 pools, one block of 16 addresses per node.</div>
+      <div class="canvas-item shape dot" data-part="signal-dot" style="--x:66;--y:337;--w:8;--h:8;--fill:#B2E879" aria-hidden="true"></div>
+      <div class="canvas-item copy" data-part="bullet-1" style="--x:92;--y:326;--w:1114;--h:38;--size:26;--ink:#E6E8EF">The RDMA resource registers on the 8 DGX nodes, with 0 devices.</div>
+      <div class="canvas-item shape dot" data-part="signal-dot" style="--x:66;--y:395;--w:8;--h:8;--fill:#B2E879" aria-hidden="true"></div>
+      <div class="canvas-item copy" data-part="bullet-2" style="--x:92;--y:384;--w:1114;--h:38;--size:26;--ink:#E6E8EF">A pod that asks for the resource stays Pending.</div>
+      <div class="canvas-item shape dot" data-part="signal-dot" style="--x:66;--y:453;--w:8;--h:8;--fill:#B2E879" aria-hidden="true"></div>
+      <div class="canvas-item copy" data-part="bullet-3" style="--x:92;--y:442;--w:1114;--h:38;--size:26;--ink:#E6E8EF">ipoib-cni refuses every Ethernet rail:</div>
+      <div class="canvas-item copy mono" data-part="error-line" style="--x:92;--y:500;--w:1100;--h:34;--size:22;--ink:#F2867A">master device is (device) not of type ipoib</div>
+      <div class="canvas-item copy" data-part="scope-note" style="--x:65;--y:578;--w:1145;--h:32;--size:21;--ink:#B5BBCA">The data path needs an InfiniBand port. That is the hardware phase.</div>
+    </div>
+    <details class="notes">
+      <summary>Speaker notes · 12:40–14:50 (2:10)</summary>
+      <p>The control plane of the rail networks runs in the simulation: the operator installs exactly three components on the 8 DGX guests, each pool gives each node a block of 16, and there is one network attachment per rail.</p>
+      <p>The data path cannot run, and the checks say so instead of faking it. The device plugin registers the resource with 0 devices because it reads RDMA devices from PCI functions only. A pod that asks for the resource stays Pending. ipoib-cni refuses an Ethernet master by its own check. Run 20261118T014617Z passed all 10 checks.</p>
+      <p>Sources</p>
+      <ul><li><a href="https://github.com/ziwon/rdma-fabric-lab/blob/main/docs/adr/0007-cel1-ipoib-pod-networks.md">0007-cel1-ipoib-pod-networks.md</a></li><li><a href="https://github.com/ziwon/rdma-fabric-lab/blob/main/tracks/cel1/scenarios/cel1-rail-networks.yaml">cel1-rail-networks.yaml</a></li><li><a href="https://github.com/ziwon/rdma-fabric-lab/blob/main/docs/fleet.md">fleet.md</a></li></ul>
+    </details>
+  </section>
+  <section id="slide-9" class="slide" aria-labelledby="title-9">
+    <h2 id="title-9" class="sr-only">The model in NetBox, kept equal</h2>
+    <div class="frame">
+      <div class="canvas-item shape dot" data-part="signal-dot" style="--x:64;--y:49;--w:9;--h:9;--fill:#B2E879" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="section" style="--x:83;--y:43;--w:850;--h:24;--size:16;--ink:#9FA6B8">08 / EXPORT</div>
+      <div class="canvas-item shape" data-part="rule" style="--x:64;--y:75;--w:1152;--h:1;--fill:#303545" aria-hidden="true"></div>
+      <div class="canvas-item shape" data-part="rule" style="--x:64;--y:654;--w:1152;--h:1;--fill:#303545" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="project-footer" style="--x:64;--y:672;--w:720;--h:23;--size:14;--ink:#9FA6B8">restack / rdma-fabric-lab</div>
+      <div class="canvas-item copy mono" data-part="slide-number" style="--x:1094;--y:672;--w:122;--h:23;--size:14;--ink:#9FA6B8;--align:right">09 / 14</div>
+      <div class="canvas-item copy heavy" data-part="headline" style="--x:64;--y:107;--w:1152;--h:72;--size:55;--ink:#F3F4F8">The model in NetBox, kept equal</div>
+      <div class="canvas-item copy" data-part="subhead" style="--x:66;--y:191;--w:1130;--h:44;--size:25;--ink:#B5BBCA">The model stays the source. The sync owns only the objects that carry its tag.</div>
+      <div class="canvas-item shape" data-part="rule" style="--x:64;--y:262;--w:1152;--h:1;--fill:#303545" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="result-kind-0" style="--x:66;--y:289;--w:300;--h:28;--size:17;--ink:#B2E879">SYNC</div>
+      <div class="canvas-item copy heavy" data-part="result-outcome-0" style="--x:369;--y:281;--w:836;--h:40;--size:29;--ink:#F3F4F8">1142 objects from nothing, then no change</div>
+      <div class="canvas-item copy" data-part="result-meaning-0" style="--x:369;--y:322;--w:836;--h:35;--size:23;--ink:#B5BBCA">25 devices, 861 interfaces, 21 prefixes, 95 addresses, 128 cables.</div>
+      <div class="canvas-item shape" data-part="rule" style="--x:64;--y:371;--w:1152;--h:1;--fill:#303545" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="result-kind-1" style="--x:66;--y:398;--w:300;--h:28;--size:17;--ink:#70C5D0">DRIFT</div>
+      <div class="canvas-item copy heavy" data-part="result-outcome-1" style="--x:369;--y:390;--w:836;--h:40;--size:29;--ink:#F3F4F8">Three hand-made changes found exactly</div>
+      <div class="canvas-item copy" data-part="result-meaning-1" style="--x:369;--y:431;--w:836;--h:35;--size:23;--ink:#B5BBCA">A deleted cable, an edited address and a stray address, all undone.</div>
+      <div class="canvas-item shape" data-part="rule" style="--x:64;--y:480;--w:1152;--h:1;--fill:#303545" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="result-kind-2" style="--x:66;--y:507;--w:300;--h:28;--size:17;--ink:#9FA6B8">TOPOLOGY</div>
+      <div class="canvas-item copy heavy" data-part="result-outcome-2" style="--x:369;--y:499;--w:836;--h:40;--size:29;--ink:#F3F4F8">Drawn in the layout of the model</div>
+      <div class="canvas-item copy" data-part="result-meaning-2" style="--x:369;--y:540;--w:836;--h:35;--size:23;--ink:#B5BBCA">netbox-topology-views places spines, leaves and nodes by tier.</div>
+    </div>
+    <details class="notes">
+      <summary>Speaker notes · 14:50–16:40 (1:50)</summary>
+      <p>A site that runs NetBox wants the same facts there. The export keeps the model as the source, because NetBox would accept an overlapping range or a rail cabled to the wrong leaf.</p>
+      <p>The sync owns only objects with its tag, so what people add by hand survives. The scenario makes three changes by hand and checks that the comparison names exactly those three and the next sync undoes them. Run 20261121T164015Z passed 9 of 9 checks.</p>
+      <p>Sources</p>
+      <ul><li><a href="https://github.com/ziwon/rdma-fabric-lab/blob/main/docs/adr/0008-netbox-from-the-site-model.md">0008-netbox-from-the-site-model.md</a></li><li><a href="https://github.com/ziwon/rdma-fabric-lab/blob/main/tracks/cel1/scenarios/cel1-netbox.yaml">cel1-netbox.yaml</a></li><li><a href="https://github.com/ziwon/rdma-fabric-lab/blob/main/docs/fleet.md">fleet.md</a></li></ul>
+    </details>
+  </section>
+  <section id="slide-10" class="slide" aria-labelledby="title-10">
+    <h2 id="title-10" class="sr-only">Every check must fail once</h2>
+    <div class="frame">
+      <div class="canvas-item shape dot" data-part="signal-dot" style="--x:64;--y:49;--w:9;--h:9;--fill:#B2E879" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="section" style="--x:83;--y:43;--w:850;--h:24;--size:16;--ink:#9FA6B8">09 / TRUST THE CHECKS</div>
+      <div class="canvas-item shape" data-part="rule" style="--x:64;--y:75;--w:1152;--h:1;--fill:#303545" aria-hidden="true"></div>
+      <div class="canvas-item shape" data-part="rule" style="--x:64;--y:654;--w:1152;--h:1;--fill:#303545" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="project-footer" style="--x:64;--y:672;--w:720;--h:23;--size:14;--ink:#9FA6B8">restack / rdma-fabric-lab</div>
+      <div class="canvas-item copy mono" data-part="slide-number" style="--x:1094;--y:672;--w:122;--h:23;--size:14;--ink:#9FA6B8;--align:right">10 / 14</div>
+      <div class="canvas-item copy heavy" data-part="headline" style="--x:64;--y:107;--w:1152;--h:72;--size:55;--ink:#F3F4F8">Every check must fail once</div>
+      <div class="canvas-item copy" data-part="subhead" style="--x:66;--y:191;--w:1130;--h:44;--size:25;--ink:#B5BBCA">A check that has never failed has not been shown to check anything.</div>
+      <div class="canvas-item shape" data-part="rule" style="--x:64;--y:267;--w:350;--h:2;--fill:#303545" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="step-number-0" style="--x:64;--y:291;--w:190;--h:45;--size:31;--ink:#9FA6B8">01</div>
+      <div class="canvas-item copy heavy" data-part="step-title-0" style="--x:64;--y:350;--w:378;--h:43;--size:31;--ink:#F3F4F8">Declare the check</div>
+      <div class="canvas-item copy" data-part="step-desc-0a" style="--x:64;--y:416;--w:376;--h:32;--size:21;--ink:#B5BBCA">Name the invariant</div>
+      <div class="canvas-item copy" data-part="step-desc-0b" style="--x:64;--y:450;--w:376;--h:32;--size:21;--ink:#B5BBCA">in the scenario spec.</div>
+      <div class="canvas-item shape" data-part="rule" style="--x:452;--y:267;--w:350;--h:2;--fill:#B2E879" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="step-number-1" style="--x:452;--y:291;--w:190;--h:45;--size:31;--ink:#B2E879">02</div>
+      <div class="canvas-item copy heavy" data-part="step-title-1" style="--x:452;--y:350;--w:378;--h:43;--size:31;--ink:#F3F4F8">Break one thing</div>
+      <div class="canvas-item copy" data-part="step-desc-1a" style="--x:452;--y:416;--w:376;--h:32;--size:21;--ink:#B5BBCA">The named check must fail,</div>
+      <div class="canvas-item copy" data-part="step-desc-1b" style="--x:452;--y:450;--w:376;--h:32;--size:21;--ink:#B5BBCA">then pass after the repair.</div>
+      <div class="canvas-item shape" data-part="rule" style="--x:840;--y:267;--w:350;--h:2;--fill:#303545" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="step-number-2" style="--x:840;--y:291;--w:190;--h:45;--size:31;--ink:#9FA6B8">03</div>
+      <div class="canvas-item copy heavy" data-part="step-title-2" style="--x:840;--y:350;--w:378;--h:43;--size:31;--ink:#F3F4F8">Keep the evidence</div>
+      <div class="canvas-item copy" data-part="step-desc-2a" style="--x:840;--y:416;--w:376;--h:32;--size:21;--ink:#B5BBCA">The manifest, the raw outputs</div>
+      <div class="canvas-item copy" data-part="step-desc-2b" style="--x:840;--y:450;--w:376;--h:32;--size:21;--ink:#B5BBCA">and both run IDs.</div>
+      <div class="canvas-item shape" data-part="proof-strap" style="--x:65;--y:539;--w:1150;--h:61;--fill:#1C1F29;--edge:#303545;--edge-width:1px" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="proof-strap-text" style="--x:88;--y:558;--w:1100;--h:28;--size:19;--ink:#B2E879">35 deliberate breaks in three scripts: 20 + 7 + 8</div>
+    </div>
+    <details class="notes">
+      <summary>Speaker notes · 16:40–18:30 (1:50)</summary>
+      <p>A rehearsal is only worth its checks. Every check of every scenario must fail on at least one deliberate break and pass after the repair. A break changes one thing, and the run must end failed with the named checks failed, not with any nonzero exit.</p>
+      <p>The break scripts of the Kubernetes RDMA scenarios, the rail networks and NetBox hold 20, 7 and 8 breaks. A break run is marked in its manifest, so the report of the latest results leaves it out.</p>
+      <p>Sources</p>
+      <ul><li><a href="https://github.com/ziwon/rdma-fabric-lab/blob/main/docs/adr/0003-results-and-breaks.md">0003-results-and-breaks.md</a></li><li><a href="https://github.com/ziwon/rdma-fabric-lab/blob/main/tests/integration/qemu-lab/breaks-k8s-rdma.sh">breaks-k8s-rdma.sh</a></li><li><a href="https://github.com/ziwon/rdma-fabric-lab/blob/main/tests/integration/qemu-lab/breaks-cel1-rails.sh">breaks-cel1-rails.sh</a></li><li><a href="https://github.com/ziwon/rdma-fabric-lab/blob/main/tests/integration/qemu-lab/breaks-cel1-netbox.sh">breaks-cel1-netbox.sh</a></li></ul>
+    </details>
+  </section>
+  <section id="slide-11" class="slide" aria-labelledby="title-11">
+    <h2 id="title-11" class="sr-only">What the rehearsal caught</h2>
+    <div class="frame">
+      <div class="canvas-item shape dot" data-part="signal-dot" style="--x:64;--y:49;--w:9;--h:9;--fill:#B2E879" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="section" style="--x:83;--y:43;--w:850;--h:24;--size:16;--ink:#9FA6B8">10 / FINDINGS</div>
+      <div class="canvas-item shape" data-part="rule" style="--x:64;--y:75;--w:1152;--h:1;--fill:#303545" aria-hidden="true"></div>
+      <div class="canvas-item shape" data-part="rule" style="--x:64;--y:654;--w:1152;--h:1;--fill:#303545" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="project-footer" style="--x:64;--y:672;--w:720;--h:23;--size:14;--ink:#9FA6B8">restack / rdma-fabric-lab</div>
+      <div class="canvas-item copy mono" data-part="slide-number" style="--x:1094;--y:672;--w:122;--h:23;--size:14;--ink:#9FA6B8;--align:right">11 / 14</div>
+      <div class="canvas-item copy heavy" data-part="headline" style="--x:64;--y:107;--w:1152;--h:72;--size:55;--ink:#F3F4F8">What the rehearsal caught</div>
+      <div class="canvas-item copy" data-part="subhead" style="--x:66;--y:191;--w:1130;--h:44;--size:25;--ink:#B5BBCA">Each was found on guests, before any hardware was involved.</div>
+      <div class="canvas-item shape dot" data-part="signal-dot" style="--x:66;--y:279;--w:8;--h:8;--fill:#B2E879" aria-hidden="true"></div>
+      <div class="canvas-item copy" data-part="bullet-0" style="--x:92;--y:268;--w:1114;--h:38;--size:26;--ink:#E6E8EF">A pod created at boot started without its second network, and no error.</div>
+      <div class="canvas-item shape dot" data-part="signal-dot" style="--x:66;--y:341;--w:8;--h:8;--fill:#B2E879" aria-hidden="true"></div>
+      <div class="canvas-item copy" data-part="bullet-1" style="--x:92;--y:330;--w:1114;--h:38;--size:26;--ink:#E6E8EF">A restarted Cilium agent could not reach the API through the ClusterIP.</div>
+      <div class="canvas-item shape dot" data-part="signal-dot" style="--x:66;--y:403;--w:8;--h:8;--fill:#B2E879" aria-hidden="true"></div>
+      <div class="canvas-item copy" data-part="bullet-2" style="--x:92;--y:392;--w:1114;--h:38;--size:26;--ink:#E6E8EF">The RDMA device plugin finds devices only on PCI functions.</div>
+      <div class="canvas-item shape dot" data-part="signal-dot" style="--x:66;--y:465;--w:8;--h:8;--fill:#B2E879" aria-hidden="true"></div>
+      <div class="canvas-item copy" data-part="bullet-3" style="--x:92;--y:454;--w:1114;--h:38;--size:26;--ink:#E6E8EF">Its DaemonSet schedules nowhere without NFD’s Mellanox label.</div>
+      <div class="canvas-item shape dot" data-part="signal-dot" style="--x:66;--y:527;--w:8;--h:8;--fill:#B2E879" aria-hidden="true"></div>
+      <div class="canvas-item copy" data-part="bullet-4" style="--x:92;--y:516;--w:1114;--h:38;--size:26;--ink:#E6E8EF">The Whereabouts daemon ignores SIGTERM, so each reboot waits 90 s.</div>
+    </div>
+    <details class="notes">
+      <summary>Speaker notes · 18:30–20:40 (2:10)</summary>
+      <p>Five findings, each with its evidence in the repository. With the primary CNI’s file in the directory containerd reads, a pod created right after a boot ran with eth0 only, so the lab moved that file. A restarted Cilium agent lost the API when the default route sat on another NIC, so the agent now uses the API address itself.</p>
+      <p>The device plugin reads RDMA devices from PCI functions, so Soft-RoCE cannot stand in for an HCA. Its DaemonSet needs the NFD label of a Mellanox PCI device. The Whereabouts daemon container does not stop on SIGTERM, and systemd kills it after 90 s at every reboot.</p>
+      <p>Sources</p>
+      <ul><li><a href="https://github.com/ziwon/rdma-fabric-lab/blob/main/docs/adr/0004-track-a-pods-and-net1.md">0004-track-a-pods-and-net1.md</a></li><li><a href="https://github.com/ziwon/rdma-fabric-lab/blob/main/docs/adr/0001-kubernetes-stack.md">0001-kubernetes-stack.md</a></li><li><a href="https://github.com/ziwon/rdma-fabric-lab/blob/main/docs/adr/0007-cel1-ipoib-pod-networks.md">0007-cel1-ipoib-pod-networks.md</a></li><li><a href="https://github.com/ziwon/rdma-fabric-lab/blob/main/docs/troubleshooting.md">troubleshooting.md</a></li><li><a href="https://github.com/ziwon/rdma-fabric-lab/blob/main/docs/fleet.md">fleet.md</a></li></ul>
+    </details>
+  </section>
+  <section id="slide-12" class="slide" aria-labelledby="title-12">
+    <h2 id="title-12" class="sr-only">What only hardware can show</h2>
+    <div class="frame">
+      <div class="canvas-item shape dot" data-part="signal-dot" style="--x:64;--y:49;--w:9;--h:9;--fill:#B2E879" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="section" style="--x:83;--y:43;--w:850;--h:24;--size:16;--ink:#9FA6B8">11 / LIMITS</div>
+      <div class="canvas-item shape" data-part="rule" style="--x:64;--y:75;--w:1152;--h:1;--fill:#303545" aria-hidden="true"></div>
+      <div class="canvas-item shape" data-part="rule" style="--x:64;--y:654;--w:1152;--h:1;--fill:#303545" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="project-footer" style="--x:64;--y:672;--w:720;--h:23;--size:14;--ink:#9FA6B8">restack / rdma-fabric-lab</div>
+      <div class="canvas-item copy mono" data-part="slide-number" style="--x:1094;--y:672;--w:122;--h:23;--size:14;--ink:#9FA6B8;--align:right">12 / 14</div>
+      <div class="canvas-item copy heavy" data-part="headline" style="--x:64;--y:107;--w:1152;--h:72;--size:55;--ink:#F3F4F8">What only hardware can show</div>
+      <div class="canvas-item copy" data-part="subhead" style="--x:66;--y:191;--w:1130;--h:44;--size:25;--ink:#B5BBCA">The simulation rails carry Ethernet. Nothing here is an InfiniBand data path.</div>
+      <div class="canvas-item shape dot" data-part="signal-dot" style="--x:66;--y:287;--w:8;--h:8;--fill:#B2E879" aria-hidden="true"></div>
+      <div class="canvas-item copy" data-part="bullet-0" style="--x:92;--y:276;--w:1114;--h:38;--size:26;--ink:#E6E8EF">IPoIB interfaces in pods, and traffic on the rails.</div>
+      <div class="canvas-item shape dot" data-part="signal-dot" style="--x:66;--y:351;--w:8;--h:8;--fill:#B2E879" aria-hidden="true"></div>
+      <div class="canvas-item copy" data-part="bullet-1" style="--x:92;--y:340;--w:1114;--h:38;--size:26;--ink:#E6E8EF">An RDMA device in a pod through the device plugin.</div>
+      <div class="canvas-item shape dot" data-part="signal-dot" style="--x:66;--y:415;--w:8;--h:8;--fill:#B2E879" aria-hidden="true"></div>
+      <div class="canvas-item copy" data-part="bullet-2" style="--x:92;--y:404;--w:1114;--h:38;--size:26;--ink:#E6E8EF">The real NVIDIA container toolkit and GPU Operator operands.</div>
+      <div class="canvas-item shape dot" data-part="signal-dot" style="--x:66;--y:479;--w:8;--h:8;--fill:#B2E879" aria-hidden="true"></div>
+      <div class="canvas-item copy" data-part="bullet-3" style="--x:92;--y:468;--w:1114;--h:38;--size:26;--ink:#E6E8EF">NDR links, firmware and any performance number.</div>
+      <div class="canvas-item copy" data-part="scope-note" style="--x:65;--y:560;--w:1145;--h:32;--size:21;--ink:#E6E8EF">Each stays not_run in the repository until a run on hardware exists.</div>
+    </div>
+    <details class="notes">
+      <summary>Speaker notes · 20:40–22:20 (1:40)</summary>
+      <p>Be exact about the boundary. IPoIB attaches only to a port whose link layer is InfiniBand, and no guest has one. The device plugin exposes no device without a PCI function. There is no GPU, so the operator creates no operand. Nothing in the talk is a throughput or latency result.</p>
+      <p>The repository lists these items as not_run with the reason for each, and the result kinds keep a simulation from being read as a hardware measurement.</p>
+      <p>Sources</p>
+      <ul><li><a href="https://github.com/ziwon/rdma-fabric-lab/blob/main/docs/fleet.md">fleet.md</a></li><li><a href="https://github.com/ziwon/rdma-fabric-lab/blob/main/docs/adr/0007-cel1-ipoib-pod-networks.md">0007-cel1-ipoib-pod-networks.md</a></li><li><a href="https://github.com/ziwon/rdma-fabric-lab/blob/main/docs/adr/0003-results-and-breaks.md">0003-results-and-breaks.md</a></li></ul>
+    </details>
+  </section>
+  <section id="slide-13" class="slide" aria-labelledby="title-13">
+    <h2 id="title-13" class="sr-only">Applying it to another site</h2>
+    <div class="frame">
+      <div class="canvas-item shape dot" data-part="signal-dot" style="--x:64;--y:49;--w:9;--h:9;--fill:#B2E879" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="section" style="--x:83;--y:43;--w:850;--h:24;--size:16;--ink:#9FA6B8">12 / YOUR SITE</div>
+      <div class="canvas-item shape" data-part="rule" style="--x:64;--y:75;--w:1152;--h:1;--fill:#303545" aria-hidden="true"></div>
+      <div class="canvas-item shape" data-part="rule" style="--x:64;--y:654;--w:1152;--h:1;--fill:#303545" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="project-footer" style="--x:64;--y:672;--w:720;--h:23;--size:14;--ink:#9FA6B8">restack / rdma-fabric-lab</div>
+      <div class="canvas-item copy mono" data-part="slide-number" style="--x:1094;--y:672;--w:122;--h:23;--size:14;--ink:#9FA6B8;--align:right">13 / 14</div>
+      <div class="canvas-item copy heavy" data-part="headline" style="--x:64;--y:107;--w:1152;--h:72;--size:55;--ink:#F3F4F8">Applying it to another site</div>
+      <div class="canvas-item copy" data-part="subhead" style="--x:66;--y:191;--w:1130;--h:44;--size:25;--ink:#B5BBCA">Another site gives the same code only its own files.</div>
+      <div class="canvas-item shape" data-part="rule" style="--x:64;--y:267;--w:350;--h:2;--fill:#303545" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="step-number-0" style="--x:64;--y:291;--w:190;--h:45;--size:31;--ink:#9FA6B8">01</div>
+      <div class="canvas-item copy heavy" data-part="step-title-0" style="--x:64;--y:350;--w:378;--h:43;--size:31;--ink:#F3F4F8">Write the model</div>
+      <div class="canvas-item copy" data-part="step-desc-0a" style="--x:64;--y:416;--w:376;--h:32;--size:21;--ink:#B5BBCA">Hosts, addresses, the fabric</div>
+      <div class="canvas-item copy" data-part="step-desc-0b" style="--x:64;--y:450;--w:376;--h:32;--size:21;--ink:#B5BBCA">and the cable list.</div>
+      <div class="canvas-item shape" data-part="rule" style="--x:452;--y:267;--w:350;--h:2;--fill:#B2E879" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="step-number-1" style="--x:452;--y:291;--w:190;--h:45;--size:31;--ink:#B2E879">02</div>
+      <div class="canvas-item copy heavy" data-part="step-title-1" style="--x:452;--y:350;--w:378;--h:43;--size:31;--ink:#F3F4F8">Validate and render</div>
+      <div class="canvas-item copy" data-part="step-desc-1a" style="--x:452;--y:416;--w:376;--h:32;--size:21;--ink:#B5BBCA">Inventory, topology, values</div>
+      <div class="canvas-item copy" data-part="step-desc-1b" style="--x:452;--y:450;--w:376;--h:32;--size:21;--ink:#B5BBCA">and NetBox objects.</div>
+      <div class="canvas-item shape" data-part="rule" style="--x:840;--y:267;--w:350;--h:2;--fill:#303545" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="step-number-2" style="--x:840;--y:291;--w:190;--h:45;--size:31;--ink:#9FA6B8">03</div>
+      <div class="canvas-item copy heavy" data-part="step-title-2" style="--x:840;--y:350;--w:378;--h:43;--size:31;--ink:#F3F4F8">Rehearse</div>
+      <div class="canvas-item copy" data-part="step-desc-2a" style="--x:840;--y:416;--w:376;--h:32;--size:21;--ink:#B5BBCA">Guests for the cluster,</div>
+      <div class="canvas-item copy" data-part="step-desc-2b" style="--x:840;--y:450;--w:376;--h:32;--size:21;--ink:#B5BBCA">ibsim for the fabric.</div>
+      <div class="canvas-item shape" data-part="proof-strap" style="--x:65;--y:539;--w:1150;--h:61;--fill:#1C1F29;--edge:#303545;--edge-width:1px" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="proof-strap-text" style="--x:88;--y:558;--w:1100;--h:28;--size:19;--ink:#B2E879">site model  /  validator  /  rendered files  /  simulation runs</div>
+    </div>
+    <details class="notes">
+      <summary>Speaker notes · 22:20–23:40 (1:20)</summary>
+      <p>The model of another site lives outside the repository. The validator and the renderer take its path. Real MACs and PCI paths stay out of the model, because provisioning owns them.</p>
+      <p>One limit is open: the Helm values of a site cannot come from outside the repository yet, so another site borrows the cel1 environment name and is held to simulation guests by a gate.</p>
+      <p>Sources</p>
+      <ul><li><a href="https://github.com/ziwon/rdma-fabric-lab/blob/main/docs/fleet.md">fleet.md</a></li><li><a href="https://github.com/ziwon/rdma-fabric-lab/blob/main/docs/runbook.md">runbook.md</a></li></ul>
+    </details>
+  </section>
+  <section id="slide-14" class="slide" aria-labelledby="title-14">
+    <h2 id="title-14" class="sr-only">Rehearse the facts before the racks arrive.</h2>
+    <div class="frame">
+      <div class="canvas-item shape dot" data-part="signal-dot" style="--x:64;--y:49;--w:9;--h:9;--fill:#B2E879" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="section" style="--x:83;--y:43;--w:850;--h:24;--size:16;--ink:#9FA6B8">13 / TAKEAWAY</div>
+      <div class="canvas-item shape" data-part="rule" style="--x:64;--y:75;--w:1152;--h:1;--fill:#303545" aria-hidden="true"></div>
+      <div class="canvas-item shape" data-part="rule" style="--x:64;--y:654;--w:1152;--h:1;--fill:#303545" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="project-footer" style="--x:64;--y:672;--w:720;--h:23;--size:14;--ink:#9FA6B8">restack / rdma-fabric-lab</div>
+      <div class="canvas-item copy mono" data-part="slide-number" style="--x:1094;--y:672;--w:122;--h:23;--size:14;--ink:#9FA6B8;--align:right">14 / 14</div>
+      <div class="canvas-item copy heavy" data-part="final-head-1" style="--x:64;--y:144;--w:1152;--h:94;--size:72;--ink:#F3F4F8">Rehearse the facts</div>
+      <div class="canvas-item copy heavy" data-part="final-head-2" style="--x:64;--y:232;--w:1152;--h:94;--size:72;--ink:#B2E879">before the racks arrive.</div>
+      <div class="canvas-item copy" data-part="final-principle" style="--x:67;--y:371;--w:1149;--h:41;--size:29;--ink:#E6E8EF">One checked model renders the inventory, the fabric and the DCIM.</div>
+      <div class="canvas-item copy" data-part="final-principle-2" style="--x:67;--y:421;--w:1149;--h:41;--size:29;--ink:#B5BBCA">Simulations run the real tools and say what they cannot show.</div>
+      <div class="canvas-item shape" data-part="rule" style="--x:66;--y:504;--w:1147;--h:1;--fill:#303545" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="repository-label" style="--x:67;--y:533;--w:1000;--h:25;--size:16;--ink:#9FA6B8">LAB &amp; REPRODUCTION</div>
+      <div class="canvas-item copy mono" data-part="repository-url" style="--x:67;--y:569;--w:1110;--h:38;--size:25;--ink:#70C5D0">github.com/ziwon/rdma-fabric-lab</div>
+    </div>
+    <details class="notes">
+      <summary>Speaker notes · 23:40–25:00 (1:20)</summary>
+      <p>Close with the transfer: keep the facts of a region in one checked model, render everything else from it, and run the real tools against simulations that state their limits. Point to the repository, its runbook and the learning site for reproduction.</p>
+      <p>The presentation is a proposal draft and makes no claim of conference acceptance.</p>
+      <p>Sources</p>
+      <ul><li><a href="https://github.com/ziwon/rdma-fabric-lab">rdma-fabric-lab</a></li><li><a href="https://github.com/ziwon/rdma-fabric-lab/blob/main/docs/verification.md">verification.md</a></li><li><a href="https://github.com/ziwon/rdma-fabric-lab/blob/main/docs/runbook.md">runbook.md</a></li><li><a href="https://github.com/ziwon/rdma-fabric-lab/blob/main/docs/fleet.md">fleet.md</a></li></ul>
+    </details>
+  </section>
+</main>
+<script>
+  const byId = (id) => document.getElementById(id);
+  const deck = byId('deck');
+  const slides = [...deck.querySelectorAll('.slide')];
+  const previous = byId('previous');
+  const next = byId('next');
+  const count = byId('count');
+  const fullscreen = byId('fullscreen');
+  let current = 0;
+  const fromHash = () => {
+    const match = /^#slide-(\d+)$/.exec(location.hash);
+    const index = match ? Number(match[1]) - 1 : 0;
+    return index >= 0 && index < slides.length ? index : 0;
+  };
+  const select = (index, updateHash = false) => {
+    current = Math.max(0, Math.min(index, slides.length - 1));
+    slides.forEach((slide, i) => { slide.hidden = i !== current; });
+    count.value = (current + 1) + ' / ' + slides.length;
+    previous.setAttribute('aria-disabled', current === 0);
+    next.setAttribute('aria-disabled', current === slides.length - 1);
+    if (updateHash && location.hash !== '#' + slides[current].id) {
+      history.pushState(null, '', '#' + slides[current].id);
+    }
+  };
+  previous.addEventListener('click', () => select(current - 1, true));
+  next.addEventListener('click', () => select(current + 1, true));
+  const restore = () => select(fromHash());
+  window.addEventListener('hashchange', restore);
+  window.addEventListener('popstate', restore);
+  const toggleFull = async () => {
+    try {
+      if (document.fullscreenElement) await document.exitFullscreen();
+      else if (document.fullscreenEnabled) await deck.requestFullscreen();
+    } catch {
+      // The browser can block fullscreen, e.g. inside an embed.
+    }
+  };
+  fullscreen.addEventListener('click', toggleFull);
+  document.addEventListener('keydown', (event) => {
+    const key = event.key;
+    if (event.defaultPrevented || event.ctrlKey || event.metaKey || event.altKey ||
+        event.target.closest('input, textarea, select, [contenteditable]') ||
+        (key === ' ' && event.target.closest('a, button, summary'))) return;
+    if (key === 'ArrowLeft' || key === 'PageUp') select(current - 1, true);
+    else if (key === 'ArrowRight' || key === 'PageDown' || key === ' ') select(current + 1, true);
+    else if (key === 'Home') select(0, true);
+    else if (key === 'End') select(slides.length - 1, true);
+    else if (key.toLowerCase() === 'f') toggleFull();
+    else return;
+    event.preventDefault();
+  });
+  fullscreen.hidden = !document.fullscreenEnabled;
+  select(fromHash());
+  byId('controls').hidden = false;
+</script>
+</body>
+</html>

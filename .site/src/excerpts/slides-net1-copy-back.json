@@ -1,0 +1,8 @@
+{
+  "id": "slides-net1-copy-back",
+  "run": "20261125T121324Z",
+  "source": ".lab/evidence/slides/runs/20261125T121324Z/a-soft-roce/k8s-multus-net1/summary.md",
+  "lines": "5-7,17-18",
+  "format": "md-table",
+  "text": "| check | status | failure class | detail |\n|---|---|---|---|\n| cni-dir-holds-only-multus | failed | assertion-failed | worker2: /etc/cni/net.d holds the CNI files ['00-multus.conf', '05-cilium.conflist'], want 00-multus.conf alone |\n| pod-at-boot-waits-for-multus | failed | assertion-failed | net1-client: containerd reported a network in 25 of 25 samples while 00-multus.conf was absent, first at boot+6.1 s with ['05-cilium.conflist', '.kubernetes-cni-keep', 'whereabouts.d']; net1-client: containerd began the pod's sandbox at boot+16.4 s, before Multus wrote its file at boot+18.7 s; net1-client eth0: annotation {}, inside 10.244.1.85; net1-client net1: annotation {}, inside None; worker2: /etc/cni/net.d holds the CNI files ['00-multus.conf', '05-cilium.conflist'], want 00-multus.conf alone |\n| new-pod-after-reboot-gets-net1 | failed | assertion-failed | net1-client has no net1 address |"
+}
