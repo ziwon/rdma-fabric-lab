@@ -94,6 +94,10 @@ The first break, Cilium's file put back, shows the failure the layout prevents. 
 
 <Excerpt id="a-multus-cilium-copy" />
 
+The same break was repeated on 2026-11-25 on a cluster built from wiped guests, for the talk deck in `docs/slides`. Run `20261125T121324Z` failed the same three checks, and run `20261125T121559Z` passed after the copy was removed.
+
+<Excerpt id="slides-net1-break" />
+
 ## Questions to think about
 
 - The Multus daemon deletes `00-multus.conf` when it stops. With Cilium's file still in `/etc/cni/net.d`, what does containerd do for a pod created in the 18 seconds after a boot, and why is there no error?

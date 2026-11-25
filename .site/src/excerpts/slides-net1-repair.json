@@ -1,0 +1,8 @@
+{
+  "id": "slides-net1-repair",
+  "run": "20261125T121559Z",
+  "source": ".lab/evidence/slides/runs/20261125T121559Z/a-soft-roce/k8s-multus-net1/summary.md",
+  "lines": "5-7,17-18",
+  "format": "md-table",
+  "text": "| check | status | failure class | detail |\n|---|---|---|---|\n| cni-dir-holds-only-multus | passed |  | cp1 /etc/cni/net.d holds 00-multus.conf alone, delegate /etc/cni/multus/net.d/05-cilium.conflist; worker1 /etc/cni/net.d holds 00-multus.conf alone, delegate /etc/cni/multus/net.d/05-cilium.conflist; worker2 /etc/cni/net.d holds 00-multus.conf alone, delegate /etc/cni/multus/net.d/05-cilium.conflist |\n| pod-at-boot-waits-for-multus | passed |  | worker2 booted c69d251a -> fa47f8dc; net1-client created by boot+6.2 s; containerd had no network in all 25 samples until 00-multus.conf appeared at boot+18.7 s; sandbox began at boot+20.5 s; net1-client on worker2: eth0 10.244.1.114 from cilium, net1 10.77.0.101; worker2 /etc/cni/net.d holds 00-multus.conf alone, delegate /etc/cni/multus/net.d/05-cilium.conflist |\n| new-pod-after-reboot-gets-net1 | passed |  | net1-client holds net1 10.77.0.101 once and reached net1-server over net1 |"
+}
