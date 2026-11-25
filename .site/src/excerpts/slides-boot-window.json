@@ -1,0 +1,8 @@
+{
+  "id": "slides-boot-window",
+  "run": "probe-boot-window 20261125T125248Z and 20261125T144022Z",
+  "source": ".lab/evidence/slides/boot-window/summary.tsv",
+  "lines": "1-9",
+  "format": "tsv",
+  "text": "label\tkind\tpod_starts\twithout_net1\tof_them_annotation_absent_or_stale\twith_net1_and_annotation_not_current\tsandbox_first_s\tmultus_file_s\nlab-layout\tkeepers\t15\t0\t0\t0\t27.0-35.5\t17.9-18.8\nlab-layout-slow\tkeepers\t9\t0\t0\t0\t52.2-58.1\t48.6-50.2\nstock\tkeepers\t15\t0\t0\t0\t29.9-34.7\t18.3-19.7\nstock-slow\tkeepers\t9\t9\t9\t0\t28.9-29.8\t49.2-50.2\nlab-layout-slow\twaiters\t3\t0\t0\t0\t49.0-50.0\t48.9-49.9\nlab-layout\twaiters\t5\t0\t0\t0\t29.3-44.5\t18.6-19.8\nstock-slow\twaiters\t3\t3\t3\t0\t28.1-32.0\t49.5-49.9\nstock\twaiters\t5\t0\t0\t0\t27.2-40.3\t17.7-19.2"
+}

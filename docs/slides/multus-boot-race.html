@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
-<title>Testing Kubernetes RDMA Network Wiring on One Host</title>
+<title>Ready Is Not Wired: A Reboot Test for Kubernetes Secondary Networks</title>
 <!-- Slide fonts: optional local copies are embedded by the learning site. -->
 <style>
   :root { color-scheme: dark; background: #0c0d12; color: #e6e8ef; font-family: "DM Sans", system-ui, sans-serif; }
@@ -56,7 +56,7 @@
   <span>RDMA Fabric Lab / 10-minute talk draft</span>
   <a href="https://github.com/ziwon/rdma-fabric-lab/tree/main/docs/slides">Slide source</a>
 </header>
-<h1 class="sr-only">Testing Kubernetes RDMA Network Wiring on One Host</h1>
+<h1 class="sr-only">Ready Is Not Wired: A Reboot Test for Kubernetes Secondary Networks</h1>
 <nav id="controls" class="controls" aria-label="Slide controls" hidden>
   <div class="actions">
     <button id="previous" type="button" aria-label="Previous slide">Prev</button>
@@ -67,7 +67,7 @@
 </nav>
 <main id="deck" aria-label="Slides">
   <section id="slide-1" class="slide" aria-labelledby="title-1">
-    <h2 id="title-1" class="sr-only">Testing Kubernetes RDMA Network Wiring on One Host</h2>
+    <h2 id="title-1" class="sr-only">Ready Is Not Wired: A Reboot Test for Kubernetes Secondary Networks</h2>
     <div class="frame">
       <div class="canvas-item shape dot" data-part="signal-dot" style="--x:64;--y:49;--w:9;--h:9;--fill:#B2E879" aria-hidden="true"></div>
       <div class="canvas-item copy mono" data-part="section" style="--x:83;--y:43;--w:850;--h:24;--size:16;--ink:#9FA6B8">PROPOSAL FOR NEOCLOUDCON EUROPE 2027 / LIGHTNING TALK DRAFT</div>
@@ -79,25 +79,25 @@
       <div class="canvas-item shape" data-part="console-header" style="--x:863;--y:140;--w:352;--h:52;--fill:#1C1F3A" aria-hidden="true"></div>
       <div class="canvas-item copy mono" data-part="console-name" style="--x:884;--y:156;--w:312;--h:25;--size:16;--ink:#8595FA">REBOOT REGRESSION</div>
       <div class="canvas-item shape dot" data-part="signal-dot" style="--x:886;--y:229;--w:8;--h:8;--fill:#B2E879" aria-hidden="true"></div>
-      <div class="canvas-item copy mono" data-part="fig-phase-0" style="--x:906;--y:224;--w:274;--h:23;--size:16;--ink:#9FA6B8">01 / baseline</div>
-      <div class="canvas-item copy mono" data-part="fig-status-0" style="--x:906;--y:252;--w:280;--h:36;--size:23;--ink:#B2E879">net1 present</div>
+      <div class="canvas-item copy mono" data-part="fig-phase-0" style="--x:906;--y:224;--w:290;--h:23;--size:16;--ink:#9FA6B8">01 / before the reboot</div>
+      <div class="canvas-item copy mono" data-part="fig-status-0" style="--x:906;--y:252;--w:290;--h:36;--size:23;--ink:#B2E879">net1 present</div>
       <div class="canvas-item shape" data-part="rule" style="--x:885;--y:299;--w:304;--h:1;--fill:#303545" aria-hidden="true"></div>
       <div class="canvas-item shape dot" data-part="signal-dot" style="--x:886;--y:330;--w:8;--h:8;--fill:#F2867A" aria-hidden="true"></div>
-      <div class="canvas-item copy mono" data-part="fig-phase-1" style="--x:906;--y:325;--w:274;--h:23;--size:16;--ink:#9FA6B8">02 / stale CNI file</div>
-      <div class="canvas-item copy mono" data-part="fig-status-1" style="--x:906;--y:353;--w:280;--h:36;--size:23;--ink:#F2867A">net1 missing</div>
+      <div class="canvas-item copy mono" data-part="fig-phase-1" style="--x:906;--y:325;--w:290;--h:23;--size:16;--ink:#9FA6B8">02 / pod created at boot</div>
+      <div class="canvas-item copy mono" data-part="fig-status-1" style="--x:906;--y:353;--w:290;--h:36;--size:23;--ink:#F2867A">Ready, no net1</div>
       <div class="canvas-item shape" data-part="rule" style="--x:885;--y:400;--w:304;--h:1;--fill:#303545" aria-hidden="true"></div>
       <div class="canvas-item shape dot" data-part="signal-dot" style="--x:886;--y:431;--w:8;--h:8;--fill:#B2E879" aria-hidden="true"></div>
-      <div class="canvas-item copy mono" data-part="fig-phase-2" style="--x:906;--y:426;--w:274;--h:23;--size:16;--ink:#9FA6B8">03 / repair</div>
-      <div class="canvas-item copy mono" data-part="fig-status-2" style="--x:906;--y:454;--w:280;--h:36;--size:23;--ink:#B2E879">net1 restored</div>
-      <div class="canvas-item copy heavy" data-part="title-line-1" style="--x:64;--y:146;--w:790;--h:86;--size:69;--ink:#F3F4F8">Testing Kubernetes</div>
-      <div class="canvas-item copy heavy" data-part="title-line-2" style="--x:64;--y:231;--w:790;--h:84;--size:69;--ink:#F3F4F8">RDMA Network Wiring</div>
-      <div class="canvas-item copy heavy" data-part="title-line-3" style="--x:64;--y:315;--w:770;--h:85;--size:69;--ink:#B2E879">on One Host</div>
-      <div class="canvas-item copy" data-part="deck-premise" style="--x:67;--y:438;--w:754;--h:50;--size:25;--ink:#B5BBCA">A reboot test that caught a missing secondary network.</div>
+      <div class="canvas-item copy mono" data-part="fig-phase-2" style="--x:906;--y:426;--w:290;--h:23;--size:16;--ink:#9FA6B8">03 / layout fixed</div>
+      <div class="canvas-item copy mono" data-part="fig-status-2" style="--x:906;--y:454;--w:290;--h:36;--size:23;--ink:#B2E879">pod waits, net1</div>
+      <div class="canvas-item copy heavy" data-part="title-line-1" style="--x:64;--y:146;--w:790;--h:96;--size:74;--ink:#F3F4F8">Ready Is Not Wired</div>
+      <div class="canvas-item copy heavy" data-part="title-line-2" style="--x:64;--y:250;--w:790;--h:58;--size:42;--ink:#B2E879">A Reboot Test for Kubernetes</div>
+      <div class="canvas-item copy heavy" data-part="title-line-3" style="--x:64;--y:304;--w:790;--h:58;--size:42;--ink:#B2E879">Secondary Networks</div>
+      <div class="canvas-item copy" data-part="deck-premise" style="--x:67;--y:420;--w:780;--h:50;--size:24;--ink:#B5BBCA">After a reboot, a new pod ran with eth0 and no second interface.</div>
       <div class="canvas-item copy mono" data-part="speaker" style="--x:67;--y:540;--w:600;--h:30;--size:18;--ink:#E6E8EF">YEONGPIL YOON</div>
     </div>
     <details class="notes">
       <summary>Speaker notes · 0:00–0:40 (0:40)</summary>
-      <p>Open on the middle state: after a worker reboot, a fresh pod was missing the secondary interface it was expected to have. The practical question is which check catches that without confusing IP reachability with RDMA traffic. This is a single-host lab, not a hardware benchmark.</p>
+      <p>Open on the middle state: after a clean reboot of a worker, a pod created as the node came back was Ready and had only eth0. The question for the next ten minutes is which pods this reaches, which check finds it, and what closes it. This is a three-node lab on one host, not a fleet and not a hardware benchmark.</p>
       <p>Sources</p>
       <ul><li><a href="https://github.com/ziwon/rdma-fabric-lab/blob/main/docs/verification.md">verification.md</a></li><li><a href="https://github.com/restack-ai/design-system/blob/main/DESIGN.md">DESIGN.md</a></li></ul>
     </details>
@@ -112,11 +112,11 @@
       <div class="canvas-item copy mono" data-part="project-footer" style="--x:64;--y:672;--w:720;--h:23;--size:14;--ink:#9FA6B8">restack / rdma-fabric-lab</div>
       <div class="canvas-item copy mono" data-part="slide-number" style="--x:1094;--y:672;--w:122;--h:23;--size:14;--ink:#9FA6B8;--align:right">02 / 08</div>
       <div class="canvas-item copy heavy" data-part="headline" style="--x:64;--y:107;--w:1152;--h:72;--size:55;--ink:#F3F4F8">A Ready pod can still miss net1</div>
-      <div class="canvas-item copy" data-part="subhead" style="--x:66;--y:191;--w:1130;--h:44;--size:25;--ink:#B5BBCA">The regression checks what a newly scheduled pod gets after a worker reboots.</div>
+      <div class="canvas-item copy" data-part="subhead" style="--x:66;--y:191;--w:1130;--h:44;--size:25;--ink:#B5BBCA">On GPU nodes the second network carries RDMA and storage traffic. Reboots are routine.</div>
       <div class="canvas-item shape" data-part="rule" style="--x:65;--y:266;--w:1150;--h:1;--fill:#303545" aria-hidden="true"></div>
       <div class="canvas-item copy mono" data-part="layer-index-0" style="--x:68;--y:292;--w:58;--h:35;--size:20;--ink:#9FA6B8">01</div>
       <div class="canvas-item copy mono" data-part="layer-name-0" style="--x:149;--y:292;--w:420;--h:30;--size:18;--ink:#9FA6B8">NODE / POD READINESS</div>
-      <div class="canvas-item copy" data-part="layer-detail-0" style="--x:552;--y:287;--w:660;--h:54;--size:28;--ink:#E6E8EF">The worker returns. The pod starts.</div>
+      <div class="canvas-item copy" data-part="layer-detail-0" style="--x:552;--y:287;--w:660;--h:54;--size:28;--ink:#E6E8EF">The worker returns. The pod is Ready.</div>
       <div class="canvas-item shape" data-part="rule" style="--x:65;--y:371;--w:1150;--h:1;--fill:#303545" aria-hidden="true"></div>
       <div class="canvas-item copy mono" data-part="layer-index-1" style="--x:68;--y:397;--w:58;--h:35;--size:20;--ink:#9FA6B8">02</div>
       <div class="canvas-item copy mono" data-part="layer-name-1" style="--x:149;--y:397;--w:420;--h:30;--size:18;--ink:#9FA6B8">PRIMARY NETWORK</div>
@@ -124,18 +124,19 @@
       <div class="canvas-item shape" data-part="rule" style="--x:65;--y:476;--w:1150;--h:1;--fill:#303545" aria-hidden="true"></div>
       <div class="canvas-item copy mono" data-part="layer-index-2" style="--x:68;--y:502;--w:58;--h:35;--size:20;--ink:#B2E879">03</div>
       <div class="canvas-item copy mono" data-part="layer-name-2" style="--x:149;--y:502;--w:420;--h:30;--size:18;--ink:#B2E879">SECONDARY ATTACHMENT</div>
-      <div class="canvas-item copy heavy" data-part="layer-detail-2" style="--x:552;--y:497;--w:660;--h:54;--size:26;--ink:#F3F4F8">The application expects net1 on the lab network.</div>
-      <div class="canvas-item shape" data-part="rule" style="--x:65;--y:582;--w:1150;--h:1;--fill:#303545" aria-hidden="true"></div>
+      <div class="canvas-item copy heavy" data-part="layer-detail-2" style="--x:552;--y:497;--w:660;--h:54;--size:26;--ink:#F3F4F8">net1 is missing, and nothing reports it.</div>
+      <div class="canvas-item shape" data-part="rule" style="--x:65;--y:581;--w:1150;--h:1;--fill:#303545" aria-hidden="true"></div>
     </div>
     <details class="notes">
       <summary>Speaker notes · 0:40–1:50 (1:10)</summary>
-      <p>Separate the signals. A worker reporting Ready and a running pod do not establish that the pod received a second interface. In this lab, primary traffic uses eth0. The workload that requests the attachment expects a reachable net1. The test checks the actual interface, route, and traffic, with special attention to the first new pod after reboot. In run 20261125T121324Z that pod met <code>kubectl wait --for=condition=Ready</code> with eth0 only, and all 32 events of its namespace were of type Normal.</p>
+      <p>Separate the signals. A worker that reports Ready and a pod that runs do not establish that the pod received its second interface. In run 20261125T131218Z the pod met <code>kubectl wait --for=condition=Ready</code>. It asked for the network in its annotation and carried no network-status, because the runtime had called Cilium alone and that call succeeded.</p>
+      <p>On a GPU platform the second interface is how a pod reaches the RDMA or storage fabric, and nodes reboot for firmware, kernels and drivers. In this lab net1 is a macvlan IP network that stands in for that attachment.</p>
       <p>Sources</p>
-      <ul><li><a href="https://github.com/ziwon/rdma-fabric-lab/blob/main/tracks/a-soft-roce/scenarios/k8s-multus-net1.yaml">k8s-multus-net1.yaml</a></li></ul>
+      <ul><li><a href="https://github.com/ziwon/rdma-fabric-lab/blob/main/tracks/a-soft-roce/scenarios/k8s-multus-net1.yaml">k8s-multus-net1.yaml</a></li><li><a href="https://github.com/ziwon/rdma-fabric-lab/blob/main/docs/adr/0004-track-a-pods-and-net1.md">0004-track-a-pods-and-net1.md</a></li></ul>
     </details>
   </section>
   <section id="slide-3" class="slide" aria-labelledby="title-3">
-    <h2 id="title-3" class="sr-only">Two independent network proofs</h2>
+    <h2 id="title-3" class="sr-only">Three guests, two pod networks</h2>
     <div class="frame">
       <div class="canvas-item shape dot" data-part="signal-dot" style="--x:64;--y:49;--w:9;--h:9;--fill:#B2E879" aria-hidden="true"></div>
       <div class="canvas-item copy mono" data-part="section" style="--x:83;--y:43;--w:850;--h:24;--size:16;--ink:#9FA6B8">02 / LAB TOPOLOGY</div>
@@ -143,35 +144,37 @@
       <div class="canvas-item shape" data-part="rule" style="--x:64;--y:654;--w:1152;--h:1;--fill:#303545" aria-hidden="true"></div>
       <div class="canvas-item copy mono" data-part="project-footer" style="--x:64;--y:672;--w:720;--h:23;--size:14;--ink:#9FA6B8">restack / rdma-fabric-lab</div>
       <div class="canvas-item copy mono" data-part="slide-number" style="--x:1094;--y:672;--w:122;--h:23;--size:14;--ink:#9FA6B8;--align:right">03 / 08</div>
-      <div class="canvas-item copy heavy" data-part="headline" style="--x:64;--y:107;--w:1152;--h:72;--size:55;--ink:#F3F4F8">Two independent network proofs</div>
+      <div class="canvas-item copy heavy" data-part="headline" style="--x:64;--y:107;--w:1152;--h:72;--size:55;--ink:#F3F4F8">Three guests, two pod networks</div>
       <div class="canvas-item copy" data-part="subhead" style="--x:66;--y:191;--w:1130;--h:44;--size:25;--ink:#B5BBCA">One Linux host runs three QEMU/KVM guests: a control plane and two workers.</div>
-      <div class="canvas-item shape" data-part="host-boundary" style="--x:64;--y:257;--w:1152;--h:335;--fill:#101218;--edge:#303545;--edge-width:1px" aria-hidden="true"></div>
-      <div class="canvas-item copy mono" data-part="node-label" style="--x:91;--y:279;--w:300;--h:27;--size:17;--ink:#E6E8EF">WORKER 1</div>
-      <div class="canvas-item copy mono" data-part="node-label-2" style="--x:933;--y:279;--w:250;--h:27;--size:17;--ink:#E6E8EF">WORKER 2</div>
-      <div class="canvas-item shape" data-part="proof-lane-0" style="--x:90;--y:329;--w:1100;--h:100;--fill:#14282D" aria-hidden="true"></div>
-      <div class="canvas-item copy mono" data-part="lane-type-0" style="--x:110;--y:342;--w:510;--h:26;--size:16;--ink:#70C5D0">A / SOFTWARE RDMA</div>
-      <div class="canvas-item copy mono" data-part="left-endpoint-0" style="--x:110;--y:382;--w:252;--h:28;--size:19;--ink:#E6E8EF">hostNetwork pod</div>
-      <div class="canvas-item shape" data-part="rule" style="--x:328;--y:392;--w:132;--h:1;--fill:#70C5D0" aria-hidden="true"></div>
-      <div class="canvas-item copy mono" data-part="fabric-label-0" style="--x:460;--y:378;--w:360;--h:34;--size:19;--ink:#70C5D0;--align:center">RXE verbs over lab NIC</div>
-      <div class="canvas-item shape" data-part="rule" style="--x:818;--y:392;--w:98;--h:1;--fill:#70C5D0" aria-hidden="true"></div>
-      <div class="canvas-item copy mono" data-part="right-endpoint-0" style="--x:941;--y:382;--w:244;--h:28;--size:19;--ink:#E6E8EF">hostNetwork pod</div>
-      <div class="canvas-item shape" data-part="proof-lane-1" style="--x:90;--y:453;--w:1100;--h:100;--fill:#18260F" aria-hidden="true"></div>
-      <div class="canvas-item copy mono" data-part="lane-type-1" style="--x:110;--y:466;--w:510;--h:26;--size:16;--ink:#B2E879">B / SECONDARY IP</div>
-      <div class="canvas-item copy mono" data-part="left-endpoint-1" style="--x:110;--y:506;--w:252;--h:28;--size:19;--ink:#E6E8EF">ordinary pod</div>
-      <div class="canvas-item shape" data-part="rule" style="--x:328;--y:516;--w:132;--h:1;--fill:#B2E879" aria-hidden="true"></div>
-      <div class="canvas-item copy mono" data-part="fabric-label-1" style="--x:460;--y:502;--w:360;--h:34;--size:19;--ink:#B2E879;--align:center">net1 IP over lab NIC</div>
-      <div class="canvas-item shape" data-part="rule" style="--x:818;--y:516;--w:98;--h:1;--fill:#B2E879" aria-hidden="true"></div>
-      <div class="canvas-item copy mono" data-part="right-endpoint-1" style="--x:941;--y:506;--w:244;--h:28;--size:19;--ink:#E6E8EF">ordinary pod</div>
+      <div class="canvas-item shape" data-part="host-boundary" style="--x:64;--y:257;--w:1152;--h:300;--fill:#101218;--edge:#303545;--edge-width:1px" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="node-label" style="--x:91;--y:275;--w:300;--h:27;--size:17;--ink:#E6E8EF">WORKER 1</div>
+      <div class="canvas-item copy mono" data-part="node-label-2" style="--x:933;--y:275;--w:250;--h:27;--size:17;--ink:#E6E8EF">WORKER 2</div>
+      <div class="canvas-item shape" data-part="proof-lane-0" style="--x:90;--y:318;--w:1100;--h:96;--fill:#14282D" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="lane-type-0" style="--x:110;--y:330;--w:510;--h:26;--size:16;--ink:#70C5D0">A / PRIMARY</div>
+      <div class="canvas-item copy mono" data-part="left-endpoint-0" style="--x:110;--y:368;--w:252;--h:28;--size:19;--ink:#E6E8EF">ordinary pod</div>
+      <div class="canvas-item shape" data-part="rule" style="--x:288;--y:379;--w:172;--h:1;--fill:#70C5D0" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="fabric-label-0" style="--x:460;--y:364;--w:360;--h:34;--size:19;--ink:#70C5D0;--align:center">eth0 from Cilium, VXLAN</div>
+      <div class="canvas-item shape" data-part="rule" style="--x:820;--y:379;--w:100;--h:1;--fill:#70C5D0" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="right-endpoint-0" style="--x:941;--y:368;--w:244;--h:28;--size:19;--ink:#E6E8EF">ordinary pod</div>
+      <div class="canvas-item shape" data-part="proof-lane-1" style="--x:90;--y:430;--w:1100;--h:96;--fill:#18260F" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="lane-type-1" style="--x:110;--y:442;--w:510;--h:26;--size:16;--ink:#B2E879">B / SECONDARY</div>
+      <div class="canvas-item copy mono" data-part="left-endpoint-1" style="--x:110;--y:480;--w:252;--h:28;--size:19;--ink:#E6E8EF">ordinary pod</div>
+      <div class="canvas-item shape" data-part="rule" style="--x:288;--y:491;--w:172;--h:1;--fill:#B2E879" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="fabric-label-1" style="--x:460;--y:476;--w:360;--h:34;--size:19;--ink:#B2E879;--align:center">net1 from Multus, macvlan</div>
+      <div class="canvas-item shape" data-part="rule" style="--x:820;--y:491;--w:100;--h:1;--fill:#B2E879" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="right-endpoint-1" style="--x:941;--y:480;--w:244;--h:28;--size:19;--ink:#E6E8EF">ordinary pod</div>
+      <div class="canvas-item copy" data-part="scope-note" style="--x:65;--y:580;--w:1145;--h:32;--size:21;--ink:#B5BBCA">net1 carries IP here. RXE verbs ran in a separate scenario, in privileged hostNetwork pods.</div>
     </div>
     <details class="notes">
-      <summary>Speaker notes · 1:50–3:15 (1:25)</summary>
-      <p>The control plane schedules two ordinary pods or two hostNetwork test pods across separate worker VMs, depending on the scenario. On lane A, the hostNetwork pods see RXE on the worker lab NIC and the test verifies real software RDMA verbs: Read, Write, and Send. These pods are privileged, as uid 65534 with no host PID, host IPC or volume: with a narrower profile ibv_devinfo finds no device, which the check narrower-profiles-fail records. In run 20261125T120953Z both lab NICs carried 15334 RoCEv2 frames and the management NICs none. On lane B, Multus adds a macvlan interface to ordinary restricted pods and Whereabouts assigns their addresses. Cilium still supplies eth0. The lanes use the same lab underlay but measure different things: the lower lane does not exercise RDMA in the pod.</p>
+      <summary>Speaker notes · 1:50–3:05 (1:15)</summary>
+      <p>Two ordinary pods on two workers, at the PodSecurity restricted level. Cilium gives each eth0 and the default route. Multus adds net1, a macvlan child of the lab NIC, and Whereabouts assigns its address.</p>
+      <p>net1 carries IP only. The lab has a second scenario that runs RXE verbs between hostNetwork pods, which must be privileged to reach the device. In run 20261125T120953Z both lab NICs carried 15334 RoCEv2 frames and the management NICs none. That scenario is not what this talk is about.</p>
       <p>Sources</p>
-      <ul><li><a href="https://github.com/ziwon/rdma-fabric-lab/blob/main/tracks/a-soft-roce/scenarios/k8s-multus-net1.yaml">k8s-multus-net1.yaml</a></li><li><a href="https://github.com/ziwon/rdma-fabric-lab/blob/main/docs/verification.md">verification.md</a></li><li><a href="https://github.com/ziwon/rdma-fabric-lab/blob/main/docs/adr/0003-results-and-breaks.md">0003-results-and-breaks.md</a></li><li><a href="https://github.com/ziwon/rdma-fabric-lab/blob/main/tracks/a-soft-roce/scenarios/k8s-hostnet-rdma.yaml">k8s-hostnet-rdma.yaml</a></li><li><a href="https://github.com/ziwon/rdma-fabric-lab/blob/main/docs/adr/0004-track-a-pods-and-net1.md">0004-track-a-pods-and-net1.md</a></li></ul>
+      <ul><li><a href="https://github.com/ziwon/rdma-fabric-lab/blob/main/tracks/a-soft-roce/scenarios/k8s-multus-net1.yaml">k8s-multus-net1.yaml</a></li><li><a href="https://github.com/ziwon/rdma-fabric-lab/blob/main/tracks/a-soft-roce/scenarios/k8s-hostnet-rdma.yaml">k8s-hostnet-rdma.yaml</a></li><li><a href="https://github.com/ziwon/rdma-fabric-lab/blob/main/docs/adr/0004-track-a-pods-and-net1.md">0004-track-a-pods-and-net1.md</a></li><li><a href="https://github.com/ziwon/rdma-fabric-lab/blob/main/docs/verification.md">verification.md</a></li></ul>
     </details>
   </section>
   <section id="slide-4" class="slide" aria-labelledby="title-4">
-    <h2 id="title-4" class="sr-only">The stale file bypasses Multus</h2>
+    <h2 id="title-4" class="sr-only">The primary CNI is ready first</h2>
     <div class="frame">
       <div class="canvas-item shape dot" data-part="signal-dot" style="--x:64;--y:49;--w:9;--h:9;--fill:#B2E879" aria-hidden="true"></div>
       <div class="canvas-item copy mono" data-part="section" style="--x:83;--y:43;--w:850;--h:24;--size:16;--ink:#9FA6B8">03 / BOOT ORDER</div>
@@ -179,36 +182,37 @@
       <div class="canvas-item shape" data-part="rule" style="--x:64;--y:654;--w:1152;--h:1;--fill:#303545" aria-hidden="true"></div>
       <div class="canvas-item copy mono" data-part="project-footer" style="--x:64;--y:672;--w:720;--h:23;--size:14;--ink:#9FA6B8">restack / rdma-fabric-lab</div>
       <div class="canvas-item copy mono" data-part="slide-number" style="--x:1094;--y:672;--w:122;--h:23;--size:14;--ink:#9FA6B8;--align:right">04 / 08</div>
-      <div class="canvas-item copy heavy" data-part="headline" style="--x:64;--y:107;--w:1152;--h:72;--size:55;--ink:#F3F4F8">The stale file bypasses Multus</div>
-      <div class="canvas-item copy" data-part="subhead" style="--x:66;--y:191;--w:1130;--h:44;--size:25;--ink:#B5BBCA">In the intended layout, containerd sees only the Multus config in its CNI directory.</div>
+      <div class="canvas-item copy heavy" data-part="headline" style="--x:64;--y:107;--w:1152;--h:72;--size:55;--ink:#F3F4F8">The primary CNI is ready first</div>
+      <div class="canvas-item copy" data-part="subhead" style="--x:66;--y:191;--w:1130;--h:44;--size:25;--ink:#B5BBCA">containerd uses the first file in /etc/cni/net.d. Multus removes its own when it stops.</div>
       <div class="canvas-item shape" data-part="cni-panel-0" style="--x:64;--y:262;--w:562;--h:288;--fill:#15171F;--edge:#303545;--edge-width:1px" aria-hidden="true"></div>
       <div class="canvas-item shape dot" data-part="signal-dot" style="--x:89;--y:290;--w:9;--h:9;--fill:#B2E879" aria-hidden="true"></div>
-      <div class="canvas-item copy mono" data-part="cni-status-0" style="--x:108;--y:283;--w:500;--h:27;--size:17;--ink:#B2E879">INTENDED</div>
+      <div class="canvas-item copy mono" data-part="cni-status-0" style="--x:108;--y:283;--w:500;--h:27;--size:17;--ink:#B2E879">LAB LAYOUT</div>
       <div class="canvas-item copy mono" data-part="cni-dir-0" style="--x:89;--y:337;--w:504;--h:32;--size:21;--ink:#9FA6B8">/etc/cni/net.d/</div>
       <div class="canvas-item copy mono" data-part="cni-file-0" style="--x:89;--y:376;--w:504;--h:44;--size:29;--ink:#F3F4F8">00-multus.conf</div>
       <div class="canvas-item shape" data-part="rule" style="--x:89;--y:432;--w:512;--h:1;--fill:#303545" aria-hidden="true"></div>
-      <div class="canvas-item copy" data-part="cni-detail-0a" style="--x:89;--y:455;--w:512;--h:38;--size:25;--ink:#E6E8EF">Multus delegates eth0 to Cilium.</div>
-      <div class="canvas-item copy" data-part="cni-detail-0b" style="--x:89;--y:491;--w:512;--h:38;--size:25;--ink:#B2E879">The pod also receives net1.</div>
+      <div class="canvas-item copy" data-part="cni-detail-0a" style="--x:89;--y:455;--w:512;--h:38;--size:25;--ink:#E6E8EF">The only file. At boot there is none,</div>
+      <div class="canvas-item copy" data-part="cni-detail-0b" style="--x:89;--y:491;--w:512;--h:38;--size:25;--ink:#B2E879">so pods wait for Multus.</div>
       <div class="canvas-item shape" data-part="cni-panel-1" style="--x:654;--y:262;--w:562;--h:288;--fill:#15171F;--edge:#303545;--edge-width:1px" aria-hidden="true"></div>
       <div class="canvas-item shape dot" data-part="signal-dot" style="--x:679;--y:290;--w:9;--h:9;--fill:#F2867A" aria-hidden="true"></div>
-      <div class="canvas-item copy mono" data-part="cni-status-1" style="--x:698;--y:283;--w:500;--h:27;--size:17;--ink:#F2867A">DELIBERATE BREAK / AT BOOT</div>
+      <div class="canvas-item copy mono" data-part="cni-status-1" style="--x:698;--y:283;--w:500;--h:27;--size:17;--ink:#F2867A">STOCK PATHS</div>
       <div class="canvas-item copy mono" data-part="cni-dir-1" style="--x:679;--y:337;--w:504;--h:32;--size:21;--ink:#9FA6B8">/etc/cni/net.d/</div>
       <div class="canvas-item copy mono" data-part="cni-file-1" style="--x:679;--y:376;--w:504;--h:44;--size:29;--ink:#F3F4F8">05-cilium.conflist</div>
       <div class="canvas-item shape" data-part="rule" style="--x:679;--y:432;--w:512;--h:1;--fill:#303545" aria-hidden="true"></div>
-      <div class="canvas-item copy" data-part="cni-detail-1a" style="--x:679;--y:455;--w:512;--h:38;--size:25;--ink:#E6E8EF">A copy in the runtime directory</div>
-      <div class="canvas-item copy" data-part="cni-detail-1b" style="--x:679;--y:491;--w:512;--h:38;--size:25;--ink:#F2867A">lets Cilium win before Multus appears.</div>
-      <div class="canvas-item copy" data-part="scope-note" style="--x:65;--y:570;--w:1145;--h:30;--size:21;--ink:#B5BBCA">Cilium’s delegated config stays in its own directory.</div>
-      <div class="canvas-item copy" data-part="boot-window" style="--x:65;--y:602;--w:1145;--h:30;--size:21;--ink:#E6E8EF">Multus removes its file when it stops. After the reboot the copy was live at boot+6.1 s, Multus’s file at boot+18.7 s.</div>
+      <div class="canvas-item copy" data-part="cni-detail-1a" style="--x:679;--y:455;--w:512;--h:38;--size:25;--ink:#E6E8EF">Also there, and still there at boot.</div>
+      <div class="canvas-item copy" data-part="cni-detail-1b" style="--x:679;--y:491;--w:512;--h:38;--size:25;--ink:#F2867A">A pod sandboxed then gets eth0 only.</div>
+      <div class="canvas-item copy" data-part="scope-note" style="--x:65;--y:570;--w:1145;--h:30;--size:21;--ink:#B5BBCA">In the lab layout Cilium writes its file to /etc/cni/multus/net.d, which only Multus reads.</div>
+      <div class="canvas-item copy" data-part="boot-window" style="--x:65;--y:602;--w:1145;--h:30;--size:21;--ink:#E6E8EF">Stock paths after a reboot: Cilium’s file was live at boot+6.2 s, Multus’s file at boot+18.5 s.</div>
     </div>
     <details class="notes">
-      <summary>Speaker notes · 3:15–4:40 (1:25)</summary>
-      <p>The intended layout separates the runtime-visible directory from Cilium’s own directory. In the documented regression, a copy of the Cilium conflist goes back into /etc/cni/net.d on worker2. The Multus daemon removes 00-multus.conf when it stops, so every boot starts without it. In the lab the file was gone after the Multus pod of a worker was deleted and back about 1.4 s later, written by the new pod. Early in boot, before Multus writes its config, the copy gives containerd a usable primary CNI too soon: in run 20261125T121324Z from boot+6.1 s, 12.6 s before Multus wrote its file at boot+18.7 s. An early test pod is deliberately scheduled as the worker returns. The test compares runtime readiness and the first sandbox creation against when the Multus config appears. This is a lab-specific regression, not a claim about all Cilium or Multus installs. The class of failure is reported outside this lab: in Sylva issue 3962 a pod on a newly joined node started through Calico alone before Multus wrote 00-multus.conf, and no error was reported.</p>
+      <summary>Speaker notes · 3:05–4:40 (1:35)</summary>
+      <p>containerd uses the first CNI file in its directory. The Multus daemon removes 00-multus.conf when it stops, so a clean reboot starts without it. In the lab the file was gone after the Multus pod of a worker was deleted and back about 1.4 s later, written by the new pod. With the stock paths of both charts, Cilium’s file sits in the same directory and survives the reboot. In run 20261125T131218Z containerd reported a network from boot+6.2 s, and Multus wrote its file at boot+18.5 s.</p>
+      <p>The lab layout moves Cilium’s file to a directory that only Multus reads. Then containerd has no network until Multus writes its file, the kubelet holds the pod, and the pod starts with both interfaces. The class of failure is reported outside this lab: in Sylva issue 3962 a pod on a newly joined node started through Calico alone before Multus wrote 00-multus.conf, and no error was reported.</p>
       <p>Sources</p>
-      <ul><li><a href="https://github.com/ziwon/rdma-fabric-lab/blob/main/tests/integration/qemu-lab/breaks-k8s-rdma.sh#L219-L221">breaks-k8s-rdma.sh</a></li><li><a href="https://github.com/ziwon/rdma-fabric-lab/blob/main/tracks/a-soft-roce/scenarios/k8s-multus-net1.yaml">k8s-multus-net1.yaml</a></li><li><a href="https://github.com/ziwon/rdma-fabric-lab/blob/main/docs/adr/0004-track-a-pods-and-net1.md">0004-track-a-pods-and-net1.md</a></li><li><a href="https://gitlab.com/sylva-projects/sylva-core/-/work_items/3962">Sylva issue 3962</a></li></ul>
+      <ul><li><a href="https://github.com/ziwon/rdma-fabric-lab/blob/main/docs/adr/0004-track-a-pods-and-net1.md">0004-track-a-pods-and-net1.md</a></li><li><a href="https://github.com/ziwon/rdma-fabric-lab/blob/main/tracks/a-soft-roce/scenarios/k8s-multus-net1.yaml">k8s-multus-net1.yaml</a></li><li><a href="https://github.com/ziwon/rdma-fabric-lab/blob/main/tests/integration/qemu-lab/probe-boot-window.sh">probe-boot-window.sh</a></li><li><a href="https://gitlab.com/sylva-projects/sylva-core/-/work_items/3962">Sylva issue 3962</a></li></ul>
     </details>
   </section>
   <section id="slide-5" class="slide" aria-labelledby="title-5">
-    <h2 id="title-5" class="sr-only">The test fails, then passes after repair</h2>
+    <h2 id="title-5" class="sr-only">The test fails, then passes after the fix</h2>
     <div class="frame">
       <div class="canvas-item shape dot" data-part="signal-dot" style="--x:64;--y:49;--w:9;--h:9;--fill:#B2E879" aria-hidden="true"></div>
       <div class="canvas-item copy mono" data-part="section" style="--x:83;--y:43;--w:850;--h:24;--size:16;--ink:#9FA6B8">04 / DEMO BEAT</div>
@@ -216,17 +220,17 @@
       <div class="canvas-item shape" data-part="rule" style="--x:64;--y:654;--w:1152;--h:1;--fill:#303545" aria-hidden="true"></div>
       <div class="canvas-item copy mono" data-part="project-footer" style="--x:64;--y:672;--w:720;--h:23;--size:14;--ink:#9FA6B8">restack / rdma-fabric-lab</div>
       <div class="canvas-item copy mono" data-part="slide-number" style="--x:1094;--y:672;--w:122;--h:23;--size:14;--ink:#9FA6B8;--align:right">05 / 08</div>
-      <div class="canvas-item copy heavy" data-part="headline" style="--x:64;--y:107;--w:1152;--h:72;--size:55;--ink:#F3F4F8">The test fails, then passes after repair</div>
-            <div class="canvas-item copy" data-part="subhead" style="--x:66;--y:191;--w:1130;--h:44;--size:25;--ink:#B5BBCA">Two runs on the lab from wiped guests, 2026-11-25. Verdicts and details as recorded.</div>
+      <div class="canvas-item copy heavy" data-part="headline" style="--x:64;--y:107;--w:1152;--h:72;--size:55;--ink:#F3F4F8">The test fails, then passes after the fix</div>
+      <div class="canvas-item copy" data-part="subhead" style="--x:66;--y:191;--w:1130;--h:44;--size:25;--ink:#B5BBCA">One cluster from wiped guests, 2026-11-25: stock CNI paths, then the lab layout.</div>
       <div class="canvas-item shape" data-part="evidence-frame" style="--x:64;--y:252;--w:1152;--h:341;--fill:#101218;--edge:#303545;--edge-width:1px" aria-hidden="true"></div>
       <div class="canvas-item copy mono" data-part="checks-heading" style="--x:89;--y:277;--w:563;--h:27;--size:17;--ink:#9FA6B8">MANIFEST CHECK</div>
-      <div class="canvas-item copy mono" data-part="break-heading" style="--x:727;--y:265;--w:220;--h:24;--size:16;--ink:#F2867A">STALE FILE</div>
-      <div class="canvas-item copy mono" data-part="run-break" style="--x:727;--y:290;--w:220;--h:22;--size:14;--ink:#9FA6B8">20261125T121324Z</div>
-      <div class="canvas-item copy mono" data-part="repair-heading" style="--x:964;--y:265;--w:220;--h:24;--size:16;--ink:#B2E879">AFTER REPAIR</div>
-      <div class="canvas-item copy mono" data-part="run-repair" style="--x:964;--y:290;--w:220;--h:22;--size:14;--ink:#9FA6B8">20261125T121559Z</div>
+      <div class="canvas-item copy mono" data-part="break-heading" style="--x:727;--y:265;--w:220;--h:24;--size:16;--ink:#F2867A">STOCK PATHS</div>
+      <div class="canvas-item copy mono" data-part="run-break" style="--x:727;--y:290;--w:220;--h:22;--size:14;--ink:#9FA6B8">20261125T131218Z</div>
+      <div class="canvas-item copy mono" data-part="repair-heading" style="--x:964;--y:265;--w:220;--h:24;--size:16;--ink:#B2E879">LAB LAYOUT</div>
+      <div class="canvas-item copy mono" data-part="run-repair" style="--x:964;--y:290;--w:220;--h:22;--size:14;--ink:#9FA6B8">20261125T132655Z</div>
       <div class="canvas-item shape" data-part="rule" style="--x:88;--y:319;--w:1098;--h:1;--fill:#303545" aria-hidden="true"></div>
       <div class="canvas-item copy mono" data-part="check-0" style="--x:89;--y:331;--w:620;--h:30;--size:21;--ink:#E6E8EF">cni-dir-holds-only-multus</div>
-      <div class="canvas-item copy" data-part="detail-0" style="--x:89;--y:361;--w:620;--h:26;--size:18;--ink:#B5BBCA">worker2 held 00-multus.conf and 05-cilium.conflist.</div>
+      <div class="canvas-item copy" data-part="detail-0" style="--x:89;--y:361;--w:620;--h:26;--size:18;--ink:#B5BBCA">Every node held 00-multus.conf and 05-cilium.conflist.</div>
       <div class="canvas-item shape" data-part="fail-0-bg" style="--x:727;--y:339;--w:128;--h:32;--fill:#2E1C1E" aria-hidden="true"></div>
       <div class="canvas-item shape dot" data-part="signal-dot" style="--x:739;--y:351;--w:8;--h:8;--fill:#F2867A" aria-hidden="true"></div>
       <div class="canvas-item copy mono" data-part="fail-0" style="--x:754;--y:345;--w:96;--h:24;--size:15;--ink:#F2867A">FAIL</div>
@@ -235,7 +239,7 @@
       <div class="canvas-item copy mono" data-part="pass-0" style="--x:991;--y:345;--w:96;--h:24;--size:15;--ink:#B2E879">PASS</div>
       <div class="canvas-item shape" data-part="rule" style="--x:88;--y:397;--w:1098;--h:1;--fill:#303545" aria-hidden="true"></div>
       <div class="canvas-item copy mono" data-part="check-1" style="--x:89;--y:403;--w:620;--h:30;--size:21;--ink:#E6E8EF">pod-at-boot-waits-for-multus</div>
-      <div class="canvas-item copy" data-part="detail-1" style="--x:89;--y:433;--w:620;--h:26;--size:18;--ink:#B5BBCA">Sandbox at boot+16.4 s. Multus wrote its file at boot+18.7 s.</div>
+      <div class="canvas-item copy" data-part="detail-1" style="--x:89;--y:433;--w:620;--h:26;--size:18;--ink:#B5BBCA">Sandbox at boot+16.2 s. Multus wrote its file at boot+18.5 s.</div>
       <div class="canvas-item shape" data-part="fail-1-bg" style="--x:727;--y:411;--w:128;--h:32;--fill:#2E1C1E" aria-hidden="true"></div>
       <div class="canvas-item shape dot" data-part="signal-dot" style="--x:739;--y:423;--w:8;--h:8;--fill:#F2867A" aria-hidden="true"></div>
       <div class="canvas-item copy mono" data-part="fail-1" style="--x:754;--y:417;--w:96;--h:24;--size:15;--ink:#F2867A">FAIL</div>
@@ -252,46 +256,53 @@
       <div class="canvas-item shape dot" data-part="signal-dot" style="--x:976;--y:495;--w:8;--h:8;--fill:#B2E879" aria-hidden="true"></div>
       <div class="canvas-item copy mono" data-part="pass-2" style="--x:991;--y:489;--w:96;--h:24;--size:15;--ink:#B2E879">PASS</div>
       <div class="canvas-item shape" data-part="rule" style="--x:88;--y:541;--w:1098;--h:1;--fill:#303545" aria-hidden="true"></div>
-      <div class="canvas-item copy" data-part="other-checks" style="--x:89;--y:555;--w:1090;--h:28;--size:19;--ink:#E6E8EF">The 11 other checks passed in the broken run: pods created before the reboot had net1.</div>
+      <div class="canvas-item copy" data-part="other-checks" style="--x:89;--y:555;--w:1090;--h:28;--size:19;--ink:#E6E8EF">The 11 other checks passed in the stock run: pods created before the reboot had net1.</div>
     </div>
     <details class="notes">
-      <summary>Speaker notes · 4:40–7:00 (2:20)</summary>
-      <p>Demo sequence: show a healthy baseline; introduce only the stale Cilium config on worker2; run the reboot regression; inspect the named checks. Remove the stale file, rerun, and show the repaired verdict. For the talk, prefer a short recorded capture or these recorded runs to waiting on a live reboot.</p>
-      <p>The slide shows two runs of 2026-11-25 on a cluster built from wiped guests. In the broken run, 20261125T121324Z, containerd reported a network in 25 of 25 samples while 00-multus.conf was absent, first at boot+6.1 s, and began the pod’s sandbox at boot+16.4 s. Multus wrote its file at boot+18.7 s. The pod met <code>kubectl wait --for=condition=Ready</code> and had eth0 only. The 11 other checks passed, because the two pods created before the reboot went through Multus and had net1. In the repaired run, 20261125T121559Z, containerd had no network in all 25 samples until the file appeared at boot+18.7 s, the sandbox began at boot+20.5 s, and all 14 checks passed. The same break failed the same three checks on 2026-11-16, in run 20261116T053519Z.</p>
-      <p>The run evidence stays on the lab host under results/ and .lab/breaks-k8s-rdma/20261125T121319Z/pairs.tsv. The repository stores the three summary rows of each run as the excerpts slides-net1-break and slides-net1-repair, and a test compares this slide with them. Keep the run IDs when the slide changes, and do not invent a screenshot or a run ID.</p>
+      <summary>Speaker notes · 4:40–6:50 (2:10)</summary>
+      <p>Demo sequence: show the two directories, reboot a worker, create a pod as soon as the node answers, and read the named checks. The slide shows two runs on one cluster built from wiped guests. With the stock CNI paths, run 20261125T131218Z: containerd reported a network in 24 of 24 samples while 00-multus.conf was absent, and began the pod’s sandbox at boot+16.2 s, before Multus wrote its file at boot+18.5 s. The 11 other checks passed, because the pods created before the reboot went through Multus.</p>
+      <p>After the move to the lab layout, run 20261125T132655Z: containerd had no network in all 22 samples until the file appeared at boot+17.5 s, the sandbox began at boot+18.2 s, and all 14 checks passed. The pod of the test tolerates every NoSchedule taint, so that only the container runtime can hold it. Ordinary pods do not tolerate those taints, and the next slide counts what happened to them.</p>
+      <p>These are recorded results, with the run IDs and three named verdicts shown on the slide.</p>
       <p>Sources</p>
-      <ul><li><a href="https://github.com/ziwon/rdma-fabric-lab/blob/main/tests/integration/qemu-lab/breaks-k8s-rdma.sh#L219-L221">breaks-k8s-rdma.sh</a></li><li><a href="https://github.com/ziwon/rdma-fabric-lab/blob/main/tracks/a-soft-roce/scenarios/k8s-multus-net1.yaml">k8s-multus-net1.yaml</a></li><li><a href="https://github.com/ziwon/rdma-fabric-lab/blob/main/.site/src/excerpts/slides-net1-break.json">slides-net1-break.json</a></li><li><a href="https://github.com/ziwon/rdma-fabric-lab/blob/main/.site/src/excerpts/slides-net1-repair.json">slides-net1-repair.json</a></li><li><a href="https://github.com/ziwon/rdma-fabric-lab/blob/main/.site/tests/slides.test.mjs">slides.test.mjs</a></li><li><a href="https://github.com/ziwon/rdma-fabric-lab/blob/main/docs/verification.md">verification.md</a></li></ul>
+      <ul><li><a href="https://github.com/ziwon/rdma-fabric-lab/blob/main/tests/integration/qemu-lab/breaks-k8s-rdma.sh#L219-L221">breaks-k8s-rdma.sh</a></li><li><a href="https://github.com/ziwon/rdma-fabric-lab/blob/main/tracks/a-soft-roce/scenarios/k8s-multus-net1.yaml">k8s-multus-net1.yaml</a></li><li><a href="https://github.com/ziwon/rdma-fabric-lab/blob/main/tests/integration/qemu-lab/probe-boot-window.sh">probe-boot-window.sh</a></li><li><a href="https://github.com/ziwon/rdma-fabric-lab/blob/main/.site/src/excerpts/slides-net1-break.json">slides-net1-break.json</a></li><li><a href="https://github.com/ziwon/rdma-fabric-lab/blob/main/.site/src/excerpts/slides-net1-repair.json">slides-net1-repair.json</a></li><li><a href="https://github.com/ziwon/rdma-fabric-lab/blob/main/.site/tests/slides.test.mjs">slides.test.mjs</a></li></ul>
     </details>
   </section>
   <section id="slide-6" class="slide" aria-labelledby="title-6">
-    <h2 id="title-6" class="sr-only">net1 reachability is an IP result</h2>
+    <h2 id="title-6" class="sr-only">Stock paths are safe only by timing</h2>
     <div class="frame">
       <div class="canvas-item shape dot" data-part="signal-dot" style="--x:64;--y:49;--w:9;--h:9;--fill:#B2E879" aria-hidden="true"></div>
-      <div class="canvas-item copy mono" data-part="section" style="--x:83;--y:43;--w:850;--h:24;--size:16;--ink:#9FA6B8">05 / INTERPRETING THE RESULT</div>
+      <div class="canvas-item copy mono" data-part="section" style="--x:83;--y:43;--w:850;--h:24;--size:16;--ink:#9FA6B8">05 / SCOPE OF THE RESULT</div>
       <div class="canvas-item shape" data-part="rule" style="--x:64;--y:75;--w:1152;--h:1;--fill:#303545" aria-hidden="true"></div>
       <div class="canvas-item shape" data-part="rule" style="--x:64;--y:654;--w:1152;--h:1;--fill:#303545" aria-hidden="true"></div>
       <div class="canvas-item copy mono" data-part="project-footer" style="--x:64;--y:672;--w:720;--h:23;--size:14;--ink:#9FA6B8">restack / rdma-fabric-lab</div>
       <div class="canvas-item copy mono" data-part="slide-number" style="--x:1094;--y:672;--w:122;--h:23;--size:14;--ink:#9FA6B8;--align:right">06 / 08</div>
-      <div class="canvas-item copy heavy" data-part="headline" style="--x:64;--y:107;--w:1152;--h:72;--size:55;--ink:#F3F4F8">net1 reachability is an IP result</div>
-      <div class="canvas-item copy" data-part="subhead" style="--x:66;--y:191;--w:1130;--h:44;--size:25;--ink:#B5BBCA">The lab gives each test an evidence type so the claims stay separate.</div>
-      <div class="canvas-item shape" data-part="rule" style="--x:64;--y:262;--w:1152;--h:1;--fill:#303545" aria-hidden="true"></div>
-      <div class="canvas-item copy mono" data-part="result-kind-0" style="--x:66;--y:289;--w:300;--h:28;--size:17;--ink:#70C5D0">RXE VERBS</div>
-      <div class="canvas-item copy heavy" data-part="result-outcome-0" style="--x:369;--y:281;--w:836;--h:40;--size:29;--ink:#F3F4F8">Passed between hostNetwork pods</div>
-      <div class="canvas-item copy" data-part="result-meaning-0" style="--x:369;--y:318;--w:836;--h:35;--size:23;--ink:#B5BBCA">Software RDMA over the worker lab NIC, in privileged pods.</div>
-      <div class="canvas-item shape" data-part="rule" style="--x:64;--y:371;--w:1152;--h:1;--fill:#303545" aria-hidden="true"></div>
-      <div class="canvas-item copy mono" data-part="result-kind-1" style="--x:66;--y:398;--w:300;--h:28;--size:17;--ink:#B2E879">MULTUS NET1</div>
-      <div class="canvas-item copy heavy" data-part="result-outcome-1" style="--x:369;--y:390;--w:836;--h:40;--size:29;--ink:#F3F4F8">Passed across worker nodes</div>
-      <div class="canvas-item copy" data-part="result-meaning-1" style="--x:369;--y:427;--w:836;--h:35;--size:23;--ink:#B5BBCA">Secondary IP, including after the repaired reboot.</div>
-      <div class="canvas-item shape" data-part="rule" style="--x:64;--y:480;--w:1152;--h:1;--fill:#303545" aria-hidden="true"></div>
-      <div class="canvas-item copy mono" data-part="result-kind-2" style="--x:66;--y:507;--w:300;--h:28;--size:17;--ink:#9FA6B8">PRODUCTION FABRIC</div>
-      <div class="canvas-item copy heavy" data-part="result-outcome-2" style="--x:369;--y:499;--w:836;--h:40;--size:29;--ink:#F3F4F8">Outside this test</div>
-      <div class="canvas-item copy" data-part="result-meaning-2" style="--x:369;--y:536;--w:836;--h:35;--size:23;--ink:#B5BBCA">No HCA, physical InfiniBand or NCCL benchmark.</div>
+      <div class="canvas-item copy heavy" data-part="headline" style="--x:64;--y:107;--w:1152;--h:72;--size:55;--ink:#F3F4F8">Stock paths are safe only by timing</div>
+      <div class="canvas-item copy" data-part="subhead" style="--x:66;--y:191;--w:1130;--h:44;--size:25;--ink:#B5BBCA">Pods that came back without net1, over clean reboots of one worker.</div>
+      <div class="canvas-item copy mono" data-part="th-0" style="--x:64;--y:262;--w:504;--h:24;--size:16;--ink:#9FA6B8">PODS ON THE REBOOTED WORKER</div>
+      <div class="canvas-item copy mono" data-part="th-1" style="--x:584;--y:262;--w:300;--h:24;--size:16;--ink:#9FA6B8">STOCK PATHS</div>
+      <div class="canvas-item copy mono" data-part="th-2" style="--x:900;--y:262;--w:300;--h:24;--size:16;--ink:#9FA6B8">LAB LAYOUT</div>
+      <div class="canvas-item shape" data-part="rule" style="--x:64;--y:296;--w:1152;--h:1;--fill:#303545" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="td-0-0" style="--x:64;--y:310;--w:504;--h:34;--size:22;--ink:#F3F4F8">Created at boot</div>
+      <div class="canvas-item copy" data-part="td-0-1" style="--x:584;--y:310;--w:300;--h:34;--size:22;--ink:#F2867A">No net1</div>
+      <div class="canvas-item copy" data-part="td-0-2" style="--x:900;--y:310;--w:300;--h:34;--size:22;--ink:#B2E879">Waits, then net1</div>
+      <div class="canvas-item shape" data-part="rule" style="--x:64;--y:364;--w:1152;--h:1;--fill:#303545" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="td-1-0" style="--x:64;--y:376;--w:504;--h:34;--size:22;--ink:#F3F4F8">Restarted or waiting</div>
+      <div class="canvas-item copy" data-part="td-1-1" style="--x:584;--y:376;--w:300;--h:34;--size:22;--ink:#E6E8EF">0 of 20 lost it</div>
+      <div class="canvas-item copy" data-part="td-1-2" style="--x:900;--y:376;--w:300;--h:34;--size:22;--ink:#B2E879">0 of 20 lost it</div>
+      <div class="canvas-item shape" data-part="rule" style="--x:64;--y:430;--w:1152;--h:1;--fill:#303545" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="td-2-0" style="--x:64;--y:442;--w:504;--h:34;--size:22;--ink:#F3F4F8">The same, Multus 30 s later</div>
+      <div class="canvas-item copy" data-part="td-2-1" style="--x:584;--y:442;--w:300;--h:34;--size:22;--ink:#F2867A">12 of 12 lost it</div>
+      <div class="canvas-item copy" data-part="td-2-2" style="--x:900;--y:442;--w:300;--h:34;--size:22;--ink:#B2E879">0 of 12 lost it</div>
+      <div class="canvas-item shape" data-part="rule" style="--x:64;--y:496;--w:1152;--h:1;--fill:#303545" aria-hidden="true"></div>
+      <div class="canvas-item copy" data-part="scope-note" style="--x:65;--y:548;--w:1145;--h:30;--size:21;--ink:#E6E8EF">Multus wrote its file 18 to 20 s after boot here, and 53 s after boot on a 13-guest simulation.</div>
+      <div class="canvas-item copy" data-part="scope-note-2" style="--x:65;--y:584;--w:1145;--h:30;--size:20;--ink:#9FA6B8">A three-node lab on one host. No HCA, no InfiniBand, and no fleet-scale timing.</div>
     </div>
     <details class="notes">
-      <summary>Speaker notes · 7:00–8:05 (1:05)</summary>
-      <p>Be explicit about what each scenario can show. The hostNetwork case exercised the software RDMA provider, and its pods had to be privileged to reach the device. The Multus case did not expose an RDMA device to ordinary pods, and its reachability test is IP. This slide’s claims do not carry over to a real HCA, switches, physical InfiniBand, production throughput or NCCL. The repository also has separate simulations. Those are out of scope for this talk.</p>
+      <summary>Speaker notes · 6:50–8:05 (1:15)</summary>
+      <p>The demo pod is the earliest pod a node can run. <code>probe-boot-window.sh</code> counts the ordinary ones, on the same cluster. Each round reboots worker2. Keepers are three pods already running there, which the kubelet starts again in new sandboxes. A waiter is one pod created while worker2 is down, scheduled once the node is Ready again. Five rounds of each gave 20 pod starts per layout. Multus wrote its file 17.7 to 19.8 s after boot, every one of those sandboxes began 9 s or more after it, and 0 of 20 lost net1 with the stock paths, as in the lab layout. The stock paths were safe by timing, not by design.</p>
+      <p>Then one more init container started the Multus daemon 30 s later, and its file appeared 48.6 to 50.2 s after boot. Over three rounds of each kind, the sandboxes still began 28.1 to 32.0 s after boot, and with the stock paths all 12 pods came back Ready without net1. The 9 restarted pods kept the network-status annotation of their old sandbox, which lists net1 and an eth0 address the pod no longer had. The 3 waiting pods had no annotation. In the lab layout 0 of 12 lost it, because every sandbox waited for the file. 18 s is not a property of Multus: on the 13-guest simulation of <code>docs/fleet.md</code>, the file appeared 53.3 s after boot. This is one host and three guests, so it gives no fleet-scale timing.</p>
       <p>Sources</p>
-      <ul><li><a href="https://github.com/ziwon/rdma-fabric-lab/blob/main/docs/verification.md">verification.md</a></li><li><a href="https://github.com/ziwon/rdma-fabric-lab/blob/main/docs/adr/0003-results-and-breaks.md">0003-results-and-breaks.md</a></li><li><a href="https://github.com/ziwon/rdma-fabric-lab/blob/main/tracks/a-soft-roce/scenarios/k8s-multus-net1.yaml">k8s-multus-net1.yaml</a></li><li><a href="https://github.com/ziwon/rdma-fabric-lab/blob/main/tracks/a-soft-roce/scenarios/k8s-hostnet-rdma.yaml">k8s-hostnet-rdma.yaml</a></li></ul>
+      <ul><li><a href="https://github.com/ziwon/rdma-fabric-lab/blob/main/tests/integration/qemu-lab/probe-boot-window.sh">probe-boot-window.sh</a></li><li><a href="https://github.com/ziwon/rdma-fabric-lab/blob/main/.site/src/excerpts/slides-boot-window.json">slides-boot-window.json</a></li><li><a href="https://github.com/ziwon/rdma-fabric-lab/blob/main/docs/adr/0004-track-a-pods-and-net1.md">0004-track-a-pods-and-net1.md</a></li><li><a href="https://github.com/ziwon/rdma-fabric-lab/blob/main/docs/fleet.md">fleet.md</a></li><li><a href="https://github.com/ziwon/rdma-fabric-lab/blob/main/docs/adr/0003-results-and-breaks.md">0003-results-and-breaks.md</a></li></ul>
     </details>
   </section>
   <section id="slide-7" class="slide" aria-labelledby="title-7">
@@ -325,9 +336,10 @@
     </div>
     <details class="notes">
       <summary>Speaker notes · 8:05–9:15 (1:10)</summary>
-      <p>The reusable part is the test design. Write the invariant before running the test. Induce one reversible bad state in a disposable environment and verify the relevant assertion catches it, rather than accepting any nonzero exit. Repair it and run the same check again. The run manifest points back to the evidence. Deliberate failures are marked separately from the latest normal results.</p>
+      <p>The reusable part is the test design. Write the invariant before running the test. Induce one reversible bad state in a disposable environment and verify the relevant assertion catches it, rather than accepting any nonzero exit. Repair it and run the same check again. In this repository the break puts a copy of Cilium’s file back into the runtime directory of one worker, and the same three checks must fail.</p>
+      <p>The run manifest points back to the evidence. Deliberate failures are marked separately from the latest normal results.</p>
       <p>Sources</p>
-      <ul><li><a href="https://github.com/ziwon/rdma-fabric-lab/blob/main/docs/adr/0003-results-and-breaks.md">0003-results-and-breaks.md</a></li><li><a href="https://github.com/ziwon/rdma-fabric-lab/blob/main/docs/verification.md">verification.md</a></li></ul>
+      <ul><li><a href="https://github.com/ziwon/rdma-fabric-lab/blob/main/docs/adr/0003-results-and-breaks.md">0003-results-and-breaks.md</a></li><li><a href="https://github.com/ziwon/rdma-fabric-lab/blob/main/docs/verification.md">verification.md</a></li><li><a href="https://github.com/ziwon/rdma-fabric-lab/blob/main/tests/integration/qemu-lab/breaks-k8s-rdma.sh#L219-L221">breaks-k8s-rdma.sh</a></li></ul>
     </details>
   </section>
   <section id="slide-8" class="slide" aria-labelledby="title-8">
@@ -341,17 +353,18 @@
       <div class="canvas-item copy mono" data-part="slide-number" style="--x:1094;--y:672;--w:122;--h:23;--size:14;--ink:#9FA6B8;--align:right">08 / 08</div>
       <div class="canvas-item copy heavy" data-part="final-head-1" style="--x:64;--y:144;--w:1152;--h:94;--size:76;--ink:#F3F4F8">Pod readiness is only</div>
       <div class="canvas-item copy heavy" data-part="final-head-2" style="--x:64;--y:235;--w:1152;--h:94;--size:76;--ink:#B2E879">the first check.</div>
-      <div class="canvas-item copy" data-part="final-principle" style="--x:67;--y:371;--w:1149;--h:41;--size:29;--ink:#E6E8EF">After reboot, test the interface and the traffic your workload expects.</div>
-      <div class="canvas-item copy" data-part="final-principle-2" style="--x:67;--y:421;--w:1149;--h:41;--size:29;--ink:#B5BBCA">Check RDMA verbs separately from secondary IP reachability.</div>
+      <div class="canvas-item copy" data-part="final-principle" style="--x:67;--y:371;--w:1149;--h:41;--size:29;--ink:#E6E8EF">After a reboot, test the interface and the traffic your workload expects.</div>
+      <div class="canvas-item copy" data-part="final-principle-2" style="--x:67;--y:421;--w:1149;--h:41;--size:29;--ink:#B5BBCA">Check the pod, not its annotation: network-status can be missing or stale.</div>
       <div class="canvas-item shape" data-part="rule" style="--x:66;--y:504;--w:1147;--h:1;--fill:#303545" aria-hidden="true"></div>
       <div class="canvas-item copy mono" data-part="repository-label" style="--x:67;--y:533;--w:1000;--h:25;--size:16;--ink:#9FA6B8">LAB &amp; REPRODUCTION</div>
       <div class="canvas-item copy mono" data-part="repository-url" style="--x:67;--y:569;--w:1110;--h:38;--size:25;--ink:#70C5D0">github.com/ziwon/rdma-fabric-lab</div>
     </div>
     <details class="notes">
       <summary>Speaker notes · 9:15–10:00 (0:45)</summary>
-      <p>Close with the transfer: use the first pod after reboot to test the interface and actual traffic, and keep a separate verbs check for any RDMA claim. Point to the repository verification and runbook for reproduction. The presentation is a proposal draft and makes no claim of conference acceptance.</p>
+      <p>Close with the transfer: after a reboot, test the interface and the traffic inside the pod. The annotation is not enough. A pod created in the window had no network-status, and a restarted pod that lost net1 kept the network-status of its earlier sandbox, with net1 in it and an eth0 address that was no longer the pod’s. Point to the repository verification and runbook for reproduction.</p>
+      <p>The presentation is a proposal draft and makes no claim of conference acceptance.</p>
       <p>Sources</p>
-      <ul><li><a href="https://github.com/ziwon/rdma-fabric-lab">rdma-fabric-lab</a></li><li><a href="https://github.com/ziwon/rdma-fabric-lab/blob/main/docs/verification.md">verification.md</a></li><li><a href="https://github.com/ziwon/rdma-fabric-lab/blob/main/docs/runbook.md">runbook.md</a></li><li><a href="https://github.com/restack-ai/design-system/blob/main/DESIGN.md">DESIGN.md</a></li></ul>
+      <ul><li><a href="https://github.com/ziwon/rdma-fabric-lab">rdma-fabric-lab</a></li><li><a href="https://github.com/ziwon/rdma-fabric-lab/blob/main/docs/verification.md">verification.md</a></li><li><a href="https://github.com/ziwon/rdma-fabric-lab/blob/main/docs/runbook.md">runbook.md</a></li><li><a href="https://gitlab.com/sylva-projects/sylva-core/-/work_items/3962">Sylva issue 3962</a></li></ul>
     </details>
   </section>
 </main>
