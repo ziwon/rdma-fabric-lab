@@ -75,6 +75,12 @@ export default defineConfig({
               ],
             },
             {
+              label: 'Talks',
+              link: '/slides/',
+              icon: 'document',
+              items: [{ label: 'All talks', link: '/slides/' }],
+            },
+            {
               label: 'Repository',
               link: '/repository/',
               icon: 'seti:folder',

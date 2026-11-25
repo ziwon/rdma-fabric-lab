@@ -5,8 +5,10 @@ import path from 'node:path';
 import { DOC_DIRS, routeOf } from './lib/docs.mjs';
 import { parseMakeTargets, readMakefiles } from './lib/make.mjs';
 import { listFiles, loadScenarios, repoRoot, siteDir } from './lib/repo.mjs';
-import { base } from './lib/site.mjs';
+import { base, site } from './lib/site.mjs';
+import { loadDecks, proposalStatus } from './lib/slides.mjs';
 import { brokenLinks, verifySite } from './lib/verify.mjs';
+import { verifyTalks } from './lib/verify-talks.mjs';
 
 const dist = path.join(siteDir, 'dist');
 
@@ -30,7 +32,10 @@ const problems = verifySite({
   docRoutes: new Map(docs.map((doc) => [doc, routeOf(doc)])),
   pages,
   makeTargetsRoute: '/reference/make-targets/',
-}).concat(brokenLinks(pages, base, (target) => existsSync(path.join(dist, target))));
+}).concat(
+  verifyTalks({ pages, decks: loadDecks(), status: proposalStatus, base, site }),
+  brokenLinks(pages, base, (target) => existsSync(path.join(dist, target))),
+);
 for (const problem of problems) console.error(`verify-dist: ${problem}`);
 console.log(`verify-dist: ${pages.size} pages, ${problems.length} problems`);
 process.exit(problems.length ? 1 : 0);

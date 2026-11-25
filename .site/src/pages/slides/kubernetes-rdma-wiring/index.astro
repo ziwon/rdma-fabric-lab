@@ -1,0 +1,22 @@
+---
+import { base, site } from '../../../../scripts/lib/site.mjs';
+
+const destination = `${base}/slides/multus-boot-race/`;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Talk moved — RDMA Fabric Lab</title>
+    <meta http-equiv="refresh" content={`0; url=${destination}`} />
+    <link rel="canonical" href={new URL(destination, site).href} />
+  </head>
+  <body>
+    <main>
+      <h1>This talk has moved</h1>
+      <p><a href={destination}>Open Ready Is Not Wired: A Reboot Test for Kubernetes Secondary Networks</a>.</p>
+    </main>
+  </body>
+</html>

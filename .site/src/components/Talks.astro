@@ -1,0 +1,29 @@
+---
+import { loadDecks, proposalStatus } from '../../scripts/lib/slides.mjs';
+import { withBase } from '../plugins/remark-base-links.mjs';
+
+const decks = loadDecks();
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+---
+
+<ul class="talks not-content" role="list">
+  {decks.map((deck) => (
+    <li data-deck={deck.slug}>
+      <h2>{deck.title}</h2>
+      <p class="length">{deck.count} slides · {deck.minutes} minutes</p>
+      <p class="status"><strong>Status:</strong> {proposalStatus}</p>
+      <a href={withBase(`/slides/${deck.slug}/`, base)}>
+        Open browser deck<span class="sr-only">: {deck.title}</span> <span aria-hidden="true">→</span>
+      </a>
+    </li>
+  ))}
+</ul>
+
+<style>
+  .talks { list-style: none; margin: 2rem 0; padding: 0; }
+  li { border-block-start: 1px solid var(--sl-color-hairline); padding-block: 1.5rem; }
+  h2 { margin: 0; color: var(--sl-color-white); font-size: 1.35rem; font-weight: 600; line-height: 1.4; }
+  .length { margin-block: 0.6rem; color: var(--sl-color-gray-3); font-family: var(--sl-font-mono); font-size: 0.8rem; }
+  .status { margin-block: 0.75rem 1rem; color: var(--sl-color-gray-2); font-size: 0.9rem; }
+  a { display: inline-block; padding-block: 0.5rem; color: var(--sl-color-text-accent); font-weight: 600; }
+</style>
