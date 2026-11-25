@@ -125,6 +125,18 @@ a-multus-cilium-copy:
   source: .lab/evidence/m3-cni-dir/runs/20261116T053519Z/a-soft-roce/k8s-multus-net1/summary.md
   block: '| check |'
   rows: [cni-dir-holds-only-multus, pod-at-boot-waits-for-multus, new-pod-after-reboot-gets-net1]
+# The runs that docs/slides/kubernetes-rdma-wiring.html shows on its demo slide. .site/tests/slides.test.mjs compares
+# the slide with these two.
+slides-net1-break:
+  run: 20261125T121324Z
+  source: .lab/evidence/slides/runs/20261125T121324Z/a-soft-roce/k8s-multus-net1/summary.md
+  block: '| check |'
+  rows: [cni-dir-holds-only-multus, pod-at-boot-waits-for-multus, new-pod-after-reboot-gets-net1]
+slides-net1-repair:
+  run: 20261125T121559Z
+  source: .lab/evidence/slides/runs/20261125T121559Z/a-soft-roce/k8s-multus-net1/summary.md
+  block: '| check |'
+  rows: [cni-dir-holds-only-multus, pod-at-boot-waits-for-multus, new-pod-after-reboot-gets-net1]
 
 b01-checks:
   run: 20261115T151655Z
