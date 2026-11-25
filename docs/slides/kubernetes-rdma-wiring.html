@@ -70,7 +70,7 @@
     <h2 id="title-1" class="sr-only">Testing Kubernetes RDMA Network Wiring on One Host</h2>
     <div class="frame">
       <div class="canvas-item shape dot" data-part="signal-dot" style="--x:64;--y:49;--w:9;--h:9;--fill:#B2E879" aria-hidden="true"></div>
-      <div class="canvas-item copy mono" data-part="section" style="--x:83;--y:43;--w:850;--h:24;--size:16;--ink:#9FA6B8">NEOCLOUDCON EUROPE 2027 / LIGHTNING TALK DRAFT</div>
+      <div class="canvas-item copy mono" data-part="section" style="--x:83;--y:43;--w:850;--h:24;--size:16;--ink:#9FA6B8">PROPOSAL FOR NEOCLOUDCON EUROPE 2027 / LIGHTNING TALK DRAFT</div>
       <div class="canvas-item shape" data-part="rule" style="--x:64;--y:75;--w:1152;--h:1;--fill:#303545" aria-hidden="true"></div>
       <div class="canvas-item shape" data-part="rule" style="--x:64;--y:654;--w:1152;--h:1;--fill:#303545" aria-hidden="true"></div>
       <div class="canvas-item copy mono" data-part="project-footer" style="--x:64;--y:672;--w:720;--h:23;--size:14;--ink:#9FA6B8">restack / rdma-fabric-lab</div>
@@ -93,7 +93,7 @@
       <div class="canvas-item copy heavy" data-part="title-line-2" style="--x:64;--y:231;--w:790;--h:84;--size:69;--ink:#F3F4F8">RDMA Network Wiring</div>
       <div class="canvas-item copy heavy" data-part="title-line-3" style="--x:64;--y:315;--w:770;--h:85;--size:69;--ink:#B2E879">on One Host</div>
       <div class="canvas-item copy" data-part="deck-premise" style="--x:67;--y:438;--w:754;--h:50;--size:25;--ink:#B5BBCA">A reboot test that caught a missing secondary network.</div>
-      <div class="canvas-item copy mono" data-part="speaker" style="--x:67;--y:540;--w:600;--h:30;--size:18;--ink:#E6E8EF">YOUNGPIL YOON</div>
+      <div class="canvas-item copy mono" data-part="speaker" style="--x:67;--y:540;--w:600;--h:30;--size:18;--ink:#E6E8EF">YEONGPIL YOON</div>
     </div>
     <details class="notes">
       <summary>Speaker notes · 0:00–0:40 (0:40)</summary>
@@ -202,9 +202,9 @@
     </div>
     <details class="notes">
       <summary>Speaker notes · 3:15–4:40 (1:25)</summary>
-      <p>The intended layout separates the runtime-visible directory from Cilium’s own directory. In the documented regression, a copy of the Cilium conflist goes back into /etc/cni/net.d on worker2. The Multus daemon removes 00-multus.conf when it stops, so every boot starts without it. In the lab the file was gone after the Multus pod of a worker was deleted and back about 1.4 s later, written by the new pod. Early in boot, before Multus writes its config, the copy gives containerd a usable primary CNI too soon: in run 20261125T121324Z from boot+6.1 s, 12.6 s before Multus wrote its file at boot+18.7 s. An early test pod is deliberately scheduled as the worker returns. The test compares runtime readiness and the first sandbox creation against when the Multus config appears. This is a lab-specific regression, not a claim about all Cilium or Multus installs.</p>
+      <p>The intended layout separates the runtime-visible directory from Cilium’s own directory. In the documented regression, a copy of the Cilium conflist goes back into /etc/cni/net.d on worker2. The Multus daemon removes 00-multus.conf when it stops, so every boot starts without it. In the lab the file was gone after the Multus pod of a worker was deleted and back about 1.4 s later, written by the new pod. Early in boot, before Multus writes its config, the copy gives containerd a usable primary CNI too soon: in run 20261125T121324Z from boot+6.1 s, 12.6 s before Multus wrote its file at boot+18.7 s. An early test pod is deliberately scheduled as the worker returns. The test compares runtime readiness and the first sandbox creation against when the Multus config appears. This is a lab-specific regression, not a claim about all Cilium or Multus installs. The class of failure is reported outside this lab: in Sylva issue 3962 a pod on a newly joined node started through Calico alone before Multus wrote 00-multus.conf, and no error was reported.</p>
       <p>Sources</p>
-      <ul><li><a href="https://github.com/ziwon/rdma-fabric-lab/blob/main/tests/integration/qemu-lab/breaks-k8s-rdma.sh#L219-L221">breaks-k8s-rdma.sh</a></li><li><a href="https://github.com/ziwon/rdma-fabric-lab/blob/main/tracks/a-soft-roce/scenarios/k8s-multus-net1.yaml">k8s-multus-net1.yaml</a></li><li><a href="https://github.com/ziwon/rdma-fabric-lab/blob/main/docs/adr/0004-track-a-pods-and-net1.md">0004-track-a-pods-and-net1.md</a></li></ul>
+      <ul><li><a href="https://github.com/ziwon/rdma-fabric-lab/blob/main/tests/integration/qemu-lab/breaks-k8s-rdma.sh#L219-L221">breaks-k8s-rdma.sh</a></li><li><a href="https://github.com/ziwon/rdma-fabric-lab/blob/main/tracks/a-soft-roce/scenarios/k8s-multus-net1.yaml">k8s-multus-net1.yaml</a></li><li><a href="https://github.com/ziwon/rdma-fabric-lab/blob/main/docs/adr/0004-track-a-pods-and-net1.md">0004-track-a-pods-and-net1.md</a></li><li><a href="https://gitlab.com/sylva-projects/sylva-core/-/work_items/3962">Sylva issue 3962</a></li></ul>
     </details>
   </section>
   <section id="slide-5" class="slide" aria-labelledby="title-5">
