@@ -1,0 +1,405 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Testing Kubernetes RDMA Network Wiring on One Host</title>
+<!-- Slide fonts: optional local copies are embedded by the learning site. -->
+<style>
+  :root { color-scheme: dark; background: #0c0d12; color: #e6e8ef; font-family: "DM Sans", system-ui, sans-serif; }
+  * { box-sizing: border-box; }
+  body { max-width: 1330px; margin: auto; padding: 16px; }
+  [hidden] { display: none !important; }
+  .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .frame { position: relative; aspect-ratio: 16 / 9; width: 100%; container-type: inline-size; overflow: hidden; border: 1px solid #303545; background: #0c0d12; }
+  .canvas-item { position: absolute; left: calc(var(--x) * 100% / 1280); top: calc(var(--y) * 100% / 720); width: calc(var(--w) * 100% / 1280); height: calc(var(--h) * 100% / 720); }
+  .shape { background: var(--fill, transparent); outline: var(--edge-width, 0px) solid var(--edge, transparent); outline-offset: -1px; }
+  .dot { border-radius: 50%; }
+  .copy { color: var(--ink); font-size: calc(var(--size) * 100cqw / 1280); line-height: 1.14; padding-top: .12em; white-space: nowrap; text-align: var(--align, left); }
+  .mono { font-family: "IBM Plex Mono", ui-monospace, "Liberation Mono", monospace; }
+  .heavy { font-weight: 700; }
+  .notes { margin: 14px 0 22px; padding: 12px 16px; background: #15171f; border: 1px solid #303545; border-radius: 5px; line-height: 1.55; overflow-wrap: anywhere; }
+  .notes summary { cursor: pointer; color: #b2e879; }
+  .notes a, .intro a { color: #b2e879; }
+  .intro { display: flex; justify-content: space-between; flex-wrap: wrap; align-items: baseline; gap: 6px 20px; margin: 0 0 12px; font-size: .84rem; color: #b5bbca; }
+  .controls { display: flex; justify-content: space-between; flex-wrap: wrap; align-items: center; gap: 8px 14px; margin-bottom: 12px; }
+  .actions { display: flex; align-items: center; gap: 7px; }
+  button { padding: 0 11px; min-height: 40px; border: 1px solid #303545; border-radius: 5px; background: #15171f; color: inherit; font: inherit; cursor: pointer; }
+  button:hover { border-color: #b2e879; }
+  button[aria-disabled="true"] { color: #9fa6b8; cursor: default; }
+  :focus-visible { outline: 2px solid #b2e879; outline-offset: 2px; }
+  #count { min-width: 6ch; color: #b2e879; text-align: center; font-variant-numeric: tabular-nums; }
+  .slide:not(:last-child) { margin-bottom: 22px; }
+  #deck:fullscreen { display: grid; place-items: center; background: #0c0d12; }
+  #deck:fullscreen .slide { margin: 0; }
+  #deck:fullscreen .frame { width: min(100vw, 177.7778vh); border: 0; }
+  #deck:fullscreen .notes { display: none; }
+  @media (max-width: 600px) {
+    body { padding: 10px; }
+    .intro { font-size: .78rem; }
+    button { min-height: 44px; }
+  }
+  @page { size: 13.333in 7.5in; margin: 0; }
+  @media print {
+    * { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+    body { padding: 0; max-width: none; }
+    .intro, .controls, .notes { display: none !important; }
+    .slide, .slide[hidden] { display: block !important; margin: 0 !important; break-inside: avoid; }
+    .slide + .slide { break-before: page; }
+    .frame { border: 0; }
+  }
+</style>
+</head>
+<body>
+<header class="intro">
+  <span>RDMA Fabric Lab / 10-minute talk draft</span>
+  <a href="https://github.com/ziwon/rdma-fabric-lab/tree/main/docs/slides">Slide source</a>
+</header>
+<h1 class="sr-only">Testing Kubernetes RDMA Network Wiring on One Host</h1>
+<nav id="controls" class="controls" aria-label="Slide controls" hidden>
+  <div class="actions">
+    <button id="previous" type="button" aria-label="Previous slide">Prev</button>
+    <output id="count" aria-live="polite" aria-atomic="true"></output>
+    <button id="next" type="button" aria-label="Next slide">Next</button>
+  </div>
+  <button id="fullscreen" type="button" hidden>Fullscreen</button>
+</nav>
+<main id="deck" aria-label="Slides">
+  <section id="slide-1" class="slide" aria-labelledby="title-1">
+    <h2 id="title-1" class="sr-only">Testing Kubernetes RDMA Network Wiring on One Host</h2>
+    <div class="frame">
+      <div class="canvas-item shape dot" data-part="signal-dot" style="--x:64;--y:49;--w:9;--h:9;--fill:#B2E879" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="section" style="--x:83;--y:43;--w:850;--h:24;--size:16;--ink:#9FA6B8">NEOCLOUDCON EUROPE 2027 / LIGHTNING TALK DRAFT</div>
+      <div class="canvas-item shape" data-part="rule" style="--x:64;--y:75;--w:1152;--h:1;--fill:#303545" aria-hidden="true"></div>
+      <div class="canvas-item shape" data-part="rule" style="--x:64;--y:654;--w:1152;--h:1;--fill:#303545" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="project-footer" style="--x:64;--y:672;--w:720;--h:23;--size:14;--ink:#9FA6B8">restack / rdma-fabric-lab</div>
+      <div class="canvas-item copy mono" data-part="slide-number" style="--x:1094;--y:672;--w:122;--h:23;--size:14;--ink:#9FA6B8;--align:right">01 / 08</div>
+      <div class="canvas-item shape" data-part="console-figure" style="--x:862;--y:139;--w:354;--h:409;--fill:#101218;--edge:#303545;--edge-width:1px" aria-hidden="true"></div>
+      <div class="canvas-item shape" data-part="console-header" style="--x:863;--y:140;--w:352;--h:52;--fill:#1C1F3A" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="console-name" style="--x:884;--y:156;--w:312;--h:25;--size:16;--ink:#8595FA">REBOOT REGRESSION</div>
+      <div class="canvas-item shape dot" data-part="signal-dot" style="--x:886;--y:229;--w:8;--h:8;--fill:#B2E879" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="fig-phase-0" style="--x:906;--y:224;--w:274;--h:23;--size:16;--ink:#9FA6B8">01 / baseline</div>
+      <div class="canvas-item copy mono" data-part="fig-status-0" style="--x:906;--y:252;--w:280;--h:36;--size:23;--ink:#B2E879">net1 present</div>
+      <div class="canvas-item shape" data-part="rule" style="--x:885;--y:299;--w:304;--h:1;--fill:#303545" aria-hidden="true"></div>
+      <div class="canvas-item shape dot" data-part="signal-dot" style="--x:886;--y:330;--w:8;--h:8;--fill:#F2867A" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="fig-phase-1" style="--x:906;--y:325;--w:274;--h:23;--size:16;--ink:#9FA6B8">02 / stale CNI file</div>
+      <div class="canvas-item copy mono" data-part="fig-status-1" style="--x:906;--y:353;--w:280;--h:36;--size:23;--ink:#F2867A">net1 missing</div>
+      <div class="canvas-item shape" data-part="rule" style="--x:885;--y:400;--w:304;--h:1;--fill:#303545" aria-hidden="true"></div>
+      <div class="canvas-item shape dot" data-part="signal-dot" style="--x:886;--y:431;--w:8;--h:8;--fill:#B2E879" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="fig-phase-2" style="--x:906;--y:426;--w:274;--h:23;--size:16;--ink:#9FA6B8">03 / repair</div>
+      <div class="canvas-item copy mono" data-part="fig-status-2" style="--x:906;--y:454;--w:280;--h:36;--size:23;--ink:#B2E879">net1 restored</div>
+      <div class="canvas-item copy heavy" data-part="title-line-1" style="--x:64;--y:146;--w:790;--h:86;--size:69;--ink:#F3F4F8">Testing Kubernetes</div>
+      <div class="canvas-item copy heavy" data-part="title-line-2" style="--x:64;--y:231;--w:790;--h:84;--size:69;--ink:#F3F4F8">RDMA Network Wiring</div>
+      <div class="canvas-item copy heavy" data-part="title-line-3" style="--x:64;--y:315;--w:770;--h:85;--size:69;--ink:#B2E879">on One Host</div>
+      <div class="canvas-item copy" data-part="deck-premise" style="--x:67;--y:438;--w:754;--h:50;--size:25;--ink:#B5BBCA">A reboot test that caught a missing secondary network.</div>
+      <div class="canvas-item copy mono" data-part="speaker" style="--x:67;--y:540;--w:600;--h:30;--size:18;--ink:#E6E8EF">YOUNGPIL YOON</div>
+    </div>
+    <details class="notes">
+      <summary>Speaker notes · 0:00–0:40 (0:40)</summary>
+      <p>Open on the middle state: after a worker reboot, a fresh pod was missing the secondary interface it was expected to have. The practical question is which check catches that without confusing IP reachability with RDMA traffic. This is a single-host lab, not a hardware benchmark.</p>
+      <p>Sources</p>
+      <ul><li><a href="https://github.com/ziwon/rdma-fabric-lab/blob/main/docs/verification.md">verification.md</a></li><li><a href="https://github.com/restack-ai/design-system/blob/main/DESIGN.md">DESIGN.md</a></li></ul>
+    </details>
+  </section>
+  <section id="slide-2" class="slide" aria-labelledby="title-2">
+    <h2 id="title-2" class="sr-only">A Ready pod can still miss net1</h2>
+    <div class="frame">
+      <div class="canvas-item shape dot" data-part="signal-dot" style="--x:64;--y:49;--w:9;--h:9;--fill:#B2E879" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="section" style="--x:83;--y:43;--w:850;--h:24;--size:16;--ink:#9FA6B8">01 / THE FAILURE MODE</div>
+      <div class="canvas-item shape" data-part="rule" style="--x:64;--y:75;--w:1152;--h:1;--fill:#303545" aria-hidden="true"></div>
+      <div class="canvas-item shape" data-part="rule" style="--x:64;--y:654;--w:1152;--h:1;--fill:#303545" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="project-footer" style="--x:64;--y:672;--w:720;--h:23;--size:14;--ink:#9FA6B8">restack / rdma-fabric-lab</div>
+      <div class="canvas-item copy mono" data-part="slide-number" style="--x:1094;--y:672;--w:122;--h:23;--size:14;--ink:#9FA6B8;--align:right">02 / 08</div>
+      <div class="canvas-item copy heavy" data-part="headline" style="--x:64;--y:107;--w:1152;--h:72;--size:55;--ink:#F3F4F8">A Ready pod can still miss net1</div>
+      <div class="canvas-item copy" data-part="subhead" style="--x:66;--y:191;--w:1130;--h:44;--size:25;--ink:#B5BBCA">The regression checks what a newly scheduled pod gets after a worker reboots.</div>
+      <div class="canvas-item shape" data-part="rule" style="--x:65;--y:266;--w:1150;--h:1;--fill:#303545" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="layer-index-0" style="--x:68;--y:292;--w:58;--h:35;--size:20;--ink:#9FA6B8">01</div>
+      <div class="canvas-item copy mono" data-part="layer-name-0" style="--x:149;--y:292;--w:420;--h:30;--size:18;--ink:#9FA6B8">NODE / POD READINESS</div>
+      <div class="canvas-item copy" data-part="layer-detail-0" style="--x:552;--y:287;--w:660;--h:54;--size:28;--ink:#E6E8EF">The worker returns. The pod starts.</div>
+      <div class="canvas-item shape" data-part="rule" style="--x:65;--y:371;--w:1150;--h:1;--fill:#303545" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="layer-index-1" style="--x:68;--y:397;--w:58;--h:35;--size:20;--ink:#9FA6B8">02</div>
+      <div class="canvas-item copy mono" data-part="layer-name-1" style="--x:149;--y:397;--w:420;--h:30;--size:18;--ink:#9FA6B8">PRIMARY NETWORK</div>
+      <div class="canvas-item copy" data-part="layer-detail-1" style="--x:552;--y:392;--w:660;--h:54;--size:28;--ink:#E6E8EF">Cilium provides eth0 and the default route.</div>
+      <div class="canvas-item shape" data-part="rule" style="--x:65;--y:476;--w:1150;--h:1;--fill:#303545" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="layer-index-2" style="--x:68;--y:502;--w:58;--h:35;--size:20;--ink:#B2E879">03</div>
+      <div class="canvas-item copy mono" data-part="layer-name-2" style="--x:149;--y:502;--w:420;--h:30;--size:18;--ink:#B2E879">SECONDARY ATTACHMENT</div>
+      <div class="canvas-item copy heavy" data-part="layer-detail-2" style="--x:552;--y:497;--w:660;--h:54;--size:26;--ink:#F3F4F8">The application expects net1 on the lab network.</div>
+      <div class="canvas-item shape" data-part="rule" style="--x:65;--y:582;--w:1150;--h:1;--fill:#303545" aria-hidden="true"></div>
+    </div>
+    <details class="notes">
+      <summary>Speaker notes · 0:40–1:50 (1:10)</summary>
+      <p>Separate the signals. A worker reporting Ready and a running pod do not establish that the pod received a second interface. In this lab, primary traffic uses eth0. The workload that requests the attachment expects a reachable net1. The test checks the actual interface, route, and traffic, with special attention to the first new pod after reboot.</p>
+      <p>Sources</p>
+      <ul><li><a href="https://github.com/ziwon/rdma-fabric-lab/blob/main/tracks/a-soft-roce/scenarios/k8s-multus-net1.yaml">k8s-multus-net1.yaml</a></li></ul>
+    </details>
+  </section>
+  <section id="slide-3" class="slide" aria-labelledby="title-3">
+    <h2 id="title-3" class="sr-only">Two independent network proofs</h2>
+    <div class="frame">
+      <div class="canvas-item shape dot" data-part="signal-dot" style="--x:64;--y:49;--w:9;--h:9;--fill:#B2E879" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="section" style="--x:83;--y:43;--w:850;--h:24;--size:16;--ink:#9FA6B8">02 / LAB TOPOLOGY</div>
+      <div class="canvas-item shape" data-part="rule" style="--x:64;--y:75;--w:1152;--h:1;--fill:#303545" aria-hidden="true"></div>
+      <div class="canvas-item shape" data-part="rule" style="--x:64;--y:654;--w:1152;--h:1;--fill:#303545" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="project-footer" style="--x:64;--y:672;--w:720;--h:23;--size:14;--ink:#9FA6B8">restack / rdma-fabric-lab</div>
+      <div class="canvas-item copy mono" data-part="slide-number" style="--x:1094;--y:672;--w:122;--h:23;--size:14;--ink:#9FA6B8;--align:right">03 / 08</div>
+      <div class="canvas-item copy heavy" data-part="headline" style="--x:64;--y:107;--w:1152;--h:72;--size:55;--ink:#F3F4F8">Two independent network proofs</div>
+      <div class="canvas-item copy" data-part="subhead" style="--x:66;--y:191;--w:1130;--h:44;--size:25;--ink:#B5BBCA">One Linux host runs a QEMU/KVM control plane and two worker VMs.</div>
+      <div class="canvas-item shape" data-part="host-boundary" style="--x:64;--y:257;--w:1152;--h:335;--fill:#101218;--edge:#303545;--edge-width:1px" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="node-label" style="--x:91;--y:279;--w:300;--h:27;--size:17;--ink:#E6E8EF">WORKER 1</div>
+      <div class="canvas-item copy mono" data-part="node-label-2" style="--x:933;--y:279;--w:250;--h:27;--size:17;--ink:#E6E8EF">WORKER 2</div>
+      <div class="canvas-item shape" data-part="proof-lane-0" style="--x:90;--y:329;--w:1100;--h:100;--fill:#14282D" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="lane-type-0" style="--x:110;--y:342;--w:510;--h:26;--size:16;--ink:#70C5D0">A / SOFTWARE RDMA</div>
+      <div class="canvas-item copy mono" data-part="left-endpoint-0" style="--x:110;--y:382;--w:252;--h:28;--size:19;--ink:#E6E8EF">hostNetwork pod</div>
+      <div class="canvas-item shape" data-part="rule" style="--x:328;--y:392;--w:132;--h:1;--fill:#70C5D0" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="fabric-label-0" style="--x:460;--y:378;--w:360;--h:34;--size:19;--ink:#70C5D0;--align:center">RXE verbs over lab NIC</div>
+      <div class="canvas-item shape" data-part="rule" style="--x:818;--y:392;--w:98;--h:1;--fill:#70C5D0" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="right-endpoint-0" style="--x:941;--y:382;--w:244;--h:28;--size:19;--ink:#E6E8EF">hostNetwork pod</div>
+      <div class="canvas-item shape" data-part="proof-lane-1" style="--x:90;--y:453;--w:1100;--h:100;--fill:#18260F" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="lane-type-1" style="--x:110;--y:466;--w:510;--h:26;--size:16;--ink:#B2E879">B / SECONDARY IP</div>
+      <div class="canvas-item copy mono" data-part="left-endpoint-1" style="--x:110;--y:506;--w:252;--h:28;--size:19;--ink:#E6E8EF">ordinary pod</div>
+      <div class="canvas-item shape" data-part="rule" style="--x:328;--y:516;--w:132;--h:1;--fill:#B2E879" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="fabric-label-1" style="--x:460;--y:502;--w:360;--h:34;--size:19;--ink:#B2E879;--align:center">net1 IP over lab NIC</div>
+      <div class="canvas-item shape" data-part="rule" style="--x:818;--y:516;--w:98;--h:1;--fill:#B2E879" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="right-endpoint-1" style="--x:941;--y:506;--w:244;--h:28;--size:19;--ink:#E6E8EF">ordinary pod</div>
+    </div>
+    <details class="notes">
+      <summary>Speaker notes · 1:50–3:15 (1:25)</summary>
+      <p>The control plane schedules two ordinary pods or two hostNetwork test pods across separate worker VMs, depending on the scenario. On lane A, the hostNetwork pods see RXE on the worker lab NIC and the test verifies real software RDMA verbs: Read, Write, and Send. On lane B, Multus adds a macvlan interface to ordinary restricted pods and Whereabouts assigns their addresses. Cilium still supplies eth0. The lanes use the same lab underlay but measure different things: the lower lane does not exercise RDMA in the pod.</p>
+      <p>Sources</p>
+      <ul><li><a href="https://github.com/ziwon/rdma-fabric-lab/blob/main/tracks/a-soft-roce/scenarios/k8s-multus-net1.yaml">k8s-multus-net1.yaml</a></li><li><a href="https://github.com/ziwon/rdma-fabric-lab/blob/main/docs/verification.md">verification.md</a></li><li><a href="https://github.com/ziwon/rdma-fabric-lab/blob/main/docs/adr/0003-results-and-breaks.md">0003-results-and-breaks.md</a></li></ul>
+    </details>
+  </section>
+  <section id="slide-4" class="slide" aria-labelledby="title-4">
+    <h2 id="title-4" class="sr-only">The stale file bypasses Multus</h2>
+    <div class="frame">
+      <div class="canvas-item shape dot" data-part="signal-dot" style="--x:64;--y:49;--w:9;--h:9;--fill:#B2E879" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="section" style="--x:83;--y:43;--w:850;--h:24;--size:16;--ink:#9FA6B8">03 / BOOT ORDER</div>
+      <div class="canvas-item shape" data-part="rule" style="--x:64;--y:75;--w:1152;--h:1;--fill:#303545" aria-hidden="true"></div>
+      <div class="canvas-item shape" data-part="rule" style="--x:64;--y:654;--w:1152;--h:1;--fill:#303545" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="project-footer" style="--x:64;--y:672;--w:720;--h:23;--size:14;--ink:#9FA6B8">restack / rdma-fabric-lab</div>
+      <div class="canvas-item copy mono" data-part="slide-number" style="--x:1094;--y:672;--w:122;--h:23;--size:14;--ink:#9FA6B8;--align:right">04 / 08</div>
+      <div class="canvas-item copy heavy" data-part="headline" style="--x:64;--y:107;--w:1152;--h:72;--size:55;--ink:#F3F4F8">The stale file bypasses Multus</div>
+      <div class="canvas-item copy" data-part="subhead" style="--x:66;--y:191;--w:1130;--h:44;--size:25;--ink:#B5BBCA">In the intended layout, containerd sees only the Multus config in its CNI directory.</div>
+      <div class="canvas-item shape" data-part="cni-panel-0" style="--x:64;--y:262;--w:562;--h:288;--fill:#15171F;--edge:#303545;--edge-width:1px" aria-hidden="true"></div>
+      <div class="canvas-item shape dot" data-part="signal-dot" style="--x:89;--y:290;--w:9;--h:9;--fill:#B2E879" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="cni-status-0" style="--x:108;--y:283;--w:500;--h:27;--size:17;--ink:#B2E879">INTENDED</div>
+      <div class="canvas-item copy mono" data-part="cni-dir-0" style="--x:89;--y:337;--w:504;--h:32;--size:21;--ink:#9FA6B8">/etc/cni/net.d/</div>
+      <div class="canvas-item copy mono" data-part="cni-file-0" style="--x:89;--y:376;--w:504;--h:44;--size:29;--ink:#F3F4F8">00-multus.conf</div>
+      <div class="canvas-item shape" data-part="rule" style="--x:89;--y:432;--w:512;--h:1;--fill:#303545" aria-hidden="true"></div>
+      <div class="canvas-item copy" data-part="cni-detail-0a" style="--x:89;--y:455;--w:512;--h:38;--size:25;--ink:#E6E8EF">Multus delegates eth0 to Cilium.</div>
+      <div class="canvas-item copy" data-part="cni-detail-0b" style="--x:89;--y:491;--w:512;--h:38;--size:25;--ink:#B2E879">The pod also receives net1.</div>
+      <div class="canvas-item shape" data-part="cni-panel-1" style="--x:654;--y:262;--w:562;--h:288;--fill:#15171F;--edge:#303545;--edge-width:1px" aria-hidden="true"></div>
+      <div class="canvas-item shape dot" data-part="signal-dot" style="--x:679;--y:290;--w:9;--h:9;--fill:#F2867A" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="cni-status-1" style="--x:698;--y:283;--w:500;--h:27;--size:17;--ink:#F2867A">DELIBERATE BREAK</div>
+      <div class="canvas-item copy mono" data-part="cni-dir-1" style="--x:679;--y:337;--w:504;--h:32;--size:21;--ink:#9FA6B8">/etc/cni/net.d/</div>
+      <div class="canvas-item copy mono" data-part="cni-file-1" style="--x:679;--y:376;--w:504;--h:44;--size:29;--ink:#F3F4F8">05-cilium.conflist</div>
+      <div class="canvas-item shape" data-part="rule" style="--x:679;--y:432;--w:512;--h:1;--fill:#303545" aria-hidden="true"></div>
+      <div class="canvas-item copy" data-part="cni-detail-1a" style="--x:679;--y:455;--w:512;--h:38;--size:25;--ink:#E6E8EF">A copy in the runtime directory</div>
+      <div class="canvas-item copy" data-part="cni-detail-1b" style="--x:679;--y:491;--w:512;--h:38;--size:25;--ink:#F2867A">lets Cilium win before Multus appears.</div>
+      <div class="canvas-item copy" data-part="scope-note" style="--x:65;--y:581;--w:1145;--h:33;--size:21;--ink:#B5BBCA">Cilium’s delegated config stays in its own directory.</div>
+    </div>
+    <details class="notes">
+      <summary>Speaker notes · 3:15–4:40 (1:25)</summary>
+      <p>The intended layout separates the runtime-visible directory from Cilium’s own directory. In the documented regression, a copy of the Cilium conflist goes back into /etc/cni/net.d on worker2. Early in boot, before Multus writes its config, the copy can give containerd a usable primary CNI too soon. An early test pod is deliberately scheduled as the worker returns. The test compares runtime readiness and the first sandbox creation against when the Multus config appears. This is a lab-specific regression, not a claim about all Cilium or Multus installs.</p>
+      <p>Sources</p>
+      <ul><li><a href="https://github.com/ziwon/rdma-fabric-lab/blob/main/tests/integration/qemu-lab/breaks-k8s-rdma.sh#L204-L206">breaks-k8s-rdma.sh</a></li><li><a href="https://github.com/ziwon/rdma-fabric-lab/blob/main/tracks/a-soft-roce/scenarios/k8s-multus-net1.yaml">k8s-multus-net1.yaml</a></li></ul>
+    </details>
+  </section>
+  <section id="slide-5" class="slide" aria-labelledby="title-5">
+    <h2 id="title-5" class="sr-only">The test fails, then passes after repair</h2>
+    <div class="frame">
+      <div class="canvas-item shape dot" data-part="signal-dot" style="--x:64;--y:49;--w:9;--h:9;--fill:#B2E879" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="section" style="--x:83;--y:43;--w:850;--h:24;--size:16;--ink:#9FA6B8">04 / DEMO BEAT</div>
+      <div class="canvas-item shape" data-part="rule" style="--x:64;--y:75;--w:1152;--h:1;--fill:#303545" aria-hidden="true"></div>
+      <div class="canvas-item shape" data-part="rule" style="--x:64;--y:654;--w:1152;--h:1;--fill:#303545" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="project-footer" style="--x:64;--y:672;--w:720;--h:23;--size:14;--ink:#9FA6B8">restack / rdma-fabric-lab</div>
+      <div class="canvas-item copy mono" data-part="slide-number" style="--x:1094;--y:672;--w:122;--h:23;--size:14;--ink:#9FA6B8;--align:right">05 / 08</div>
+      <div class="canvas-item copy heavy" data-part="headline" style="--x:64;--y:107;--w:1152;--h:72;--size:55;--ink:#F3F4F8">The test fails, then passes after repair</div>
+      <div class="canvas-item copy" data-part="subhead" style="--x:66;--y:191;--w:1130;--h:44;--size:25;--ink:#B5BBCA">Recorded regression summarized below. This is a schematic, not a terminal capture.</div>
+      <div class="canvas-item shape" data-part="evidence-frame" style="--x:64;--y:252;--w:1152;--h:341;--fill:#101218;--edge:#303545;--edge-width:1px" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="checks-heading" style="--x:89;--y:277;--w:563;--h:27;--size:17;--ink:#9FA6B8">MANIFEST CHECK</div>
+      <div class="canvas-item copy mono" data-part="break-heading" style="--x:727;--y:277;--w:190;--h:27;--size:17;--ink:#F2867A">STALE FILE</div>
+      <div class="canvas-item copy mono" data-part="repair-heading" style="--x:964;--y:277;--w:220;--h:27;--size:17;--ink:#B2E879">AFTER REPAIR</div>
+      <div class="canvas-item shape" data-part="rule" style="--x:88;--y:319;--w:1098;--h:1;--fill:#303545" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="check-0" style="--x:89;--y:341;--w:604;--h:34;--size:22;--ink:#E6E8EF">cni-dir-holds-only-multus</div>
+      <div class="canvas-item shape" data-part="fail-0-bg" style="--x:727;--y:340;--w:128;--h:32;--fill:#2E1C1E" aria-hidden="true"></div>
+      <div class="canvas-item shape dot" data-part="signal-dot" style="--x:739;--y:352;--w:8;--h:8;--fill:#F2867A" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="fail-0" style="--x:754;--y:346;--w:96;--h:24;--size:15;--ink:#F2867A">FAIL</div>
+      <div class="canvas-item shape" data-part="pass-0-bg" style="--x:964;--y:340;--w:128;--h:32;--fill:#18260F" aria-hidden="true"></div>
+      <div class="canvas-item shape dot" data-part="signal-dot" style="--x:976;--y:352;--w:8;--h:8;--fill:#B2E879" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="pass-0" style="--x:991;--y:346;--w:96;--h:24;--size:15;--ink:#B2E879">PASS</div>
+      <div class="canvas-item shape" data-part="rule" style="--x:88;--y:393;--w:1098;--h:1;--fill:#303545" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="check-1" style="--x:89;--y:415;--w:604;--h:34;--size:22;--ink:#E6E8EF">pod-at-boot-waits-for-multus</div>
+      <div class="canvas-item shape" data-part="fail-1-bg" style="--x:727;--y:414;--w:128;--h:32;--fill:#2E1C1E" aria-hidden="true"></div>
+      <div class="canvas-item shape dot" data-part="signal-dot" style="--x:739;--y:426;--w:8;--h:8;--fill:#F2867A" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="fail-1" style="--x:754;--y:420;--w:96;--h:24;--size:15;--ink:#F2867A">FAIL</div>
+      <div class="canvas-item shape" data-part="pass-1-bg" style="--x:964;--y:414;--w:128;--h:32;--fill:#18260F" aria-hidden="true"></div>
+      <div class="canvas-item shape dot" data-part="signal-dot" style="--x:976;--y:426;--w:8;--h:8;--fill:#B2E879" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="pass-1" style="--x:991;--y:420;--w:96;--h:24;--size:15;--ink:#B2E879">PASS</div>
+      <div class="canvas-item shape" data-part="rule" style="--x:88;--y:467;--w:1098;--h:1;--fill:#303545" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="check-2" style="--x:89;--y:489;--w:604;--h:34;--size:22;--ink:#E6E8EF">new-pod-after-reboot-gets-net1</div>
+      <div class="canvas-item shape" data-part="fail-2-bg" style="--x:727;--y:488;--w:128;--h:32;--fill:#2E1C1E" aria-hidden="true"></div>
+      <div class="canvas-item shape dot" data-part="signal-dot" style="--x:739;--y:500;--w:8;--h:8;--fill:#F2867A" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="fail-2" style="--x:754;--y:494;--w:96;--h:24;--size:15;--ink:#F2867A">FAIL</div>
+      <div class="canvas-item shape" data-part="pass-2-bg" style="--x:964;--y:488;--w:128;--h:32;--fill:#18260F" aria-hidden="true"></div>
+      <div class="canvas-item shape dot" data-part="signal-dot" style="--x:976;--y:500;--w:8;--h:8;--fill:#B2E879" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="pass-2" style="--x:991;--y:494;--w:96;--h:24;--size:15;--ink:#B2E879">PASS</div>
+      <div class="canvas-item copy mono" data-part="evidence-path" style="--x:90;--y:549;--w:1070;--h:30;--size:17;--ink:#9FA6B8">Evidence: manifest.json + pairs.tsv</div>
+    </div>
+    <details class="notes">
+      <summary>Speaker notes · 4:40–7:00 (2:20)</summary>
+      <p>Demo sequence: show a healthy baseline; introduce only the stale Cilium config in the worker test; run the reboot regression; inspect the named checks. Remove the stale file, rerun, and show the repaired verdict. For the talk, prefer a short recorded capture or sanitized local artifacts to waiting on a live reboot. Draft production note: replace this schematic with a short captured excerpt if the corresponding local logs are available. Keep the run IDs and compare the same check names; do not invent a screenshot or run ID.</p>
+      <p>Sources</p>
+      <ul><li><a href="https://github.com/ziwon/rdma-fabric-lab/blob/main/tests/integration/qemu-lab/breaks-k8s-rdma.sh#L204-L206">breaks-k8s-rdma.sh</a></li><li><a href="https://github.com/ziwon/rdma-fabric-lab/blob/main/tracks/a-soft-roce/scenarios/k8s-multus-net1.yaml">k8s-multus-net1.yaml</a></li><li><a href="https://github.com/ziwon/rdma-fabric-lab/blob/main/docs/verification.md">verification.md</a></li></ul>
+    </details>
+  </section>
+  <section id="slide-6" class="slide" aria-labelledby="title-6">
+    <h2 id="title-6" class="sr-only">net1 reachability is an IP result</h2>
+    <div class="frame">
+      <div class="canvas-item shape dot" data-part="signal-dot" style="--x:64;--y:49;--w:9;--h:9;--fill:#B2E879" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="section" style="--x:83;--y:43;--w:850;--h:24;--size:16;--ink:#9FA6B8">05 / INTERPRETING THE RESULT</div>
+      <div class="canvas-item shape" data-part="rule" style="--x:64;--y:75;--w:1152;--h:1;--fill:#303545" aria-hidden="true"></div>
+      <div class="canvas-item shape" data-part="rule" style="--x:64;--y:654;--w:1152;--h:1;--fill:#303545" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="project-footer" style="--x:64;--y:672;--w:720;--h:23;--size:14;--ink:#9FA6B8">restack / rdma-fabric-lab</div>
+      <div class="canvas-item copy mono" data-part="slide-number" style="--x:1094;--y:672;--w:122;--h:23;--size:14;--ink:#9FA6B8;--align:right">06 / 08</div>
+      <div class="canvas-item copy heavy" data-part="headline" style="--x:64;--y:107;--w:1152;--h:72;--size:55;--ink:#F3F4F8">net1 reachability is an IP result</div>
+      <div class="canvas-item copy" data-part="subhead" style="--x:66;--y:191;--w:1130;--h:44;--size:25;--ink:#B5BBCA">The lab gives each test an evidence type so the claims stay separate.</div>
+      <div class="canvas-item shape" data-part="rule" style="--x:64;--y:262;--w:1152;--h:1;--fill:#303545" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="result-kind-0" style="--x:66;--y:289;--w:300;--h:28;--size:17;--ink:#70C5D0">RXE VERBS</div>
+      <div class="canvas-item copy heavy" data-part="result-outcome-0" style="--x:369;--y:281;--w:836;--h:40;--size:29;--ink:#F3F4F8">Passed between hostNetwork pods</div>
+      <div class="canvas-item copy" data-part="result-meaning-0" style="--x:369;--y:318;--w:836;--h:35;--size:23;--ink:#B5BBCA">Software RDMA over the worker lab NIC.</div>
+      <div class="canvas-item shape" data-part="rule" style="--x:64;--y:371;--w:1152;--h:1;--fill:#303545" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="result-kind-1" style="--x:66;--y:398;--w:300;--h:28;--size:17;--ink:#B2E879">MULTUS NET1</div>
+      <div class="canvas-item copy heavy" data-part="result-outcome-1" style="--x:369;--y:390;--w:836;--h:40;--size:29;--ink:#F3F4F8">Passed across worker nodes</div>
+      <div class="canvas-item copy" data-part="result-meaning-1" style="--x:369;--y:427;--w:836;--h:35;--size:23;--ink:#B5BBCA">Secondary IP, including after the repaired reboot.</div>
+      <div class="canvas-item shape" data-part="rule" style="--x:64;--y:480;--w:1152;--h:1;--fill:#303545" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="result-kind-2" style="--x:66;--y:507;--w:300;--h:28;--size:17;--ink:#9FA6B8">PRODUCTION FABRIC</div>
+      <div class="canvas-item copy heavy" data-part="result-outcome-2" style="--x:369;--y:499;--w:836;--h:40;--size:29;--ink:#F3F4F8">Outside this test</div>
+      <div class="canvas-item copy" data-part="result-meaning-2" style="--x:369;--y:536;--w:836;--h:35;--size:23;--ink:#B5BBCA">No HCA, physical InfiniBand or NCCL benchmark.</div>
+    </div>
+    <details class="notes">
+      <summary>Speaker notes · 7:00–8:05 (1:05)</summary>
+      <p>Be explicit about what each scenario can show. The hostNetwork case exercised the software RDMA provider. The Multus case did not expose an RDMA device to ordinary pods, and its reachability test is IP. This slide’s claims do not carry over to a real HCA, switches, physical InfiniBand, production throughput or NCCL. The repository also has separate simulations. Those are out of scope for this talk.</p>
+      <p>Sources</p>
+      <ul><li><a href="https://github.com/ziwon/rdma-fabric-lab/blob/main/docs/verification.md">verification.md</a></li><li><a href="https://github.com/ziwon/rdma-fabric-lab/blob/main/docs/adr/0003-results-and-breaks.md">0003-results-and-breaks.md</a></li><li><a href="https://github.com/ziwon/rdma-fabric-lab/blob/main/tracks/a-soft-roce/scenarios/k8s-multus-net1.yaml">k8s-multus-net1.yaml</a></li></ul>
+    </details>
+  </section>
+  <section id="slide-7" class="slide" aria-labelledby="title-7">
+    <h2 id="title-7" class="sr-only">A good check fails for the right reason</h2>
+    <div class="frame">
+      <div class="canvas-item shape dot" data-part="signal-dot" style="--x:64;--y:49;--w:9;--h:9;--fill:#B2E879" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="section" style="--x:83;--y:43;--w:850;--h:24;--size:16;--ink:#9FA6B8">06 / TEST DESIGN</div>
+      <div class="canvas-item shape" data-part="rule" style="--x:64;--y:75;--w:1152;--h:1;--fill:#303545" aria-hidden="true"></div>
+      <div class="canvas-item shape" data-part="rule" style="--x:64;--y:654;--w:1152;--h:1;--fill:#303545" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="project-footer" style="--x:64;--y:672;--w:720;--h:23;--size:14;--ink:#9FA6B8">restack / rdma-fabric-lab</div>
+      <div class="canvas-item copy mono" data-part="slide-number" style="--x:1094;--y:672;--w:122;--h:23;--size:14;--ink:#9FA6B8;--align:right">07 / 08</div>
+      <div class="canvas-item copy heavy" data-part="headline" style="--x:64;--y:107;--w:1152;--h:72;--size:55;--ink:#F3F4F8">A good check fails for the right reason</div>
+      <div class="canvas-item copy" data-part="subhead" style="--x:66;--y:191;--w:1130;--h:44;--size:25;--ink:#B5BBCA">The run keeps the verdict and the evidence together.</div>
+      <div class="canvas-item shape" data-part="rule" style="--x:64;--y:267;--w:350;--h:2;--fill:#303545" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="step-number-0" style="--x:64;--y:291;--w:190;--h:45;--size:31;--ink:#9FA6B8">01</div>
+      <div class="canvas-item copy heavy" data-part="step-title-0" style="--x:64;--y:350;--w:378;--h:43;--size:31;--ink:#F3F4F8">Declare the check</div>
+      <div class="canvas-item copy" data-part="step-desc-0a" style="--x:64;--y:416;--w:376;--h:32;--size:21;--ink:#B5BBCA">Name the expected invariant</div>
+      <div class="canvas-item copy" data-part="step-desc-0b" style="--x:64;--y:450;--w:376;--h:32;--size:21;--ink:#B5BBCA">in the scenario spec.</div>
+      <div class="canvas-item shape" data-part="rule" style="--x:452;--y:267;--w:350;--h:2;--fill:#B2E879" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="step-number-1" style="--x:452;--y:291;--w:190;--h:45;--size:31;--ink:#B2E879">02</div>
+      <div class="canvas-item copy heavy" data-part="step-title-1" style="--x:452;--y:350;--w:378;--h:43;--size:31;--ink:#F3F4F8">Break one invariant</div>
+      <div class="canvas-item copy" data-part="step-desc-1a" style="--x:452;--y:416;--w:376;--h:32;--size:21;--ink:#B5BBCA">Verify the exact named check fails,</div>
+      <div class="canvas-item copy" data-part="step-desc-1b" style="--x:452;--y:450;--w:376;--h:32;--size:21;--ink:#B5BBCA">then repair and rerun.</div>
+      <div class="canvas-item shape" data-part="rule" style="--x:840;--y:267;--w:350;--h:2;--fill:#303545" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="step-number-2" style="--x:840;--y:291;--w:190;--h:45;--size:31;--ink:#9FA6B8">03</div>
+      <div class="canvas-item copy heavy" data-part="step-title-2" style="--x:840;--y:350;--w:378;--h:43;--size:31;--ink:#F3F4F8">Keep the evidence</div>
+      <div class="canvas-item copy" data-part="step-desc-2a" style="--x:840;--y:416;--w:376;--h:32;--size:21;--ink:#B5BBCA">Store the manifest with the</div>
+      <div class="canvas-item copy" data-part="step-desc-2b" style="--x:840;--y:450;--w:376;--h:32;--size:21;--ink:#B5BBCA">raw outputs it references.</div>
+      <div class="canvas-item shape" data-part="proof-strap" style="--x:65;--y:539;--w:1150;--h:61;--fill:#1C1F29;--edge:#303545;--edge-width:1px" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="proof-strap-text" style="--x:88;--y:558;--w:1100;--h:28;--size:19;--ink:#B2E879">scenario spec  /  named check  /  run manifest  /  raw evidence</div>
+    </div>
+    <details class="notes">
+      <summary>Speaker notes · 8:05–9:15 (1:10)</summary>
+      <p>The reusable part is the test design. Write the invariant before running the test. Induce one reversible bad state in a disposable environment and verify the relevant assertion catches it, rather than accepting any nonzero exit. Repair it and run the same check again. The run manifest points back to the evidence. Deliberate failures are marked separately from the latest normal results.</p>
+      <p>Sources</p>
+      <ul><li><a href="https://github.com/ziwon/rdma-fabric-lab/blob/main/docs/adr/0003-results-and-breaks.md">0003-results-and-breaks.md</a></li><li><a href="https://github.com/ziwon/rdma-fabric-lab/blob/main/docs/verification.md">verification.md</a></li></ul>
+    </details>
+  </section>
+  <section id="slide-8" class="slide" aria-labelledby="title-8">
+    <h2 id="title-8" class="sr-only">Pod readiness is only the first check.</h2>
+    <div class="frame">
+      <div class="canvas-item shape dot" data-part="signal-dot" style="--x:64;--y:49;--w:9;--h:9;--fill:#B2E879" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="section" style="--x:83;--y:43;--w:850;--h:24;--size:16;--ink:#9FA6B8">07 / TAKEAWAY</div>
+      <div class="canvas-item shape" data-part="rule" style="--x:64;--y:75;--w:1152;--h:1;--fill:#303545" aria-hidden="true"></div>
+      <div class="canvas-item shape" data-part="rule" style="--x:64;--y:654;--w:1152;--h:1;--fill:#303545" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="project-footer" style="--x:64;--y:672;--w:720;--h:23;--size:14;--ink:#9FA6B8">restack / rdma-fabric-lab</div>
+      <div class="canvas-item copy mono" data-part="slide-number" style="--x:1094;--y:672;--w:122;--h:23;--size:14;--ink:#9FA6B8;--align:right">08 / 08</div>
+      <div class="canvas-item copy heavy" data-part="final-head-1" style="--x:64;--y:144;--w:1152;--h:94;--size:76;--ink:#F3F4F8">Pod readiness is only</div>
+      <div class="canvas-item copy heavy" data-part="final-head-2" style="--x:64;--y:235;--w:1152;--h:94;--size:76;--ink:#B2E879">the first check.</div>
+      <div class="canvas-item copy" data-part="final-principle" style="--x:67;--y:371;--w:1149;--h:41;--size:29;--ink:#E6E8EF">After reboot, test the interface and the traffic your workload expects.</div>
+      <div class="canvas-item copy" data-part="final-principle-2" style="--x:67;--y:421;--w:1149;--h:41;--size:29;--ink:#B5BBCA">Check RDMA verbs separately from secondary IP reachability.</div>
+      <div class="canvas-item shape" data-part="rule" style="--x:66;--y:504;--w:1147;--h:1;--fill:#303545" aria-hidden="true"></div>
+      <div class="canvas-item copy mono" data-part="repository-label" style="--x:67;--y:533;--w:1000;--h:25;--size:16;--ink:#9FA6B8">LAB &amp; REPRODUCTION</div>
+      <div class="canvas-item copy mono" data-part="repository-url" style="--x:67;--y:569;--w:1110;--h:38;--size:25;--ink:#70C5D0">github.com/ziwon/rdma-fabric-lab</div>
+    </div>
+    <details class="notes">
+      <summary>Speaker notes · 9:15–10:00 (0:45)</summary>
+      <p>Close with the transfer: use the first pod after reboot to test the interface and actual traffic, and keep a separate verbs check for any RDMA claim. Point to the repository verification and runbook for reproduction. The presentation is a proposal draft and makes no claim of conference acceptance.</p>
+      <p>Sources</p>
+      <ul><li><a href="https://github.com/ziwon/rdma-fabric-lab">rdma-fabric-lab</a></li><li><a href="https://github.com/ziwon/rdma-fabric-lab/blob/main/docs/verification.md">verification.md</a></li><li><a href="https://github.com/ziwon/rdma-fabric-lab/blob/main/docs/runbook.md">runbook.md</a></li><li><a href="https://github.com/restack-ai/design-system/blob/main/DESIGN.md">DESIGN.md</a></li></ul>
+    </details>
+  </section>
+</main>
+<script>
+  const byId = (id) => document.getElementById(id);
+  const deck = byId('deck');
+  const slides = [...deck.querySelectorAll('.slide')];
+  const previous = byId('previous');
+  const next = byId('next');
+  const count = byId('count');
+  const fullscreen = byId('fullscreen');
+  let current = 0;
+  const fromHash = () => {
+    const match = /^#slide-(\d+)$/.exec(location.hash);
+    const index = match ? Number(match[1]) - 1 : 0;
+    return index >= 0 && index < slides.length ? index : 0;
+  };
+  const select = (index, updateHash = false) => {
+    current = Math.max(0, Math.min(index, slides.length - 1));
+    slides.forEach((slide, i) => { slide.hidden = i !== current; });
+    count.value = (current + 1) + ' / ' + slides.length;
+    previous.setAttribute('aria-disabled', current === 0);
+    next.setAttribute('aria-disabled', current === slides.length - 1);
+    if (updateHash && location.hash !== '#' + slides[current].id) {
+      history.pushState(null, '', '#' + slides[current].id);
+    }
+  };
+  previous.addEventListener('click', () => select(current - 1, true));
+  next.addEventListener('click', () => select(current + 1, true));
+  const restore = () => select(fromHash());
+  window.addEventListener('hashchange', restore);
+  window.addEventListener('popstate', restore);
+  const toggleFull = async () => {
+    try {
+      if (document.fullscreenElement) await document.exitFullscreen();
+      else if (document.fullscreenEnabled) await deck.requestFullscreen();
+    } catch {
+      // The browser can block fullscreen, e.g. inside an embed.
+    }
+  };
+  fullscreen.addEventListener('click', toggleFull);
+  document.addEventListener('keydown', (event) => {
+    const key = event.key;
+    if (event.defaultPrevented || event.ctrlKey || event.metaKey || event.altKey ||
+        event.target.closest('input, textarea, select, [contenteditable]') ||
+        (key === ' ' && event.target.closest('a, button, summary'))) return;
+    if (key === 'ArrowLeft' || key === 'PageUp') select(current - 1, true);
+    else if (key === 'ArrowRight' || key === 'PageDown' || key === ' ') select(current + 1, true);
+    else if (key === 'Home') select(0, true);
+    else if (key === 'End') select(slides.length - 1, true);
+    else if (key.toLowerCase() === 'f') toggleFull();
+    else return;
+    event.preventDefault();
+  });
+  fullscreen.hidden = !document.fullscreenEnabled;
+  select(fromHash());
+  byId('controls').hidden = false;
+</script>
+</body>
+</html>

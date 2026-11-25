@@ -6,6 +6,7 @@
   <a href="docs/runbook.md">Runbook</a> ·
   <a href="docs/verification.md">Verification</a> ·
   <a href="https://rdma.restack.tech/">Learning site</a> ·
+  <a href="docs/slides/">Slide drafts</a> ·
   <a href="docs/adr/">Decisions</a> ·
   <a href="LICENSE">MIT</a>
 </p>
