@@ -9,6 +9,7 @@ import { base, site } from './lib/site.mjs';
 import { loadDecks, proposalStatus } from './lib/slides.mjs';
 import { brokenLinks, verifySite } from './lib/verify.mjs';
 import { verifyTalks } from './lib/verify-talks.mjs';
+import { verifyReference } from './lib/verify-reference.mjs';
 
 const dist = path.join(siteDir, 'dist');
 
@@ -34,6 +35,7 @@ const problems = verifySite({
   makeTargetsRoute: '/reference/make-targets/',
 }).concat(
   verifyTalks({ pages, decks: loadDecks(), status: proposalStatus, base, site }),
+  verifyReference({ pages, adrRoutes: docs.filter((doc) => doc.startsWith('docs/adr/')).map(routeOf), base }),
   brokenLinks(pages, base, (target) => existsSync(path.join(dist, target))),
 );
 for (const problem of problems) console.error(`verify-dist: ${problem}`);
