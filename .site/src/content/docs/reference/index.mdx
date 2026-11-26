@@ -1,24 +1,11 @@
 ---
 title: Reference
-description: The make targets, and the runbook, verification record, ADRs and other documents of the repository, copied into the site at build time.
+description: Decisions and operating documents for reproducing and maintaining the lab.
 sidebar:
   order: 0
 ---
 
-The reference pages come from the repository itself at build time, so they cannot fall behind it.
-
-- [Make targets](/reference/make-targets/) reads the `##` comments of `Makefile` and `mk/*.mk`, the same lines `make help` prints.
-- The repository documents below are copied from `docs/` by `scripts/sync-docs.mjs` at every build. Their own links become site links, a code span that names another copied document becomes a link to it, and paths under `.lab/`, its evidence copies in `.lab/evidence/` among them, and `results/` stay code, because those files exist only on the machine that ran the lab.
-
-## Running and proving the lab
-
-| Document | What it covers |
-|---|---|
-| [runbook](/docs/runbook/) | From a fresh host to every track, with measured durations and sizes, cleanup, recovery and the safety rules |
-| [verification](/docs/verification/) | How the lab proves itself, the latest full reproduction and the MVP checklist with its evidence |
-| [troubleshooting](/docs/troubleshooting/) | Failures seen in every track and the cel1 simulation, with their causes and evidence |
-| [fleet](/docs/fleet/) | The cel1 region, its fleet targets and its simulation |
-| [setup-vmware](/docs/setup-vmware/) | The same lab as VMware Workstation guests, not verified on the current host |
+These documents are for operators reproducing or maintaining the lab. Start with [Labs](/labs/); read the ADRs for the “why” behind a decision and the runbook to reproduce a run.
 
 ## Decisions
 
@@ -32,3 +19,15 @@ The reference pages come from the repository itself at build time, so they canno
 | [ADR 0006](/docs/adr/0006-track-c-packet-model/) | The ns-3 backend, the RESUME patch, the four profiles and the comparison parameters |
 | [ADR 0007](/docs/adr/0007-cel1-ipoib-pod-networks/) | Accepted, offline and simulation phases done: Cilium on `mgmt0`, Multus and one IPoIB network per InfiniBand rail for cel1 pods |
 | [ADR 0008](/docs/adr/0008-netbox-from-the-site-model/) | The site model exported to NetBox in its own guest, the managed tag, and the comparison by natural keys |
+
+## Running and proving the lab
+
+| Document | What it covers |
+|---|---|
+| [runbook](/docs/runbook/) | From a fresh host to every track, with measured durations and sizes, cleanup, recovery and the safety rules |
+| [verification](/docs/verification/) | How the lab proves itself, the latest full reproduction and the MVP checklist with its evidence |
+| [troubleshooting](/docs/troubleshooting/) | Failures seen in every track and the cel1 simulation, with their causes and evidence |
+| [fleet](/docs/fleet/) | The cel1 region, its fleet targets and its simulation |
+| [setup-vmware](/docs/setup-vmware/) | The same lab as VMware Workstation guests, not verified on the current host |
+
+[Make targets](/reference/make-targets/) lists the commands available through `make help`.

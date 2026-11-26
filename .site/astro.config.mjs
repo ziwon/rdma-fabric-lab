@@ -92,7 +92,11 @@ export default defineConfig({
               icon: 'document',
               items: [
                 { autogenerate: { directory: 'reference' } },
-                { label: 'Repository documents', items: [{ autogenerate: { directory: 'docs' } }] },
+                {
+                  label: 'Repository documents',
+                  collapsed: true,
+                  items: [{ autogenerate: { directory: 'docs', collapsed: true } }],
+                },
               ],
             },
           ],
